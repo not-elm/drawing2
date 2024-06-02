@@ -9,7 +9,7 @@
       "DOM",
       "ES2020"
     ],
-    "outDir": "./build",
+    "outDir": "../../build",
     "jsx": "react-jsx",
     "jsxImportSource": "@emotion/react",
     "skipLibCheck": true
