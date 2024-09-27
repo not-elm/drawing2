@@ -1,9 +1,12 @@
+import type { CSSObject } from "@emotion/serialize/src";
 import {
+	type HTMLAttributes,
 	type MouseEventHandler,
 	type WheelEventHandler,
 	useCallback,
 	useEffect,
 } from "react";
+import { useCanvasEventHandler } from "./StoreProvider";
 import { isNullish } from "./lib/isNullish";
 import { type CanvasState, toCanvasCoordinate } from "./model/CanvasState";
 import { Line } from "./model/Line";
@@ -228,6 +231,8 @@ function SelectionView({
 }
 
 function RectSelection({ rect, viewport }: { rect: Rect; viewport: Viewport }) {
+	const handlers = useCanvasEventHandler();
+
 	return (
 		<div
 			css={{
@@ -239,6 +244,137 @@ function RectSelection({ rect, viewport }: { rect: Rect; viewport: Viewport }) {
 				boxSizing: "border-box",
 				border: "3px solid #4d30ef",
 				background: "rgba(77,48,239,0.3)",
+				"--drag-handle-size": "16px",
+				pointerEvents: "all",
+			}}
+			onMouseDown={(ev) => {
+				ev.stopPropagation();
+				ev.preventDefault();
+				handlers.handleRectMouseDown(rect, ev.clientX, ev.clientY);
+			}}
+		>
+			<ResizeHandler
+				css={{ top: "0%", left: "0%", width: "100%", cursor: "ns-resize" }}
+				onMouseDown={(ev) => {
+					ev.stopPropagation();
+					ev.preventDefault();
+					handlers.handleRectResizeHandleMouseDown(
+						rect,
+						ev.clientX,
+						ev.clientY,
+						"top",
+					);
+				}}
+			/>
+			<ResizeHandler
+				css={{ top: "0%", left: "100%", height: "100%", cursor: "ew-resize" }}
+				onMouseDown={(ev) => {
+					ev.stopPropagation();
+					ev.preventDefault();
+					handlers.handleRectResizeHandleMouseDown(
+						rect,
+						ev.clientX,
+						ev.clientY,
+						"right",
+					);
+				}}
+			/>
+			<ResizeHandler
+				css={{ top: "100%", left: "0%", width: "100%", cursor: "ns-resize" }}
+				onMouseDown={(ev) => {
+					ev.stopPropagation();
+					ev.preventDefault();
+					handlers.handleRectResizeHandleMouseDown(
+						rect,
+						ev.clientX,
+						ev.clientY,
+						"bottom",
+					);
+				}}
+			/>
+			<ResizeHandler
+				css={{ top: "0%", left: "0%", height: "100%", cursor: "ew-resize" }}
+				onMouseDown={(ev) => {
+					ev.stopPropagation();
+					ev.preventDefault();
+					handlers.handleRectResizeHandleMouseDown(
+						rect,
+						ev.clientX,
+						ev.clientY,
+						"left",
+					);
+				}}
+			/>
+
+			<ResizeHandler
+				css={{ top: "0%", left: "0%", cursor: "nwse-resize" }}
+				onMouseDown={(ev) => {
+					ev.stopPropagation();
+					ev.preventDefault();
+					handlers.handleRectResizeHandleMouseDown(
+						rect,
+						ev.clientX,
+						ev.clientY,
+						"topLeft",
+					);
+				}}
+			/>
+			<ResizeHandler
+				css={{ top: "0%", left: "100%", cursor: "nesw-resize" }}
+				onMouseDown={(ev) => {
+					ev.stopPropagation();
+					ev.preventDefault();
+					handlers.handleRectResizeHandleMouseDown(
+						rect,
+						ev.clientX,
+						ev.clientY,
+						"topRight",
+					);
+				}}
+			/>
+			<ResizeHandler
+				css={{ top: "100%", left: "100%", cursor: "nwse-resize" }}
+				onMouseDown={(ev) => {
+					ev.stopPropagation();
+					ev.preventDefault();
+					handlers.handleRectResizeHandleMouseDown(
+						rect,
+						ev.clientX,
+						ev.clientY,
+						"bottomRight",
+					);
+				}}
+			/>
+			<ResizeHandler
+				css={{ top: "100%", left: "0%", cursor: "nesw-resize" }}
+				onMouseDown={(ev) => {
+					ev.stopPropagation();
+					ev.preventDefault();
+					handlers.handleRectResizeHandleMouseDown(
+						rect,
+						ev.clientX,
+						ev.clientY,
+						"bottomLeft",
+					);
+				}}
+			/>
+		</div>
+	);
+}
+
+function ResizeHandler(
+	props: HTMLAttributes<HTMLDivElement> & { css?: CSSObject },
+) {
+	return (
+		<div
+			{...props}
+			css={{
+				position: "absolute",
+				transform:
+					"translate(calc(-1 * var(--drag-handle-size) / 2), calc(-1 * var(--drag-handle-size) / 2))",
+				width: "var(--drag-handle-size)",
+				height: "var(--drag-handle-size)",
+				...props.css,
 			}}
 		/>
 	);

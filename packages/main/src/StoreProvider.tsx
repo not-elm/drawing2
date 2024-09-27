@@ -59,16 +59,18 @@ async function initializeStore(): Promise<CanvasStateStore> {
 	return store;
 }
 
-export function useCanvasState(): [CanvasState, CanvasEventHandlers] {
+export function useCanvasState(): CanvasState {
 	const store = useContext(context);
 
-	const state = useSyncExternalStore(
+	return useSyncExternalStore(
 		(callback) => {
 			store.addListener(callback);
 			return () => store.removeListener(callback);
 		},
 		() => store.getState(),
 	);
+}
 
-	return [state, store];
+export function useCanvasEventHandler(): CanvasEventHandlers {
+	return useContext(context);
 }

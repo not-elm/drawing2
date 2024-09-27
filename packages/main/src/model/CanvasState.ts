@@ -1,6 +1,7 @@
 import { LiveObject, type Room } from "@liveblocks/client";
 import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
+import { isNotNullish } from "../lib/isNullish";
 import { Line } from "./Line";
 import { Page } from "./Page";
 import { Rect } from "./Rect";
@@ -13,7 +14,7 @@ export interface CanvasState {
 	viewport: Viewport;
 	selectedRect: Rect | null;
 	selectedLine: Line | null;
-	dragHandle: DragHandle;
+	dragType: DragType;
 	dragging: boolean;
 	dragStartX: number;
 	dragStartY: number;
@@ -33,7 +34,7 @@ export namespace CanvasState {
 			},
 			selectedRect: null,
 			selectedLine: null,
-			dragHandle: { type: "none" },
+			dragType: { type: "none" },
 			dragging: false,
 			dragStartX: 0,
 			dragStartY: 0,
@@ -82,7 +83,7 @@ export class CanvasStateStore
 		this.syncWithLiveBlockStorage();
 	}
 
-	private setRectPosition(x: number, y: number) {
+	private setPosition(x: number, y: number) {
 		if (this.state.selectedRect) {
 			const rects = this.storage.root.get("page").get("rects");
 			const rect = rects.find(
@@ -93,6 +94,41 @@ export class CanvasStateStore
 			rect.set("x", x);
 			rect.set("y", y);
 			this.syncWithLiveBlockStorage();
+		}
+	}
+
+	private scaleShapes(
+		scaleX: number,
+		scaleY: number,
+		originX: number,
+		originY: number,
+		rects: Rect[],
+		lines: Line[],
+	) {
+		for (const rect of rects) {
+			const currentRect = this.storage.root
+				.get("page")
+				.get("rects")
+				.find((r) => r.get("id") === rect.id);
+			if (currentRect === undefined) continue;
+
+			let x = (rect.x - originX) * scaleX + originX;
+			let y = (rect.y - originY) * scaleY + originY;
+			let width = rect.width * scaleX;
+			let height = rect.height * scaleY;
+			if (width < 0) {
+				x += width;
+				width = -width;
+			}
+			if (height < 0) {
+				y += height;
+				height = -height;
+			}
+
+			currentRect.set("x", x);
+			currentRect.set("y", y);
+			currentRect.set("width", width);
+			currentRect.set("height", height);
 		}
 	}
 
@@ -202,17 +238,96 @@ export class CanvasStateStore
 	handleRectMouseDown(rect: Rect, canvasX: number, canvasY: number) {
 		this.selectShape(rect.id);
 		this.handleDragStart(canvasX, canvasY, {
-			type: "center",
+			type: "move",
 			startX: rect.x,
 			startY: rect.y,
 		});
 	}
 
-	handleDragStart(
-		startCanvasX: number,
-		startCanvasY: number,
-		handle: DragHandle,
+	handleRectResizeHandleMouseDown(
+		rect: Rect,
+		canvasX: number,
+		canvasY: number,
+		handle: RectResizeHandle,
 	) {
+		this.selectShape(rect.id);
+
+		let dragType: DragType;
+		switch (handle) {
+			case "topLeft":
+				dragType = {
+					type: "nwse-resize",
+					originX: rect.x + rect.width,
+					originY: rect.y + rect.height,
+					rects: [this.state.selectedRect].filter(isNotNullish),
+					lines: [this.state.selectedLine].filter(isNotNullish),
+				};
+				break;
+			case "top":
+				dragType = {
+					type: "ns-resize",
+					originY: rect.y + rect.height,
+					rects: [this.state.selectedRect].filter(isNotNullish),
+					lines: [this.state.selectedLine].filter(isNotNullish),
+				};
+				break;
+			case "topRight":
+				dragType = {
+					type: "nesw-resize",
+					originX: rect.x,
+					originY: rect.y + rect.height,
+					rects: [this.state.selectedRect].filter(isNotNullish),
+					lines: [this.state.selectedLine].filter(isNotNullish),
+				};
+				break;
+			case "right":
+				dragType = {
+					type: "ew-resize",
+					originX: rect.x,
+					rects: [this.state.selectedRect].filter(isNotNullish),
+					lines: [this.state.selectedLine].filter(isNotNullish),
+				};
+				break;
+			case "bottomRight":
+				dragType = {
+					type: "nwse-resize",
+					originX: rect.x,
+					originY: rect.y,
+					rects: [this.state.selectedRect].filter(isNotNullish),
+					lines: [this.state.selectedLine].filter(isNotNullish),
+				};
+				break;
+			case "bottomLeft":
+				dragType = {
+					type: "nesw-resize",
+					originX: rect.x + rect.width,
+					originY: rect.y,
+					rects: [this.state.selectedRect].filter(isNotNullish),
+					lines: [this.state.selectedLine].filter(isNotNullish),
+				};
+				break;
+			case "left":
+				dragType = {
+					type: "ew-resize",
+					originX: rect.x + rect.width,
+					rects: [this.state.selectedRect].filter(isNotNullish),
+					lines: [this.state.selectedLine].filter(isNotNullish),
+				};
+				break;
+			case "bottom":
+				dragType = {
+					type: "ns-resize",
+					originY: rect.y,
+					rects: [this.state.selectedRect].filter(isNotNullish),
+					lines: [this.state.selectedLine].filter(isNotNullish),
+				};
+				break;
+		}
+
+		this.handleDragStart(canvasX, canvasY, dragType);
+	}
+
+	handleDragStart(startCanvasX: number, startCanvasY: number, type: DragType) {
 		logAction("startDrag");
 		assert(!this.state.dragging, "Cannot start dragging while dragging");
 
@@ -224,7 +339,7 @@ export class CanvasStateStore
 
 		this.setState({
 			...this.state,
-			dragHandle: handle,
+			dragType: type,
 			dragging: true,
 			dragStartX: startX,
 			dragStartY: startY,
@@ -250,16 +365,55 @@ export class CanvasStateStore
 
 		switch (this.state.mode) {
 			case "select": {
-				switch (this.state.dragHandle.type) {
-					case "center": {
-						this.setRectPosition(
+				switch (this.state.dragType.type) {
+					case "move": {
+						this.setPosition(
 							this.state.dragCurrentX -
 								this.state.dragStartX +
-								this.state.dragHandle.startX,
+								this.state.dragType.startX,
 							this.state.dragCurrentY -
 								this.state.dragStartY +
-								this.state.dragHandle.startY,
+								this.state.dragType.startY,
 						);
+						break;
+					}
+					case "nwse-resize":
+					case "nesw-resize": {
+						this.scaleShapes(
+							(this.state.dragCurrentX - this.state.dragType.originX) /
+								(this.state.dragStartX - this.state.dragType.originX),
+							(this.state.dragCurrentY - this.state.dragType.originY) /
+								(this.state.dragStartY - this.state.dragType.originY),
+							this.state.dragType.originX,
+							this.state.dragType.originY,
+							this.state.dragType.rects,
+							this.state.dragType.lines,
+						);
+						break;
+					}
+					case "ns-resize": {
+						this.scaleShapes(
+							1,
+							(this.state.dragCurrentY - this.state.dragType.originY) /
+								(this.state.dragStartY - this.state.dragType.originY),
+							0,
+							this.state.dragType.originY,
+							this.state.dragType.rects,
+							this.state.dragType.lines,
+						);
+						break;
+					}
+					case "ew-resize": {
+						this.scaleShapes(
+							(this.state.dragCurrentX - this.state.dragType.originX) /
+								(this.state.dragStartX - this.state.dragType.originX),
+							1,
+							this.state.dragType.originX,
+							0,
+							this.state.dragType.rects,
+							this.state.dragType.lines,
+						);
+						break;
 					}
 				}
 				break;
@@ -274,15 +428,15 @@ export class CanvasStateStore
 
 		switch (this.state.mode) {
 			case "select": {
-				switch (this.state.dragHandle.type) {
-					case "center": {
-						this.setRectPosition(
+				switch (this.state.dragType.type) {
+					case "move": {
+						this.setPosition(
 							this.state.dragCurrentX -
 								this.state.dragStartX +
-								this.state.dragHandle.startX,
+								this.state.dragType.startX,
 							this.state.dragCurrentY -
 								this.state.dragStartY +
-								this.state.dragHandle.startY,
+								this.state.dragType.startY,
 						);
 					}
 				}
@@ -356,10 +510,24 @@ export interface CanvasEventHandlers {
 	handleCanvasMouseMove(canvasX: number, canvasY: number): void;
 	handleCanvasMouseUp(): void;
 	handleRectMouseDown(rect: Rect, canvasX: number, canvasY: number): void;
+	handleRectResizeHandleMouseDown(
+		rect: Rect,
+		canvasX: number,
+		canvasY: number,
+		handle:
+			| "topLeft"
+			| "top"
+			| "topRight"
+			| "right"
+			| "bottomRight"
+			| "bottom"
+			| "bottomLeft"
+			| "left",
+	): void;
 	handleDragStart(
 		startCanvasX: number,
 		startCanvasY: number,
-		handle: DragHandle,
+		handle: DragType,
 	): void;
 	handleDragMove(currentCanvasX: number, currentCanvasY: number): void;
 	handleDragEnd(): void;
@@ -380,17 +548,45 @@ export interface CanvasEventHandlers {
 	handleModeChange(mode: ToolMode): void;
 }
 
-export type DragHandle =
+export type DragType =
 	| { type: "none" }
-	| { type: "center"; startX: number; startY: number }
-	| { type: "nw" }
-	| { type: "ne" }
-	| { type: "se" }
-	| { type: "sw" }
-	| { type: "n" }
-	| { type: "e" }
-	| { type: "s" }
-	| { type: "w" };
+	| { type: "move"; startX: number; startY: number }
+	| {
+			type: "nwse-resize";
+			originX: number;
+			originY: number;
+			rects: Rect[];
+			lines: Line[];
+	  }
+	| {
+			type: "nesw-resize";
+			originX: number;
+			originY: number;
+			rects: Rect[];
+			lines: Line[];
+	  }
+	| {
+			type: "ns-resize";
+			originY: number;
+			rects: Rect[];
+			lines: Line[];
+	  }
+	| {
+			type: "ew-resize";
+			originX: number;
+			rects: Rect[];
+			lines: Line[];
+	  };
+
+export type RectResizeHandle =
+	| "topLeft"
+	| "top"
+	| "topRight"
+	| "right"
+	| "bottomRight"
+	| "bottom"
+	| "bottomLeft"
+	| "left";
 
 export function logAction(name: string, params?: Record<string, unknown>) {
 	// console.table({ name, ...params });

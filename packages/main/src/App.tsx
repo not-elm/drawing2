@@ -1,10 +1,11 @@
 import { useEffect } from "react";
 import { Canvas } from "./Canvas";
-import { useCanvasState } from "./StoreProvider";
+import { useCanvasEventHandler, useCanvasState } from "./StoreProvider";
 import { ToolBar } from "./ToolBar";
 
 export function App() {
-	const [state, handlers] = useCanvasState();
+	const state = useCanvasState();
+	const handlers = useCanvasEventHandler();
 
 	useEffect(() => {
 		function handleKeyDown(event: KeyboardEvent) {
