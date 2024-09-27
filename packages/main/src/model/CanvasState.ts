@@ -99,6 +99,10 @@ export class CanvasStateStore
 	private setMode(mode: ToolMode) {
 		logAction("setMode");
 		this.setState({ ...this.state, mode });
+
+		if (mode !== "select") {
+			this.selectShape(null);
+		}
 	}
 
 	private moveViewportPosition(deltaCanvasX: number, deltaCanvasY: number) {
@@ -293,6 +297,7 @@ export class CanvasStateStore
 				const y = Math.min(this.state.dragStartY, this.state.dragCurrentY);
 				const rect = Rect.create(x, y, width, height);
 				this.addRect(rect);
+				this.setMode("select");
 				break;
 			}
 			case "line": {
@@ -303,6 +308,7 @@ export class CanvasStateStore
 					this.state.dragCurrentY,
 				);
 				this.addLine(line);
+				this.setMode("select");
 			}
 		}
 	}
