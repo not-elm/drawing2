@@ -37,8 +37,6 @@ export function Canvas({
 		centerCanvasY: number,
 	) => void;
 }) {
-	console.log(state);
-
 	useEffect(() => {
 		function handleMouseMove(ev: MouseEvent) {
 			onCanvasMouseMove(ev.clientX, ev.clientY);

@@ -1,4 +1,6 @@
 import { LiveList, LiveObject, createClient } from "@liveblocks/client";
+import { useSyncExternalStore } from "react";
+import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
 import { Line } from "./Line";
 import { Page } from "./Page";
@@ -47,7 +49,7 @@ const client = createClient({
 		"pk_dev_C0tQrDQdKR0j4wrQoccD4kiwG7wVf_kCe806sGq6osrUVSWvzljKiiLhCe9yiOZn",
 });
 
-const { room, leave } = client.enterRoom("my-room", {
+const { room } = client.enterRoom("my-room", {
 	initialStorage: {
 		page: new LiveObject({
 			rects: new LiveList([]),
@@ -56,56 +58,22 @@ const { room, leave } = client.enterRoom("my-room", {
 	},
 });
 room.getStorage().then(({ root }) => {
-	const unsubscribe = room.subscribe(
-		root,
-		() => store.syncWithLiveBlockStorage(),
-		{ isDeep: true },
-	);
+	room.subscribe(root, () => store.syncWithLiveBlockStorage(), {
+		isDeep: true,
+	});
 });
 room.subscribe("storage-status", (status) => {
-	switch (status) {
-		case "not-loaded":
-			// Storage has not been loaded yet
-			break;
-		case "loading":
-			// Storage is currently loading
-			break;
-		case "synchronizing":
-			// Local Storage changes are being synchronized
-			break;
-		case "synchronized": {
-			store.syncWithLiveBlockStorage();
-			break;
-		}
+	if (status === "synchronized") {
+		store.syncWithLiveBlockStorage();
 	}
 });
 
-export async function addRect(rect: Rect) {
-	const storage = await room.getStorage();
-	storage.root.get("page").get("rects").push(new LiveObject(rect));
-	store.syncWithLiveBlockStorage();
-}
-
-export async function deleteRect(id: string) {
-	const storage = await room.getStorage();
-	const rects = storage.root.get("page").get("rects");
-	const index = rects.findIndex((rect) => rect.get("id") === id);
-	rects.delete(index);
-	store.syncWithLiveBlockStorage();
-}
-
-export async function addLine(line: Line) {
-	const storage = await room.getStorage();
-	storage.root.get("page").get("lines").push(new LiveObject(line));
-	store.syncWithLiveBlockStorage();
-}
-
-class CanvasStateStore {
-	private state: CanvasState;
-	private callbacks: Set<(state: CanvasState) => void> = new Set();
-
+class CanvasStateStore
+	extends Store<CanvasState>
+	implements CanvasEventHandlers
+{
 	constructor() {
-		this.state = CanvasState.create();
+		super(CanvasState.create());
 	}
 
 	syncWithLiveBlockStorage() {
@@ -116,26 +84,27 @@ class CanvasStateStore {
 			);
 	}
 
-	getState() {
-		return this.state;
+	private async addRect(rect: Rect) {
+		const storage = await room.getStorage();
+		storage.root.get("page").get("rects").push(new LiveObject(rect));
+		store.syncWithLiveBlockStorage();
 	}
 
-	setState(newState: CanvasState) {
-		this.state = newState;
-		for (const callback of this.callbacks) {
-			callback(newState);
-		}
+	private async deleteRect(id: string) {
+		const storage = await room.getStorage();
+		const rects = storage.root.get("page").get("rects");
+		const index = rects.findIndex((rect) => rect.get("id") === id);
+		rects.delete(index);
+		store.syncWithLiveBlockStorage();
 	}
 
-	addListener(callback: (state: CanvasState) => void) {
-		this.callbacks.add(callback);
+	private async addLine(line: Line) {
+		const storage = await room.getStorage();
+		storage.root.get("page").get("lines").push(new LiveObject(line));
+		store.syncWithLiveBlockStorage();
 	}
 
-	removeListener(callback: (state: CanvasState) => void) {
-		this.callbacks.delete(callback);
-	}
-
-	setPage(page: Page) {
+	private setPage(page: Page) {
 		logAction("setPage");
 		const state = { ...this.state, page };
 		if (page.rects.every((rect) => rect.id !== state.selectedRect?.id)) {
@@ -147,12 +116,12 @@ class CanvasStateStore {
 		this.setState(state);
 	}
 
-	setMode(mode: ToolMode) {
+	private setMode(mode: ToolMode) {
 		logAction("setMode");
 		this.setState({ ...this.state, mode });
 	}
 
-	moveViewportPosition(deltaCanvasX: number, deltaCanvasY: number) {
+	private moveViewportPosition(deltaCanvasX: number, deltaCanvasY: number) {
 		logAction("moveViewportPosition");
 
 		this.setState({
@@ -165,7 +134,7 @@ class CanvasStateStore {
 		});
 	}
 
-	setViewportScale(
+	private setViewportScale(
 		newScale: number,
 		centerCanvasX: number,
 		centerCanvasY: number,
@@ -188,7 +157,7 @@ class CanvasStateStore {
 		});
 	}
 
-	selectShape(id: string | null) {
+	private selectShape(id: string | null) {
 		logAction("selectShape");
 
 		const selectedRect =
@@ -202,22 +171,23 @@ class CanvasStateStore {
 		});
 	}
 
-	deleteSelectedShape() {
+	private deleteSelectedShape() {
 		logAction("deleteSelectedShape");
 
 		if (this.state.selectedRect) {
-			deleteRect(this.state.selectedRect.id);
+			this.deleteRect(this.state.selectedRect.id);
 		}
 	}
 
-	undo() {
+	private undo() {
 		room.history.undo();
 	}
 
-	redo() {
+	private redo() {
 		room.history.redo();
 	}
 
+	/// ---------------------------------------------------------------------------
 	/// handlers
 
 	handleCanvasMouseDown(canvasX: number, canvasY: number) {
@@ -243,6 +213,10 @@ class CanvasStateStore {
 		if (this.state.dragging) {
 			this.handleDragEnd();
 		}
+	}
+
+	handleRectMouseDown(rect: Rect) {
+		this.selectShape(rect.id);
 	}
 
 	handleDragStart(
@@ -300,7 +274,7 @@ class CanvasStateStore {
 				const x = Math.min(this.state.dragStartX, this.state.dragCurrentX);
 				const y = Math.min(this.state.dragStartY, this.state.dragCurrentY);
 				const rect = Rect.create(x, y, width, height);
-				addRect(rect);
+				this.addRect(rect);
 				break;
 			}
 			case "line": {
@@ -310,13 +284,90 @@ class CanvasStateStore {
 					this.state.dragCurrentX,
 					this.state.dragCurrentY,
 				);
-				addLine(line);
+				this.addLine(line);
 			}
 		}
 	}
+
+	handleScroll(deltaCanvasX: number, deltaCanvasY: number) {
+		this.moveViewportPosition(deltaCanvasX, deltaCanvasY);
+	}
+
+	handleScale(newScale: number, centerCanvasX: number, centerCanvasY: number) {
+		this.setViewportScale(newScale, centerCanvasX, centerCanvasY);
+	}
+
+	handleKeyDown(
+		key: string,
+		modifiers: { metaKey: boolean; ctrlKey: boolean; shiftKey: boolean },
+	): boolean {
+		switch (key) {
+			case "z": {
+				if (modifiers.metaKey || modifiers.ctrlKey) {
+					if (modifiers.shiftKey) {
+						this.redo();
+					} else {
+						this.undo();
+					}
+				}
+				return true;
+			}
+			case "Delete":
+			case "Backspace": {
+				this.deleteSelectedShape();
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	handleModeChange(mode: ToolMode) {
+		this.setMode(mode);
+	}
 }
 
-export const store = new CanvasStateStore();
+export interface CanvasEventHandlers {
+	handleCanvasMouseDown(canvasX: number, canvasY: number): void;
+	handleCanvasMouseMove(canvasX: number, canvasY: number): void;
+	handleCanvasMouseUp(): void;
+	handleRectMouseDown(rect: Rect): void;
+	handleDragStart(
+		startCanvasX: number,
+		startCanvasY: number,
+		handle: DragHandle,
+	): void;
+	handleDragMove(currentCanvasX: number, currentCanvasY: number): void;
+	handleDragEnd(): void;
+	handleScroll(deltaCanvasX: number, deltaCanvasY: number): void;
+	handleScale(
+		newScale: number,
+		centerCanvasX: number,
+		centerCanvasY: number,
+	): void;
+	handleKeyDown(
+		key: string,
+		modifiers: {
+			metaKey: boolean;
+			ctrlKey: boolean;
+			shiftKey: boolean;
+		},
+	): boolean;
+	handleModeChange(mode: ToolMode): void;
+}
+
+const store = new CanvasStateStore();
+export function useCanvasState(): [CanvasState, CanvasEventHandlers] {
+	const state = useSyncExternalStore(
+		(callback) => {
+			store.addListener(callback);
+			return () => store.removeListener(callback);
+		},
+		() => store.getState(),
+	);
+
+	return [state, store];
+}
 
 export type DragHandle =
 	| "none"
