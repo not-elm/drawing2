@@ -9,8 +9,12 @@ export interface DragState {
 }
 
 export function useDrag({
+	onDragStart,
+	onDragMove,
 	onDragEnd,
 }: {
+	onDragStart: (state: DragState) => void;
+	onDragMove: (state: DragState) => void;
 	onDragEnd: (state: DragState) => void;
 }): {
 	state: DragState;
@@ -29,27 +33,32 @@ export function useDrag({
 		currentY: 0,
 	}));
 
-	const handleMouseDown = useCallback((ev: MouseEvent) => {
-		setState(() => ({
-			dragging: true,
-			startX: ev.clientX,
-			startY: ev.clientY,
-			currentX: ev.clientX,
-			currentY: ev.clientY,
-		}));
-	}, []);
+	const handleMouseDown = useCallback(
+		(ev: MouseEvent) => {
+			onDragStart?.(state);
+			setState(() => ({
+				dragging: true,
+				startX: ev.clientX,
+				startY: ev.clientY,
+				currentX: ev.clientX,
+				currentY: ev.clientY,
+			}));
+		},
+		[state, onDragStart],
+	);
 
 	const handleMouseMove = useCallback(
 		(ev: MouseEvent) => {
 			if (!state.dragging) return;
 
+			onDragMove?.(state);
 			setState((state) => ({
 				...state,
 				currentX: ev.clientX,
 				currentY: ev.clientY,
 			}));
 		},
-		[state.dragging],
+		[state, onDragMove],
 	);
 
 	const handleMouseUp = useCallback(() => {

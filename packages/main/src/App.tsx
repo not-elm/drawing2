@@ -1,55 +1,38 @@
-import { LiveObject } from "@liveblocks/client";
-import { useStorage } from "@liveblocks/react";
-import { useMutation, useRedo, useUndo } from "@liveblocks/react/suspense";
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { Canvas } from "./Canvas";
 import { ToolBar } from "./ToolBar";
-import type { Line } from "./model/Line";
-import type { Page } from "./model/Page";
-import type { Rect } from "./model/Rect";
-import type { ToolMode } from "./model/ToolMode";
+import { store } from "./model/CanvasState";
+
+function useCanvasState() {
+	return useSyncExternalStore(
+		(callback) => {
+			store.addListener(callback);
+			return () => store.removeListener(callback);
+		},
+		() => store.getState(),
+	);
+}
 
 export function App() {
-	const [mode, setMode] = useState<ToolMode>("select");
-	const page = useStorage((root) => root.page as Page);
-	const [viewport, setViewport] = useState(() => ({
-		x: 0,
-		y: 0,
-		scale: 1,
-	}));
-
-	const undo = useUndo();
-	const redo = useRedo();
-
-	const addRect = useMutation(({ storage }, rect: Rect) => {
-		const page = storage.get("page");
-		const rects = page.get("rects");
-		rects.push(new LiveObject(rect));
-	}, []);
-
-	const deleteRect = useMutation(({ storage }, id: string) => {
-		const page = storage.get("page");
-		const rects = page.get("rects");
-		const index = rects.findIndex((rect) => rect.get("id") === id);
-		if (index !== -1) {
-			rects.delete(index);
-		}
-	}, []);
-
-	const addLine = useMutation(({ storage }, line: Line) => {
-		const page = storage.get("page");
-		const lines = page.get("lines");
-		lines.push(new LiveObject(line));
-	}, []);
+	const state = useCanvasState();
 
 	useEffect(() => {
 		function handleKeyDown(event: KeyboardEvent) {
-			if (event.key === "z" && (event.metaKey || event.ctrlKey)) {
-				event.preventDefault();
-				if (event.shiftKey) {
-					redo();
-				} else {
-					undo();
+			switch (event.key) {
+				case "z": {
+					if (event.metaKey || event.ctrlKey) {
+						event.preventDefault();
+						if (event.shiftKey) {
+							store.redo();
+						} else {
+							store.undo();
+						}
+					}
+					break;
+				}
+				case "Delete":
+				case "Backspace": {
+					store.deleteSelectedShape();
 				}
 			}
 		}
@@ -59,11 +42,7 @@ export function App() {
 		return () => {
 			window.removeEventListener("keydown", handleKeyDown);
 		};
-	}, [undo, redo]);
-
-	if (page === null) {
-		return <div>Page is null</div>;
-	}
+	}, []);
 
 	return (
 		<div
@@ -73,27 +52,21 @@ export function App() {
 			}}
 		>
 			<Canvas
-				toolMode={mode}
-				page={page}
-				viewport={viewport}
-				onAddRect={(rect) => addRect(rect)}
-				onDeleteRect={(id) => deleteRect(id)}
-				onAddLine={(line) => addLine(line)}
-				onScroll={(deltaX, deltaY) => {
-					setViewport((oldState) => ({
-						...oldState,
-						x: oldState.x + deltaX,
-						y: oldState.y + deltaY,
-					}));
-				}}
-				onScale={(scale, centerX, centerY) => {
-					setViewport((oldState) => {
-						const x = centerX / oldState.scale - centerX / scale + oldState.x;
-						const y = centerY / oldState.scale - centerY / scale + oldState.y;
-
-						return { x, y, scale };
-					});
-				}}
+				state={state}
+				onCanvasMouseDown={(canvasX, canvasY) =>
+					store.handleCanvasMouseDown(canvasX, canvasY)
+				}
+				onCanvasMouseMove={(canvasX, canvasY) =>
+					store.handleCanvasMouseMove(canvasX, canvasY)
+				}
+				onCanvasMouseUp={() => store.handleCanvasMouseUp()}
+				onRectMouseDown={(rect) => store.selectShape(rect.id)}
+				onScroll={(deltaCanvasX, deltaCanvasY) =>
+					store.moveViewportPosition(deltaCanvasX, deltaCanvasY)
+				}
+				onScale={(scale, centerCanvasX, centerCanvasY) =>
+					store.setViewportScale(scale, centerCanvasX, centerCanvasY)
+				}
 			/>
 			<div
 				css={{
@@ -105,7 +78,10 @@ export function App() {
 					justifyContent: "center",
 				}}
 			>
-				<ToolBar mode={mode} onModeChange={(mode) => setMode(mode)} />
+				<ToolBar
+					mode={state.mode}
+					onModeChange={(mode) => store.setMode(mode)}
+				/>
 			</div>
 		</div>
 	);

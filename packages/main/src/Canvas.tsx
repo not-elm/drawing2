@@ -1,121 +1,117 @@
-import { type WheelEventHandler, useCallback, useEffect } from "react";
-import { type DragState, useDrag } from "./hooks/useDrag";
-import { type SelectionState, useSelection } from "./hooks/useSelection";
+import {
+	type MouseEventHandler,
+	type WheelEventHandler,
+	useCallback,
+	useEffect,
+} from "react";
+import { isNullish } from "./lib/isNullish";
+import { type CanvasState, toCanvasCoordinate } from "./model/CanvasState";
 import { Line } from "./model/Line";
-import type { Page } from "./model/Page";
 import { Rect } from "./model/Rect";
-import type { ToolMode } from "./model/ToolMode";
 import type { Viewport } from "./model/Viewport";
 
 export function Canvas({
-	toolMode,
-	page,
-	viewport,
-	onAddRect,
-	onDeleteRect,
-	onAddLine,
+	state,
+	onCanvasMouseDown,
+	onCanvasMouseMove,
+	onCanvasMouseUp,
+	onRectMouseDown,
 	onScroll,
 	onScale,
 }: {
-	toolMode: ToolMode;
-	page: Page;
-	viewport: Viewport;
-	onAddRect: (rect: Rect) => void;
-	onDeleteRect: (id: string) => void;
-	onAddLine: (line: Line) => void;
-	onScroll: (deltaX: number, deltaY: number) => void;
+	state: CanvasState;
+	onCanvasMouseDown: (canvasX: number, canvasY: number) => void;
+	onCanvasMouseMove: (canvasX: number, canvasY: number) => void;
+	onCanvasMouseUp: (canvasX: number, canvasY: number) => void;
+	onRectMouseDown: (rect: Rect) => void;
+	onScroll: (deltaX: number, deltaCanvasY: number) => void;
 	/**
 	 * Called when the user scales the canvas.
 	 * @param scale
 	 * @param centerX The x coordinate of the center of the scale operation in canvas coordinate.
 	 * @param centerY The y coordinate of the center of the scale operation in canvas coordinate
 	 */
-	onScale: (scale: number, centerX: number, centerY: number) => void;
+	onScale: (
+		scale: number,
+		centerCanvasX: number,
+		centerCanvasY: number,
+	) => void;
 }) {
-	const selection = useSelection(page);
-
-	const { containerRef, state } = useDrag({
-		onDragEnd: (state) => {
-			const [startX, startY] = fromCanvasCoordinate(
-				state.startX,
-				state.startY,
-				viewport,
-			);
-			const [currentX, currentY] = fromCanvasCoordinate(
-				state.currentX,
-				state.currentY,
-				viewport,
-			);
-
-			switch (toolMode) {
-				case "rect": {
-					const width = Math.abs(currentX - startX);
-					const height = Math.abs(currentY - startY);
-					const x = Math.min(startX, currentX);
-					const y = Math.min(startY, currentY);
-					onAddRect(Rect.create(x, y, width, height));
-					break;
-				}
-				case "line": {
-					onAddLine(Line.create(startX, startY, currentX, currentY));
-					break;
-				}
-			}
-		},
-	});
+	console.log(state);
 
 	useEffect(() => {
-		function handleKeyDown(ev: KeyboardEvent) {
-			if (ev.key === "Delete") {
-				selection.rect && onDeleteRect(selection.rect.id);
-			}
+		function handleMouseMove(ev: MouseEvent) {
+			onCanvasMouseMove(ev.clientX, ev.clientY);
 		}
-		window.addEventListener("keydown", handleKeyDown);
-		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, [onDeleteRect, selection.rect]);
+		function handleMouseUp(ev: MouseEvent) {
+			onCanvasMouseUp(ev.clientX, ev.clientY);
+		}
+		window.addEventListener("mousemove", handleMouseMove);
+		window.addEventListener("mouseup", handleMouseUp);
+
+		return () => {
+			window.removeEventListener("mousemove", handleMouseMove);
+			window.removeEventListener("mouseup", handleMouseUp);
+		};
+	}, [onCanvasMouseMove, onCanvasMouseUp]);
 
 	const handleWheel: WheelEventHandler = useCallback(
 		(ev) => {
 			if (ev.ctrlKey) {
-				onScale(viewport.scale - ev.deltaY * 0.001, ev.clientX, ev.clientY);
+				onScale(
+					state.viewport.scale - ev.deltaY * 0.001,
+					ev.clientX,
+					ev.clientY,
+				);
 			} else {
 				onScroll(ev.deltaX, ev.deltaY);
 			}
 		},
-		[onScroll, onScale, viewport.scale],
+		[onScroll, onScale, state.viewport.scale],
+	);
+
+	const handleCanvasMouseDown: MouseEventHandler = useCallback(
+		(ev) => {
+			onCanvasMouseDown(ev.clientX, ev.clientY);
+		},
+		[onCanvasMouseDown],
 	);
 
 	return (
 		<div
-			ref={containerRef}
 			css={{
 				position: "fixed",
 				inset: 0,
 			}}
 			onWheel={handleWheel}
+			onMouseDown={handleCanvasMouseDown}
 		>
-			{page.rects.map((rect) => (
+			{state.page.rects.map((rect) => (
 				<RectView
 					key={JSON.stringify(rect)}
 					rect={rect}
-					viewport={viewport}
+					viewport={state.viewport}
 					onMouseDown={
-						toolMode === "select"
+						state.mode === "select"
 							? (ev) => {
-									ev.preventDefault();
 									ev.stopPropagation();
-									selection.select(rect.id);
+									ev.preventDefault();
+									onRectMouseDown(rect);
 								}
 							: undefined
 					}
 				/>
 			))}
-			{page.lines.map((line) => (
-				<LineView key={JSON.stringify(line)} line={line} viewport={viewport} />
+			{state.page.lines.map((line) => (
+				<LineView
+					key={JSON.stringify(line)}
+					line={line}
+					viewport={state.viewport}
+				/>
 			))}
 
-			<ToolPreview dragState={state} mode={toolMode} viewport={viewport} />
-			<SelectionView selection={selection} viewport={viewport} />
+			<ToolPreview state={state} />
+			<SelectionView state={state} />
 		</div>
 	);
 }
@@ -124,10 +120,10 @@ function RectView({
 	rect,
 	viewport,
 	onMouseDown,
-}: { rect: Rect; viewport: Viewport; onMouseDown?: (ev: MouseEvent) => void }) {
+}: { rect: Rect; viewport: Viewport; onMouseDown?: MouseEventHandler }) {
 	return (
 		<div
-			onMouseDown={(ev) => onMouseDown?.(ev.nativeEvent)}
+			onMouseDown={onMouseDown}
 			css={{
 				position: "absolute",
 				left: (rect.x - viewport.x) * viewport.scale,
@@ -177,93 +173,46 @@ function LineView({ line, viewport }: { line: Line; viewport: Viewport }) {
 	);
 }
 
-function ToolPreview({
-	dragState,
-	mode,
-	viewport,
-}: { dragState: DragState; mode: ToolMode; viewport: Viewport }) {
-	if (!dragState.dragging) return null;
+function ToolPreview({ state }: { state: CanvasState }) {
+	if (!state.dragging) return null;
 
-	switch (mode) {
+	switch (state.mode) {
 		case "rect":
-			return <RectToolPreview dragState={dragState} viewport={viewport} />;
+			return <RectToolPreview state={state} />;
 		case "line":
-			return <LineToolPreview dragState={dragState} viewport={viewport} />;
+			return <LineToolPreview state={state} />;
 	}
 }
 
-function RectToolPreview({
-	dragState,
-	viewport,
-}: { dragState: DragState; viewport: Viewport }) {
-	const [startX, startY] = fromCanvasCoordinate(
-		dragState.startX,
-		dragState.startY,
-		viewport,
-	);
-	const [currentX, currentY] = fromCanvasCoordinate(
-		dragState.currentX,
-		dragState.currentY,
-		viewport,
-	);
-
-	const width = Math.abs(currentX - startX);
-	const height = Math.abs(currentY - startY);
-	const x = Math.min(startX, currentX);
-	const y = Math.min(startY, currentY);
+function RectToolPreview({ state }: { state: CanvasState }) {
+	const width = Math.abs(state.dragCurrentX - state.dragStartX);
+	const height = Math.abs(state.dragCurrentY - state.dragStartY);
+	const x = Math.min(state.dragStartX, state.dragCurrentX);
+	const y = Math.min(state.dragStartY, state.dragCurrentY);
 
 	const rect = Rect.create(x, y, width, height);
 
-	return <RectView rect={rect} viewport={viewport} />;
+	return <RectView rect={rect} viewport={state.viewport} />;
 }
 
-function LineToolPreview({
-	dragState,
-	viewport,
-}: { dragState: DragState; viewport: Viewport }) {
-	const [startX, startY] = fromCanvasCoordinate(
-		dragState.startX,
-		dragState.startY,
-		viewport,
-	);
-	const [currentX, currentY] = fromCanvasCoordinate(
-		dragState.currentX,
-		dragState.currentY,
-		viewport,
+function LineToolPreview({ state }: { state: CanvasState }) {
+	const line = Line.create(
+		state.dragStartX,
+		state.dragStartY,
+		state.dragCurrentX,
+		state.dragCurrentY,
 	);
 
-	const line = Line.create(startX, startY, currentX, currentY);
-
-	return <LineView line={line} viewport={viewport} />;
-}
-
-function fromCanvasCoordinate(
-	canvasX: number,
-	canvasY: number,
-	viewport: Viewport,
-): [x: number, y: number] {
-	return [
-		canvasX / viewport.scale + viewport.x,
-		canvasY / viewport.scale + viewport.y,
-	];
-}
-
-function toCanvasCoordinate(
-	x: number,
-	y: number,
-	viewport: Viewport,
-): [canvasX: number, canvasY: number] {
-	return [(x - viewport.x) * viewport.scale, (y - viewport.y) * viewport.scale];
+	return <LineView line={line} viewport={state.viewport} />;
 }
 
 function SelectionView({
-	selection,
-	viewport,
+	state,
 }: {
-	selection: SelectionState;
-	viewport: Viewport;
+	state: CanvasState;
 }) {
-	if (!selection.selected) return null;
+	if (isNullish(state.selectedLine) && isNullish(state.selectedRect))
+		return null;
 
 	return (
 		<div
@@ -273,10 +222,9 @@ function SelectionView({
 				pointerEvents: "none",
 			}}
 		>
-			{selection.rect && (
-				<RectSelection rect={selection.rect} viewport={viewport} />
+			{state.selectedRect && (
+				<RectSelection rect={state.selectedRect} viewport={state.viewport} />
 			)}
-			{selection.line && <LineView line={selection.line} viewport={viewport} />}
 		</div>
 	);
 }
@@ -292,6 +240,7 @@ function RectSelection({ rect, viewport }: { rect: Rect; viewport: Viewport }) {
 				height: rect.height * viewport.scale,
 				boxSizing: "border-box",
 				border: "3px solid #4d30ef",
+				background: "rgba(77,48,239,0.3)",
 			}}
 		/>
 	);
