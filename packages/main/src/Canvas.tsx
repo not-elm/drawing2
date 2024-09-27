@@ -1,5 +1,6 @@
-import { type WheelEventHandler, useCallback } from "react";
+import { type WheelEventHandler, useCallback, useEffect } from "react";
 import { type DragState, useDrag } from "./hooks/useDrag";
+import { type SelectionState, useSelection } from "./hooks/useSelection";
 import { Line } from "./model/Line";
 import type { Page } from "./model/Page";
 import { Rect } from "./model/Rect";
@@ -11,6 +12,7 @@ export function Canvas({
 	page,
 	viewport,
 	onAddRect,
+	onDeleteRect,
 	onAddLine,
 	onScroll,
 	onScale,
@@ -19,6 +21,7 @@ export function Canvas({
 	page: Page;
 	viewport: Viewport;
 	onAddRect: (rect: Rect) => void;
+	onDeleteRect: (id: string) => void;
 	onAddLine: (line: Line) => void;
 	onScroll: (deltaX: number, deltaY: number) => void;
 	/**
@@ -29,6 +32,8 @@ export function Canvas({
 	 */
 	onScale: (scale: number, centerX: number, centerY: number) => void;
 }) {
+	const selection = useSelection(page);
+
 	const { containerRef, state } = useDrag({
 		onDragEnd: (state) => {
 			const [startX, startY] = fromCanvasCoordinate(
@@ -59,6 +64,16 @@ export function Canvas({
 		},
 	});
 
+	useEffect(() => {
+		function handleKeyDown(ev: KeyboardEvent) {
+			if (ev.key === "Delete") {
+				selection.rect && onDeleteRect(selection.rect.id);
+			}
+		}
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, [onDeleteRect, selection.rect]);
+
 	const handleWheel: WheelEventHandler = useCallback(
 		(ev) => {
 			if (ev.ctrlKey) {
@@ -80,20 +95,39 @@ export function Canvas({
 			onWheel={handleWheel}
 		>
 			{page.rects.map((rect) => (
-				<RectView key={JSON.stringify(rect)} rect={rect} viewport={viewport} />
+				<RectView
+					key={JSON.stringify(rect)}
+					rect={rect}
+					viewport={viewport}
+					onMouseDown={
+						toolMode === "select"
+							? (ev) => {
+									ev.preventDefault();
+									ev.stopPropagation();
+									selection.select(rect.id);
+								}
+							: undefined
+					}
+				/>
 			))}
 			{page.lines.map((line) => (
 				<LineView key={JSON.stringify(line)} line={line} viewport={viewport} />
 			))}
 
 			<ToolPreview dragState={state} mode={toolMode} viewport={viewport} />
+			<SelectionView selection={selection} viewport={viewport} />
 		</div>
 	);
 }
 
-function RectView({ rect, viewport }: { rect: Rect; viewport: Viewport }) {
+function RectView({
+	rect,
+	viewport,
+	onMouseDown,
+}: { rect: Rect; viewport: Viewport; onMouseDown?: (ev: MouseEvent) => void }) {
 	return (
 		<div
+			onMouseDown={(ev) => onMouseDown?.(ev.nativeEvent)}
 			css={{
 				position: "absolute",
 				left: (rect.x - viewport.x) * viewport.scale,
@@ -102,6 +136,7 @@ function RectView({ rect, viewport }: { rect: Rect; viewport: Viewport }) {
 				height: rect.height * viewport.scale,
 				border: "1px solid #000",
 				background: "#f0f0f0",
+				boxSizing: "border-box",
 			}}
 		/>
 	);
@@ -219,4 +254,45 @@ function toCanvasCoordinate(
 	viewport: Viewport,
 ): [canvasX: number, canvasY: number] {
 	return [(x - viewport.x) * viewport.scale, (y - viewport.y) * viewport.scale];
+}
+
+function SelectionView({
+	selection,
+	viewport,
+}: {
+	selection: SelectionState;
+	viewport: Viewport;
+}) {
+	if (!selection.selected) return null;
+
+	return (
+		<div
+			css={{
+				position: "absolute",
+				inset: 0,
+				pointerEvents: "none",
+			}}
+		>
+			{selection.rect && (
+				<RectSelection rect={selection.rect} viewport={viewport} />
+			)}
+			{selection.line && <LineView line={selection.line} viewport={viewport} />}
+		</div>
+	);
+}
+
+function RectSelection({ rect, viewport }: { rect: Rect; viewport: Viewport }) {
+	return (
+		<div
+			css={{
+				position: "absolute",
+				left: (rect.x - viewport.x) * viewport.scale,
+				top: (rect.y - viewport.y) * viewport.scale,
+				width: rect.width * viewport.scale,
+				height: rect.height * viewport.scale,
+				boxSizing: "border-box",
+				border: "3px solid #4d30ef",
+			}}
+		/>
+	);
 }

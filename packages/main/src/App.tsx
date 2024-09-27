@@ -10,7 +10,7 @@ import type { Rect } from "./model/Rect";
 import type { ToolMode } from "./model/ToolMode";
 
 export function App() {
-	const [mode, setMode] = useState<ToolMode>("rect");
+	const [mode, setMode] = useState<ToolMode>("select");
 	const page = useStorage((root) => root.page as Page);
 	const [viewport, setViewport] = useState(() => ({
 		x: 0,
@@ -25,6 +25,15 @@ export function App() {
 		const page = storage.get("page");
 		const rects = page.get("rects");
 		rects.push(new LiveObject(rect));
+	}, []);
+
+	const deleteRect = useMutation(({ storage }, id: string) => {
+		const page = storage.get("page");
+		const rects = page.get("rects");
+		const index = rects.findIndex((rect) => rect.get("id") === id);
+		if (index !== -1) {
+			rects.delete(index);
+		}
 	}, []);
 
 	const addLine = useMutation(({ storage }, line: Line) => {
@@ -68,6 +77,7 @@ export function App() {
 				page={page}
 				viewport={viewport}
 				onAddRect={(rect) => addRect(rect)}
+				onDeleteRect={(id) => deleteRect(id)}
 				onAddLine={(line) => addLine(line)}
 				onScroll={(deltaX, deltaY) => {
 					setViewport((oldState) => ({

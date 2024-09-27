@@ -1,4 +1,5 @@
 export interface Rect {
+	id: string;
 	x: number;
 	y: number;
 	width: number;
@@ -12,6 +13,12 @@ export namespace Rect {
 		width: number,
 		height: number,
 	): Rect {
-		return { x, y, width, height };
+		return {
+			id: Math.random().toString(36).slice(2, 9),
+			x,
+			y,
+			width,
+			height,
+		};
 	}
 }

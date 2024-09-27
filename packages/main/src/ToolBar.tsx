@@ -19,6 +19,16 @@ export function ToolBar({
 		>
 			<li>
 				<Button
+					aria-checked={mode === "select"}
+					onClick={() => {
+						onModeChange("select");
+					}}
+				>
+					Select
+				</Button>
+			</li>
+			<li>
+				<Button
 					aria-checked={mode === "rect"}
 					onClick={() => {
 						onModeChange("rect");
