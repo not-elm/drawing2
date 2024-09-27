@@ -74,11 +74,6 @@ export function useDrag({
 			if (container === null) return;
 
 			container.addEventListener("mousedown", handleMouseDown);
-
-			// TODO: CallbackRefにclean upを渡すのは王道ではないかも?
-			return () => {
-				container.removeEventListener("mousedown", handleMouseDown);
-			};
 		},
 		[handleMouseDown],
 	);
