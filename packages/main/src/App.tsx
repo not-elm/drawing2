@@ -1,21 +1,25 @@
 import { LiveObject } from "@liveblocks/client";
 import { useStorage } from "@liveblocks/react";
-import { useMutation } from "@liveblocks/react/suspense";
-import { useState } from "react";
+import { useMutation, useRedo, useUndo } from "@liveblocks/react/suspense";
+import { useEffect, useState } from "react";
 import { Canvas } from "./Canvas";
 import { ToolBar } from "./ToolBar";
 import type { Line } from "./model/Line";
+import type { Page } from "./model/Page";
 import type { Rect } from "./model/Rect";
 import type { ToolMode } from "./model/ToolMode";
 
 export function App() {
 	const [mode, setMode] = useState<ToolMode>("rect");
-	const page = useStorage((root) => root.page);
+	const page = useStorage((root) => root.page as Page);
 	const [viewport, setViewport] = useState(() => ({
 		x: 0,
 		y: 0,
 		scale: 1,
 	}));
+
+	const undo = useUndo();
+	const redo = useRedo();
 
 	const addRect = useMutation(({ storage }, rect: Rect) => {
 		const page = storage.get("page");
@@ -29,9 +33,29 @@ export function App() {
 		lines.push(new LiveObject(line));
 	}, []);
 
+	useEffect(() => {
+		function handleKeyDown(event: KeyboardEvent) {
+			if (event.key === "z" && (event.metaKey || event.ctrlKey)) {
+				event.preventDefault();
+				if (event.shiftKey) {
+					redo();
+				} else {
+					undo();
+				}
+			}
+		}
+
+		window.addEventListener("keydown", handleKeyDown);
+
+		return () => {
+			window.removeEventListener("keydown", handleKeyDown);
+		};
+	}, [undo, redo]);
+
 	if (page === null) {
 		return <div>Page is null</div>;
 	}
+
 	return (
 		<div
 			css={{
