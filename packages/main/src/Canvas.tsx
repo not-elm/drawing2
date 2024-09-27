@@ -12,10 +12,18 @@ export function Canvas({
 	page,
 	viewport,
 	onScroll,
+	onScale,
 }: {
 	page: Page;
 	viewport: Viewport;
 	onScroll: (deltaX: number, deltaY: number) => void;
+	/**
+	 * Called when the user scales the canvas.
+	 * @param scale
+	 * @param centerX The x coordinate of the center of the scale operation in canvas coordinate.
+	 * @param centerY The y coordinate of the center of the scale operation in canvas coordinate
+	 */
+	onScale: (scale: number, centerX: number, centerY: number) => void;
 }) {
 	const { containerRef, state } = useDrag({
 		onDragEnd: (state) => {
@@ -31,9 +39,13 @@ export function Canvas({
 
 	const handleWheel: WheelEventHandler = useCallback(
 		(ev) => {
-			onScroll(ev.deltaX, ev.deltaY);
+			if (ev.ctrlKey) {
+				onScale(viewport.scale - ev.deltaY * 0.001, ev.clientX, ev.clientY);
+			} else {
+				onScroll(ev.deltaX, ev.deltaY);
+			}
 		},
-		[onScroll],
+		[onScroll, onScale, viewport.scale],
 	);
 
 	return (
@@ -50,10 +62,10 @@ export function Canvas({
 					key={JSON.stringify(rect)}
 					css={{
 						position: "absolute",
-						left: rect.x - viewport.x,
-						top: rect.y - viewport.y,
-						width: rect.width,
-						height: rect.height,
+						left: (rect.x - viewport.x) * viewport.scale,
+						top: (rect.y - viewport.y) * viewport.scale,
+						width: rect.width * viewport.scale,
+						height: rect.height * viewport.scale,
 						border: "1px solid #000",
 						background: "#f0f0f0",
 					}}

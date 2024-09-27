@@ -25,6 +25,14 @@ export function App() {
 					y: oldState.y + deltaY,
 				}));
 			}}
+			onScale={(scale, centerX, centerY) => {
+				setViewport((oldState) => {
+					const x = centerX / oldState.scale - centerX / scale + oldState.x;
+					const y = centerY / oldState.scale - centerY / scale + oldState.y;
+
+					return { x, y, scale };
+				});
+			}}
 		/>
 	);
 }
