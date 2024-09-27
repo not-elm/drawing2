@@ -1,5 +1,4 @@
-import { LiveList, LiveObject, createClient } from "@liveblocks/client";
-import { useSyncExternalStore } from "react";
+import { LiveObject, type Room } from "@liveblocks/client";
 import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
 import { Line } from "./Line";
@@ -44,64 +43,36 @@ export namespace CanvasState {
 	}
 }
 
-const client = createClient({
-	publicApiKey:
-		"pk_dev_C0tQrDQdKR0j4wrQoccD4kiwG7wVf_kCe806sGq6osrUVSWvzljKiiLhCe9yiOZn",
-});
-
-const { room } = client.enterRoom("my-room", {
-	initialStorage: {
-		page: new LiveObject({
-			rects: new LiveList([]),
-			lines: new LiveList([]),
-		}),
-	},
-});
-room.getStorage().then(({ root }) => {
-	room.subscribe(root, () => store.syncWithLiveBlockStorage(), {
-		isDeep: true,
-	});
-});
-room.subscribe("storage-status", (status) => {
-	if (status === "synchronized") {
-		store.syncWithLiveBlockStorage();
-	}
-});
-
-class CanvasStateStore
+export class CanvasStateStore
 	extends Store<CanvasState>
 	implements CanvasEventHandlers
 {
-	constructor() {
+	constructor(
+		private readonly room: Room,
+		private readonly storage: { root: LiveObject<Liveblocks["Storage"]> },
+	) {
 		super(CanvasState.create());
 	}
 
 	syncWithLiveBlockStorage() {
-		room
-			.getStorage()
-			.then((storage) =>
-				store.setPage(storage.root.get("page").toImmutable() as Page),
-			);
+		this.setPage(this.storage.root.get("page").toImmutable() as Page);
 	}
 
-	private async addRect(rect: Rect) {
-		const storage = await room.getStorage();
-		storage.root.get("page").get("rects").push(new LiveObject(rect));
-		store.syncWithLiveBlockStorage();
+	private addRect(rect: Rect) {
+		this.storage.root.get("page").get("rects").push(new LiveObject(rect));
+		this.syncWithLiveBlockStorage();
 	}
 
-	private async deleteRect(id: string) {
-		const storage = await room.getStorage();
-		const rects = storage.root.get("page").get("rects");
+	private deleteRect(id: string) {
+		const rects = this.storage.root.get("page").get("rects");
 		const index = rects.findIndex((rect) => rect.get("id") === id);
 		rects.delete(index);
-		store.syncWithLiveBlockStorage();
+		this.syncWithLiveBlockStorage();
 	}
 
-	private async addLine(line: Line) {
-		const storage = await room.getStorage();
-		storage.root.get("page").get("lines").push(new LiveObject(line));
-		store.syncWithLiveBlockStorage();
+	private addLine(line: Line) {
+		this.storage.root.get("page").get("lines").push(new LiveObject(line));
+		this.syncWithLiveBlockStorage();
 	}
 
 	private setPage(page: Page) {
@@ -180,11 +151,11 @@ class CanvasStateStore
 	}
 
 	private undo() {
-		room.history.undo();
+		this.room.history.undo();
 	}
 
 	private redo() {
-		room.history.redo();
+		this.room.history.redo();
 	}
 
 	/// ---------------------------------------------------------------------------
@@ -356,19 +327,6 @@ export interface CanvasEventHandlers {
 	handleModeChange(mode: ToolMode): void;
 }
 
-const store = new CanvasStateStore();
-export function useCanvasState(): [CanvasState, CanvasEventHandlers] {
-	const state = useSyncExternalStore(
-		(callback) => {
-			store.addListener(callback);
-			return () => store.removeListener(callback);
-		},
-		() => store.getState(),
-	);
-
-	return [state, store];
-}
-
 export type DragHandle =
 	| "none"
 	| "center"
@@ -382,7 +340,7 @@ export type DragHandle =
 	| "w";
 
 export function logAction(name: string, params?: Record<string, unknown>) {
-	console.table({ name, ...params });
+	// console.table({ name, ...params });
 }
 
 export function fromCanvasCoordinate(

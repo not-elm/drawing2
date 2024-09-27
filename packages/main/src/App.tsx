@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Canvas } from "./Canvas";
+import { useCanvasState } from "./StoreProvider";
 import { ToolBar } from "./ToolBar";
-import { useCanvasState } from "./model/CanvasState";
 
 export function App() {
 	const [state, handlers] = useCanvasState();
