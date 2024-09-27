@@ -83,7 +83,7 @@ export class CanvasStateStore
 		this.syncWithLiveBlockStorage();
 	}
 
-	private setPosition(
+	private moveShapes(
 		deltaX: number,
 		deltaY: number,
 		rects: Rect[],
@@ -99,6 +99,18 @@ export class CanvasStateStore
 
 				currentRect.set("x", rect.x + deltaX);
 				currentRect.set("y", rect.y + deltaY);
+			}
+			for (const line of lines) {
+				const currentLine = this.storage.root
+					.get("page")
+					.get("lines")
+					.find((r) => r.get("id") === line.id);
+				if (currentLine === undefined) continue;
+
+				currentLine.set("x1", line.x1 + deltaX);
+				currentLine.set("y1", line.y1 + deltaY);
+				currentLine.set("x2", line.x2 + deltaX);
+				currentLine.set("y2", line.y2 + deltaY);
 			}
 		});
 	}
@@ -137,21 +149,35 @@ export class CanvasStateStore
 				currentRect.set("width", width);
 				currentRect.set("height", height);
 			}
+			for (const line of lines) {
+				const currentLine = this.storage.root
+					.get("page")
+					.get("lines")
+					.find((r) => r.get("id") === line.id);
+				if (currentLine === undefined) continue;
+
+				const x1 = (line.x1 - originX) * scaleX + originX;
+				const y1 = (line.y1 - originY) * scaleY + originY;
+				const x2 = (line.x2 - originX) * scaleX + originX;
+				const y2 = (line.y2 - originY) * scaleY + originY;
+
+				currentLine.set("x1", x1);
+				currentLine.set("y1", y1);
+				currentLine.set("x2", x2);
+				currentLine.set("y2", y2);
+			}
 		});
 	}
 
 	private setMode(mode: ToolMode) {
-		logAction("setMode");
 		this.setState({ ...this.state, mode });
 
 		if (mode !== "select") {
-			this.selectShape(null, false);
+			this.clearSelection();
 		}
 	}
 
 	private moveViewportPosition(deltaCanvasX: number, deltaCanvasY: number) {
-		logAction("moveViewportPosition");
-
 		this.setState({
 			...this.state,
 			viewport: {
@@ -167,8 +193,6 @@ export class CanvasStateStore
 		centerCanvasX: number,
 		centerCanvasY: number,
 	) {
-		logAction("setViewportScale");
-
 		this.setState({
 			...this.state,
 			viewport: {
@@ -185,31 +209,29 @@ export class CanvasStateStore
 		});
 	}
 
-	private selectShape(id: string | null, multiSelect: boolean) {
-		logAction("selectShape");
+	private selectShape(id: string) {
+		this.setState({
+			...this.state,
+			selectedShapeIds: [...this.state.selectedShapeIds, id],
+		});
+	}
 
-		if (multiSelect) {
-			if (id === null) return;
+	private unselectShape(id: string) {
+		this.setState({
+			...this.state,
+			selectedShapeIds: this.state.selectedShapeIds.filter((i) => i !== id),
+		});
+	}
 
-			if (this.state.selectedShapeIds.includes(id)) {
-				this.setState({
-					...this.state,
-					selectedShapeIds: this.state.selectedShapeIds.filter(
-						(selectedId) => selectedId !== id,
-					),
-				});
-			} else {
-				this.setState({
-					...this.state,
-					selectedShapeIds: [...this.state.selectedShapeIds, id],
-				});
-			}
+	private clearSelection() {
+		this.setSelectedShapeIds([]);
+	}
+
+	private toggleShapeSelect(id: string) {
+		if (this.state.selectedShapeIds.includes(id)) {
+			this.unselectShape(id);
 		} else {
-			if (id === null) {
-				this.setState({ ...this.state, selectedShapeIds: [] });
-			} else {
-				this.setState({ ...this.state, selectedShapeIds: [id] });
-			}
+			this.selectShape(id);
 		}
 	}
 
@@ -220,9 +242,7 @@ export class CanvasStateStore
 		});
 	}
 
-	private deleteSelectedShape() {
-		logAction("deleteSelectedShape");
-
+	private deleteSelectedShapes() {
 		for (const id of this.state.selectedShapeIds) {
 			this.deleteRect(id);
 		}
@@ -247,7 +267,7 @@ export class CanvasStateStore
 		switch (this.state.mode) {
 			case "select": {
 				if (!modifiers.shiftKey) {
-					this.selectShape(null, false);
+					this.clearSelection();
 				}
 				this.handleDragStart(canvasX, canvasY, {
 					type: "select",
@@ -274,17 +294,24 @@ export class CanvasStateStore
 		}
 	}
 
-	handleRectMouseDown(
-		rect: Rect,
+	handleShapeMouseDown(
+		id: string,
 		canvasX: number,
 		canvasY: number,
 		modifiers: { shiftKey: boolean },
 	) {
-		this.selectShape(rect.id, modifiers.shiftKey);
+		if (modifiers.shiftKey) {
+			this.toggleShapeSelect(id);
+		} else {
+			if (this.state.selectedShapeIds.includes(id)) {
+				// Do nothing
+			} else {
+				this.clearSelection();
+				this.selectShape(id);
+			}
+		}
 		this.handleDragStart(canvasX, canvasY, {
 			type: "move",
-			startX: rect.x,
-			startY: rect.y,
 			rects: this.state.selectedShapeIds
 				.map((id) => this.state.page.rects.find((r) => r.id === id))
 				.filter(isNotNullish),
@@ -314,8 +341,6 @@ export class CanvasStateStore
 			case "center": {
 				dragType = {
 					type: "move",
-					startX: selectionRect.x,
-					startY: selectionRect.y,
 					rects: this.state.selectedShapeIds
 						.map((id) => this.state.page.rects.find((r) => r.id === id))
 						.filter(isNotNullish),
@@ -431,7 +456,6 @@ export class CanvasStateStore
 	}
 
 	handleDragStart(startCanvasX: number, startCanvasY: number, type: DragType) {
-		logAction("startDrag");
 		assert(!this.state.dragging, "Cannot start dragging while dragging");
 
 		const [startX, startY] = fromCanvasCoordinate(
@@ -489,7 +513,7 @@ export class CanvasStateStore
 						break;
 					}
 					case "move": {
-						this.setPosition(
+						this.moveShapes(
 							this.state.dragCurrentX - this.state.dragStartX,
 							this.state.dragCurrentY - this.state.dragStartY,
 							this.state.dragType.rects,
@@ -610,7 +634,7 @@ export class CanvasStateStore
 			}
 			case "Delete":
 			case "Backspace": {
-				this.deleteSelectedShape();
+				this.deleteSelectedShapes();
 				return true;
 			}
 		}
@@ -631,8 +655,8 @@ export interface CanvasEventHandlers {
 	): void;
 	handleCanvasMouseMove(canvasX: number, canvasY: number): void;
 	handleCanvasMouseUp(): void;
-	handleRectMouseDown(
-		rect: Rect,
+	handleShapeMouseDown(
+		id: string,
 		canvasX: number,
 		canvasY: number,
 		modifiers: {
@@ -685,8 +709,6 @@ export type DragType =
 	| { type: "select"; originalSelectedShapeIds: string[] }
 	| {
 			type: "move";
-			startX: number;
-			startY: number;
 			rects: Rect[];
 			lines: Line[];
 	  }
@@ -727,10 +749,6 @@ export type SelectionRectHandleType =
 	| "bottom"
 	| "bottomLeft"
 	| "left";
-
-export function logAction(name: string, params?: Record<string, unknown>) {
-	// console.table({ name, ...params });
-}
 
 export function fromCanvasCoordinate(
 	canvasX: number,

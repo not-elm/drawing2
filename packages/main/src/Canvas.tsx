@@ -82,9 +82,14 @@ export function Canvas() {
 							? (ev) => {
 									ev.stopPropagation();
 									ev.preventDefault();
-									handlers.handleRectMouseDown(rect, ev.clientX, ev.clientY, {
-										shiftKey: ev.shiftKey,
-									});
+									handlers.handleShapeMouseDown(
+										rect.id,
+										ev.clientX,
+										ev.clientY,
+										{
+											shiftKey: ev.shiftKey,
+										},
+									);
 								}
 							: undefined
 					}
@@ -129,6 +134,8 @@ function RectView({
 }
 
 function LineView({ line, viewport }: { line: Line; viewport: Viewport }) {
+	const handlers = useCanvasEventHandler();
+
 	const [canvasX1, canvasY1] = toCanvasCoordinate(line.x1, line.y1, viewport);
 	const [canvasX2, canvasY2] = toCanvasCoordinate(line.x2, line.y2, viewport);
 
@@ -140,14 +147,14 @@ function LineView({ line, viewport }: { line: Line; viewport: Viewport }) {
 	return (
 		<svg
 			viewBox={`0 0 ${width} ${height}`}
-			width={width}
-			height={height}
 			css={{
 				position: "absolute",
+				pointerEvents: "none",
 				left,
 				top,
 				width,
 				height,
+				overflow: "visible",
 			}}
 		>
 			<title>line</title>
@@ -158,6 +165,24 @@ function LineView({ line, viewport }: { line: Line; viewport: Viewport }) {
 				y2={canvasY2 - top}
 				stroke="#000"
 				strokeWidth={1}
+			/>
+			<line
+				x1={canvasX1 - left}
+				y1={canvasY1 - top}
+				x2={canvasX2 - left}
+				y2={canvasY2 - top}
+				strokeWidth={15}
+				strokeLinecap="round"
+				css={{
+					pointerEvents: "all",
+				}}
+				onMouseDown={(ev) => {
+					ev.stopPropagation();
+					ev.preventDefault();
+					handlers.handleShapeMouseDown(line.id, ev.clientX, ev.clientY, {
+						shiftKey: ev.shiftKey,
+					});
+				}}
 			/>
 		</svg>
 	);
@@ -334,7 +359,7 @@ function SelectionRect({
 					onMouseDown={(ev) => {
 						ev.stopPropagation();
 						ev.preventDefault();
-						handlers.handleRectMouseDown(rect, ev.clientX, ev.clientY, {
+						handlers.handleShapeMouseDown(rect.id, ev.clientX, ev.clientY, {
 							shiftKey: ev.shiftKey,
 						});
 					}}
