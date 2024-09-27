@@ -1,10 +1,9 @@
 import { useEffect } from "react";
 import { Canvas } from "./Canvas";
-import { useCanvasEventHandler, useCanvasState } from "./StoreProvider";
+import { useCanvasEventHandler } from "./StoreProvider";
 import { ToolBar } from "./ToolBar";
 
 export function App() {
-	const state = useCanvasState();
 	const handlers = useCanvasEventHandler();
 
 	useEffect(() => {
@@ -33,39 +32,19 @@ export function App() {
 				inset: 0,
 			}}
 		>
-			<Canvas
-				state={state}
-				onCanvasMouseDown={(canvasX, canvasY) =>
-					handlers.handleCanvasMouseDown(canvasX, canvasY)
-				}
-				onCanvasMouseMove={(canvasX, canvasY) =>
-					handlers.handleCanvasMouseMove(canvasX, canvasY)
-				}
-				onCanvasMouseUp={() => handlers.handleCanvasMouseUp()}
-				onRectMouseDown={(rect, canvasX, canvasY) =>
-					handlers.handleRectMouseDown(rect, canvasX, canvasY)
-				}
-				onScroll={(deltaCanvasX, deltaCanvasY) =>
-					handlers.handleScroll(deltaCanvasX, deltaCanvasY)
-				}
-				onScale={(scale, centerCanvasX, centerCanvasY) =>
-					handlers.handleScale(scale, centerCanvasX, centerCanvasY)
-				}
-			/>
+			<Canvas />
 			<div
 				css={{
 					position: "absolute",
 					width: "100%",
-					bottom: 64,
+					bottom: 24,
 					display: "flex",
 					flexDirection: "row",
 					justifyContent: "center",
+					pointerEvents: "none",
 				}}
 			>
-				<ToolBar
-					mode={state.mode}
-					onModeChange={(mode) => handlers.handleModeChange(mode)}
-				/>
+				<ToolBar />
 			</div>
 		</div>
 	);

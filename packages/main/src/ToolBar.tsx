@@ -1,13 +1,18 @@
-import type { ButtonHTMLAttributes } from "react";
-import type { ToolMode } from "./model/ToolMode";
+import styled from "@emotion/styled";
+import { useCanvasEventHandler, useCanvasState } from "./StoreProvider";
 
-export function ToolBar({
-	mode,
-	onModeChange,
-}: { mode: ToolMode; onModeChange: (mode: ToolMode) => void }) {
+export function ToolBar() {
+	const state = useCanvasState();
+	const handlers = useCanvasEventHandler();
+
 	return (
 		<ul
 			css={{
+				background: "#fff",
+				border: "1px solid #c0c0c0",
+				boxShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
+				padding: "4px 4px",
+				borderRadius: "12px",
 				listStyle: "none",
 				flex: "0 0 auto",
 				display: "flex",
@@ -15,13 +20,14 @@ export function ToolBar({
 				alignItems: "center",
 				justifyContent: "center",
 				gap: 16,
+				pointerEvents: "all",
 			}}
 		>
 			<li>
 				<Button
-					aria-checked={mode === "select"}
+					aria-checked={state.mode === "select"}
 					onClick={() => {
-						onModeChange("select");
+						handlers.handleModeChange("select");
 					}}
 				>
 					Select
@@ -29,9 +35,9 @@ export function ToolBar({
 			</li>
 			<li>
 				<Button
-					aria-checked={mode === "rect"}
+					aria-checked={state.mode === "rect"}
 					onClick={() => {
-						onModeChange("rect");
+						handlers.handleModeChange("rect");
 					}}
 				>
 					Rect
@@ -39,9 +45,9 @@ export function ToolBar({
 			</li>
 			<li>
 				<Button
-					aria-checked={mode === "line"}
+					aria-checked={state.mode === "line"}
 					onClick={() => {
-						onModeChange("line");
+						handlers.handleModeChange("line");
 					}}
 				>
 					Line
@@ -51,16 +57,26 @@ export function ToolBar({
 	);
 }
 
-function Button(props: ButtonHTMLAttributes<HTMLButtonElement>) {
-	return (
-		<button
-			{...props}
-			type="button"
-			css={{
-				'&[aria-checked="true"]': {
-					backgroundColor: "rgba(0, 0, 0, 0.1)",
-				},
-			}}
-		/>
-	);
-}
+const Button = styled.button({
+	display: "flex",
+	flexDirection: "row",
+	alignItems: "center",
+	justifyContent: "center",
+	width: "56px",
+	height: "56px",
+	padding: "8px",
+	background: "#fff",
+	border: "none",
+	borderRadius: "8px",
+	cursor: "pointer",
+	transition: "background-color 0.2s",
+	"&:hover": {
+		backgroundColor: "#f0f0f0",
+		transition: "background-color none",
+	},
+	'&[aria-checked="true"]': {
+		backgroundColor: "#2568cd",
+		color: "#fff",
+		transition: "background-color none",
+	},
+});

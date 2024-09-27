@@ -12,36 +12,19 @@ export interface CanvasState {
 	page: Page;
 	mode: ToolMode;
 	viewport: Viewport;
-	selectedRect: Rect | null;
-	selectedLine: Line | null;
+	selectedShapeIds: string[];
 	dragType: DragType;
 	dragging: boolean;
 	dragStartX: number;
 	dragStartY: number;
 	dragCurrentX: number;
 	dragCurrentY: number;
-}
-
-export namespace CanvasState {
-	export function create(): CanvasState {
-		return {
-			page: Page.create(),
-			mode: "select",
-			viewport: {
-				x: 0,
-				y: 0,
-				scale: 1,
-			},
-			selectedRect: null,
-			selectedLine: null,
-			dragType: { type: "none" },
-			dragging: false,
-			dragStartX: 0,
-			dragStartY: 0,
-			dragCurrentX: 0,
-			dragCurrentY: 0,
-		};
-	}
+	selectionRect: {
+		x: number;
+		y: number;
+		width: number;
+		height: number;
+	} | null;
 }
 
 export class CanvasStateStore
@@ -52,17 +35,34 @@ export class CanvasStateStore
 		private readonly room: Room,
 		private readonly storage: { root: LiveObject<Liveblocks["Storage"]> },
 	) {
-		super(CanvasState.create());
+		super({
+			page: Page.create(),
+			mode: "select",
+			viewport: {
+				x: 0,
+				y: 0,
+				scale: 1,
+			},
+			selectedShapeIds: [],
+			dragType: { type: "none" },
+			dragging: false,
+			dragStartX: 0,
+			dragStartY: 0,
+			dragCurrentX: 0,
+			dragCurrentY: 0,
+			selectionRect: null,
+		});
 	}
 
 	syncWithLiveBlockStorage() {
 		const page = this.storage.root.get("page").toImmutable() as Page;
 
 		const state = { ...this.state, page };
-		state.selectedRect =
-			page.rects.find((rect) => rect.id === state.selectedRect?.id) ?? null;
-		state.selectedLine =
-			page.lines.find((line) => line.id === state.selectedLine?.id) ?? null;
+		state.selectedShapeIds = state.selectedShapeIds.filter(
+			(id) =>
+				page.rects.some((rect) => rect.id === id) ||
+				page.lines.some((line) => line.id === id),
+		);
 		this.setState(state);
 	}
 
@@ -83,18 +83,24 @@ export class CanvasStateStore
 		this.syncWithLiveBlockStorage();
 	}
 
-	private setPosition(x: number, y: number) {
-		if (this.state.selectedRect) {
-			const rects = this.storage.root.get("page").get("rects");
-			const rect = rects.find(
-				(rect) => rect.get("id") === this.state.selectedRect?.id,
-			);
-			if (rect === undefined) return;
+	private setPosition(
+		deltaX: number,
+		deltaY: number,
+		rects: Rect[],
+		lines: Line[],
+	) {
+		this.room.batch(() => {
+			for (const rect of rects) {
+				const currentRect = this.storage.root
+					.get("page")
+					.get("rects")
+					.find((r) => r.get("id") === rect.id);
+				if (currentRect === undefined) continue;
 
-			rect.set("x", x);
-			rect.set("y", y);
-			this.syncWithLiveBlockStorage();
-		}
+				currentRect.set("x", rect.x + deltaX);
+				currentRect.set("y", rect.y + deltaY);
+			}
+		});
 	}
 
 	private scaleShapes(
@@ -105,31 +111,33 @@ export class CanvasStateStore
 		rects: Rect[],
 		lines: Line[],
 	) {
-		for (const rect of rects) {
-			const currentRect = this.storage.root
-				.get("page")
-				.get("rects")
-				.find((r) => r.get("id") === rect.id);
-			if (currentRect === undefined) continue;
+		this.room.batch(() => {
+			for (const rect of rects) {
+				const currentRect = this.storage.root
+					.get("page")
+					.get("rects")
+					.find((r) => r.get("id") === rect.id);
+				if (currentRect === undefined) continue;
 
-			let x = (rect.x - originX) * scaleX + originX;
-			let y = (rect.y - originY) * scaleY + originY;
-			let width = rect.width * scaleX;
-			let height = rect.height * scaleY;
-			if (width < 0) {
-				x += width;
-				width = -width;
-			}
-			if (height < 0) {
-				y += height;
-				height = -height;
-			}
+				let x = (rect.x - originX) * scaleX + originX;
+				let y = (rect.y - originY) * scaleY + originY;
+				let width = rect.width * scaleX;
+				let height = rect.height * scaleY;
+				if (width < 0) {
+					x += width;
+					width = -width;
+				}
+				if (height < 0) {
+					y += height;
+					height = -height;
+				}
 
-			currentRect.set("x", x);
-			currentRect.set("y", y);
-			currentRect.set("width", width);
-			currentRect.set("height", height);
-		}
+				currentRect.set("x", x);
+				currentRect.set("y", y);
+				currentRect.set("width", width);
+				currentRect.set("height", height);
+			}
+		});
 	}
 
 	private setMode(mode: ToolMode) {
@@ -137,7 +145,7 @@ export class CanvasStateStore
 		this.setState({ ...this.state, mode });
 
 		if (mode !== "select") {
-			this.selectShape(null);
+			this.selectShape(null, false);
 		}
 	}
 
@@ -165,11 +173,11 @@ export class CanvasStateStore
 			...this.state,
 			viewport: {
 				x:
-					this.state.viewport.x / this.state.viewport.scale -
+					centerCanvasX / this.state.viewport.scale -
 					centerCanvasX / newScale +
 					this.state.viewport.x,
 				y:
-					this.state.viewport.y / this.state.viewport.scale -
+					centerCanvasY / this.state.viewport.scale -
 					centerCanvasY / newScale +
 					this.state.viewport.y,
 				scale: newScale,
@@ -177,25 +185,46 @@ export class CanvasStateStore
 		});
 	}
 
-	private selectShape(id: string | null) {
+	private selectShape(id: string | null, multiSelect: boolean) {
 		logAction("selectShape");
 
-		const selectedRect =
-			this.state.page.rects.find((rect) => rect.id === id) ?? null;
-		const selectedLine =
-			this.state.page.lines.find((line) => line.id === id) ?? null;
+		if (multiSelect) {
+			if (id === null) return;
+
+			if (this.state.selectedShapeIds.includes(id)) {
+				this.setState({
+					...this.state,
+					selectedShapeIds: this.state.selectedShapeIds.filter(
+						(selectedId) => selectedId !== id,
+					),
+				});
+			} else {
+				this.setState({
+					...this.state,
+					selectedShapeIds: [...this.state.selectedShapeIds, id],
+				});
+			}
+		} else {
+			if (id === null) {
+				this.setState({ ...this.state, selectedShapeIds: [] });
+			} else {
+				this.setState({ ...this.state, selectedShapeIds: [id] });
+			}
+		}
+	}
+
+	private setSelectedShapeIds(ids: string[]) {
 		this.setState({
 			...this.state,
-			selectedRect,
-			selectedLine,
+			selectedShapeIds: ids,
 		});
 	}
 
 	private deleteSelectedShape() {
 		logAction("deleteSelectedShape");
 
-		if (this.state.selectedRect) {
-			this.deleteRect(this.state.selectedRect.id);
+		for (const id of this.state.selectedShapeIds) {
+			this.deleteRect(id);
 		}
 	}
 
@@ -210,10 +239,20 @@ export class CanvasStateStore
 	/// ---------------------------------------------------------------------------
 	/// handlers
 
-	handleCanvasMouseDown(canvasX: number, canvasY: number) {
+	handleCanvasMouseDown(
+		canvasX: number,
+		canvasY: number,
+		modifiers: { shiftKey: boolean },
+	) {
 		switch (this.state.mode) {
 			case "select": {
-				this.selectShape(null);
+				if (!modifiers.shiftKey) {
+					this.selectShape(null, false);
+				}
+				this.handleDragStart(canvasX, canvasY, {
+					type: "select",
+					originalSelectedShapeIds: this.state.selectedShapeIds.slice(),
+				});
 				break;
 			}
 			case "line":
@@ -235,91 +274,155 @@ export class CanvasStateStore
 		}
 	}
 
-	handleRectMouseDown(rect: Rect, canvasX: number, canvasY: number) {
-		this.selectShape(rect.id);
+	handleRectMouseDown(
+		rect: Rect,
+		canvasX: number,
+		canvasY: number,
+		modifiers: { shiftKey: boolean },
+	) {
+		this.selectShape(rect.id, modifiers.shiftKey);
 		this.handleDragStart(canvasX, canvasY, {
 			type: "move",
 			startX: rect.x,
 			startY: rect.y,
+			rects: this.state.selectedShapeIds
+				.map((id) => this.state.page.rects.find((r) => r.id === id))
+				.filter(isNotNullish),
+			lines: this.state.selectedShapeIds
+				.map((id) => this.state.page.lines.find((r) => r.id === id))
+				.filter(isNotNullish),
 		});
 	}
 
-	handleRectResizeHandleMouseDown(
-		rect: Rect,
+	handleSelectionHandleMouseDown(
 		canvasX: number,
 		canvasY: number,
-		handle: RectResizeHandle,
+		handle: SelectionRectHandleType,
 	) {
-		this.selectShape(rect.id);
+		const selectionRect = computeUnionRect(
+			this.state.selectedShapeIds
+				.map((id) => this.state.page.rects.find((r) => r.id === id))
+				.filter(isNotNullish),
+			this.state.selectedShapeIds
+				.map((id) => this.state.page.lines.find((r) => r.id === id))
+				.filter(isNotNullish),
+		);
+		assert(selectionRect !== null, "Cannot resize without a selection");
 
 		let dragType: DragType;
 		switch (handle) {
+			case "center": {
+				dragType = {
+					type: "move",
+					startX: selectionRect.x,
+					startY: selectionRect.y,
+					rects: this.state.selectedShapeIds
+						.map((id) => this.state.page.rects.find((r) => r.id === id))
+						.filter(isNotNullish),
+					lines: this.state.selectedShapeIds
+						.map((id) => this.state.page.lines.find((r) => r.id === id))
+						.filter(isNotNullish),
+				};
+				break;
+			}
 			case "topLeft":
 				dragType = {
 					type: "nwse-resize",
-					originX: rect.x + rect.width,
-					originY: rect.y + rect.height,
-					rects: [this.state.selectedRect].filter(isNotNullish),
-					lines: [this.state.selectedLine].filter(isNotNullish),
+					originX: selectionRect.x + selectionRect.width,
+					originY: selectionRect.y + selectionRect.height,
+					rects: this.state.selectedShapeIds
+						.map((id) => this.state.page.rects.find((r) => r.id === id))
+						.filter(isNotNullish),
+					lines: this.state.selectedShapeIds
+						.map((id) => this.state.page.lines.find((r) => r.id === id))
+						.filter(isNotNullish),
 				};
 				break;
 			case "top":
 				dragType = {
 					type: "ns-resize",
-					originY: rect.y + rect.height,
-					rects: [this.state.selectedRect].filter(isNotNullish),
-					lines: [this.state.selectedLine].filter(isNotNullish),
+					originY: selectionRect.y + selectionRect.height,
+					rects: this.state.selectedShapeIds
+						.map((id) => this.state.page.rects.find((r) => r.id === id))
+						.filter(isNotNullish),
+					lines: this.state.selectedShapeIds
+						.map((id) => this.state.page.lines.find((r) => r.id === id))
+						.filter(isNotNullish),
 				};
 				break;
 			case "topRight":
 				dragType = {
 					type: "nesw-resize",
-					originX: rect.x,
-					originY: rect.y + rect.height,
-					rects: [this.state.selectedRect].filter(isNotNullish),
-					lines: [this.state.selectedLine].filter(isNotNullish),
+					originX: selectionRect.x,
+					originY: selectionRect.y + selectionRect.height,
+					rects: this.state.selectedShapeIds
+						.map((id) => this.state.page.rects.find((r) => r.id === id))
+						.filter(isNotNullish),
+					lines: this.state.selectedShapeIds
+						.map((id) => this.state.page.lines.find((r) => r.id === id))
+						.filter(isNotNullish),
 				};
 				break;
 			case "right":
 				dragType = {
 					type: "ew-resize",
-					originX: rect.x,
-					rects: [this.state.selectedRect].filter(isNotNullish),
-					lines: [this.state.selectedLine].filter(isNotNullish),
+					originX: selectionRect.x,
+					rects: this.state.selectedShapeIds
+						.map((id) => this.state.page.rects.find((r) => r.id === id))
+						.filter(isNotNullish),
+					lines: this.state.selectedShapeIds
+						.map((id) => this.state.page.lines.find((r) => r.id === id))
+						.filter(isNotNullish),
 				};
 				break;
 			case "bottomRight":
 				dragType = {
 					type: "nwse-resize",
-					originX: rect.x,
-					originY: rect.y,
-					rects: [this.state.selectedRect].filter(isNotNullish),
-					lines: [this.state.selectedLine].filter(isNotNullish),
+					originX: selectionRect.x,
+					originY: selectionRect.y,
+					rects: this.state.selectedShapeIds
+						.map((id) => this.state.page.rects.find((r) => r.id === id))
+						.filter(isNotNullish),
+					lines: this.state.selectedShapeIds
+						.map((id) => this.state.page.lines.find((r) => r.id === id))
+						.filter(isNotNullish),
 				};
 				break;
 			case "bottomLeft":
 				dragType = {
 					type: "nesw-resize",
-					originX: rect.x + rect.width,
-					originY: rect.y,
-					rects: [this.state.selectedRect].filter(isNotNullish),
-					lines: [this.state.selectedLine].filter(isNotNullish),
+					originX: selectionRect.x + selectionRect.width,
+					originY: selectionRect.y,
+					rects: this.state.selectedShapeIds
+						.map((id) => this.state.page.rects.find((r) => r.id === id))
+						.filter(isNotNullish),
+					lines: this.state.selectedShapeIds
+						.map((id) => this.state.page.lines.find((r) => r.id === id))
+						.filter(isNotNullish),
 				};
 				break;
 			case "left":
 				dragType = {
 					type: "ew-resize",
-					originX: rect.x + rect.width,
-					rects: [this.state.selectedRect].filter(isNotNullish),
-					lines: [this.state.selectedLine].filter(isNotNullish),
+					originX: selectionRect.x + selectionRect.width,
+					rects: this.state.selectedShapeIds
+						.map((id) => this.state.page.rects.find((r) => r.id === id))
+						.filter(isNotNullish),
+					lines: this.state.selectedShapeIds
+						.map((id) => this.state.page.lines.find((r) => r.id === id))
+						.filter(isNotNullish),
 				};
 				break;
 			case "bottom":
 				dragType = {
 					type: "ns-resize",
-					originY: rect.y,
-					rects: [this.state.selectedRect].filter(isNotNullish),
-					lines: [this.state.selectedLine].filter(isNotNullish),
+					originY: selectionRect.y,
+					rects: this.state.selectedShapeIds
+						.map((id) => this.state.page.rects.find((r) => r.id === id))
+						.filter(isNotNullish),
+					lines: this.state.selectedShapeIds
+						.map((id) => this.state.page.lines.find((r) => r.id === id))
+						.filter(isNotNullish),
 				};
 				break;
 		}
@@ -337,6 +440,7 @@ export class CanvasStateStore
 			this.state.viewport,
 		);
 
+		this.room.history.pause();
 		this.setState({
 			...this.state,
 			dragType: type,
@@ -366,14 +470,30 @@ export class CanvasStateStore
 		switch (this.state.mode) {
 			case "select": {
 				switch (this.state.dragType.type) {
+					case "select": {
+						const selectionRect = {
+							x: Math.min(this.state.dragStartX, currentX),
+							y: Math.min(this.state.dragStartY, currentY),
+							width: Math.abs(currentX - this.state.dragStartX),
+							height: Math.abs(currentY - this.state.dragStartY),
+						};
+						this.setState({ ...this.state, selectionRect });
+						const selectedShapeIds =
+							this.state.dragType.originalSelectedShapeIds.slice();
+						for (const rect of this.state.page.rects) {
+							if (isOverlap(rect, selectionRect)) {
+								selectedShapeIds.push(rect.id);
+							}
+						}
+						this.setSelectedShapeIds(selectedShapeIds);
+						break;
+					}
 					case "move": {
 						this.setPosition(
-							this.state.dragCurrentX -
-								this.state.dragStartX +
-								this.state.dragType.startX,
-							this.state.dragCurrentY -
-								this.state.dragStartY +
-								this.state.dragType.startY,
+							this.state.dragCurrentX - this.state.dragStartX,
+							this.state.dragCurrentY - this.state.dragStartY,
+							this.state.dragType.rects,
+							this.state.dragType.lines,
 						);
 						break;
 					}
@@ -424,20 +544,18 @@ export class CanvasStateStore
 	handleDragEnd() {
 		assert(this.state.dragging, "Cannot end drag while not dragging");
 
+		this.room.history.resume();
 		this.setState({ ...this.state, dragging: false });
 
 		switch (this.state.mode) {
 			case "select": {
 				switch (this.state.dragType.type) {
-					case "move": {
-						this.setPosition(
-							this.state.dragCurrentX -
-								this.state.dragStartX +
-								this.state.dragType.startX,
-							this.state.dragCurrentY -
-								this.state.dragStartY +
-								this.state.dragType.startY,
-						);
+					case "select": {
+						this.setState({
+							...this.state,
+							selectionRect: null,
+						});
+						break;
 					}
 				}
 				break;
@@ -506,23 +624,25 @@ export class CanvasStateStore
 }
 
 export interface CanvasEventHandlers {
-	handleCanvasMouseDown(canvasX: number, canvasY: number): void;
+	handleCanvasMouseDown(
+		canvasX: number,
+		canvasY: number,
+		modifiers: { shiftKey: boolean },
+	): void;
 	handleCanvasMouseMove(canvasX: number, canvasY: number): void;
 	handleCanvasMouseUp(): void;
-	handleRectMouseDown(rect: Rect, canvasX: number, canvasY: number): void;
-	handleRectResizeHandleMouseDown(
+	handleRectMouseDown(
 		rect: Rect,
 		canvasX: number,
 		canvasY: number,
-		handle:
-			| "topLeft"
-			| "top"
-			| "topRight"
-			| "right"
-			| "bottomRight"
-			| "bottom"
-			| "bottomLeft"
-			| "left",
+		modifiers: {
+			shiftKey: boolean;
+		},
+	): void;
+	handleSelectionHandleMouseDown(
+		canvasX: number,
+		canvasY: number,
+		handle: SelectionRectHandleType,
 	): void;
 	handleDragStart(
 		startCanvasX: number,
@@ -548,9 +668,28 @@ export interface CanvasEventHandlers {
 	handleModeChange(mode: ToolMode): void;
 }
 
+export function isOverlap(
+	r1: { x: number; y: number; width: number; height: number },
+	r2: { x: number; y: number; width: number; height: number },
+) {
+	return (
+		r1.x < r2.x + r2.width &&
+		r1.x + r1.width > r2.x &&
+		r1.y < r2.y + r2.height &&
+		r1.y + r1.height > r2.y
+	);
+}
+
 export type DragType =
 	| { type: "none" }
-	| { type: "move"; startX: number; startY: number }
+	| { type: "select"; originalSelectedShapeIds: string[] }
+	| {
+			type: "move";
+			startX: number;
+			startY: number;
+			rects: Rect[];
+			lines: Line[];
+	  }
 	| {
 			type: "nwse-resize";
 			originX: number;
@@ -578,7 +717,8 @@ export type DragType =
 			lines: Line[];
 	  };
 
-export type RectResizeHandle =
+export type SelectionRectHandleType =
+	| "center"
 	| "topLeft"
 	| "top"
 	| "topRight"
@@ -609,4 +749,42 @@ export function toCanvasCoordinate(
 	viewport: Viewport,
 ): [canvasX: number, canvasY: number] {
 	return [(x - viewport.x) * viewport.scale, (y - viewport.y) * viewport.scale];
+}
+
+export function computeUnionRect(
+	rects: Rect[],
+	lines: Line[],
+): {
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+} | null {
+	if (rects.length === 0 && lines.length === 0) return null;
+
+	let minX = Number.POSITIVE_INFINITY;
+	let minY = Number.POSITIVE_INFINITY;
+	let maxX = Number.NEGATIVE_INFINITY;
+	let maxY = Number.NEGATIVE_INFINITY;
+
+	for (const rect of rects) {
+		minX = Math.min(minX, rect.x);
+		minY = Math.min(minY, rect.y);
+		maxX = Math.max(maxX, rect.x + rect.width);
+		maxY = Math.max(maxY, rect.y + rect.height);
+	}
+
+	for (const line of lines) {
+		minX = Math.min(minX, line.x1, line.x2);
+		minY = Math.min(minY, line.y1, line.y2);
+		maxX = Math.max(maxX, line.x1, line.x2);
+		maxY = Math.max(maxY, line.y1, line.y2);
+	}
+
+	return {
+		x: minX,
+		y: minY,
+		width: maxX - minX,
+		height: maxY - minY,
+	};
 }

@@ -32,6 +32,7 @@
 		"webpack-dev-server": "^5.1.0"
 	},
 	"dependencies": {
+		"@emotion/styled": "^11.13.0",
 		"@liveblocks/client": "^2.8.0",
 		"@liveblocks/react": "^2.8.0"
 	}

@@ -1,51 +1,32 @@
-import type { CSSObject } from "@emotion/serialize/src";
+import styled from "@emotion/styled";
 import {
-	type HTMLAttributes,
 	type MouseEventHandler,
 	type WheelEventHandler,
 	useCallback,
 	useEffect,
+	useMemo,
 } from "react";
-import { useCanvasEventHandler } from "./StoreProvider";
-import { isNullish } from "./lib/isNullish";
-import { type CanvasState, toCanvasCoordinate } from "./model/CanvasState";
+import { useCanvasEventHandler, useCanvasState } from "./StoreProvider";
+import { isNotNullish } from "./lib/isNullish";
+import {
+	type CanvasState,
+	computeUnionRect,
+	toCanvasCoordinate,
+} from "./model/CanvasState";
 import { Line } from "./model/Line";
 import { Rect } from "./model/Rect";
 import type { Viewport } from "./model/Viewport";
 
-export function Canvas({
-	state,
-	onCanvasMouseDown,
-	onCanvasMouseMove,
-	onCanvasMouseUp,
-	onRectMouseDown,
-	onScroll,
-	onScale,
-}: {
-	state: CanvasState;
-	onCanvasMouseDown: (canvasX: number, canvasY: number) => void;
-	onCanvasMouseMove: (canvasX: number, canvasY: number) => void;
-	onCanvasMouseUp: (canvasX: number, canvasY: number) => void;
-	onRectMouseDown: (rect: Rect, canvasX: number, canvasY: number) => void;
-	onScroll: (deltaX: number, deltaCanvasY: number) => void;
-	/**
-	 * Called when the user scales the canvas.
-	 * @param scale
-	 * @param centerX The x coordinate of the center of the scale operation in canvas coordinate.
-	 * @param centerY The y coordinate of the center of the scale operation in canvas coordinate
-	 */
-	onScale: (
-		scale: number,
-		centerCanvasX: number,
-		centerCanvasY: number,
-	) => void;
-}) {
+export function Canvas() {
+	const state = useCanvasState();
+	const handlers = useCanvasEventHandler();
+
 	useEffect(() => {
 		function handleMouseMove(ev: MouseEvent) {
-			onCanvasMouseMove(ev.clientX, ev.clientY);
+			handlers.handleCanvasMouseMove(ev.clientX, ev.clientY);
 		}
-		function handleMouseUp(ev: MouseEvent) {
-			onCanvasMouseUp(ev.clientX, ev.clientY);
+		function handleMouseUp() {
+			handlers.handleCanvasMouseUp();
 		}
 		window.addEventListener("mousemove", handleMouseMove);
 		window.addEventListener("mouseup", handleMouseUp);
@@ -54,28 +35,32 @@ export function Canvas({
 			window.removeEventListener("mousemove", handleMouseMove);
 			window.removeEventListener("mouseup", handleMouseUp);
 		};
-	}, [onCanvasMouseMove, onCanvasMouseUp]);
+	}, [handlers]);
 
 	const handleWheel: WheelEventHandler = useCallback(
 		(ev) => {
 			if (ev.ctrlKey) {
-				onScale(
-					state.viewport.scale - ev.deltaY * 0.001,
+				handlers.handleScale(
+					Math.min(Math.max(0.1, state.viewport.scale - ev.deltaY * 0.0005), 4),
 					ev.clientX,
 					ev.clientY,
 				);
 			} else {
-				onScroll(ev.deltaX, ev.deltaY);
+				handlers.handleScroll(ev.deltaX, ev.deltaY);
 			}
 		},
-		[onScroll, onScale, state.viewport.scale],
+		[handlers, state.viewport.scale],
 	);
 
 	const handleCanvasMouseDown: MouseEventHandler = useCallback(
 		(ev) => {
-			onCanvasMouseDown(ev.clientX, ev.clientY);
+			ev.stopPropagation();
+			ev.preventDefault();
+			handlers.handleCanvasMouseDown(ev.clientX, ev.clientY, {
+				shiftKey: ev.shiftKey,
+			});
 		},
-		[onCanvasMouseDown],
+		[handlers],
 	);
 
 	return (
@@ -97,7 +82,9 @@ export function Canvas({
 							? (ev) => {
 									ev.stopPropagation();
 									ev.preventDefault();
-									onRectMouseDown(rect, ev.clientX, ev.clientY);
+									handlers.handleRectMouseDown(rect, ev.clientX, ev.clientY, {
+										shiftKey: ev.shiftKey,
+									});
 								}
 							: undefined
 					}
@@ -111,8 +98,9 @@ export function Canvas({
 				/>
 			))}
 
-			<ToolPreview state={state} />
-			<SelectionView state={state} />
+			<ToolPreview />
+			<SelectionRectView />
+			<SelectionView />
 		</div>
 	);
 }
@@ -131,7 +119,8 @@ function RectView({
 				top: (rect.y - viewport.y) * viewport.scale,
 				width: rect.width * viewport.scale,
 				height: rect.height * viewport.scale,
-				border: "1px solid #000",
+				border: "2px solid #303030",
+				borderRadius: "4px",
 				background: "#f0f0f0",
 				boxSizing: "border-box",
 			}}
@@ -174,18 +163,22 @@ function LineView({ line, viewport }: { line: Line; viewport: Viewport }) {
 	);
 }
 
-function ToolPreview({ state }: { state: CanvasState }) {
+function ToolPreview() {
+	const state = useCanvasState();
+
 	if (!state.dragging) return null;
 
 	switch (state.mode) {
 		case "rect":
-			return <RectToolPreview state={state} />;
+			return <RectToolPreview />;
 		case "line":
 			return <LineToolPreview state={state} />;
 	}
 }
 
-function RectToolPreview({ state }: { state: CanvasState }) {
+function RectToolPreview() {
+	const state = useCanvasState();
+
 	const width = Math.abs(state.dragCurrentX - state.dragStartX);
 	const height = Math.abs(state.dragCurrentY - state.dragStartY);
 	const x = Math.min(state.dragStartX, state.dragCurrentX);
@@ -207,13 +200,10 @@ function LineToolPreview({ state }: { state: CanvasState }) {
 	return <LineView line={line} viewport={state.viewport} />;
 }
 
-function SelectionView({
-	state,
-}: {
-	state: CanvasState;
-}) {
-	if (isNullish(state.selectedLine) && isNullish(state.selectedRect))
-		return null;
+function SelectionRectView() {
+	const state = useCanvasState();
+
+	if (state.selectionRect === null) return null;
 
 	return (
 		<div
@@ -223,82 +213,175 @@ function SelectionView({
 				pointerEvents: "none",
 			}}
 		>
-			{state.selectedRect && (
-				<RectSelection rect={state.selectedRect} viewport={state.viewport} />
-			)}
+			<div
+				css={{
+					position: "absolute",
+					left:
+						(state.selectionRect.x - state.viewport.x) * state.viewport.scale,
+					top:
+						(state.selectionRect.y - state.viewport.y) * state.viewport.scale,
+					width: state.selectionRect.width * state.viewport.scale,
+					height: state.selectionRect.height * state.viewport.scale,
+					// border: "2px dashed #303030",
+					// boxSizing: "border-box",
+					background: "rgba(40, 40 ,40, 0.1)",
+				}}
+			/>
 		</div>
 	);
 }
 
-function RectSelection({ rect, viewport }: { rect: Rect; viewport: Viewport }) {
-	const handlers = useCanvasEventHandler();
+function SelectionView() {
+	const state = useCanvasState();
+
+	const selectionRect = useMemo(
+		() =>
+			computeUnionRect(
+				state.selectedShapeIds
+					.map((id) => state.page.rects.find((r) => r.id === id))
+					.filter(isNotNullish),
+				state.selectedShapeIds
+					.map((id) => state.page.lines.find((r) => r.id === id))
+					.filter(isNotNullish),
+			),
+		[state.selectedShapeIds, state.page.rects, state.page.lines],
+	);
+	if (selectionRect === null) return null;
+	const rects = state.selectedShapeIds
+		.map((id) => state.page.rects.find((r) => r.id === id))
+		.filter(isNotNullish);
 
 	return (
 		<div
 			css={{
 				position: "absolute",
-				left: (rect.x - viewport.x) * viewport.scale,
-				top: (rect.y - viewport.y) * viewport.scale,
-				width: rect.width * viewport.scale,
-				height: rect.height * viewport.scale,
-				boxSizing: "border-box",
-				border: "3px solid #4d30ef",
-				background: "rgba(77,48,239,0.3)",
-				"--drag-handle-size": "16px",
-				pointerEvents: "all",
-			}}
-			onMouseDown={(ev) => {
-				ev.stopPropagation();
-				ev.preventDefault();
-				handlers.handleRectMouseDown(rect, ev.clientX, ev.clientY);
+				inset: 0,
+				pointerEvents: "none",
 			}}
 		>
-			<ResizeHandler
+			<SelectionRect
+				x={selectionRect.x}
+				y={selectionRect.y}
+				width={selectionRect.width}
+				height={selectionRect.height}
+				rects={rects}
+				viewport={state.viewport}
+			/>
+		</div>
+	);
+}
+
+function SelectionRect({
+	x,
+	y,
+	width,
+	height,
+	rects,
+	viewport,
+}: {
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+	rects: Rect[];
+	viewport: Viewport;
+}) {
+	const handlers = useCanvasEventHandler();
+
+	return (
+		<div
+			css={{
+				"--color-selection": "#2568cd",
+				position: "absolute",
+				left: (x - viewport.x) * viewport.scale,
+				top: (y - viewport.y) * viewport.scale,
+				width: width * viewport.scale,
+				height: height * viewport.scale,
+				pointerEvents: "none",
+			}}
+		>
+			<div
+				css={{
+					position: "absolute",
+					inset: 0,
+					boxSizing: "border-box",
+					outline: "2px solid var(--color-selection)",
+					pointerEvents: "all",
+				}}
+				onMouseDown={(ev) => {
+					ev.stopPropagation();
+					ev.preventDefault();
+					handlers.handleSelectionHandleMouseDown(
+						ev.clientX,
+						ev.clientY,
+						"center",
+					);
+				}}
+			/>
+			{rects.map((rect) => (
+				<div
+					key={rect.id}
+					css={{
+						position: "absolute",
+						left: (rect.x - x) * viewport.scale,
+						top: (rect.y - y) * viewport.scale,
+						width: rect.width * viewport.scale,
+						height: rect.height * viewport.scale,
+						boxSizing: "border-box",
+						border: "1px solid var(--color-selection)",
+						pointerEvents: "all",
+					}}
+					onMouseDown={(ev) => {
+						ev.stopPropagation();
+						ev.preventDefault();
+						handlers.handleRectMouseDown(rect, ev.clientX, ev.clientY, {
+							shiftKey: ev.shiftKey,
+						});
+					}}
+				/>
+			))}
+			<ResizeHandle
 				css={{ top: "0%", left: "0%", width: "100%", cursor: "ns-resize" }}
 				onMouseDown={(ev) => {
 					ev.stopPropagation();
 					ev.preventDefault();
-					handlers.handleRectResizeHandleMouseDown(
-						rect,
+					handlers.handleSelectionHandleMouseDown(
 						ev.clientX,
 						ev.clientY,
 						"top",
 					);
 				}}
 			/>
-			<ResizeHandler
+			<ResizeHandle
 				css={{ top: "0%", left: "100%", height: "100%", cursor: "ew-resize" }}
 				onMouseDown={(ev) => {
 					ev.stopPropagation();
 					ev.preventDefault();
-					handlers.handleRectResizeHandleMouseDown(
-						rect,
+					handlers.handleSelectionHandleMouseDown(
 						ev.clientX,
 						ev.clientY,
 						"right",
 					);
 				}}
 			/>
-			<ResizeHandler
+			<ResizeHandle
 				css={{ top: "100%", left: "0%", width: "100%", cursor: "ns-resize" }}
 				onMouseDown={(ev) => {
 					ev.stopPropagation();
 					ev.preventDefault();
-					handlers.handleRectResizeHandleMouseDown(
-						rect,
+					handlers.handleSelectionHandleMouseDown(
 						ev.clientX,
 						ev.clientY,
 						"bottom",
 					);
 				}}
 			/>
-			<ResizeHandler
+			<ResizeHandle
 				css={{ top: "0%", left: "0%", height: "100%", cursor: "ew-resize" }}
 				onMouseDown={(ev) => {
 					ev.stopPropagation();
 					ev.preventDefault();
-					handlers.handleRectResizeHandleMouseDown(
-						rect,
+					handlers.handleSelectionHandleMouseDown(
 						ev.clientX,
 						ev.clientY,
 						"left",
@@ -306,76 +389,83 @@ function RectSelection({ rect, viewport }: { rect: Rect; viewport: Viewport }) {
 				}}
 			/>
 
-			<ResizeHandler
+			<ResizeHandle
 				css={{ top: "0%", left: "0%", cursor: "nwse-resize" }}
 				onMouseDown={(ev) => {
 					ev.stopPropagation();
 					ev.preventDefault();
-					handlers.handleRectResizeHandleMouseDown(
-						rect,
+					handlers.handleSelectionHandleMouseDown(
 						ev.clientX,
 						ev.clientY,
 						"topLeft",
 					);
 				}}
-			/>
-			<ResizeHandler
+			>
+				<CornerResizeHandle />
+			</ResizeHandle>
+			<ResizeHandle
 				css={{ top: "0%", left: "100%", cursor: "nesw-resize" }}
 				onMouseDown={(ev) => {
 					ev.stopPropagation();
 					ev.preventDefault();
-					handlers.handleRectResizeHandleMouseDown(
-						rect,
+					handlers.handleSelectionHandleMouseDown(
 						ev.clientX,
 						ev.clientY,
 						"topRight",
 					);
 				}}
-			/>
-			<ResizeHandler
+			>
+				<CornerResizeHandle />
+			</ResizeHandle>
+			<ResizeHandle
 				css={{ top: "100%", left: "100%", cursor: "nwse-resize" }}
 				onMouseDown={(ev) => {
 					ev.stopPropagation();
 					ev.preventDefault();
-					handlers.handleRectResizeHandleMouseDown(
-						rect,
+					handlers.handleSelectionHandleMouseDown(
 						ev.clientX,
 						ev.clientY,
 						"bottomRight",
 					);
 				}}
-			/>
-			<ResizeHandler
+			>
+				<CornerResizeHandle />
+			</ResizeHandle>
+			<ResizeHandle
 				css={{ top: "100%", left: "0%", cursor: "nesw-resize" }}
 				onMouseDown={(ev) => {
 					ev.stopPropagation();
 					ev.preventDefault();
-					handlers.handleRectResizeHandleMouseDown(
-						rect,
+					handlers.handleSelectionHandleMouseDown(
 						ev.clientX,
 						ev.clientY,
 						"bottomLeft",
 					);
 				}}
-			/>
+			>
+				<CornerResizeHandle />
+			</ResizeHandle>
 		</div>
 	);
 }
 
-function ResizeHandler(
-	props: HTMLAttributes<HTMLDivElement> & { css?: CSSObject },
-) {
-	return (
-		<div
-			{...props}
-			css={{
-				position: "absolute",
-				transform:
-					"translate(calc(-1 * var(--drag-handle-size) / 2), calc(-1 * var(--drag-handle-size) / 2))",
-				width: "var(--drag-handle-size)",
-				height: "var(--drag-handle-size)",
-				...props.css,
-			}}
-		/>
-	);
-}
+const ResizeHandle = styled.div({
+	position: "absolute",
+	transform: "translate(-8px, -8px)",
+	minWidth: "16px",
+	minHeight: "16px",
+	pointerEvents: "all",
+});
+
+const CornerResizeHandle = styled.div({
+	background: "#fff",
+	outline: "2px solid var(--color-selection)",
+	boxSizing: "border-box",
+	position: "absolute",
+	transform: "translate(-50%, -50%)",
+	top: "50%",
+	left: "50%",
+	minWidth: "8px",
+	minHeight: "8px",
+	pointerEvents: "all",
+});
