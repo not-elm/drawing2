@@ -1,21 +1,25 @@
 import { type WheelEventHandler, useCallback } from "react";
 import { type DragState, useDrag } from "./hooks/useDrag";
-import { Page } from "./model/Page";
+import { Line } from "./model/Line";
+import type { Page } from "./model/Page";
 import { Rect } from "./model/Rect";
+import type { ToolMode } from "./model/ToolMode";
 import type { Viewport } from "./model/Viewport";
 
-let page = Page.create();
-page = Page.addRect(page, Rect.create(100, 200, 300, 400));
-page = Page.addRect(page, Rect.create(200, 100, 400, 300));
-
 export function Canvas({
+	toolMode,
 	page,
 	viewport,
+	onAddRect,
+	onAddLine,
 	onScroll,
 	onScale,
 }: {
+	toolMode: ToolMode;
 	page: Page;
 	viewport: Viewport;
+	onAddRect: (rect: Rect) => void;
+	onAddLine: (line: Line) => void;
 	onScroll: (deltaX: number, deltaY: number) => void;
 	/**
 	 * Called when the user scales the canvas.
@@ -27,13 +31,31 @@ export function Canvas({
 }) {
 	const { containerRef, state } = useDrag({
 		onDragEnd: (state) => {
-			const width = Math.abs(state.currentX - state.startX);
-			const height = Math.abs(state.currentY - state.startY);
+			const [startX, startY] = fromCanvasCoordinate(
+				state.startX,
+				state.startY,
+				viewport,
+			);
+			const [currentX, currentY] = fromCanvasCoordinate(
+				state.currentX,
+				state.currentY,
+				viewport,
+			);
 
-			const x = Math.min(state.startX, state.currentX);
-			const y = Math.min(state.startY, state.currentY);
-
-			page = Page.addRect(page, Rect.create(x, y, width, height));
+			switch (toolMode) {
+				case "rect": {
+					const width = Math.abs(currentX - startX);
+					const height = Math.abs(currentY - startY);
+					const x = Math.min(startX, currentX);
+					const y = Math.min(startY, currentY);
+					onAddRect(Rect.create(x, y, width, height));
+					break;
+				}
+				case "line": {
+					onAddLine(Line.create(startX, startY, currentX, currentY));
+					break;
+				}
+			}
 		},
 	});
 
@@ -58,44 +80,143 @@ export function Canvas({
 			onWheel={handleWheel}
 		>
 			{page.rects.map((rect) => (
-				<div
-					key={JSON.stringify(rect)}
-					css={{
-						position: "absolute",
-						left: (rect.x - viewport.x) * viewport.scale,
-						top: (rect.y - viewport.y) * viewport.scale,
-						width: rect.width * viewport.scale,
-						height: rect.height * viewport.scale,
-						border: "1px solid #000",
-						background: "#f0f0f0",
-					}}
-				/>
+				<RectView key={JSON.stringify(rect)} rect={rect} viewport={viewport} />
+			))}
+			{page.lines.map((line) => (
+				<LineView key={JSON.stringify(line)} line={line} viewport={viewport} />
 			))}
 
-			<RectPreview dragState={state} />
+			<ToolPreview dragState={state} mode={toolMode} viewport={viewport} />
 		</div>
 	);
 }
 
-function RectPreview({ dragState }: { dragState: DragState }) {
-	if (!dragState.dragging) return null;
-
-	const width = Math.abs(dragState.currentX - dragState.startX);
-	const height = Math.abs(dragState.currentY - dragState.startY);
-	const x = Math.min(dragState.startX, dragState.currentX);
-	const y = Math.min(dragState.startY, dragState.currentY);
-
+function RectView({ rect, viewport }: { rect: Rect; viewport: Viewport }) {
 	return (
 		<div
 			css={{
 				position: "absolute",
-				left: x,
-				top: y,
-				width,
-				height,
-				border: "1px dashed #000",
+				left: (rect.x - viewport.x) * viewport.scale,
+				top: (rect.y - viewport.y) * viewport.scale,
+				width: rect.width * viewport.scale,
+				height: rect.height * viewport.scale,
+				border: "1px solid #000",
 				background: "#f0f0f0",
 			}}
 		/>
 	);
+}
+
+function LineView({ line, viewport }: { line: Line; viewport: Viewport }) {
+	const [canvasX1, canvasY1] = toCanvasCoordinate(line.x1, line.y1, viewport);
+	const [canvasX2, canvasY2] = toCanvasCoordinate(line.x2, line.y2, viewport);
+
+	const left = Math.min(canvasX1, canvasX2);
+	const top = Math.min(canvasY1, canvasY2);
+	const width = Math.abs(canvasX1 - canvasX2);
+	const height = Math.abs(canvasY1 - canvasY2);
+
+	return (
+		<svg
+			viewBox={`0 0 ${width} ${height}`}
+			width={width}
+			height={height}
+			css={{
+				position: "absolute",
+				left,
+				top,
+				width,
+				height,
+			}}
+		>
+			<title>line</title>
+			<line
+				x1={canvasX1 - left}
+				y1={canvasY1 - top}
+				x2={canvasX2 - left}
+				y2={canvasY2 - top}
+				stroke="#000"
+				strokeWidth={1}
+			/>
+		</svg>
+	);
+}
+
+function ToolPreview({
+	dragState,
+	mode,
+	viewport,
+}: { dragState: DragState; mode: ToolMode; viewport: Viewport }) {
+	if (!dragState.dragging) return null;
+
+	switch (mode) {
+		case "rect":
+			return <RectToolPreview dragState={dragState} viewport={viewport} />;
+		case "line":
+			return <LineToolPreview dragState={dragState} viewport={viewport} />;
+	}
+}
+
+function RectToolPreview({
+	dragState,
+	viewport,
+}: { dragState: DragState; viewport: Viewport }) {
+	const [startX, startY] = fromCanvasCoordinate(
+		dragState.startX,
+		dragState.startY,
+		viewport,
+	);
+	const [currentX, currentY] = fromCanvasCoordinate(
+		dragState.currentX,
+		dragState.currentY,
+		viewport,
+	);
+
+	const width = Math.abs(currentX - startX);
+	const height = Math.abs(currentY - startY);
+	const x = Math.min(startX, currentX);
+	const y = Math.min(startY, currentY);
+
+	const rect = Rect.create(x, y, width, height);
+
+	return <RectView rect={rect} viewport={viewport} />;
+}
+
+function LineToolPreview({
+	dragState,
+	viewport,
+}: { dragState: DragState; viewport: Viewport }) {
+	const [startX, startY] = fromCanvasCoordinate(
+		dragState.startX,
+		dragState.startY,
+		viewport,
+	);
+	const [currentX, currentY] = fromCanvasCoordinate(
+		dragState.currentX,
+		dragState.currentY,
+		viewport,
+	);
+
+	const line = Line.create(startX, startY, currentX, currentY);
+
+	return <LineView line={line} viewport={viewport} />;
+}
+
+function fromCanvasCoordinate(
+	canvasX: number,
+	canvasY: number,
+	viewport: Viewport,
+): [x: number, y: number] {
+	return [
+		canvasX / viewport.scale + viewport.x,
+		canvasY / viewport.scale + viewport.y,
+	];
+}
+
+function toCanvasCoordinate(
+	x: number,
+	y: number,
+	viewport: Viewport,
+): [canvasX: number, canvasY: number] {
+	return [(x - viewport.x) * viewport.scale, (y - viewport.y) * viewport.scale];
 }
