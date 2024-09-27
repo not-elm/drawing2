@@ -41,7 +41,9 @@ export function App() {
 					handlers.handleCanvasMouseMove(canvasX, canvasY)
 				}
 				onCanvasMouseUp={() => handlers.handleCanvasMouseUp()}
-				onRectMouseDown={(rect) => handlers.handleRectMouseDown(rect)}
+				onRectMouseDown={(rect, canvasX, canvasY) =>
+					handlers.handleRectMouseDown(rect, canvasX, canvasY)
+				}
 				onScroll={(deltaCanvasX, deltaCanvasY) =>
 					handlers.handleScroll(deltaCanvasX, deltaCanvasY)
 				}

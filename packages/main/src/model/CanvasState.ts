@@ -13,7 +13,7 @@ export interface CanvasState {
 	viewport: Viewport;
 	selectedRect: Rect | null;
 	selectedLine: Line | null;
-	dragHandle: DragHandle | null;
+	dragHandle: DragHandle;
 	dragging: boolean;
 	dragStartX: number;
 	dragStartY: number;
@@ -33,7 +33,7 @@ export namespace CanvasState {
 			},
 			selectedRect: null,
 			selectedLine: null,
-			dragHandle: null,
+			dragHandle: { type: "none" },
 			dragging: false,
 			dragStartX: 0,
 			dragStartY: 0,
@@ -55,7 +55,14 @@ export class CanvasStateStore
 	}
 
 	syncWithLiveBlockStorage() {
-		this.setPage(this.storage.root.get("page").toImmutable() as Page);
+		const page = this.storage.root.get("page").toImmutable() as Page;
+
+		const state = { ...this.state, page };
+		state.selectedRect =
+			page.rects.find((rect) => rect.id === state.selectedRect?.id) ?? null;
+		state.selectedLine =
+			page.lines.find((line) => line.id === state.selectedLine?.id) ?? null;
+		this.setState(state);
 	}
 
 	private addRect(rect: Rect) {
@@ -75,16 +82,18 @@ export class CanvasStateStore
 		this.syncWithLiveBlockStorage();
 	}
 
-	private setPage(page: Page) {
-		logAction("setPage");
-		const state = { ...this.state, page };
-		if (page.rects.every((rect) => rect.id !== state.selectedRect?.id)) {
-			state.selectedRect = null;
+	private setRectPosition(x: number, y: number) {
+		if (this.state.selectedRect) {
+			const rects = this.storage.root.get("page").get("rects");
+			const rect = rects.find(
+				(rect) => rect.get("id") === this.state.selectedRect?.id,
+			);
+			if (rect === undefined) return;
+
+			rect.set("x", x);
+			rect.set("y", y);
+			this.syncWithLiveBlockStorage();
 		}
-		if (page.lines.every((rect) => rect.id !== state.selectedLine?.id)) {
-			state.selectedLine = null;
-		}
-		this.setState(state);
 	}
 
 	private setMode(mode: ToolMode) {
@@ -169,7 +178,7 @@ export class CanvasStateStore
 			}
 			case "line":
 			case "rect": {
-				this.handleDragStart(canvasX, canvasY, "none");
+				this.handleDragStart(canvasX, canvasY, { type: "none" });
 			}
 		}
 	}
@@ -186,8 +195,13 @@ export class CanvasStateStore
 		}
 	}
 
-	handleRectMouseDown(rect: Rect) {
+	handleRectMouseDown(rect: Rect, canvasX: number, canvasY: number) {
 		this.selectShape(rect.id);
+		this.handleDragStart(canvasX, canvasY, {
+			type: "center",
+			startX: rect.x,
+			startY: rect.y,
+		});
 	}
 
 	handleDragStart(
@@ -229,6 +243,24 @@ export class CanvasStateStore
 			dragCurrentX: currentX,
 			dragCurrentY: currentY,
 		});
+
+		switch (this.state.mode) {
+			case "select": {
+				switch (this.state.dragHandle.type) {
+					case "center": {
+						this.setRectPosition(
+							this.state.dragCurrentX -
+								this.state.dragStartX +
+								this.state.dragHandle.startX,
+							this.state.dragCurrentY -
+								this.state.dragStartY +
+								this.state.dragHandle.startY,
+						);
+					}
+				}
+				break;
+			}
+		}
 	}
 
 	handleDragEnd() {
@@ -237,6 +269,21 @@ export class CanvasStateStore
 		this.setState({ ...this.state, dragging: false });
 
 		switch (this.state.mode) {
+			case "select": {
+				switch (this.state.dragHandle.type) {
+					case "center": {
+						this.setRectPosition(
+							this.state.dragCurrentX -
+								this.state.dragStartX +
+								this.state.dragHandle.startX,
+							this.state.dragCurrentY -
+								this.state.dragStartY +
+								this.state.dragHandle.startY,
+						);
+					}
+				}
+				break;
+			}
 			case "rect": {
 				const width = Math.abs(this.state.dragCurrentX - this.state.dragStartX);
 				const height = Math.abs(
@@ -302,7 +349,7 @@ export interface CanvasEventHandlers {
 	handleCanvasMouseDown(canvasX: number, canvasY: number): void;
 	handleCanvasMouseMove(canvasX: number, canvasY: number): void;
 	handleCanvasMouseUp(): void;
-	handleRectMouseDown(rect: Rect): void;
+	handleRectMouseDown(rect: Rect, canvasX: number, canvasY: number): void;
 	handleDragStart(
 		startCanvasX: number,
 		startCanvasY: number,
@@ -328,16 +375,16 @@ export interface CanvasEventHandlers {
 }
 
 export type DragHandle =
-	| "none"
-	| "center"
-	| "nw"
-	| "ne"
-	| "se"
-	| "sw"
-	| "n"
-	| "e"
-	| "s"
-	| "w";
+	| { type: "none" }
+	| { type: "center"; startX: number; startY: number }
+	| { type: "nw" }
+	| { type: "ne" }
+	| { type: "se" }
+	| { type: "sw" }
+	| { type: "n" }
+	| { type: "e" }
+	| { type: "s" }
+	| { type: "w" };
 
 export function logAction(name: string, params?: Record<string, unknown>) {
 	// console.table({ name, ...params });

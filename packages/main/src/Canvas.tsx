@@ -23,7 +23,7 @@ export function Canvas({
 	onCanvasMouseDown: (canvasX: number, canvasY: number) => void;
 	onCanvasMouseMove: (canvasX: number, canvasY: number) => void;
 	onCanvasMouseUp: (canvasX: number, canvasY: number) => void;
-	onRectMouseDown: (rect: Rect) => void;
+	onRectMouseDown: (rect: Rect, canvasX: number, canvasY: number) => void;
 	onScroll: (deltaX: number, deltaCanvasY: number) => void;
 	/**
 	 * Called when the user scales the canvas.
@@ -94,7 +94,7 @@ export function Canvas({
 							? (ev) => {
 									ev.stopPropagation();
 									ev.preventDefault();
-									onRectMouseDown(rect);
+									onRectMouseDown(rect, ev.clientX, ev.clientY);
 								}
 							: undefined
 					}
