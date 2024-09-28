@@ -84,12 +84,12 @@ export function RectView({
 			<div
 				css={{
 					position: "absolute",
+					width: "100%",
 					...{
 						"start-outside": { right: "100%", textAlign: "start" as const },
 						start: { left: 0, textAlign: "start" as const },
 						center: {
-							left: "50%",
-							transform: "translateX(-50%)",
+							left: 0,
 							textAlign: "center" as const,
 						},
 						end: { right: 0, textAlign: "end" as const },
@@ -100,10 +100,7 @@ export function RectView({
 						start: { top: 0 },
 						center: {
 							top: "50%",
-							transform:
-								rect.textAlignX === "center"
-									? "translate(-50%, -50%)"
-									: "translateY(-50%)",
+							transform: "translateY(-50%)",
 						},
 						end: { bottom: 0 },
 						"end-outside": { top: "100%" },
