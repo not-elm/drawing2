@@ -80,7 +80,7 @@ export class CanvasStateStore
 				this.storage.root.get("page").delete("objectIds" as any);
 				this.storage.root.get("page").set("schemaUpdatedAt", 0);
 			}
-			if (schemaUpdatedAt < +new Date("2024-09-28T16:00:00.000Z")) {
+			if (schemaUpdatedAt < +new Date("2024-09-28T16:40:00.000Z")) {
 				// Add "objectIds" field
 				const objectIds = new LiveList([
 					...this.storage.root.get("page").get("shapes").keys(),
