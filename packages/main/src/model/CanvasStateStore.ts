@@ -3,7 +3,8 @@ import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
 import { isNotNullish } from "../lib/isNullish";
 import { ClipboardService } from "../service/ClipboardService";
-import { CanvasState2 } from "./CanvasState";
+import { CanvasState } from "./CanvasState";
+import type { ColorId } from "./ColorPalette";
 import { Line } from "./Line";
 import type { Mode } from "./Mode";
 import { Page } from "./Page";
@@ -13,7 +14,7 @@ import type { TextAlignment } from "./TextAlignment";
 import type { Viewport } from "./Viewport";
 
 export class CanvasStateStore
-	extends Store<CanvasState2>
+	extends Store<CanvasState>
 	implements CanvasEventHandlers
 {
 	constructor(
@@ -21,7 +22,7 @@ export class CanvasStateStore
 		private readonly storage: { root: LiveObject<Liveblocks["Storage"]> },
 	) {
 		super(
-			new CanvasState2({
+			new CanvasState({
 				page: Page.create(),
 				mode: "select",
 				viewport: {
@@ -36,6 +37,9 @@ export class CanvasStateStore
 				dragStartY: 0,
 				dragCurrentX: 0,
 				dragCurrentY: 0,
+				defaultColorId: 0,
+				defaultTextAlignX: "center",
+				defaultTextAlignY: "center",
 			}),
 		);
 	}
@@ -686,7 +690,16 @@ export class CanvasStateStore
 				);
 				const x = Math.min(this.state.dragStartX, this.state.dragCurrentX);
 				const y = Math.min(this.state.dragStartY, this.state.dragCurrentY);
-				const shape = Shape.create(x, y, width, height, "");
+				const shape = Shape.create(
+					x,
+					y,
+					width,
+					height,
+					"",
+					this.state.defaultTextAlignX,
+					this.state.defaultTextAlignY,
+					this.state.defaultColorId,
+				);
 				this.addShape(shape);
 				this.setMode("select");
 				break;
@@ -697,6 +710,7 @@ export class CanvasStateStore
 					this.state.dragStartY,
 					this.state.dragCurrentX,
 					this.state.dragCurrentY,
+					this.state.defaultColorId,
 				);
 				this.addLine(line);
 				this.setMode("select");
@@ -856,6 +870,26 @@ export class CanvasStateStore
 				}
 			}
 		});
+		this.setState(
+			this.state.copy({ defaultTextAlignX: alignX, defaultTextAlignY: alignY }),
+		);
+	}
+
+	handleColorButtonClick(colorId: ColorId) {
+		this.update(() => {
+			for (const id of this.state.selectedShapeIds) {
+				const shape = this.storage.root.get("page").get("shapes").get(id);
+				if (shape !== undefined) {
+					shape.set("colorId", colorId);
+				}
+
+				const line = this.storage.root.get("page").get("lines").get(id);
+				if (line !== undefined) {
+					line.set("colorId", colorId);
+				}
+			}
+		});
+		this.setState(this.state.copy({ defaultColorId: colorId }));
 	}
 }
 
@@ -915,6 +949,7 @@ export interface CanvasEventHandlers {
 		alignX: TextAlignment,
 		alignY: TextAlignment,
 	): void;
+	handleColorButtonClick(colorId: ColorId): void;
 }
 
 export function isOverlap(

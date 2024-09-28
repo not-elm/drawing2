@@ -7,7 +7,11 @@ export function ToolBar() {
 	const handlers = useCanvasEventHandler();
 
 	return (
-		<Card>
+		<Card
+			css={{
+				padding: "4px 4px",
+			}}
+		>
 			<ul
 				css={{
 					padding: 0,

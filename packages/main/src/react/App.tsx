@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { ColorPalette, cssVarBaseColorName } from "../model/ColorPalette";
 import { Canvas } from "./Canvas";
 import { PropertyPanel } from "./PropertyPanel/PropertyPanel";
 import { useCanvasEventHandler } from "./StoreProvider";
@@ -34,6 +35,18 @@ export function App() {
 				"--color-ui-primary": "#2568cd",
 				"--color-ui-selected": "var(--color-ui-primary)",
 				"--color-selection": "var(--color-ui-primary)",
+				[cssVarBaseColorName(0)]: ColorPalette[0],
+				[cssVarBaseColorName(1)]: ColorPalette[1],
+				[cssVarBaseColorName(2)]: ColorPalette[2],
+				[cssVarBaseColorName(3)]: ColorPalette[3],
+				[cssVarBaseColorName(4)]: ColorPalette[4],
+				[cssVarBaseColorName(5)]: ColorPalette[5],
+				[cssVarBaseColorName(6)]: ColorPalette[6],
+				[cssVarBaseColorName(7)]: ColorPalette[7],
+				[cssVarBaseColorName(8)]: ColorPalette[8],
+				[cssVarBaseColorName(9)]: ColorPalette[9],
+				[cssVarBaseColorName(10)]: ColorPalette[10],
+				[cssVarBaseColorName(11)]: ColorPalette[11],
 			}}
 		>
 			<Canvas />

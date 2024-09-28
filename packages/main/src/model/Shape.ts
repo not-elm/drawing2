@@ -1,4 +1,5 @@
 import { randomId } from "../lib/randomId";
+import type { ColorId } from "./ColorPalette";
 import type { TextAlignment } from "./TextAlignment";
 
 export interface Shape {
@@ -10,6 +11,7 @@ export interface Shape {
 	label: string;
 	textAlignX: TextAlignment;
 	textAlignY: TextAlignment;
+	colorId: ColorId;
 }
 
 export namespace Shape {
@@ -19,6 +21,9 @@ export namespace Shape {
 		width: number,
 		height: number,
 		label: string,
+		textAlignX: TextAlignment,
+		textAlignY: TextAlignment,
+		colorId: ColorId,
 	): Shape {
 		return {
 			id: randomId(),
@@ -26,9 +31,10 @@ export namespace Shape {
 			y,
 			width,
 			height,
-			label: "",
-			textAlignX: "center",
-			textAlignY: "center",
+			label,
+			textAlignX,
+			textAlignY,
+			colorId,
 		};
 	}
 

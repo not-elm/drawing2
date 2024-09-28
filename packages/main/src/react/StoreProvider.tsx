@@ -7,7 +7,7 @@ import {
 	useState,
 	useSyncExternalStore,
 } from "react";
-import type { CanvasState2 } from "../model/CanvasState";
+import type { CanvasState } from "../model/CanvasState";
 import {
 	type CanvasEventHandlers,
 	CanvasStateStore,
@@ -61,7 +61,7 @@ async function initializeStore(): Promise<CanvasStateStore> {
 	return store;
 }
 
-export function useCanvasState(): CanvasState2 {
+export function useCanvasState(): CanvasState {
 	const store = useContext(context);
 
 	return useSyncExternalStore(

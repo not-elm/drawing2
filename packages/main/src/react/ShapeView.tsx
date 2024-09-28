@@ -1,4 +1,5 @@
 import { type MouseEventHandler, useCallback } from "react";
+import { cssVarBaseColor } from "../model/ColorPalette";
 import type { Shape } from "../model/Shape";
 import type { Viewport } from "../model/Viewport";
 import { useCanvasEventHandler, useCanvasState } from "./StoreProvider";
@@ -71,14 +72,16 @@ export function ShapeView({
 				}}
 			>
 				<rect
-					css={{ pointerEvents: "all" }}
+					css={{
+						pointerEvents: "all",
+						stroke: cssVarBaseColor(shape.colorId),
+						fill: "none",
+					}}
 					x={0}
 					y={0}
 					width={canvasWidth}
 					height={canvasHeight}
 					strokeWidth={2}
-					stroke="#303030"
-					fill="#f0f0f0"
 				/>
 			</svg>
 			<div

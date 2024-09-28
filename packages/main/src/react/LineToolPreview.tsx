@@ -16,6 +16,7 @@ export function LineToolPreview() {
 		state.dragStartY,
 		state.dragCurrentX,
 		state.dragCurrentY,
+		state.defaultColorId,
 	);
 
 	return <LineView line={line} viewport={state.viewport} />;

@@ -7,7 +7,7 @@ export function ShapeToolPreview() {
 	const state = useCanvasState();
 	assert(
 		state.mode === "shape",
-		"ShapeToolPreview should be rendered in shape mode",
+		"ShapeToolPreview should be rendered in rect mode",
 	);
 	assert(state.dragging, "ShapeToolPreview should be rendered while dragging");
 
@@ -16,7 +16,16 @@ export function ShapeToolPreview() {
 	const x = Math.min(state.dragStartX, state.dragCurrentX);
 	const y = Math.min(state.dragStartY, state.dragCurrentY);
 
-	const shape = Shape.create(x, y, width, height, "");
+	const rect = Shape.create(
+		x,
+		y,
+		width,
+		height,
+		"",
+		state.defaultTextAlignX,
+		state.defaultTextAlignY,
+		state.defaultColorId,
+	);
 
-	return <ShapeView shape={shape} viewport={state.viewport} />;
+	return <ShapeView shape={rect} viewport={state.viewport} />;
 }
