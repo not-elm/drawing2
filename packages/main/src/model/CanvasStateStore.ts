@@ -169,6 +169,10 @@ export class CanvasStateStore
 	}
 
 	private setMode(mode: Mode) {
+		if (this.state.dragging) {
+			this.handleDragEnd();
+		}
+
 		this.setState(this.state.copy({ mode }));
 
 		if (mode !== "select" && mode !== "text") {
@@ -681,6 +685,26 @@ export class CanvasStateStore
 						this.undo();
 					}
 				}
+				return true;
+			}
+			case "r": {
+				this.setMode("rect");
+				return true;
+			}
+			case "Escape": {
+				switch (this.state.mode) {
+					case "select": {
+						this.clearSelection();
+						return true;
+					}
+					default: {
+						this.setMode("select");
+						return true;
+					}
+				}
+			}
+			case "l": {
+				this.setMode("line");
 				return true;
 			}
 			case "Delete":
