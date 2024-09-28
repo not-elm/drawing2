@@ -7,7 +7,9 @@ import { CanvasState2 } from "./CanvasState";
 import { Line } from "./Line";
 import type { Mode } from "./Mode";
 import { Page } from "./Page";
-import { Rect, RectLike, type TextAlignment } from "./Rect";
+import { Rect } from "./Rect";
+import { Shape } from "./Shape";
+import type { TextAlignment } from "./TextAlignment";
 import type { Viewport } from "./Viewport";
 
 export class CanvasStateStore
@@ -44,7 +46,7 @@ export class CanvasStateStore
 		const state = this.state.copy({
 			page,
 			selectedShapeIds: this.state.selectedShapeIds.filter(
-				(id) => page.rects.get(id) || page.lines.get(id),
+				(id) => page.shapes.get(id) || page.lines.get(id),
 			),
 		});
 		this.setState(state);
@@ -57,12 +59,12 @@ export class CanvasStateStore
 		this.syncWithLiveBlockStorage();
 	}
 
-	private addRect(rect: Rect) {
+	private addShape(shape: Shape) {
 		this.update(() => {
 			this.storage.root
 				.get("page")
-				.get("rects")
-				.set(rect.id, new LiveObject(rect));
+				.get("shapes")
+				.set(shape.id, new LiveObject(shape));
 		});
 	}
 
@@ -77,11 +79,11 @@ export class CanvasStateStore
 
 	private deleteShapes(ids: string[]) {
 		this.update(() => {
-			const rects = this.storage.root.get("page").get("rects");
+			const shapes = this.storage.root.get("page").get("shapes");
 			const lines = this.storage.root.get("page").get("lines");
 
 			for (const id of ids) {
-				rects.delete(id);
+				shapes.delete(id);
 			}
 			for (const id of ids) {
 				lines.delete(id);
@@ -92,19 +94,19 @@ export class CanvasStateStore
 	private moveShapes(
 		deltaX: number,
 		deltaY: number,
-		rects: Rect[],
+		shapes: Shape[],
 		lines: Line[],
 	) {
 		this.update(() => {
-			const currentRects = this.storage.root.get("page").get("rects");
+			const currentShapes = this.storage.root.get("page").get("shapes");
 			const currentLines = this.storage.root.get("page").get("lines");
 
-			for (const rect of rects) {
-				const currentRect = currentRects.get(rect.id);
-				if (currentRect === undefined) continue;
+			for (const shape of shapes) {
+				const currentShape = currentShapes.get(shape.id);
+				if (currentShape === undefined) continue;
 
-				currentRect.set("x", rect.x + deltaX);
-				currentRect.set("y", rect.y + deltaY);
+				currentShape.set("x", shape.x + deltaX);
+				currentShape.set("y", shape.y + deltaY);
 			}
 			for (const line of lines) {
 				const currentLine = currentLines.get(line.id);
@@ -123,21 +125,21 @@ export class CanvasStateStore
 		scaleY: number,
 		originX: number,
 		originY: number,
-		rects: Rect[],
+		shapes: Shape[],
 		lines: Line[],
 	) {
 		this.update(() => {
-			const currentRects = this.storage.root.get("page").get("rects");
+			const currentShapes = this.storage.root.get("page").get("shapes");
 			const currentLines = this.storage.root.get("page").get("lines");
 
-			for (const rect of rects) {
-				const currentRect = currentRects.get(rect.id);
-				if (currentRect === undefined) continue;
+			for (const shape of shapes) {
+				const currentShape = currentShapes.get(shape.id);
+				if (currentShape === undefined) continue;
 
-				let x = (rect.x - originX) * scaleX + originX;
-				let y = (rect.y - originY) * scaleY + originY;
-				let width = rect.width * scaleX;
-				let height = rect.height * scaleY;
+				let x = (shape.x - originX) * scaleX + originX;
+				let y = (shape.y - originY) * scaleY + originY;
+				let width = shape.width * scaleX;
+				let height = shape.height * scaleY;
 				if (width < 0) {
 					x += width;
 					width = -width;
@@ -147,10 +149,10 @@ export class CanvasStateStore
 					height = -height;
 				}
 
-				currentRect.set("x", x);
-				currentRect.set("y", y);
-				currentRect.set("width", width);
-				currentRect.set("height", height);
+				currentShape.set("x", x);
+				currentShape.set("y", y);
+				currentShape.set("width", width);
+				currentShape.set("height", height);
 			}
 			for (const line of lines) {
 				const currentLine = currentLines.get(line.id);
@@ -267,7 +269,7 @@ export class CanvasStateStore
 		if (this.state.selectedShapeIds.length === 0) return;
 
 		const shapes = this.state.selectedShapeIds
-			.map((id) => this.state.page.rects.get(id))
+			.map((id) => this.state.page.shapes.get(id))
 			.filter(isNotNullish);
 		const lines = this.state.selectedShapeIds
 			.map((id) => this.state.page.lines.get(id))
@@ -287,7 +289,7 @@ export class CanvasStateStore
 
 		this.update(() => {
 			for (const shape of shapes) {
-				this.addRect(shape);
+				this.addShape(shape);
 			}
 			for (const line of lines) {
 				this.addLine(line);
@@ -316,11 +318,11 @@ export class CanvasStateStore
 					canvasY,
 					this.state.viewport,
 				);
-				if (selectionRect !== null && RectLike.includes(selectionRect, x, y)) {
+				if (selectionRect !== null && Rect.includes(selectionRect, x, y)) {
 					this.handleDragStart(canvasX, canvasY, {
 						type: "move",
-						rects: this.state.selectedShapeIds
-							.map((id) => this.state.page.rects.get(id))
+						shapes: this.state.selectedShapeIds
+							.map((id) => this.state.page.shapes.get(id))
 							.filter(isNotNullish),
 						lines: this.state.selectedShapeIds
 							.map((id) => this.state.page.lines.get(id))
@@ -338,7 +340,7 @@ export class CanvasStateStore
 				break;
 			}
 			case "line":
-			case "rect": {
+			case "shape": {
 				this.handleDragStart(canvasX, canvasY, { type: "none" });
 				break;
 			}
@@ -382,8 +384,8 @@ export class CanvasStateStore
 				}
 				this.handleDragStart(canvasX, canvasY, {
 					type: "move",
-					rects: this.state.selectedShapeIds
-						.map((id) => this.state.page.rects.get(id))
+					shapes: this.state.selectedShapeIds
+						.map((id) => this.state.page.shapes.get(id))
 						.filter(isNotNullish),
 					lines: this.state.selectedShapeIds
 						.map((id) => this.state.page.lines.get(id))
@@ -395,8 +397,8 @@ export class CanvasStateStore
 				this.setMode("select");
 				this.handleDragStart(canvasX, canvasY, {
 					type: "move",
-					rects: this.state.selectedShapeIds
-						.map((id) => this.state.page.rects.get(id))
+					shapes: this.state.selectedShapeIds
+						.map((id) => this.state.page.shapes.get(id))
 						.filter(isNotNullish),
 					lines: this.state.selectedShapeIds
 						.map((id) => this.state.page.lines.get(id))
@@ -427,7 +429,7 @@ export class CanvasStateStore
 	) {
 		const selectionRect = computeUnionRect(
 			this.state.selectedShapeIds
-				.map((id) => this.state.page.rects.get(id))
+				.map((id) => this.state.page.shapes.get(id))
 				.filter(isNotNullish),
 			this.state.selectedShapeIds
 				.map((id) => this.state.page.lines.get(id))
@@ -440,8 +442,8 @@ export class CanvasStateStore
 			case "center": {
 				dragType = {
 					type: "move",
-					rects: this.state.selectedShapeIds
-						.map((id) => this.state.page.rects.get(id))
+					shapes: this.state.selectedShapeIds
+						.map((id) => this.state.page.shapes.get(id))
 						.filter(isNotNullish),
 					lines: this.state.selectedShapeIds
 						.map((id) => this.state.page.lines.get(id))
@@ -454,8 +456,8 @@ export class CanvasStateStore
 					type: "nwse-resize",
 					originX: selectionRect.x + selectionRect.width,
 					originY: selectionRect.y + selectionRect.height,
-					rects: this.state.selectedShapeIds
-						.map((id) => this.state.page.rects.get(id))
+					shapes: this.state.selectedShapeIds
+						.map((id) => this.state.page.shapes.get(id))
 						.filter(isNotNullish),
 					lines: this.state.selectedShapeIds
 						.map((id) => this.state.page.lines.get(id))
@@ -466,8 +468,8 @@ export class CanvasStateStore
 				dragType = {
 					type: "ns-resize",
 					originY: selectionRect.y + selectionRect.height,
-					rects: this.state.selectedShapeIds
-						.map((id) => this.state.page.rects.get(id))
+					shapes: this.state.selectedShapeIds
+						.map((id) => this.state.page.shapes.get(id))
 						.filter(isNotNullish),
 					lines: this.state.selectedShapeIds
 						.map((id) => this.state.page.lines.get(id))
@@ -479,8 +481,8 @@ export class CanvasStateStore
 					type: "nesw-resize",
 					originX: selectionRect.x,
 					originY: selectionRect.y + selectionRect.height,
-					rects: this.state.selectedShapeIds
-						.map((id) => this.state.page.rects.get(id))
+					shapes: this.state.selectedShapeIds
+						.map((id) => this.state.page.shapes.get(id))
 						.filter(isNotNullish),
 					lines: this.state.selectedShapeIds
 						.map((id) => this.state.page.lines.get(id))
@@ -491,8 +493,8 @@ export class CanvasStateStore
 				dragType = {
 					type: "ew-resize",
 					originX: selectionRect.x,
-					rects: this.state.selectedShapeIds
-						.map((id) => this.state.page.rects.get(id))
+					shapes: this.state.selectedShapeIds
+						.map((id) => this.state.page.shapes.get(id))
 						.filter(isNotNullish),
 					lines: this.state.selectedShapeIds
 						.map((id) => this.state.page.lines.get(id))
@@ -504,8 +506,8 @@ export class CanvasStateStore
 					type: "nwse-resize",
 					originX: selectionRect.x,
 					originY: selectionRect.y,
-					rects: this.state.selectedShapeIds
-						.map((id) => this.state.page.rects.get(id))
+					shapes: this.state.selectedShapeIds
+						.map((id) => this.state.page.shapes.get(id))
 						.filter(isNotNullish),
 					lines: this.state.selectedShapeIds
 						.map((id) => this.state.page.lines.get(id))
@@ -517,8 +519,8 @@ export class CanvasStateStore
 					type: "nesw-resize",
 					originX: selectionRect.x + selectionRect.width,
 					originY: selectionRect.y,
-					rects: this.state.selectedShapeIds
-						.map((id) => this.state.page.rects.get(id))
+					shapes: this.state.selectedShapeIds
+						.map((id) => this.state.page.shapes.get(id))
 						.filter(isNotNullish),
 					lines: this.state.selectedShapeIds
 						.map((id) => this.state.page.lines.get(id))
@@ -529,8 +531,8 @@ export class CanvasStateStore
 				dragType = {
 					type: "ew-resize",
 					originX: selectionRect.x + selectionRect.width,
-					rects: this.state.selectedShapeIds
-						.map((id) => this.state.page.rects.get(id))
+					shapes: this.state.selectedShapeIds
+						.map((id) => this.state.page.shapes.get(id))
 						.filter(isNotNullish),
 					lines: this.state.selectedShapeIds
 						.map((id) => this.state.page.lines.get(id))
@@ -541,8 +543,8 @@ export class CanvasStateStore
 				dragType = {
 					type: "ns-resize",
 					originY: selectionRect.y,
-					rects: this.state.selectedShapeIds
-						.map((id) => this.state.page.rects.get(id))
+					shapes: this.state.selectedShapeIds
+						.map((id) => this.state.page.shapes.get(id))
 						.filter(isNotNullish),
 					lines: this.state.selectedShapeIds
 						.map((id) => this.state.page.lines.get(id))
@@ -601,9 +603,9 @@ export class CanvasStateStore
 						const selectedShapeIds =
 							this.state.dragType.originalSelectedShapeIds.slice();
 
-						for (const rect of this.state.page.rects.values()) {
-							if (isOverlap(rect, selectionRect)) {
-								selectedShapeIds.push(rect.id);
+						for (const shape of this.state.page.shapes.values()) {
+							if (isOverlap(shape, selectionRect)) {
+								selectedShapeIds.push(shape.id);
 							}
 						}
 						this.setSelectedShapeIds(selectedShapeIds);
@@ -613,7 +615,7 @@ export class CanvasStateStore
 						this.moveShapes(
 							this.state.dragCurrentX - this.state.dragStartX,
 							this.state.dragCurrentY - this.state.dragStartY,
-							this.state.dragType.rects,
+							this.state.dragType.shapes,
 							this.state.dragType.lines,
 						);
 						break;
@@ -627,7 +629,7 @@ export class CanvasStateStore
 								(this.state.dragStartY - this.state.dragType.originY),
 							this.state.dragType.originX,
 							this.state.dragType.originY,
-							this.state.dragType.rects,
+							this.state.dragType.shapes,
 							this.state.dragType.lines,
 						);
 						break;
@@ -639,7 +641,7 @@ export class CanvasStateStore
 								(this.state.dragStartY - this.state.dragType.originY),
 							0,
 							this.state.dragType.originY,
-							this.state.dragType.rects,
+							this.state.dragType.shapes,
 							this.state.dragType.lines,
 						);
 						break;
@@ -651,7 +653,7 @@ export class CanvasStateStore
 							1,
 							this.state.dragType.originX,
 							0,
-							this.state.dragType.rects,
+							this.state.dragType.shapes,
 							this.state.dragType.lines,
 						);
 						break;
@@ -677,15 +679,15 @@ export class CanvasStateStore
 			case "select": {
 				break;
 			}
-			case "rect": {
+			case "shape": {
 				const width = Math.abs(this.state.dragCurrentX - this.state.dragStartX);
 				const height = Math.abs(
 					this.state.dragCurrentY - this.state.dragStartY,
 				);
 				const x = Math.min(this.state.dragStartX, this.state.dragCurrentX);
 				const y = Math.min(this.state.dragStartY, this.state.dragCurrentY);
-				const rect = Rect.create(x, y, width, height, "");
-				this.addRect(rect);
+				const shape = Shape.create(x, y, width, height, "");
+				this.addShape(shape);
 				this.setMode("select");
 				break;
 			}
@@ -718,12 +720,12 @@ export class CanvasStateStore
 			case "a": {
 				switch (this.state.mode) {
 					case "line":
-					case "rect":
+					case "shape":
 					case "select": {
 						if (modifiers.metaKey || modifiers.ctrlKey) {
 							this.setMode("select");
 							this.setSelectedShapeIds([
-								...this.state.page.rects.keys(),
+								...this.state.page.shapes.keys(),
 								...this.state.page.lines.keys(),
 							]);
 							return true;
@@ -734,9 +736,9 @@ export class CanvasStateStore
 			}
 			case "r": {
 				switch (this.state.mode) {
-					case "rect":
+					case "shape":
 					case "select": {
-						this.setMode("rect");
+						this.setMode("shape");
 						return true;
 					}
 				}
@@ -744,7 +746,7 @@ export class CanvasStateStore
 			}
 			case "l": {
 				switch (this.state.mode) {
-					case "rect":
+					case "shape":
 					case "select": {
 						this.setMode("line");
 						return true;
@@ -755,7 +757,7 @@ export class CanvasStateStore
 			case "z": {
 				switch (this.state.mode) {
 					case "line":
-					case "rect":
+					case "shape":
 					case "select": {
 						if (modifiers.metaKey || modifiers.ctrlKey) {
 							if (modifiers.shiftKey) {
@@ -835,10 +837,10 @@ export class CanvasStateStore
 
 	handleLabelChange(shapeId: string, value: string) {
 		this.update(() => {
-			const rect = this.storage.root.get("page").get("rects").get(shapeId);
+			const shape = this.storage.root.get("page").get("shapes").get(shapeId);
 
-			if (rect !== undefined) {
-				rect.set("label", value);
+			if (shape !== undefined) {
+				shape.set("label", value);
 			}
 		});
 	}
@@ -846,11 +848,11 @@ export class CanvasStateStore
 	handleTextAlignButtonClick(alignX: TextAlignment, alignY: TextAlignment) {
 		this.update(() => {
 			for (const id of this.state.selectedShapeIds) {
-				const rect = this.storage.root.get("page").get("rects").get(id);
+				const shape = this.storage.root.get("page").get("shapes").get(id);
 
-				if (rect !== undefined) {
-					rect.set("textAlignX", alignX);
-					rect.set("textAlignY", alignY);
+				if (shape !== undefined) {
+					shape.set("textAlignX", alignX);
+					shape.set("textAlignY", alignY);
 				}
 			}
 		});
@@ -932,33 +934,33 @@ export type DragType =
 	| { type: "select"; originalSelectedShapeIds: string[] }
 	| {
 			type: "move";
-			rects: Rect[];
+			shapes: Shape[];
 			lines: Line[];
 	  }
 	| {
 			type: "nwse-resize";
 			originX: number;
 			originY: number;
-			rects: Rect[];
+			shapes: Shape[];
 			lines: Line[];
 	  }
 	| {
 			type: "nesw-resize";
 			originX: number;
 			originY: number;
-			rects: Rect[];
+			shapes: Shape[];
 			lines: Line[];
 	  }
 	| {
 			type: "ns-resize";
 			originY: number;
-			rects: Rect[];
+			shapes: Shape[];
 			lines: Line[];
 	  }
 	| {
 			type: "ew-resize";
 			originX: number;
-			rects: Rect[];
+			shapes: Shape[];
 			lines: Line[];
 	  };
 
@@ -992,22 +994,19 @@ export function toCanvasCoordinate(
 	return [(x - viewport.x) * viewport.scale, (y - viewport.y) * viewport.scale];
 }
 
-export function computeUnionRect(
-	rects: Rect[],
-	lines: Line[],
-): RectLike | null {
-	if (rects.length === 0 && lines.length === 0) return null;
+export function computeUnionRect(shapes: Shape[], lines: Line[]): Rect | null {
+	if (shapes.length === 0 && lines.length === 0) return null;
 
 	let minX = Number.POSITIVE_INFINITY;
 	let minY = Number.POSITIVE_INFINITY;
 	let maxX = Number.NEGATIVE_INFINITY;
 	let maxY = Number.NEGATIVE_INFINITY;
 
-	for (const rect of rects) {
-		minX = Math.min(minX, rect.x);
-		minY = Math.min(minY, rect.y);
-		maxX = Math.max(maxX, rect.x + rect.width);
-		maxY = Math.max(maxY, rect.y + rect.height);
+	for (const shape of shapes) {
+		minX = Math.min(minX, shape.x);
+		minY = Math.min(minY, shape.y);
+		maxX = Math.max(maxX, shape.x + shape.width);
+		maxY = Math.max(maxY, shape.y + shape.height);
 	}
 
 	for (const line of lines) {

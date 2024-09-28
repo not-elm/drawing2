@@ -33,12 +33,12 @@ export function ToolBar() {
 				</li>
 				<li>
 					<Button
-						aria-checked={state.mode === "rect"}
+						aria-checked={state.mode === "shape"}
 						onClick={() => {
-							handlers.handleModeChange("rect");
+							handlers.handleModeChange("shape");
 						}}
 					>
-						Rect
+						Shape
 					</Button>
 				</li>
 				<li>

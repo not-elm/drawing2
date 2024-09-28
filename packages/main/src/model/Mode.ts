@@ -1,1 +1,1 @@
-export type Mode = "select" | "rect" | "line" | "text";
+export type Mode = "select" | "shape" | "line" | "text";

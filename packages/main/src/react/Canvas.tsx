@@ -5,9 +5,9 @@ import {
 	useEffect,
 } from "react";
 import { LineView } from "./LineView";
-import { RectView } from "./RectView";
 import { SelectionRect } from "./SelectionRect";
 import { SelectorRect } from "./SelectorRect";
+import { ShapeView } from "./ShapeView";
 import { useCanvasEventHandler, useCanvasState } from "./StoreProvider";
 import { ToolPreview } from "./ToolPreview";
 
@@ -66,8 +66,8 @@ export function Canvas() {
 			onWheel={handleWheel}
 			onMouseDown={handleCanvasMouseDown}
 		>
-			{[...state.page.rects.values()].map((rect) => (
-				<RectView key={rect.id} rect={rect} viewport={state.viewport} />
+			{[...state.page.shapes.values()].map((shape) => (
+				<ShapeView key={shape.id} shape={shape} viewport={state.viewport} />
 			))}
 			{[...state.page.lines.values()].map((line) => (
 				<LineView key={line.id} line={line} viewport={state.viewport} />

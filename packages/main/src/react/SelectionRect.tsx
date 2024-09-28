@@ -9,8 +9,8 @@ export function SelectionRect() {
 	if (selectionRect === null) return null;
 
 	const { x, y, width, height } = selectionRect;
-	const rects = state.selectedShapeIds
-		.map((id) => state.page.rects.get(id))
+	const shapes = state.selectedShapeIds
+		.map((id) => state.page.shapes.get(id))
 		.filter(isNotNullish);
 
 	return (
@@ -32,15 +32,15 @@ export function SelectionRect() {
 					outline: "2px solid var(--color-selection)",
 				}}
 			/>
-			{rects.map((rect) => (
+			{shapes.map((shape) => (
 				<div
-					key={rect.id}
+					key={shape.id}
 					css={{
 						position: "absolute",
-						left: (rect.x - x) * state.viewport.scale,
-						top: (rect.y - y) * state.viewport.scale,
-						width: rect.width * state.viewport.scale,
-						height: rect.height * state.viewport.scale,
+						left: (shape.x - x) * state.viewport.scale,
+						top: (shape.y - y) * state.viewport.scale,
+						width: shape.width * state.viewport.scale,
+						height: shape.height * state.viewport.scale,
 						boxSizing: "border-box",
 						border: "1px solid var(--color-selection)",
 					}}

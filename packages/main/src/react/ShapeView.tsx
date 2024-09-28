@@ -1,24 +1,24 @@
 import { type MouseEventHandler, useCallback } from "react";
-import type { Rect } from "../model/Rect";
+import type { Shape } from "../model/Shape";
 import type { Viewport } from "../model/Viewport";
 import { useCanvasEventHandler, useCanvasState } from "./StoreProvider";
 
-export function RectView({
-	rect,
+export function ShapeView({
+	shape,
 	viewport,
-}: { rect: Rect; viewport: Viewport }) {
+}: { shape: Shape; viewport: Viewport }) {
 	const state = useCanvasState();
 	const handlers = useCanvasEventHandler();
 
-	const canvasWidth = rect.width * viewport.scale;
-	const canvasHeight = rect.height * viewport.scale;
+	const canvasWidth = shape.width * viewport.scale;
+	const canvasHeight = shape.height * viewport.scale;
 
-	const isLabelEditing = state.isTextEditing(rect.id);
+	const isLabelEditing = state.isTextEditing(shape.id);
 
 	const handleMouseDown: MouseEventHandler = useCallback(
 		(ev) => {
 			const handled = handlers.handleShapeMouseDown(
-				rect.id,
+				shape.id,
 				ev.clientX,
 				ev.clientY,
 				{
@@ -30,13 +30,13 @@ export function RectView({
 				ev.preventDefault();
 			}
 		},
-		[rect.id, handlers],
+		[shape.id, handlers],
 	);
 
 	const handleDoubleClick: MouseEventHandler = useCallback(
 		(ev) => {
 			const handled = handlers.handleShapeDoubleClick(
-				rect.id,
+				shape.id,
 				ev.clientX,
 				ev.clientY,
 				{
@@ -48,15 +48,15 @@ export function RectView({
 				ev.preventDefault();
 			}
 		},
-		[rect.id, handlers],
+		[shape.id, handlers],
 	);
 
 	return (
 		<div
 			css={{
 				position: "absolute",
-				left: (rect.x - viewport.x) * viewport.scale,
-				top: (rect.y - viewport.y) * viewport.scale,
+				left: (shape.x - viewport.x) * viewport.scale,
+				top: (shape.y - viewport.y) * viewport.scale,
 			}}
 			onMouseDown={handleMouseDown}
 			onDoubleClick={handleDoubleClick}
@@ -94,7 +94,7 @@ export function RectView({
 						},
 						end: { right: 0, textAlign: "end" as const },
 						"end-outside": { left: "100%", textAlign: "end" as const },
-					}[rect.textAlignX],
+					}[shape.textAlignX],
 					...{
 						"start-outside": { bottom: "100%" },
 						start: { top: 0 },
@@ -104,7 +104,7 @@ export function RectView({
 						},
 						end: { bottom: 0 },
 						"end-outside": { top: "100%" },
-					}[rect.textAlignY],
+					}[shape.textAlignY],
 				}}
 			>
 				{isLabelEditing ? (
@@ -127,12 +127,12 @@ export function RectView({
 							ev.target.setSelectionRange(0, ev.target.value.length);
 						}}
 						onChange={(ev) =>
-							handlers.handleLabelChange(rect.id, ev.target.value)
+							handlers.handleLabelChange(shape.id, ev.target.value)
 						}
 						onMouseDown={(ev) => {
 							ev.stopPropagation();
 						}}
-						value={rect.label}
+						value={shape.label}
 					/>
 				) : (
 					<span
@@ -140,7 +140,7 @@ export function RectView({
 							whiteSpace: "pre-wrap",
 						}}
 					>
-						{addPostFix(rect.label)}
+						{addPostFix(shape.label)}
 					</span>
 				)}
 			</div>

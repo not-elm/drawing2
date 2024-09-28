@@ -1,5 +1,5 @@
 import { LineToolPreview } from "./LineToolPreview";
-import { RectToolPreview } from "./RectToolPreview";
+import { ShapeToolPreview } from "./ShapeToolPreview";
 import { useCanvasState } from "./StoreProvider";
 
 export function ToolPreview() {
@@ -8,8 +8,8 @@ export function ToolPreview() {
 	if (!state.dragging) return null;
 
 	switch (state.mode) {
-		case "rect":
-			return <RectToolPreview />;
+		case "shape":
+			return <ShapeToolPreview />;
 		case "line":
 			return <LineToolPreview />;
 	}

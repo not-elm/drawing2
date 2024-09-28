@@ -1,15 +1,15 @@
 import type { Line } from "./Line";
-import type { Rect } from "./Rect";
+import type { Shape } from "./Shape";
 
 export interface Page {
-	rects: Map<string, Rect>;
+	shapes: Map<string, Shape>;
 	lines: Map<string, Line>;
 }
 
 export namespace Page {
 	export function create(): Page {
 		return {
-			rects: new Map(),
+			shapes: new Map(),
 			lines: new Map(),
 		};
 	}

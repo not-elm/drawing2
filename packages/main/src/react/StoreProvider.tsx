@@ -13,7 +13,7 @@ import {
 	CanvasStateStore,
 } from "../model/CanvasStateStore";
 import type { Line } from "../model/Line";
-import type { Rect } from "../model/Rect";
+import type { Shape } from "../model/Shape";
 
 const context = createContext<CanvasStateStore>(null as never);
 
@@ -41,7 +41,7 @@ async function initializeStore(): Promise<CanvasStateStore> {
 	const { room } = client.enterRoom("my-room", {
 		initialStorage: {
 			page: new LiveObject({
-				rects: new LiveMap<string, LiveObject<Rect>>(),
+				shapes: new LiveMap<string, LiveObject<Shape>>(),
 				lines: new LiveMap<string, LiveObject<Line>>(),
 			}),
 		},

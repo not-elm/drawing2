@@ -1,6 +1,6 @@
-import type { TextAlignment } from "../../model/Rect";
 import { useCanvasEventHandler, useCanvasState } from "../StoreProvider";
 
+import type { TextAlignment } from "../../model/TextAlignment";
 import { Card, CardSection } from "../Card";
 
 export function PropertyPanel() {

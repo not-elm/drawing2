@@ -1,16 +1,16 @@
 import { assert } from "../lib/assert";
 import { randomId } from "../lib/randomId";
 import { Line } from "../model/Line";
-import { Rect } from "../model/Rect";
+import { Shape } from "../model/Shape";
 
 export const ClipboardService = new (class {
-	copy(shapes: Rect[], lines: Line[]): Promise<void> {
+	copy(shapes: Shape[], lines: Line[]): Promise<void> {
 		const json = JSON.stringify({ shapes, lines });
 		return navigator.clipboard.writeText(json);
 	}
 
 	async paste(): Promise<{
-		shapes: Rect[];
+		shapes: Shape[];
 		lines: Line[];
 	}> {
 		try {
@@ -18,7 +18,7 @@ export const ClipboardService = new (class {
 			const data = JSON.parse(json);
 
 			assert(
-				data.shapes.every(Rect.validate) && data.lines.every(Line.validate),
+				data.shapes.every(Shape.validate) && data.lines.every(Line.validate),
 			);
 
 			for (const shape of data.shapes) {

@@ -3,7 +3,9 @@ import { isNotNullish } from "../lib/isNullish";
 import { type DragType, computeUnionRect } from "./CanvasStateStore";
 import type { Mode } from "./Mode";
 import type { Page } from "./Page";
-import type { Rect, RectLike, TextAlignment } from "./Rect";
+import type { Rect } from "./Rect";
+import type { Shape } from "./Shape";
+import type { TextAlignment } from "./TextAlignment";
 import type { Viewport } from "./Viewport";
 
 export interface CanvasState {
@@ -17,12 +19,7 @@ export interface CanvasState {
 	dragStartY: number;
 	dragCurrentX: number;
 	dragCurrentY: number;
-	selectionRect: {
-		x: number;
-		y: number;
-		width: number;
-		height: number;
-	} | null;
+	selectionRect: Rect | null;
 }
 
 export class CanvasState2 extends dataclass<{
@@ -37,7 +34,7 @@ export class CanvasState2 extends dataclass<{
 	readonly dragCurrentX: number;
 	readonly dragCurrentY: number;
 }>() {
-	get selectorRect(): RectLike | null {
+	get selectorRect(): Rect | null {
 		if (this.dragType.type !== "select") return null;
 
 		return {
@@ -48,28 +45,32 @@ export class CanvasState2 extends dataclass<{
 		};
 	}
 
-	get selectionRect(): RectLike | null {
-		const rects = this.selectedShapeIds
-			.map((id) => this.page.rects.get(id))
+	get selectionRect(): Rect | null {
+		const shapes = this.selectedShapeIds
+			.map((id) => this.page.shapes.get(id))
 			.filter(isNotNullish);
 		const lines = this.selectedShapeIds
 			.map((id) => this.page.lines.get(id))
 			.filter(isNotNullish);
 
-		return computeUnionRect(rects, lines);
+		return computeUnionRect(shapes, lines);
 	}
 
-	get selectedShapes(): Rect[] {
+	get selectedShapes(): Shape[] {
 		return this.selectedShapeIds
-			.map((id) => this.page.rects.get(id))
+			.map((id) => this.page.shapes.get(id))
 			.filter(isNotNullish);
 	}
 
 	getSelectedShapeTextAlignment():
 		| [alignX: TextAlignment, alignY: TextAlignment]
 		| null {
-		const alignXs = new Set(this.selectedShapes.map((rect) => rect.textAlignX));
-		const alignYs = new Set(this.selectedShapes.map((rect) => rect.textAlignY));
+		const alignXs = new Set(
+			this.selectedShapes.map((shape) => shape.textAlignX),
+		);
+		const alignYs = new Set(
+			this.selectedShapes.map((shape) => shape.textAlignY),
+		);
 
 		if (alignXs.size !== 1 || alignYs.size !== 1) return null;
 
