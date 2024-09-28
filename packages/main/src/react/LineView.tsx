@@ -1,17 +1,18 @@
-import { toCanvasCoordinate } from "../model/CanvasStateStore";
+import { memo } from "react";
 import { cssVarBaseColor } from "../model/ColorPaletteBase";
 import type { Line } from "../model/Line";
-import type { Viewport } from "../model/Viewport";
 import { useCanvasEventHandler } from "./StoreProvider";
 
-export function LineView({
+export const LineView = memo(function LineView({
 	line,
-	viewport,
-}: { line: Line; viewport: Viewport }) {
+	scale,
+}: { line: Line; scale: number }) {
 	const handlers = useCanvasEventHandler();
 
-	const [canvasX1, canvasY1] = toCanvasCoordinate(line.x1, line.y1, viewport);
-	const [canvasX2, canvasY2] = toCanvasCoordinate(line.x2, line.y2, viewport);
+	const canvasX1 = line.x1 * scale;
+	const canvasY1 = line.y1 * scale;
+	const canvasX2 = line.x2 * scale;
+	const canvasY2 = line.y2 * scale;
 
 	const left = Math.min(canvasX1, canvasX2);
 	const top = Math.min(canvasY1, canvasY2);
@@ -31,7 +32,6 @@ export function LineView({
 				overflow: "visible",
 			}}
 		>
-			<title>line</title>
 			<line
 				css={{
 					stroke: cssVarBaseColor(line.colorId),
@@ -72,4 +72,4 @@ export function LineView({
 			/>
 		</svg>
 	);
-}
+});

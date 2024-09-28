@@ -57,32 +57,47 @@ export function Canvas() {
 		[handlers],
 	);
 
+	const scale = state.viewport.scale;
+
 	return (
 		<div
 			css={{
 				position: "fixed",
 				inset: 0,
+				overflow: "clip",
 			}}
 			onWheel={handleWheel}
 			onMouseDown={handleCanvasMouseDown}
 		>
-			{state.page.objectIds.map((objectId) => {
-				const shape = state.page.shapes.get(objectId);
-				if (shape) {
-					return (
-						<ShapeView key={shape.id} shape={shape} viewport={state.viewport} />
-					);
-				}
+			<div
+				css={{
+					position: "relative",
+					transform: `translate(${-state.viewport.x * scale}px, ${
+						-state.viewport.y * scale
+					}px)`,
+				}}
+			>
+				{state.page.objectIds.map((objectId) => {
+					const shape = state.page.shapes.get(objectId);
+					if (shape) {
+						return (
+							<ShapeView
+								key={shape.id}
+								shape={shape}
+								scale={scale}
+								isLabelEditing={state.isTextEditing(shape.id)}
+							/>
+						);
+					}
 
-				const line = state.page.lines.get(objectId);
-				if (line) {
-					return (
-						<LineView key={line.id} line={line} viewport={state.viewport} />
-					);
-				}
+					const line = state.page.lines.get(objectId);
+					if (line) {
+						return <LineView key={line.id} line={line} scale={scale} />;
+					}
 
-				return null;
-			})}
+					return null;
+				})}
+			</div>
 
 			<ToolPreview />
 			<SelectorRect />

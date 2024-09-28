@@ -1,24 +1,18 @@
-import { type MouseEventHandler, useCallback } from "react";
+import { type MouseEventHandler, memo, useCallback } from "react";
 import {
 	cssVarBackgroundColor,
 	cssVarBaseColor,
 	cssVarMonoBackgroundColor,
 } from "../model/ColorPaletteBase";
 import type { Shape } from "../model/Shape";
-import type { Viewport } from "../model/Viewport";
-import { useCanvasEventHandler, useCanvasState } from "./StoreProvider";
+import { useCanvasEventHandler } from "./StoreProvider";
 
-export function ShapeView({
+export const ShapeView = memo(function ShapeView({
 	shape,
-	viewport,
-}: { shape: Shape; viewport: Viewport }) {
-	const state = useCanvasState();
+	scale,
+	isLabelEditing,
+}: { shape: Shape; scale: number; isLabelEditing: boolean }) {
 	const handlers = useCanvasEventHandler();
-
-	const canvasWidth = shape.width * viewport.scale;
-	const canvasHeight = shape.height * viewport.scale;
-
-	const isLabelEditing = state.isTextEditing(shape.id);
 
 	const handleMouseDown: MouseEventHandler = useCallback(
 		(ev) => {
@@ -62,16 +56,16 @@ export function ShapeView({
 		<div
 			css={{
 				position: "absolute",
-				left: (shape.x - viewport.x) * viewport.scale,
-				top: (shape.y - viewport.y) * viewport.scale,
+				left: shape.x * scale,
+				top: shape.y * scale,
 			}}
 			onMouseDown={handleMouseDown}
 			onDoubleClick={handleDoubleClick}
 		>
 			<svg
-				viewBox={`0 0 ${canvasWidth} ${canvasHeight}`}
-				width={canvasWidth}
-				height={canvasHeight}
+				viewBox={`0 0 ${shape.width * scale} ${shape.height * scale}`}
+				width={shape.width * scale}
+				height={shape.height * scale}
 				css={{
 					overflow: "visible",
 					pointerEvents: "none",
@@ -89,8 +83,8 @@ export function ShapeView({
 					}}
 					x={0}
 					y={0}
-					width={canvasWidth}
-					height={canvasHeight}
+					width={shape.width * scale}
+					height={shape.height * scale}
 					strokeWidth={5}
 				/>
 			</svg>
@@ -98,7 +92,7 @@ export function ShapeView({
 				css={{
 					position: "absolute",
 					width: "100%",
-					fontSize: 24 * viewport.scale,
+					fontSize: 24 * scale,
 					...{
 						"start-outside": { right: "100%", textAlign: "start" as const },
 						start: { left: 0, textAlign: "start" as const },
@@ -160,7 +154,7 @@ export function ShapeView({
 			</div>
 		</div>
 	);
-}
+});
 
 const ZERO_WIDTH_SPACE = "\u200b";
 
