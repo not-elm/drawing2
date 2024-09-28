@@ -428,7 +428,7 @@ export class CanvasStateStore
 		return true;
 	}
 
-	handleSelectionHandleMouseDown(
+	handleSelectionRectHandleMouseDown(
 		canvasX: number,
 		canvasY: number,
 		handle: SelectionRectHandleType,
@@ -562,6 +562,18 @@ export class CanvasStateStore
 		this.handleDragStart(canvasX, canvasY, dragType);
 	}
 
+	handleSelectionLineHandleMouseDown(
+		canvasX: number,
+		canvasY: number,
+		point: 1 | 2,
+	) {
+		const line = this.state.page.lines.get(this.state.selectedShapeIds[0]);
+		assert(isNotNullish(line), "Cannot edit without selecting a line");
+
+		const dragType: DragType = { type: "move-point", line, point };
+		this.handleDragStart(canvasX, canvasY, dragType);
+	}
+
 	handleDragStart(startCanvasX: number, startCanvasY: number, type: DragType) {
 		assert(!this.state.dragging, "Cannot start dragging while dragging");
 
@@ -629,6 +641,37 @@ export class CanvasStateStore
 							this.state.dragType.shapes,
 							this.state.dragType.lines,
 						);
+						break;
+					}
+					case "move-point": {
+						const { point, line } = this.state.dragType;
+						this.update(() => {
+							const currentLine = this.storage.root
+								.get("page")
+								.get("lines")
+								.get(line.id);
+							if (currentLine === undefined) return;
+
+							if (point === 1) {
+								currentLine.set(
+									"x1",
+									line.x1 + currentX - this.state.dragStartX,
+								);
+								currentLine.set(
+									"y1",
+									line.y1 + currentY - this.state.dragStartY,
+								);
+							} else {
+								currentLine.set(
+									"x2",
+									line.x2 + currentX - this.state.dragStartX,
+								);
+								currentLine.set(
+									"y2",
+									line.y2 + currentY - this.state.dragStartY,
+								);
+							}
+						});
 						break;
 					}
 					case "nwse-resize":
@@ -937,10 +980,15 @@ export interface CanvasEventHandlers {
 			shiftKey: boolean;
 		},
 	): boolean;
-	handleSelectionHandleMouseDown(
+	handleSelectionRectHandleMouseDown(
 		canvasX: number,
 		canvasY: number,
 		handle: SelectionRectHandleType,
+	): void;
+	handleSelectionLineHandleMouseDown(
+		canvasX: number,
+		canvasY: number,
+		point: 1 | 2,
 	): void;
 	handleDragStart(
 		startCanvasX: number,
@@ -977,9 +1025,14 @@ export type DragType =
 	| { type: "none" }
 	| { type: "select"; originalSelectedShapeIds: string[] }
 	| {
-			type: "move";
+			type: "move"; // moving multiple objects
 			shapes: Shape[];
 			lines: Line[];
+	  }
+	| {
+			type: "move-point"; // moving a point in a path
+			line: Line;
+			point: 1 | 2;
 	  }
 	| {
 			type: "nwse-resize";
