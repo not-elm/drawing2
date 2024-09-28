@@ -14,6 +14,7 @@ import {
 } from "../model/CanvasStateStore";
 import type { Line } from "../model/Line";
 import type { Shape } from "../model/Shape";
+import { getRestoreViewportService } from "../service/RestoreViewportService";
 
 const context = createContext<CanvasStateStore>(null as never);
 
@@ -47,7 +48,11 @@ async function initializeStore(): Promise<CanvasStateStore> {
 		},
 	});
 	const storage = await room.getStorage();
-	const store = new CanvasStateStore(room, storage);
+	const store = new CanvasStateStore(
+		room,
+		storage,
+		getRestoreViewportService(),
+	);
 	room.subscribe(storage.root, () => store.syncWithLiveBlockStorage(), {
 		isDeep: true,
 	});

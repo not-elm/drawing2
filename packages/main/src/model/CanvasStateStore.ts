@@ -3,6 +3,7 @@ import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
 import { isNotNullish } from "../lib/isNullish";
 import { ClipboardService } from "../service/ClipboardService";
+import type { RestoreViewportService } from "../service/RestoreViewportService";
 import { CanvasState } from "./CanvasState";
 import type { ColorId } from "./ColorPaletteBase";
 import type { FillMode } from "./FillMode";
@@ -21,6 +22,7 @@ export class CanvasStateStore
 	constructor(
 		private readonly room: Room,
 		private readonly storage: { root: LiveObject<Liveblocks["Storage"]> },
+		private readonly restoreViewportService: RestoreViewportService,
 	) {
 		super(
 			new CanvasState({
@@ -44,6 +46,11 @@ export class CanvasStateStore
 				defaultTextAlignY: "center",
 			}),
 		);
+		this.restoreViewportService.restore().then((viewport) => {
+			if (viewport !== null) {
+				this.setState(this.state.copy({ viewport }));
+			}
+		});
 	}
 
 	syncWithLiveBlockStorage() {
@@ -199,6 +206,7 @@ export class CanvasStateStore
 				},
 			}),
 		);
+		this.restoreViewportService.save(this.state.viewport);
 	}
 
 	private setViewportScale(
@@ -221,6 +229,7 @@ export class CanvasStateStore
 				},
 			}),
 		);
+		this.restoreViewportService.save(this.state.viewport);
 	}
 
 	private select(id: string) {
