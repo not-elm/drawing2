@@ -4,6 +4,7 @@ class Dataclass<OwnProps extends Record<string, unknown>> {
 	}
 
 	copy(props: Partial<OwnProps> = {}): this {
+		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 		return new (this as any).constructor({ ...this, ...props });
 	}
 
@@ -18,8 +19,9 @@ class Dataclass<OwnProps extends Record<string, unknown>> {
 	}
 
 	// Actual type of props is `OwnProps`, but cannot use here since this is static method.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 	static create(props: any) {
+		// biome-ignore lint/complexity/noThisInStatic: <explanation>
 		return new this(props);
 	}
 }

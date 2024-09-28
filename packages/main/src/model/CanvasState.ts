@@ -7,7 +7,7 @@ import type { Line } from "./Line";
 import type { Mode } from "./Mode";
 import type { Page } from "./Page";
 import { PropertyPanelState } from "./PropertyPanelState";
-import type { Rect } from "./Rect";
+import { Rect } from "./Rect";
 import type { Shape } from "./Shape";
 import type { TextAlignment } from "./TextAlignment";
 import type { Viewport } from "./Viewport";
@@ -31,12 +31,12 @@ export class CanvasState extends dataclass<{
 	get selectorRect(): Rect | null {
 		if (this.dragType.type !== "select") return null;
 
-		return {
+		return new Rect({
 			x: Math.min(this.dragStartX, this.dragCurrentX),
 			y: Math.min(this.dragStartY, this.dragCurrentY),
 			width: Math.abs(this.dragCurrentX - this.dragStartX),
 			height: Math.abs(this.dragCurrentY - this.dragStartY),
-		};
+		});
 	}
 
 	get selectionRect(): Rect | null {

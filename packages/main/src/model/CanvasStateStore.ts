@@ -324,7 +324,7 @@ export class CanvasStateStore
 					canvasY,
 					this.state.viewport,
 				);
-				if (selectionRect !== null && Rect.includes(selectionRect, x, y)) {
+				if (selectionRect?.isOverlapWithPoint(x, y) ?? false) {
 					this.handleDragStart(canvasX, canvasY, {
 						type: "move",
 						shapes: this.state.selectedShapeIds
@@ -610,8 +610,13 @@ export class CanvasStateStore
 							this.state.dragType.originalSelectedShapeIds.slice();
 
 						for (const shape of this.state.page.shapes.values()) {
-							if (isOverlap(shape, selectionRect)) {
+							if (selectionRect.isOverlapWithRect(shape)) {
 								selectedShapeIds.push(shape.id);
+							}
+						}
+						for (const line of this.state.page.lines.values()) {
+							if (selectionRect.isOverlapWithLine(line)) {
+								selectedShapeIds.push(line.id);
 							}
 						}
 						this.setSelectedShapeIds(selectedShapeIds);
@@ -968,18 +973,6 @@ export interface CanvasEventHandlers {
 	handleFillModeButtonClick(fillMode: FillMode): void;
 }
 
-export function isOverlap(
-	r1: { x: number; y: number; width: number; height: number },
-	r2: { x: number; y: number; width: number; height: number },
-) {
-	return (
-		r1.x < r2.x + r2.width &&
-		r1.x + r1.width > r2.x &&
-		r1.y < r2.y + r2.height &&
-		r1.y + r1.height > r2.y
-	);
-}
-
 export type DragType =
 	| { type: "none" }
 	| { type: "select"; originalSelectedShapeIds: string[] }
@@ -1067,10 +1060,10 @@ export function computeUnionRect(shapes: Shape[], lines: Line[]): Rect | null {
 		maxY = Math.max(maxY, line.y1, line.y2);
 	}
 
-	return {
+	return new Rect({
 		x: minX,
 		y: minY,
 		width: maxX - minX,
 		height: maxY - minY,
-	};
+	});
 }
