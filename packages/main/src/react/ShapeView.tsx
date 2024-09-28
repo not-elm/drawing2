@@ -26,6 +26,7 @@ export function ShapeView({
 				shape.id,
 				ev.clientX,
 				ev.clientY,
+				ev.button,
 				{
 					shiftKey: ev.shiftKey,
 				},
@@ -44,6 +45,7 @@ export function ShapeView({
 				shape.id,
 				ev.clientX,
 				ev.clientY,
+				ev.button,
 				{
 					shiftKey: ev.shiftKey,
 				},

@@ -58,6 +58,7 @@ export function LineView({
 						line.id,
 						ev.clientX,
 						ev.clientY,
+						ev.button,
 						{
 							shiftKey: ev.shiftKey,
 						},

@@ -50,7 +50,7 @@ export function Canvas() {
 		(ev) => {
 			ev.stopPropagation();
 			ev.preventDefault();
-			handlers.handleCanvasMouseDown(ev.clientX, ev.clientY, {
+			handlers.handleCanvasMouseDown(ev.clientX, ev.clientY, ev.button, {
 				shiftKey: ev.shiftKey,
 			});
 		},

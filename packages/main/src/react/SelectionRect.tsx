@@ -96,6 +96,7 @@ export function SelectionRect() {
 							handlers.handleSelectionLineHandleMouseDown(
 								ev.clientX,
 								ev.clientY,
+								ev.button,
 								1,
 							);
 						}}
@@ -114,6 +115,7 @@ export function SelectionRect() {
 							handlers.handleSelectionLineHandleMouseDown(
 								ev.clientX,
 								ev.clientY,
+								ev.button,
 								2,
 							);
 						}}
@@ -132,6 +134,7 @@ export function SelectionRect() {
 							handlers.handleSelectionRectHandleMouseDown(
 								ev.clientX,
 								ev.clientY,
+								ev.button,
 								"top",
 							);
 						}}
@@ -149,6 +152,7 @@ export function SelectionRect() {
 							handlers.handleSelectionRectHandleMouseDown(
 								ev.clientX,
 								ev.clientY,
+								ev.button,
 								"right",
 							);
 						}}
@@ -166,6 +170,7 @@ export function SelectionRect() {
 							handlers.handleSelectionRectHandleMouseDown(
 								ev.clientX,
 								ev.clientY,
+								ev.button,
 								"bottom",
 							);
 						}}
@@ -178,6 +183,7 @@ export function SelectionRect() {
 							handlers.handleSelectionRectHandleMouseDown(
 								ev.clientX,
 								ev.clientY,
+								ev.button,
 								"left",
 							);
 						}}
@@ -191,6 +197,7 @@ export function SelectionRect() {
 							handlers.handleSelectionRectHandleMouseDown(
 								ev.clientX,
 								ev.clientY,
+								ev.button,
 								"topLeft",
 							);
 						}}
@@ -205,6 +212,7 @@ export function SelectionRect() {
 							handlers.handleSelectionRectHandleMouseDown(
 								ev.clientX,
 								ev.clientY,
+								ev.button,
 								"topRight",
 							);
 						}}
@@ -219,6 +227,7 @@ export function SelectionRect() {
 							handlers.handleSelectionRectHandleMouseDown(
 								ev.clientX,
 								ev.clientY,
+								ev.button,
 								"bottomRight",
 							);
 						}}
@@ -233,6 +242,7 @@ export function SelectionRect() {
 							handlers.handleSelectionRectHandleMouseDown(
 								ev.clientX,
 								ev.clientY,
+								ev.button,
 								"bottomLeft",
 							);
 						}}

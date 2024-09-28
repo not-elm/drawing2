@@ -323,45 +323,51 @@ export class CanvasStateStore
 	handleCanvasMouseDown(
 		canvasX: number,
 		canvasY: number,
+		mouseButton: number,
 		modifiers: { shiftKey: boolean },
 	) {
-		switch (this.state.mode) {
-			case "select": {
-				const selectionRect = this.state.selectionRect;
-				const [x, y] = fromCanvasCoordinate(
-					canvasX,
-					canvasY,
-					this.state.viewport,
-				);
-				if (selectionRect?.isOverlapWithPoint(x, y) ?? false) {
-					this.handleDragStart(canvasX, canvasY, {
-						type: "move",
-						shapes: this.state.selectedShapeIds
-							.map((id) => this.state.page.shapes.get(id))
-							.filter(isNotNullish),
-						lines: this.state.selectedShapeIds
-							.map((id) => this.state.page.lines.get(id))
-							.filter(isNotNullish),
-					});
-				} else {
-					if (!modifiers.shiftKey) {
-						this.clearSelection();
+		switch (mouseButton) {
+			case MouseButton.Left: {
+				switch (this.state.mode) {
+					case "select": {
+						const selectionRect = this.state.selectionRect;
+						const [x, y] = fromCanvasCoordinate(
+							canvasX,
+							canvasY,
+							this.state.viewport,
+						);
+						if (selectionRect?.isOverlapWithPoint(x, y) ?? false) {
+							this.handleDragStart(canvasX, canvasY, {
+								type: "move",
+								shapes: this.state.selectedShapeIds
+									.map((id) => this.state.page.shapes.get(id))
+									.filter(isNotNullish),
+								lines: this.state.selectedShapeIds
+									.map((id) => this.state.page.lines.get(id))
+									.filter(isNotNullish),
+							});
+						} else {
+							if (!modifiers.shiftKey) {
+								this.clearSelection();
+							}
+							this.handleDragStart(canvasX, canvasY, {
+								type: "select",
+								originalSelectedShapeIds: this.state.selectedShapeIds.slice(),
+							});
+						}
+						break;
 					}
-					this.handleDragStart(canvasX, canvasY, {
-						type: "select",
-						originalSelectedShapeIds: this.state.selectedShapeIds.slice(),
-					});
+					case "line":
+					case "shape": {
+						this.handleDragStart(canvasX, canvasY, { type: "none" });
+						break;
+					}
+					case "text": {
+						this.setMode("select");
+						this.clearSelection();
+						break;
+					}
 				}
-				break;
-			}
-			case "line":
-			case "shape": {
-				this.handleDragStart(canvasX, canvasY, { type: "none" });
-				break;
-			}
-			case "text": {
-				this.setMode("select");
-				this.clearSelection();
 				break;
 			}
 		}
@@ -383,46 +389,51 @@ export class CanvasStateStore
 		id: string,
 		canvasX: number,
 		canvasY: number,
+		mouseButton: number,
 		modifiers: { shiftKey: boolean },
 	): boolean {
-		switch (this.state.mode) {
-			case "select": {
-				if (modifiers.shiftKey) {
-					this.toggleSelect(id);
-				} else {
-					if (this.state.selectedShapeIds.includes(id)) {
-						// Do nothing
-					} else {
-						this.clearSelection();
-						this.select(id);
+		switch (mouseButton) {
+			case MouseButton.Left: {
+				switch (this.state.mode) {
+					case "select": {
+						if (modifiers.shiftKey) {
+							this.toggleSelect(id);
+						} else {
+							if (this.state.selectedShapeIds.includes(id)) {
+								// Do nothing
+							} else {
+								this.clearSelection();
+								this.select(id);
+							}
+						}
+						this.handleDragStart(canvasX, canvasY, {
+							type: "move",
+							shapes: this.state.selectedShapeIds
+								.map((id) => this.state.page.shapes.get(id))
+								.filter(isNotNullish),
+							lines: this.state.selectedShapeIds
+								.map((id) => this.state.page.lines.get(id))
+								.filter(isNotNullish),
+						});
+						return true;
+					}
+					case "text": {
+						this.setMode("select");
+						this.handleDragStart(canvasX, canvasY, {
+							type: "move",
+							shapes: this.state.selectedShapeIds
+								.map((id) => this.state.page.shapes.get(id))
+								.filter(isNotNullish),
+							lines: this.state.selectedShapeIds
+								.map((id) => this.state.page.lines.get(id))
+								.filter(isNotNullish),
+						});
+						return true;
 					}
 				}
-				this.handleDragStart(canvasX, canvasY, {
-					type: "move",
-					shapes: this.state.selectedShapeIds
-						.map((id) => this.state.page.shapes.get(id))
-						.filter(isNotNullish),
-					lines: this.state.selectedShapeIds
-						.map((id) => this.state.page.lines.get(id))
-						.filter(isNotNullish),
-				});
-				return true;
-			}
-			case "text": {
-				this.setMode("select");
-				this.handleDragStart(canvasX, canvasY, {
-					type: "move",
-					shapes: this.state.selectedShapeIds
-						.map((id) => this.state.page.shapes.get(id))
-						.filter(isNotNullish),
-					lines: this.state.selectedShapeIds
-						.map((id) => this.state.page.lines.get(id))
-						.filter(isNotNullish),
-				});
-				return true;
+				break;
 			}
 		}
-
 		return false;
 	}
 
@@ -430,157 +441,174 @@ export class CanvasStateStore
 		id: string,
 		canvasX: number,
 		canvasY: number,
+		mouseButton: number,
 		modifiers: { shiftKey: boolean },
 	) {
-		this.setSelectedShapeIds([id]);
-		this.setMode("text");
-		return true;
+		switch (mouseButton) {
+			case MouseButton.Left: {
+				this.setSelectedShapeIds([id]);
+				this.setMode("text");
+				return true;
+			}
+		}
 	}
 
 	handleSelectionRectHandleMouseDown(
 		canvasX: number,
 		canvasY: number,
+		mouseButton: number,
 		handle: SelectionRectHandleType,
 	) {
-		const selectionRect = computeUnionRect(
-			this.state.selectedShapeIds
-				.map((id) => this.state.page.shapes.get(id))
-				.filter(isNotNullish),
-			this.state.selectedShapeIds
-				.map((id) => this.state.page.lines.get(id))
-				.filter(isNotNullish),
-		);
-		assert(selectionRect !== null, "Cannot resize without a selection");
-
-		let dragType: DragType;
-		switch (handle) {
-			case "center": {
-				dragType = {
-					type: "move",
-					shapes: this.state.selectedShapeIds
+		switch (mouseButton) {
+			case MouseButton.Left: {
+				const selectionRect = computeUnionRect(
+					this.state.selectedShapeIds
 						.map((id) => this.state.page.shapes.get(id))
 						.filter(isNotNullish),
-					lines: this.state.selectedShapeIds
+					this.state.selectedShapeIds
 						.map((id) => this.state.page.lines.get(id))
 						.filter(isNotNullish),
-				};
+				);
+				assert(selectionRect !== null, "Cannot resize without a selection");
+
+				let dragType: DragType;
+				switch (handle) {
+					case "center": {
+						dragType = {
+							type: "move",
+							shapes: this.state.selectedShapeIds
+								.map((id) => this.state.page.shapes.get(id))
+								.filter(isNotNullish),
+							lines: this.state.selectedShapeIds
+								.map((id) => this.state.page.lines.get(id))
+								.filter(isNotNullish),
+						};
+						break;
+					}
+					case "topLeft":
+						dragType = {
+							type: "nwse-resize",
+							originX: selectionRect.x + selectionRect.width,
+							originY: selectionRect.y + selectionRect.height,
+							shapes: this.state.selectedShapeIds
+								.map((id) => this.state.page.shapes.get(id))
+								.filter(isNotNullish),
+							lines: this.state.selectedShapeIds
+								.map((id) => this.state.page.lines.get(id))
+								.filter(isNotNullish),
+						};
+						break;
+					case "top":
+						dragType = {
+							type: "ns-resize",
+							originY: selectionRect.y + selectionRect.height,
+							shapes: this.state.selectedShapeIds
+								.map((id) => this.state.page.shapes.get(id))
+								.filter(isNotNullish),
+							lines: this.state.selectedShapeIds
+								.map((id) => this.state.page.lines.get(id))
+								.filter(isNotNullish),
+						};
+						break;
+					case "topRight":
+						dragType = {
+							type: "nesw-resize",
+							originX: selectionRect.x,
+							originY: selectionRect.y + selectionRect.height,
+							shapes: this.state.selectedShapeIds
+								.map((id) => this.state.page.shapes.get(id))
+								.filter(isNotNullish),
+							lines: this.state.selectedShapeIds
+								.map((id) => this.state.page.lines.get(id))
+								.filter(isNotNullish),
+						};
+						break;
+					case "right":
+						dragType = {
+							type: "ew-resize",
+							originX: selectionRect.x,
+							shapes: this.state.selectedShapeIds
+								.map((id) => this.state.page.shapes.get(id))
+								.filter(isNotNullish),
+							lines: this.state.selectedShapeIds
+								.map((id) => this.state.page.lines.get(id))
+								.filter(isNotNullish),
+						};
+						break;
+					case "bottomRight":
+						dragType = {
+							type: "nwse-resize",
+							originX: selectionRect.x,
+							originY: selectionRect.y,
+							shapes: this.state.selectedShapeIds
+								.map((id) => this.state.page.shapes.get(id))
+								.filter(isNotNullish),
+							lines: this.state.selectedShapeIds
+								.map((id) => this.state.page.lines.get(id))
+								.filter(isNotNullish),
+						};
+						break;
+					case "bottomLeft":
+						dragType = {
+							type: "nesw-resize",
+							originX: selectionRect.x + selectionRect.width,
+							originY: selectionRect.y,
+							shapes: this.state.selectedShapeIds
+								.map((id) => this.state.page.shapes.get(id))
+								.filter(isNotNullish),
+							lines: this.state.selectedShapeIds
+								.map((id) => this.state.page.lines.get(id))
+								.filter(isNotNullish),
+						};
+						break;
+					case "left":
+						dragType = {
+							type: "ew-resize",
+							originX: selectionRect.x + selectionRect.width,
+							shapes: this.state.selectedShapeIds
+								.map((id) => this.state.page.shapes.get(id))
+								.filter(isNotNullish),
+							lines: this.state.selectedShapeIds
+								.map((id) => this.state.page.lines.get(id))
+								.filter(isNotNullish),
+						};
+						break;
+					case "bottom":
+						dragType = {
+							type: "ns-resize",
+							originY: selectionRect.y,
+							shapes: this.state.selectedShapeIds
+								.map((id) => this.state.page.shapes.get(id))
+								.filter(isNotNullish),
+							lines: this.state.selectedShapeIds
+								.map((id) => this.state.page.lines.get(id))
+								.filter(isNotNullish),
+						};
+						break;
+				}
+
+				this.handleDragStart(canvasX, canvasY, dragType);
 				break;
 			}
-			case "topLeft":
-				dragType = {
-					type: "nwse-resize",
-					originX: selectionRect.x + selectionRect.width,
-					originY: selectionRect.y + selectionRect.height,
-					shapes: this.state.selectedShapeIds
-						.map((id) => this.state.page.shapes.get(id))
-						.filter(isNotNullish),
-					lines: this.state.selectedShapeIds
-						.map((id) => this.state.page.lines.get(id))
-						.filter(isNotNullish),
-				};
-				break;
-			case "top":
-				dragType = {
-					type: "ns-resize",
-					originY: selectionRect.y + selectionRect.height,
-					shapes: this.state.selectedShapeIds
-						.map((id) => this.state.page.shapes.get(id))
-						.filter(isNotNullish),
-					lines: this.state.selectedShapeIds
-						.map((id) => this.state.page.lines.get(id))
-						.filter(isNotNullish),
-				};
-				break;
-			case "topRight":
-				dragType = {
-					type: "nesw-resize",
-					originX: selectionRect.x,
-					originY: selectionRect.y + selectionRect.height,
-					shapes: this.state.selectedShapeIds
-						.map((id) => this.state.page.shapes.get(id))
-						.filter(isNotNullish),
-					lines: this.state.selectedShapeIds
-						.map((id) => this.state.page.lines.get(id))
-						.filter(isNotNullish),
-				};
-				break;
-			case "right":
-				dragType = {
-					type: "ew-resize",
-					originX: selectionRect.x,
-					shapes: this.state.selectedShapeIds
-						.map((id) => this.state.page.shapes.get(id))
-						.filter(isNotNullish),
-					lines: this.state.selectedShapeIds
-						.map((id) => this.state.page.lines.get(id))
-						.filter(isNotNullish),
-				};
-				break;
-			case "bottomRight":
-				dragType = {
-					type: "nwse-resize",
-					originX: selectionRect.x,
-					originY: selectionRect.y,
-					shapes: this.state.selectedShapeIds
-						.map((id) => this.state.page.shapes.get(id))
-						.filter(isNotNullish),
-					lines: this.state.selectedShapeIds
-						.map((id) => this.state.page.lines.get(id))
-						.filter(isNotNullish),
-				};
-				break;
-			case "bottomLeft":
-				dragType = {
-					type: "nesw-resize",
-					originX: selectionRect.x + selectionRect.width,
-					originY: selectionRect.y,
-					shapes: this.state.selectedShapeIds
-						.map((id) => this.state.page.shapes.get(id))
-						.filter(isNotNullish),
-					lines: this.state.selectedShapeIds
-						.map((id) => this.state.page.lines.get(id))
-						.filter(isNotNullish),
-				};
-				break;
-			case "left":
-				dragType = {
-					type: "ew-resize",
-					originX: selectionRect.x + selectionRect.width,
-					shapes: this.state.selectedShapeIds
-						.map((id) => this.state.page.shapes.get(id))
-						.filter(isNotNullish),
-					lines: this.state.selectedShapeIds
-						.map((id) => this.state.page.lines.get(id))
-						.filter(isNotNullish),
-				};
-				break;
-			case "bottom":
-				dragType = {
-					type: "ns-resize",
-					originY: selectionRect.y,
-					shapes: this.state.selectedShapeIds
-						.map((id) => this.state.page.shapes.get(id))
-						.filter(isNotNullish),
-					lines: this.state.selectedShapeIds
-						.map((id) => this.state.page.lines.get(id))
-						.filter(isNotNullish),
-				};
-				break;
 		}
-
-		this.handleDragStart(canvasX, canvasY, dragType);
 	}
 
 	handleSelectionLineHandleMouseDown(
 		canvasX: number,
 		canvasY: number,
+		mouseButton: number,
 		point: 1 | 2,
 	) {
-		const line = this.state.page.lines.get(this.state.selectedShapeIds[0]);
-		assert(isNotNullish(line), "Cannot edit without selecting a line");
+		switch (mouseButton) {
+			case MouseButton.Left: {
+				const line = this.state.page.lines.get(this.state.selectedShapeIds[0]);
+				assert(isNotNullish(line), "Cannot edit without selecting a line");
 
-		const dragType: DragType = { type: "move-point", line, point };
-		this.handleDragStart(canvasX, canvasY, dragType);
+				const dragType: DragType = { type: "move-point", line, point };
+				this.handleDragStart(canvasX, canvasY, dragType);
+				break;
+			}
+		}
 	}
 
 	handleDragStart(startCanvasX: number, startCanvasY: number, type: DragType) {
@@ -971,6 +999,7 @@ export interface CanvasEventHandlers {
 	handleCanvasMouseDown(
 		canvasX: number,
 		canvasY: number,
+		mouseButton: number,
 		modifiers: { shiftKey: boolean },
 	): void;
 	handleCanvasMouseMove(canvasX: number, canvasY: number): void;
@@ -979,6 +1008,7 @@ export interface CanvasEventHandlers {
 		id: string,
 		canvasX: number,
 		canvasY: number,
+		mouseButton: number,
 		modifiers: {
 			shiftKey: boolean;
 		},
@@ -987,6 +1017,7 @@ export interface CanvasEventHandlers {
 		id: string,
 		canvasX: number,
 		canvasY: number,
+		mouseButton: number,
 		modifiers: {
 			shiftKey: boolean;
 		},
@@ -994,11 +1025,13 @@ export interface CanvasEventHandlers {
 	handleSelectionRectHandleMouseDown(
 		canvasX: number,
 		canvasY: number,
+		mouseButton: number,
 		handle: SelectionRectHandleType,
 	): void;
 	handleSelectionLineHandleMouseDown(
 		canvasX: number,
 		canvasY: number,
+		mouseButton: number,
 		point: 1 | 2,
 	): void;
 	handleDragStart(
@@ -1131,3 +1164,9 @@ export function computeUnionRect(shapes: Shape[], lines: Line[]): Rect | null {
 		height: maxY - minY,
 	});
 }
+
+export const MouseButton = {
+	Left: 0,
+	Middle: 1,
+	Right: 2,
+};
