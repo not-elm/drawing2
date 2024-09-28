@@ -1,34 +1,27 @@
 import styled from "@emotion/styled";
-import type { Rect } from "../model/Rect";
-import type { Viewport } from "../model/Viewport";
-import { useCanvasEventHandler } from "./StoreProvider";
+import { isNotNullish } from "../lib/isNullish";
+import { useCanvasEventHandler, useCanvasState } from "./StoreProvider";
 
-export function SelectionRect({
-	x,
-	y,
-	width,
-	height,
-	rects,
-	viewport,
-}: {
-	x: number;
-	y: number;
-	width: number;
-	height: number;
-	rects: Rect[];
-	viewport: Viewport;
-}) {
+export function SelectionRect() {
+	const state = useCanvasState();
 	const handlers = useCanvasEventHandler();
+	const selectionRect = state.selectionRect;
+	if (selectionRect === null) return null;
+
+	const { x, y, width, height } = selectionRect;
+	const rects = state.selectedShapeIds
+		.map((id) => state.page.rects.get(id))
+		.filter(isNotNullish);
 
 	return (
 		<div
 			css={{
 				"--color-selection": "#2568cd",
 				position: "absolute",
-				left: (x - viewport.x) * viewport.scale,
-				top: (y - viewport.y) * viewport.scale,
-				width: width * viewport.scale,
-				height: height * viewport.scale,
+				left: (x - state.viewport.x) * state.viewport.scale,
+				top: (y - state.viewport.y) * state.viewport.scale,
+				width: width * state.viewport.scale,
+				height: height * state.viewport.scale,
 				pointerEvents: "none",
 			}}
 		>
@@ -38,16 +31,6 @@ export function SelectionRect({
 					inset: 0,
 					boxSizing: "border-box",
 					outline: "2px solid var(--color-selection)",
-					pointerEvents: "all",
-				}}
-				onMouseDown={(ev) => {
-					ev.stopPropagation();
-					ev.preventDefault();
-					handlers.handleSelectionHandleMouseDown(
-						ev.clientX,
-						ev.clientY,
-						"center",
-					);
 				}}
 			/>
 			{rects.map((rect) => (
@@ -55,128 +38,134 @@ export function SelectionRect({
 					key={rect.id}
 					css={{
 						position: "absolute",
-						left: (rect.x - x) * viewport.scale,
-						top: (rect.y - y) * viewport.scale,
-						width: rect.width * viewport.scale,
-						height: rect.height * viewport.scale,
+						left: (rect.x - x) * state.viewport.scale,
+						top: (rect.y - y) * state.viewport.scale,
+						width: rect.width * state.viewport.scale,
+						height: rect.height * state.viewport.scale,
 						boxSizing: "border-box",
 						border: "1px solid var(--color-selection)",
-						pointerEvents: "all",
-					}}
-					onMouseDown={(ev) => {
-						ev.stopPropagation();
-						ev.preventDefault();
-						handlers.handleShapeMouseDown(rect.id, ev.clientX, ev.clientY, {
-							shiftKey: ev.shiftKey,
-						});
 					}}
 				/>
 			))}
-			<ResizeHandle
-				css={{ top: "0%", left: "0%", width: "100%", cursor: "ns-resize" }}
-				onMouseDown={(ev) => {
-					ev.stopPropagation();
-					ev.preventDefault();
-					handlers.handleSelectionHandleMouseDown(
-						ev.clientX,
-						ev.clientY,
-						"top",
-					);
-				}}
-			/>
-			<ResizeHandle
-				css={{ top: "0%", left: "100%", height: "100%", cursor: "ew-resize" }}
-				onMouseDown={(ev) => {
-					ev.stopPropagation();
-					ev.preventDefault();
-					handlers.handleSelectionHandleMouseDown(
-						ev.clientX,
-						ev.clientY,
-						"right",
-					);
-				}}
-			/>
-			<ResizeHandle
-				css={{ top: "100%", left: "0%", width: "100%", cursor: "ns-resize" }}
-				onMouseDown={(ev) => {
-					ev.stopPropagation();
-					ev.preventDefault();
-					handlers.handleSelectionHandleMouseDown(
-						ev.clientX,
-						ev.clientY,
-						"bottom",
-					);
-				}}
-			/>
-			<ResizeHandle
-				css={{ top: "0%", left: "0%", height: "100%", cursor: "ew-resize" }}
-				onMouseDown={(ev) => {
-					ev.stopPropagation();
-					ev.preventDefault();
-					handlers.handleSelectionHandleMouseDown(
-						ev.clientX,
-						ev.clientY,
-						"left",
-					);
-				}}
-			/>
+			{state.mode === "select" && (
+				<>
+					<ResizeHandle
+						css={{ top: "0%", left: "0%", width: "100%", cursor: "ns-resize" }}
+						onMouseDown={(ev) => {
+							ev.stopPropagation();
+							ev.preventDefault();
+							handlers.handleSelectionHandleMouseDown(
+								ev.clientX,
+								ev.clientY,
+								"top",
+							);
+						}}
+					/>
+					<ResizeHandle
+						css={{
+							top: "0%",
+							left: "100%",
+							height: "100%",
+							cursor: "ew-resize",
+						}}
+						onMouseDown={(ev) => {
+							ev.stopPropagation();
+							ev.preventDefault();
+							handlers.handleSelectionHandleMouseDown(
+								ev.clientX,
+								ev.clientY,
+								"right",
+							);
+						}}
+					/>
+					<ResizeHandle
+						css={{
+							top: "100%",
+							left: "0%",
+							width: "100%",
+							cursor: "ns-resize",
+						}}
+						onMouseDown={(ev) => {
+							ev.stopPropagation();
+							ev.preventDefault();
+							handlers.handleSelectionHandleMouseDown(
+								ev.clientX,
+								ev.clientY,
+								"bottom",
+							);
+						}}
+					/>
+					<ResizeHandle
+						css={{ top: "0%", left: "0%", height: "100%", cursor: "ew-resize" }}
+						onMouseDown={(ev) => {
+							ev.stopPropagation();
+							ev.preventDefault();
+							handlers.handleSelectionHandleMouseDown(
+								ev.clientX,
+								ev.clientY,
+								"left",
+							);
+						}}
+					/>
 
-			<ResizeHandle
-				css={{ top: "0%", left: "0%", cursor: "nwse-resize" }}
-				onMouseDown={(ev) => {
-					ev.stopPropagation();
-					ev.preventDefault();
-					handlers.handleSelectionHandleMouseDown(
-						ev.clientX,
-						ev.clientY,
-						"topLeft",
-					);
-				}}
-			>
-				<CornerResizeHandle />
-			</ResizeHandle>
-			<ResizeHandle
-				css={{ top: "0%", left: "100%", cursor: "nesw-resize" }}
-				onMouseDown={(ev) => {
-					ev.stopPropagation();
-					ev.preventDefault();
-					handlers.handleSelectionHandleMouseDown(
-						ev.clientX,
-						ev.clientY,
-						"topRight",
-					);
-				}}
-			>
-				<CornerResizeHandle />
-			</ResizeHandle>
-			<ResizeHandle
-				css={{ top: "100%", left: "100%", cursor: "nwse-resize" }}
-				onMouseDown={(ev) => {
-					ev.stopPropagation();
-					ev.preventDefault();
-					handlers.handleSelectionHandleMouseDown(
-						ev.clientX,
-						ev.clientY,
-						"bottomRight",
-					);
-				}}
-			>
-				<CornerResizeHandle />
-			</ResizeHandle>
-			<ResizeHandle
-				css={{ top: "100%", left: "0%", cursor: "nesw-resize" }}
-				onMouseDown={(ev) => {
-					ev.stopPropagation();
-					ev.preventDefault();
-					handlers.handleSelectionHandleMouseDown(
-						ev.clientX,
-						ev.clientY,
-						"bottomLeft",
-					);
-				}}
-			>
-				<CornerResizeHandle />
-			</ResizeHandle>
+					<ResizeHandle
+						css={{ top: "0%", left: "0%", cursor: "nwse-resize" }}
+						onMouseDown={(ev) => {
+							ev.stopPropagation();
+							ev.preventDefault();
+							handlers.handleSelectionHandleMouseDown(
+								ev.clientX,
+								ev.clientY,
+								"topLeft",
+							);
+						}}
+					>
+						<CornerResizeHandle />
+					</ResizeHandle>
+					<ResizeHandle
+						css={{ top: "0%", left: "100%", cursor: "nesw-resize" }}
+						onMouseDown={(ev) => {
+							ev.stopPropagation();
+							ev.preventDefault();
+							handlers.handleSelectionHandleMouseDown(
+								ev.clientX,
+								ev.clientY,
+								"topRight",
+							);
+						}}
+					>
+						<CornerResizeHandle />
+					</ResizeHandle>
+					<ResizeHandle
+						css={{ top: "100%", left: "100%", cursor: "nwse-resize" }}
+						onMouseDown={(ev) => {
+							ev.stopPropagation();
+							ev.preventDefault();
+							handlers.handleSelectionHandleMouseDown(
+								ev.clientX,
+								ev.clientY,
+								"bottomRight",
+							);
+						}}
+					>
+						<CornerResizeHandle />
+					</ResizeHandle>
+					<ResizeHandle
+						css={{ top: "100%", left: "0%", cursor: "nesw-resize" }}
+						onMouseDown={(ev) => {
+							ev.stopPropagation();
+							ev.preventDefault();
+							handlers.handleSelectionHandleMouseDown(
+								ev.clientX,
+								ev.clientY,
+								"bottomLeft",
+							);
+						}}
+					>
+						<CornerResizeHandle />
+					</ResizeHandle>
+				</>
+			)}
 		</div>
 	);
 }

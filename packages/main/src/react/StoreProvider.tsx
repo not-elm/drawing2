@@ -7,11 +7,11 @@ import {
 	useState,
 	useSyncExternalStore,
 } from "react";
+import type { CanvasState2 } from "../model/CanvasState";
 import {
 	type CanvasEventHandlers,
-	type CanvasState,
 	CanvasStateStore,
-} from "../model/CanvasState";
+} from "../model/CanvasStateStore";
 import type { Line } from "../model/Line";
 import type { Rect } from "../model/Rect";
 
@@ -61,7 +61,7 @@ async function initializeStore(): Promise<CanvasStateStore> {
 	return store;
 }
 
-export function useCanvasState(): CanvasState {
+export function useCanvasState(): CanvasState2 {
 	const store = useContext(context);
 
 	return useSyncExternalStore(

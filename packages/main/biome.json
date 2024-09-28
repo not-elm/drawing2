@@ -5,7 +5,8 @@
 				"noBannedTypes": "off"
 			},
 			"a11y": {
-				"useKeyWithClickEvents": "off"
+				"useKeyWithClickEvents": "off",
+				"noAutofocus": "off"
 			},
 			"style": {
 				"noParameterAssign": "off"

@@ -6,8 +6,8 @@ import {
 } from "react";
 import { LineView } from "./LineView";
 import { RectView } from "./RectView";
-import { SelectionRectView } from "./SelectionRectView";
-import { SelectionView } from "./SelectionView";
+import { SelectionRect } from "./SelectionRect";
+import { SelectorRect } from "./SelectorRect";
 import { useCanvasEventHandler, useCanvasState } from "./StoreProvider";
 import { ToolPreview } from "./ToolPreview";
 
@@ -67,35 +67,15 @@ export function Canvas() {
 			onMouseDown={handleCanvasMouseDown}
 		>
 			{[...state.page.rects.values()].map((rect) => (
-				<RectView
-					key={rect.id}
-					rect={rect}
-					viewport={state.viewport}
-					onMouseDown={
-						state.mode === "select"
-							? (ev) => {
-									ev.stopPropagation();
-									ev.preventDefault();
-									handlers.handleShapeMouseDown(
-										rect.id,
-										ev.clientX,
-										ev.clientY,
-										{
-											shiftKey: ev.shiftKey,
-										},
-									);
-								}
-							: undefined
-					}
-				/>
+				<RectView key={rect.id} rect={rect} viewport={state.viewport} />
 			))}
 			{[...state.page.lines.values()].map((line) => (
 				<LineView key={line.id} line={line} viewport={state.viewport} />
 			))}
 
 			<ToolPreview />
-			<SelectionRectView />
-			<SelectionView />
+			<SelectorRect />
+			<SelectionRect />
 		</div>
 	);
 }

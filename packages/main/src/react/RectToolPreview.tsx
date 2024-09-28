@@ -16,7 +16,7 @@ export function RectToolPreview() {
 	const x = Math.min(state.dragStartX, state.dragCurrentX);
 	const y = Math.min(state.dragStartY, state.dragCurrentY);
 
-	const rect = Rect.create(x, y, width, height);
+	const rect = Rect.create(x, y, width, height, "");
 
 	return <RectView rect={rect} viewport={state.viewport} />;
 }

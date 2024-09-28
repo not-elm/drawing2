@@ -1,4 +1,4 @@
-import { toCanvasCoordinate } from "../model/CanvasState";
+import { toCanvasCoordinate } from "../model/CanvasStateStore";
 import type { Line } from "../model/Line";
 import type { Viewport } from "../model/Viewport";
 import { useCanvasEventHandler } from "./StoreProvider";
@@ -50,11 +50,19 @@ export function LineView({
 					pointerEvents: "all",
 				}}
 				onMouseDown={(ev) => {
-					ev.stopPropagation();
-					ev.preventDefault();
-					handlers.handleShapeMouseDown(line.id, ev.clientX, ev.clientY, {
-						shiftKey: ev.shiftKey,
-					});
+					const handled = handlers.handleShapeMouseDown(
+						line.id,
+						ev.clientX,
+						ev.clientY,
+						{
+							shiftKey: ev.shiftKey,
+						},
+					);
+
+					if (handled) {
+						ev.stopPropagation();
+						ev.preventDefault();
+					}
 				}}
 			/>
 		</svg>
