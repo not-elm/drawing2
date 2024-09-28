@@ -25,6 +25,7 @@ export function ShapeToolPreview() {
 		state.defaultTextAlignX,
 		state.defaultTextAlignY,
 		state.defaultColorId,
+		state.defaultFillMode,
 	);
 
 	return <ShapeView shape={rect} viewport={state.viewport} />;

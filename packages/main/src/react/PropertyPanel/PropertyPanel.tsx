@@ -2,6 +2,7 @@ import { type MouseEventHandler, useCallback } from "react";
 import { Card } from "../Card";
 import { useCanvasState } from "../StoreProvider";
 import { ColorSection } from "./ColorSection";
+import { FillModeSection } from "./FillModeSection";
 import { TextAlignmentSection } from "./TextAlignmentSection";
 
 export function PropertyPanel() {
@@ -13,6 +14,7 @@ export function PropertyPanel() {
 	return (
 		<Card onMouseDown={handleMouseDown}>
 			{state.colorSectionVisible && <ColorSection />}
+			{state.fillModeSectionVisible && <FillModeSection />}
 			{state.textAlignSectionVisible && <TextAlignmentSection />}
 		</Card>
 	);

@@ -1,9 +1,13 @@
 import { type MouseEventHandler, useCallback } from "react";
-import { type ColorId, cssVarBaseColor } from "../../model/ColorPaletteBase";
+import {
+	cssVarBackgroundColor,
+	cssVarBaseColor,
+} from "../../model/ColorPaletteBase";
+import type { FillMode } from "../../model/FillMode";
 import { CardSection } from "../Card";
 import { useCanvasEventHandler, useCanvasState } from "../StoreProvider";
 
-export function ColorSection() {
+export function FillModeSection() {
 	return (
 		<CardSection
 			css={{ display: "flex", flexDirection: "row", justifyContent: "center" }}
@@ -13,44 +17,41 @@ export function ColorSection() {
 					position: "relative",
 					display: "grid",
 					gap: 4,
-					gridTemplateColumns: "repeat(4, 1fr)",
-					gridTemplateRows: "repeat(3, 1fr)",
+					gridTemplateColumns: "repeat(3, 1fr)",
 				}}
 			>
-				<ColorButton colorId={0} />
-				<ColorButton colorId={1} />
-				<ColorButton colorId={2} />
-				<ColorButton colorId={3} />
-				<ColorButton colorId={4} />
-				<ColorButton colorId={5} />
-				<ColorButton colorId={6} />
-				<ColorButton colorId={7} />
-				<ColorButton colorId={8} />
-				<ColorButton colorId={9} />
-				<ColorButton colorId={10} />
-				<ColorButton colorId={11} />
+				<ColorButton fillMode="none" title="透明" />
+				<ColorButton fillMode="mono" title="モノクロで塗りつぶし" />
+				<ColorButton fillMode="color" title="同系色で塗りつぶし" />
 			</div>
 		</CardSection>
 	);
 }
 
-function ColorButton({ colorId }: { colorId: ColorId }) {
-	const state = useCanvasState().propertyPanelState;
+function ColorButton({
+	fillMode,
+	title,
+}: { fillMode: FillMode; title: string }) {
+	const state = useCanvasState();
+	const propertyPanelState = state.propertyPanelState;
 	const handlers = useCanvasEventHandler();
-	const selected = state.colorId === colorId;
+	const selected = propertyPanelState.fillMode === fillMode;
 
 	const handleClick: MouseEventHandler = useCallback(
 		(ev) => {
 			ev.stopPropagation();
-			handlers.handleColorButtonClick(colorId);
+			handlers.handleFillModeButtonClick(fillMode);
 		},
-		[handlers, colorId],
+		[handlers, fillMode],
 	);
+
+	const colorId = propertyPanelState.colorId ?? state.defaultColorId;
 
 	return (
 		<button
 			onClick={handleClick}
 			type="button"
+			title={title}
 			aria-selected={selected}
 			css={{
 				position: "relative",
@@ -72,7 +73,13 @@ function ColorButton({ colorId }: { colorId: ColorId }) {
 					position: "absolute",
 					inset: "8px",
 					borderRadius: "50%",
-					background: cssVarBaseColor(colorId),
+					border: "2px solid",
+					borderColor: cssVarBaseColor(colorId),
+					...{
+						none: { borderStyle: "dashed", opacity: 0.3 },
+						mono: { background: "#fff" },
+						color: { background: cssVarBackgroundColor(colorId) },
+					}[fillMode],
 				},
 
 				"&[aria-selected='true']": {

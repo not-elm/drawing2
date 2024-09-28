@@ -1,6 +1,8 @@
 import { dataclass } from "../lib/dataclass";
 import { isNotNullish } from "../lib/isNullish";
 import { type DragType, computeUnionRect } from "./CanvasStateStore";
+import type { ColorId } from "./ColorPaletteBase";
+import type { FillMode } from "./FillMode";
 import type { Line } from "./Line";
 import type { Mode } from "./Mode";
 import type { Page } from "./Page";
@@ -21,7 +23,8 @@ export class CanvasState extends dataclass<{
 	readonly dragStartY: number;
 	readonly dragCurrentX: number;
 	readonly dragCurrentY: number;
-	readonly defaultColorId: number;
+	readonly defaultColorId: ColorId;
+	readonly defaultFillMode: FillMode;
 	readonly defaultTextAlignX: TextAlignment;
 	readonly defaultTextAlignY: TextAlignment;
 }>() {
@@ -69,6 +72,9 @@ export class CanvasState extends dataclass<{
 			...selectedShapes.map((shape) => shape.colorId),
 			...selectedLines.map((shape) => shape.colorId),
 		]);
+		const fillModes = new Set([
+			...selectedShapes.map((shape) => shape.fillMode),
+		]);
 
 		return new PropertyPanelState({
 			colorSectionVisible: true,
@@ -77,6 +83,14 @@ export class CanvasState extends dataclass<{
 					? this.defaultColorId
 					: colorIds.size === 1
 						? [...colorIds][0]
+						: null,
+			fillModeSectionVisible:
+				selectedShapes.length > 0 || selectedLines.length === 0,
+			fillMode:
+				fillModes.size === 0
+					? this.defaultFillMode
+					: fillModes.size === 1
+						? [...fillModes][0]
 						: null,
 			textAlignSectionVisible:
 				selectedShapes.length > 0 || selectedLines.length === 0,

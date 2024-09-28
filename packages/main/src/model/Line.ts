@@ -1,5 +1,5 @@
 import { randomId } from "../lib/randomId";
-import type { ColorId } from "./ColorPalette";
+import type { ColorId } from "./ColorPaletteBase";
 
 export interface Line {
 	id: string;

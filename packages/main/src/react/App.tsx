@@ -1,5 +1,12 @@
 import { useEffect } from "react";
-import { ColorPalette, cssVarBaseColorName } from "../model/ColorPalette";
+import {
+	ColorPaletteBackground,
+	ColorPaletteBase,
+	ColorPaletteMonoColorBackground,
+	cssVarBackgroundColorName,
+	cssVarBaseColorName,
+	cssVarMonoBackgroundColorName,
+} from "../model/ColorPaletteBase";
 import { Canvas } from "./Canvas";
 import { PropertyPanel } from "./PropertyPanel/PropertyPanel";
 import { useCanvasEventHandler } from "./StoreProvider";
@@ -35,18 +42,31 @@ export function App() {
 				"--color-ui-primary": "#2568cd",
 				"--color-ui-selected": "var(--color-ui-primary)",
 				"--color-selection": "var(--color-ui-primary)",
-				[cssVarBaseColorName(0)]: ColorPalette[0],
-				[cssVarBaseColorName(1)]: ColorPalette[1],
-				[cssVarBaseColorName(2)]: ColorPalette[2],
-				[cssVarBaseColorName(3)]: ColorPalette[3],
-				[cssVarBaseColorName(4)]: ColorPalette[4],
-				[cssVarBaseColorName(5)]: ColorPalette[5],
-				[cssVarBaseColorName(6)]: ColorPalette[6],
-				[cssVarBaseColorName(7)]: ColorPalette[7],
-				[cssVarBaseColorName(8)]: ColorPalette[8],
-				[cssVarBaseColorName(9)]: ColorPalette[9],
-				[cssVarBaseColorName(10)]: ColorPalette[10],
-				[cssVarBaseColorName(11)]: ColorPalette[11],
+				[cssVarBaseColorName(0)]: ColorPaletteBase[0],
+				[cssVarBaseColorName(1)]: ColorPaletteBase[1],
+				[cssVarBaseColorName(2)]: ColorPaletteBase[2],
+				[cssVarBaseColorName(3)]: ColorPaletteBase[3],
+				[cssVarBaseColorName(4)]: ColorPaletteBase[4],
+				[cssVarBaseColorName(5)]: ColorPaletteBase[5],
+				[cssVarBaseColorName(6)]: ColorPaletteBase[6],
+				[cssVarBaseColorName(7)]: ColorPaletteBase[7],
+				[cssVarBaseColorName(8)]: ColorPaletteBase[8],
+				[cssVarBaseColorName(9)]: ColorPaletteBase[9],
+				[cssVarBaseColorName(10)]: ColorPaletteBase[10],
+				[cssVarBaseColorName(11)]: ColorPaletteBase[11],
+				[cssVarBackgroundColorName(0)]: ColorPaletteBackground[0],
+				[cssVarBackgroundColorName(1)]: ColorPaletteBackground[1],
+				[cssVarBackgroundColorName(2)]: ColorPaletteBackground[2],
+				[cssVarBackgroundColorName(3)]: ColorPaletteBackground[3],
+				[cssVarBackgroundColorName(4)]: ColorPaletteBackground[4],
+				[cssVarBackgroundColorName(5)]: ColorPaletteBackground[5],
+				[cssVarBackgroundColorName(6)]: ColorPaletteBackground[6],
+				[cssVarBackgroundColorName(7)]: ColorPaletteBackground[7],
+				[cssVarBackgroundColorName(8)]: ColorPaletteBackground[8],
+				[cssVarBackgroundColorName(9)]: ColorPaletteBackground[9],
+				[cssVarBackgroundColorName(10)]: ColorPaletteBackground[10],
+				[cssVarBackgroundColorName(11)]: ColorPaletteBackground[11],
+				[cssVarMonoBackgroundColorName]: ColorPaletteMonoColorBackground,
 			}}
 		>
 			<Canvas />

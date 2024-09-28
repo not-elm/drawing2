@@ -1,5 +1,6 @@
 import { randomId } from "../lib/randomId";
-import type { ColorId } from "./ColorPalette";
+import type { ColorId } from "./ColorPaletteBase";
+import type { FillMode } from "./FillMode";
 import type { TextAlignment } from "./TextAlignment";
 
 export interface Shape {
@@ -12,6 +13,7 @@ export interface Shape {
 	textAlignX: TextAlignment;
 	textAlignY: TextAlignment;
 	colorId: ColorId;
+	fillMode: FillMode;
 }
 
 export namespace Shape {
@@ -24,6 +26,7 @@ export namespace Shape {
 		textAlignX: TextAlignment,
 		textAlignY: TextAlignment,
 		colorId: ColorId,
+		fillMode: FillMode,
 	): Shape {
 		return {
 			id: randomId(),
@@ -35,6 +38,7 @@ export namespace Shape {
 			textAlignX,
 			textAlignY,
 			colorId,
+			fillMode,
 		};
 	}
 

@@ -4,7 +4,8 @@ import { assert } from "../lib/assert";
 import { isNotNullish } from "../lib/isNullish";
 import { ClipboardService } from "../service/ClipboardService";
 import { CanvasState } from "./CanvasState";
-import type { ColorId } from "./ColorPalette";
+import type { ColorId } from "./ColorPaletteBase";
+import type { FillMode } from "./FillMode";
 import { Line } from "./Line";
 import type { Mode } from "./Mode";
 import { Page } from "./Page";
@@ -38,6 +39,7 @@ export class CanvasStateStore
 				dragCurrentX: 0,
 				dragCurrentY: 0,
 				defaultColorId: 0,
+				defaultFillMode: "mono",
 				defaultTextAlignX: "center",
 				defaultTextAlignY: "center",
 			}),
@@ -699,6 +701,7 @@ export class CanvasStateStore
 					this.state.defaultTextAlignX,
 					this.state.defaultTextAlignY,
 					this.state.defaultColorId,
+					this.state.defaultFillMode,
 				);
 				this.addShape(shape);
 				this.setMode("select");
@@ -891,6 +894,18 @@ export class CanvasStateStore
 		});
 		this.setState(this.state.copy({ defaultColorId: colorId }));
 	}
+
+	handleFillModeButtonClick(fillMode: FillMode) {
+		this.update(() => {
+			for (const id of this.state.selectedShapeIds) {
+				const shape = this.storage.root.get("page").get("shapes").get(id);
+				if (shape !== undefined) {
+					shape.set("fillMode", fillMode);
+				}
+			}
+		});
+		this.setState(this.state.copy({ defaultFillMode: fillMode }));
+	}
 }
 
 export interface CanvasEventHandlers {
@@ -950,6 +965,7 @@ export interface CanvasEventHandlers {
 		alignY: TextAlignment,
 	): void;
 	handleColorButtonClick(colorId: ColorId): void;
+	handleFillModeButtonClick(fillMode: FillMode): void;
 }
 
 export function isOverlap(

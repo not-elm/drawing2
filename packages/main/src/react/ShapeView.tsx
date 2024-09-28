@@ -1,5 +1,9 @@
 import { type MouseEventHandler, useCallback } from "react";
-import { cssVarBaseColor } from "../model/ColorPalette";
+import {
+	cssVarBackgroundColor,
+	cssVarBaseColor,
+	cssVarMonoBackgroundColor,
+} from "../model/ColorPaletteBase";
 import type { Shape } from "../model/Shape";
 import type { Viewport } from "../model/Viewport";
 import { useCanvasEventHandler, useCanvasState } from "./StoreProvider";
@@ -75,19 +79,24 @@ export function ShapeView({
 					css={{
 						pointerEvents: "all",
 						stroke: cssVarBaseColor(shape.colorId),
-						fill: "none",
+						...{
+							none: { fill: "none" },
+							mono: { fill: cssVarMonoBackgroundColor },
+							color: { fill: cssVarBackgroundColor(shape.colorId) },
+						}[shape.fillMode],
 					}}
 					x={0}
 					y={0}
 					width={canvasWidth}
 					height={canvasHeight}
-					strokeWidth={2}
+					strokeWidth={5}
 				/>
 			</svg>
 			<div
 				css={{
 					position: "absolute",
 					width: "100%",
+					fontSize: 24 * viewport.scale,
 					...{
 						"start-outside": { right: "100%", textAlign: "start" as const },
 						start: { left: 0, textAlign: "start" as const },

@@ -1,5 +1,5 @@
 import { toCanvasCoordinate } from "../model/CanvasStateStore";
-import { cssVarBaseColor } from "../model/ColorPalette";
+import { cssVarBaseColor } from "../model/ColorPaletteBase";
 import type { Line } from "../model/Line";
 import type { Viewport } from "../model/Viewport";
 import { useCanvasEventHandler } from "./StoreProvider";
@@ -40,7 +40,8 @@ export function LineView({
 				y1={canvasY1 - top}
 				x2={canvasX2 - left}
 				y2={canvasY2 - top}
-				strokeWidth={2}
+				strokeWidth={5}
+				strokeLinecap="round"
 			/>
 			<line
 				x1={canvasX1 - left}
