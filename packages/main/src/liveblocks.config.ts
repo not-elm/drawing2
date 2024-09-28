@@ -1,4 +1,4 @@
-import type { LiveList, LiveObject } from "@liveblocks/client";
+import type { LiveMap, LiveObject } from "@liveblocks/client";
 import type { Line } from "./model/Line";
 import type { Rect } from "./model/Rect";
 
@@ -13,8 +13,8 @@ declare global {
 		// The Storage tree for the room, for useMutation, useStorage, etc.
 		Storage: {
 			page: LiveObject<{
-				rects: LiveList<LiveObject<Rect>>;
-				lines: LiveList<LiveObject<Line>>;
+				rects: LiveMap<string, LiveObject<Rect>>;
+				lines: LiveMap<string, LiveObject<Line>>;
 			}>;
 		};
 

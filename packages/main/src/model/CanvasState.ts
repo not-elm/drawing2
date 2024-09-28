@@ -59,28 +59,48 @@ export class CanvasStateStore
 
 		const state = { ...this.state, page };
 		state.selectedShapeIds = state.selectedShapeIds.filter(
-			(id) =>
-				page.rects.some((rect) => rect.id === id) ||
-				page.lines.some((line) => line.id === id),
+			(id) => page.rects.get(id) || page.lines.get(id),
 		);
 		this.setState(state);
 	}
 
-	private addRect(rect: Rect) {
-		this.storage.root.get("page").get("rects").push(new LiveObject(rect));
+	private update(predicate: () => void) {
+		this.room.batch(() => {
+			predicate();
+		});
 		this.syncWithLiveBlockStorage();
 	}
 
-	private deleteRect(id: string) {
-		const rects = this.storage.root.get("page").get("rects");
-		const index = rects.findIndex((rect) => rect.get("id") === id);
-		rects.delete(index);
-		this.syncWithLiveBlockStorage();
+	private addRect(rect: Rect) {
+		this.update(() => {
+			this.storage.root
+				.get("page")
+				.get("rects")
+				.set(rect.id, new LiveObject(rect));
+		});
 	}
 
 	private addLine(line: Line) {
-		this.storage.root.get("page").get("lines").push(new LiveObject(line));
-		this.syncWithLiveBlockStorage();
+		this.update(() => {
+			this.storage.root
+				.get("page")
+				.get("lines")
+				.set(line.id, new LiveObject(line));
+		});
+	}
+
+	private deleteShapes(ids: string[]) {
+		this.update(() => {
+			const rects = this.storage.root.get("page").get("rects");
+			const lines = this.storage.root.get("page").get("lines");
+
+			for (const id of ids) {
+				rects.delete(id);
+			}
+			for (const id of ids) {
+				lines.delete(id);
+			}
+		});
 	}
 
 	private moveShapes(
@@ -89,22 +109,19 @@ export class CanvasStateStore
 		rects: Rect[],
 		lines: Line[],
 	) {
-		this.room.batch(() => {
+		this.update(() => {
+			const currentRects = this.storage.root.get("page").get("rects");
+			const currentLines = this.storage.root.get("page").get("lines");
+
 			for (const rect of rects) {
-				const currentRect = this.storage.root
-					.get("page")
-					.get("rects")
-					.find((r) => r.get("id") === rect.id);
+				const currentRect = currentRects.get(rect.id);
 				if (currentRect === undefined) continue;
 
 				currentRect.set("x", rect.x + deltaX);
 				currentRect.set("y", rect.y + deltaY);
 			}
 			for (const line of lines) {
-				const currentLine = this.storage.root
-					.get("page")
-					.get("lines")
-					.find((r) => r.get("id") === line.id);
+				const currentLine = currentLines.get(line.id);
 				if (currentLine === undefined) continue;
 
 				currentLine.set("x1", line.x1 + deltaX);
@@ -123,12 +140,12 @@ export class CanvasStateStore
 		rects: Rect[],
 		lines: Line[],
 	) {
-		this.room.batch(() => {
+		this.update(() => {
+			const currentRects = this.storage.root.get("page").get("rects");
+			const currentLines = this.storage.root.get("page").get("lines");
+
 			for (const rect of rects) {
-				const currentRect = this.storage.root
-					.get("page")
-					.get("rects")
-					.find((r) => r.get("id") === rect.id);
+				const currentRect = currentRects.get(rect.id);
 				if (currentRect === undefined) continue;
 
 				let x = (rect.x - originX) * scaleX + originX;
@@ -150,10 +167,7 @@ export class CanvasStateStore
 				currentRect.set("height", height);
 			}
 			for (const line of lines) {
-				const currentLine = this.storage.root
-					.get("page")
-					.get("lines")
-					.find((r) => r.get("id") === line.id);
+				const currentLine = currentLines.get(line.id);
 				if (currentLine === undefined) continue;
 
 				const x1 = (line.x1 - originX) * scaleX + originX;
@@ -209,30 +223,30 @@ export class CanvasStateStore
 		});
 	}
 
-	private selectShape(id: string) {
+	private select(id: string) {
 		this.setState({
 			...this.state,
 			selectedShapeIds: [...this.state.selectedShapeIds, id],
 		});
 	}
 
-	private unselectShape(id: string) {
+	private unselect(id: string) {
 		this.setState({
 			...this.state,
 			selectedShapeIds: this.state.selectedShapeIds.filter((i) => i !== id),
 		});
 	}
 
-	private clearSelection() {
-		this.setSelectedShapeIds([]);
+	private toggleSelect(id: string) {
+		if (this.state.selectedShapeIds.includes(id)) {
+			this.unselect(id);
+		} else {
+			this.select(id);
+		}
 	}
 
-	private toggleShapeSelect(id: string) {
-		if (this.state.selectedShapeIds.includes(id)) {
-			this.unselectShape(id);
-		} else {
-			this.selectShape(id);
-		}
+	private clearSelection() {
+		this.setSelectedShapeIds([]);
 	}
 
 	private setSelectedShapeIds(ids: string[]) {
@@ -243,9 +257,7 @@ export class CanvasStateStore
 	}
 
 	private deleteSelectedShapes() {
-		for (const id of this.state.selectedShapeIds) {
-			this.deleteRect(id);
-		}
+		this.deleteShapes(this.state.selectedShapeIds);
 	}
 
 	private undo() {
@@ -301,22 +313,22 @@ export class CanvasStateStore
 		modifiers: { shiftKey: boolean },
 	) {
 		if (modifiers.shiftKey) {
-			this.toggleShapeSelect(id);
+			this.toggleSelect(id);
 		} else {
 			if (this.state.selectedShapeIds.includes(id)) {
 				// Do nothing
 			} else {
 				this.clearSelection();
-				this.selectShape(id);
+				this.select(id);
 			}
 		}
 		this.handleDragStart(canvasX, canvasY, {
 			type: "move",
 			rects: this.state.selectedShapeIds
-				.map((id) => this.state.page.rects.find((r) => r.id === id))
+				.map((id) => this.state.page.rects.get(id))
 				.filter(isNotNullish),
 			lines: this.state.selectedShapeIds
-				.map((id) => this.state.page.lines.find((r) => r.id === id))
+				.map((id) => this.state.page.lines.get(id))
 				.filter(isNotNullish),
 		});
 	}
@@ -328,10 +340,10 @@ export class CanvasStateStore
 	) {
 		const selectionRect = computeUnionRect(
 			this.state.selectedShapeIds
-				.map((id) => this.state.page.rects.find((r) => r.id === id))
+				.map((id) => this.state.page.rects.get(id))
 				.filter(isNotNullish),
 			this.state.selectedShapeIds
-				.map((id) => this.state.page.lines.find((r) => r.id === id))
+				.map((id) => this.state.page.lines.get(id))
 				.filter(isNotNullish),
 		);
 		assert(selectionRect !== null, "Cannot resize without a selection");
@@ -342,10 +354,10 @@ export class CanvasStateStore
 				dragType = {
 					type: "move",
 					rects: this.state.selectedShapeIds
-						.map((id) => this.state.page.rects.find((r) => r.id === id))
+						.map((id) => this.state.page.rects.get(id))
 						.filter(isNotNullish),
 					lines: this.state.selectedShapeIds
-						.map((id) => this.state.page.lines.find((r) => r.id === id))
+						.map((id) => this.state.page.lines.get(id))
 						.filter(isNotNullish),
 				};
 				break;
@@ -356,10 +368,10 @@ export class CanvasStateStore
 					originX: selectionRect.x + selectionRect.width,
 					originY: selectionRect.y + selectionRect.height,
 					rects: this.state.selectedShapeIds
-						.map((id) => this.state.page.rects.find((r) => r.id === id))
+						.map((id) => this.state.page.rects.get(id))
 						.filter(isNotNullish),
 					lines: this.state.selectedShapeIds
-						.map((id) => this.state.page.lines.find((r) => r.id === id))
+						.map((id) => this.state.page.lines.get(id))
 						.filter(isNotNullish),
 				};
 				break;
@@ -368,10 +380,10 @@ export class CanvasStateStore
 					type: "ns-resize",
 					originY: selectionRect.y + selectionRect.height,
 					rects: this.state.selectedShapeIds
-						.map((id) => this.state.page.rects.find((r) => r.id === id))
+						.map((id) => this.state.page.rects.get(id))
 						.filter(isNotNullish),
 					lines: this.state.selectedShapeIds
-						.map((id) => this.state.page.lines.find((r) => r.id === id))
+						.map((id) => this.state.page.lines.get(id))
 						.filter(isNotNullish),
 				};
 				break;
@@ -381,10 +393,10 @@ export class CanvasStateStore
 					originX: selectionRect.x,
 					originY: selectionRect.y + selectionRect.height,
 					rects: this.state.selectedShapeIds
-						.map((id) => this.state.page.rects.find((r) => r.id === id))
+						.map((id) => this.state.page.rects.get(id))
 						.filter(isNotNullish),
 					lines: this.state.selectedShapeIds
-						.map((id) => this.state.page.lines.find((r) => r.id === id))
+						.map((id) => this.state.page.lines.get(id))
 						.filter(isNotNullish),
 				};
 				break;
@@ -393,10 +405,10 @@ export class CanvasStateStore
 					type: "ew-resize",
 					originX: selectionRect.x,
 					rects: this.state.selectedShapeIds
-						.map((id) => this.state.page.rects.find((r) => r.id === id))
+						.map((id) => this.state.page.rects.get(id))
 						.filter(isNotNullish),
 					lines: this.state.selectedShapeIds
-						.map((id) => this.state.page.lines.find((r) => r.id === id))
+						.map((id) => this.state.page.lines.get(id))
 						.filter(isNotNullish),
 				};
 				break;
@@ -406,10 +418,10 @@ export class CanvasStateStore
 					originX: selectionRect.x,
 					originY: selectionRect.y,
 					rects: this.state.selectedShapeIds
-						.map((id) => this.state.page.rects.find((r) => r.id === id))
+						.map((id) => this.state.page.rects.get(id))
 						.filter(isNotNullish),
 					lines: this.state.selectedShapeIds
-						.map((id) => this.state.page.lines.find((r) => r.id === id))
+						.map((id) => this.state.page.lines.get(id))
 						.filter(isNotNullish),
 				};
 				break;
@@ -419,10 +431,10 @@ export class CanvasStateStore
 					originX: selectionRect.x + selectionRect.width,
 					originY: selectionRect.y,
 					rects: this.state.selectedShapeIds
-						.map((id) => this.state.page.rects.find((r) => r.id === id))
+						.map((id) => this.state.page.rects.get(id))
 						.filter(isNotNullish),
 					lines: this.state.selectedShapeIds
-						.map((id) => this.state.page.lines.find((r) => r.id === id))
+						.map((id) => this.state.page.lines.get(id))
 						.filter(isNotNullish),
 				};
 				break;
@@ -431,10 +443,10 @@ export class CanvasStateStore
 					type: "ew-resize",
 					originX: selectionRect.x + selectionRect.width,
 					rects: this.state.selectedShapeIds
-						.map((id) => this.state.page.rects.find((r) => r.id === id))
+						.map((id) => this.state.page.rects.get(id))
 						.filter(isNotNullish),
 					lines: this.state.selectedShapeIds
-						.map((id) => this.state.page.lines.find((r) => r.id === id))
+						.map((id) => this.state.page.lines.get(id))
 						.filter(isNotNullish),
 				};
 				break;
@@ -443,10 +455,10 @@ export class CanvasStateStore
 					type: "ns-resize",
 					originY: selectionRect.y,
 					rects: this.state.selectedShapeIds
-						.map((id) => this.state.page.rects.find((r) => r.id === id))
+						.map((id) => this.state.page.rects.get(id))
 						.filter(isNotNullish),
 					lines: this.state.selectedShapeIds
-						.map((id) => this.state.page.lines.find((r) => r.id === id))
+						.map((id) => this.state.page.lines.get(id))
 						.filter(isNotNullish),
 				};
 				break;
@@ -504,7 +516,7 @@ export class CanvasStateStore
 						this.setState({ ...this.state, selectionRect });
 						const selectedShapeIds =
 							this.state.dragType.originalSelectedShapeIds.slice();
-						for (const rect of this.state.page.rects) {
+						for (const rect of this.state.page.rects.values()) {
 							if (isOverlap(rect, selectionRect)) {
 								selectedShapeIds.push(rect.id);
 							}

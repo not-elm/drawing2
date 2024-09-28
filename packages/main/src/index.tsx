@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
-import { App } from "./App";
-import { StoreProvider } from "./StoreProvider";
+import { App } from "./react/App";
+import { StoreProvider } from "./react/StoreProvider";
 
 window.addEventListener("DOMContentLoaded", () => {
 	const container = document.getElementById("root");

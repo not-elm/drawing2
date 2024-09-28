@@ -1,4 +1,4 @@
-import { LiveList, LiveObject, createClient } from "@liveblocks/client";
+import { LiveMap, LiveObject, createClient } from "@liveblocks/client";
 import {
 	type ReactNode,
 	createContext,
@@ -11,7 +11,9 @@ import {
 	type CanvasEventHandlers,
 	type CanvasState,
 	CanvasStateStore,
-} from "./model/CanvasState";
+} from "../model/CanvasState";
+import type { Line } from "../model/Line";
+import type { Rect } from "../model/Rect";
 
 const context = createContext<CanvasStateStore>(null as never);
 
@@ -39,8 +41,8 @@ async function initializeStore(): Promise<CanvasStateStore> {
 	const { room } = client.enterRoom("my-room", {
 		initialStorage: {
 			page: new LiveObject({
-				rects: new LiveList([]),
-				lines: new LiveList([]),
+				rects: new LiveMap<string, LiveObject<Rect>>(),
+				lines: new LiveMap<string, LiveObject<Line>>(),
 			}),
 		},
 	});
