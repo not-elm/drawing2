@@ -1,5 +1,5 @@
 import { type MouseEventHandler, useCallback } from "react";
-import { type ColorId, cssVarBaseColor } from "../../model/ColorPaletteBase";
+import { type ColorId, Colors } from "../../model/Colors";
 import { CardSection } from "../Card";
 import { useCanvasEventHandler, useCanvasState } from "../StoreProvider";
 
@@ -72,7 +72,7 @@ function ColorButton({ colorId }: { colorId: ColorId }) {
 					position: "absolute",
 					inset: "8px",
 					borderRadius: "50%",
-					background: cssVarBaseColor(colorId),
+					background: Colors[colorId],
 				},
 
 				"&[aria-selected='true']": {

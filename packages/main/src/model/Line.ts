@@ -1,5 +1,5 @@
 import { randomId } from "../lib/randomId";
-import type { ColorId } from "./ColorPaletteBase";
+import type { ColorId } from "./Colors";
 
 export interface LineLike {
 	x1: number;

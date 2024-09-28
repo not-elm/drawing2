@@ -1,9 +1,9 @@
 import { type MouseEventHandler, memo, useCallback } from "react";
 import {
-	cssVarBackgroundColor,
-	cssVarBaseColor,
-	cssVarMonoBackgroundColor,
-} from "../model/ColorPaletteBase";
+	ColorPaletteBackground,
+	ColorPaletteBackgroundMonoColor,
+	Colors,
+} from "../model/Colors";
 import type { Shape } from "../model/Shape";
 import { useCanvasEventHandler } from "./StoreProvider";
 
@@ -74,11 +74,11 @@ export const ShapeView = memo(function ShapeView({
 				<rect
 					css={{
 						pointerEvents: "all",
-						stroke: cssVarBaseColor(shape.colorId),
+						stroke: Colors[shape.colorId],
 						...{
 							none: { fill: "none" },
-							mono: { fill: cssVarMonoBackgroundColor },
-							color: { fill: cssVarBackgroundColor(shape.colorId) },
+							mono: { fill: ColorPaletteBackgroundMonoColor },
+							color: { fill: ColorPaletteBackground[shape.colorId] },
 						}[shape.fillMode],
 					}}
 					x={0}

@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { cssVarBaseColor } from "../model/ColorPaletteBase";
+import { Colors } from "../model/Colors";
 import type { Line } from "../model/Line";
 import { useCanvasEventHandler } from "./StoreProvider";
 
@@ -34,7 +34,7 @@ export const LineView = memo(function LineView({
 		>
 			<line
 				css={{
-					stroke: cssVarBaseColor(line.colorId),
+					stroke: Colors[line.colorId],
 				}}
 				x1={canvasX1 - left}
 				y1={canvasY1 - top}

@@ -1,8 +1,5 @@
 import { type MouseEventHandler, useCallback } from "react";
-import {
-	cssVarBackgroundColor,
-	cssVarBaseColor,
-} from "../../model/ColorPaletteBase";
+import { ColorPaletteBackground, Colors } from "../../model/Colors";
 import type { FillMode } from "../../model/FillMode";
 import { CardSection } from "../Card";
 import { useCanvasEventHandler, useCanvasState } from "../StoreProvider";
@@ -74,11 +71,11 @@ function ColorButton({
 					inset: "8px",
 					borderRadius: "50%",
 					border: "2px solid",
-					borderColor: cssVarBaseColor(colorId),
+					borderColor: Colors[colorId],
 					...{
 						none: { borderStyle: "dashed", opacity: 0.3 },
 						mono: { background: "#fff" },
-						color: { background: cssVarBackgroundColor(colorId) },
+						color: { background: ColorPaletteBackground[colorId] },
 					}[fillMode],
 				},
 

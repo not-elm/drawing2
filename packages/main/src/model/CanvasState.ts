@@ -1,7 +1,7 @@
 import { dataclass } from "../lib/dataclass";
 import { isNotNullish } from "../lib/isNullish";
 import { type DragType, computeUnionRect } from "./CanvasStateStore";
-import type { ColorId } from "./ColorPaletteBase";
+import type { ColorId } from "./Colors";
 import type { FillMode } from "./FillMode";
 import type { Line } from "./Line";
 import type { Mode } from "./Mode";

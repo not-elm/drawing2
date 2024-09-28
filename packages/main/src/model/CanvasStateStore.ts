@@ -5,7 +5,7 @@ import { isNotNullish } from "../lib/isNullish";
 import { ClipboardService } from "../service/ClipboardService";
 import type { RestoreViewportService } from "../service/RestoreViewportService";
 import { CanvasState } from "./CanvasState";
-import type { ColorId } from "./ColorPaletteBase";
+import type { ColorId } from "./Colors";
 import type { FillMode } from "./FillMode";
 import { Line } from "./Line";
 import type { Mode } from "./Mode";
