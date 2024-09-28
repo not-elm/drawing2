@@ -29,27 +29,27 @@ export function SelectionRect() {
 			}}
 		>
 			<svg
-				viewBox={`0 0 ${width} ${height}`}
+				viewBox={`0 0 ${width * state.viewport.scale} ${
+					height * state.viewport.scale
+				}`}
 				width={width * state.viewport.scale}
 				height={height * state.viewport.scale}
 				css={{
 					position: "absolute",
 					inset: 0,
 					overflow: "visible",
-					pointerEvents: "none",
 				}}
 			>
 				{!isSingleLineMode && (
 					<rect
 						css={{
-							pointerEvents: "all",
 							stroke: "var(--color-selection)",
 							fill: "none",
 						}}
 						x={0}
 						y={0}
-						width={width}
-						height={height}
+						width={width * state.viewport.scale}
+						height={height * state.viewport.scale}
 						strokeWidth={3}
 					/>
 				)}
@@ -57,14 +57,13 @@ export function SelectionRect() {
 					<rect
 						key={shape.id}
 						css={{
-							pointerEvents: "all",
 							stroke: "var(--color-selection)",
 							fill: "none",
 						}}
-						x={shape.x - x}
-						y={shape.y - y}
-						width={shape.width}
-						height={shape.height}
+						x={(shape.x - x) * state.viewport.scale}
+						y={(shape.y - y) * state.viewport.scale}
+						width={shape.width * state.viewport.scale}
+						height={shape.height * state.viewport.scale}
 						strokeWidth={1}
 					/>
 				))}
@@ -72,14 +71,13 @@ export function SelectionRect() {
 					<line
 						key={line.id}
 						css={{
-							pointerEvents: "all",
 							stroke: "var(--color-selection)",
 							fill: "none",
 						}}
-						x1={line.x1 - x}
-						y1={line.y1 - y}
-						x2={line.x2 - x}
-						y2={line.y2 - y}
+						x1={(line.x1 - x) * state.viewport.scale}
+						y1={(line.y1 - y) * state.viewport.scale}
+						x2={(line.x2 - x) * state.viewport.scale}
+						y2={(line.y2 - y) * state.viewport.scale}
 						strokeWidth={1}
 					/>
 				))}

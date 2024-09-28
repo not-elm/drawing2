@@ -738,6 +738,8 @@ export class CanvasStateStore
 				const height = Math.abs(
 					this.state.dragCurrentY - this.state.dragStartY,
 				);
+				if (width === 0 || height === 0) break;
+
 				const x = Math.min(this.state.dragStartX, this.state.dragCurrentX);
 				const y = Math.min(this.state.dragStartY, this.state.dragCurrentY);
 				const shape = Shape.create(

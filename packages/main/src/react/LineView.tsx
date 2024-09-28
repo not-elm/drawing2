@@ -15,8 +15,8 @@ export function LineView({
 
 	const left = Math.min(canvasX1, canvasX2);
 	const top = Math.min(canvasY1, canvasY2);
-	const width = Math.abs(canvasX1 - canvasX2);
-	const height = Math.abs(canvasY1 - canvasY2);
+	const width = Math.max(Math.abs(canvasX1 - canvasX2), 1);
+	const height = Math.max(Math.abs(canvasY1 - canvasY2), 1);
 
 	return (
 		<svg
