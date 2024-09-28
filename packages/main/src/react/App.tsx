@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Canvas } from "./Canvas";
+import { PropertyPanel } from "./PropertyPanel/PropertyPanel";
 import { useCanvasEventHandler } from "./StoreProvider";
 import { ToolBar } from "./ToolBar";
 
@@ -30,6 +31,9 @@ export function App() {
 			css={{
 				position: "fixed",
 				inset: 0,
+				"--color-ui-primary": "#2568cd",
+				"--color-ui-selected": "var(--color-ui-primary)",
+				"--color-selection": "var(--color-ui-primary)",
 			}}
 		>
 			<Canvas />
@@ -37,7 +41,9 @@ export function App() {
 				css={{
 					position: "absolute",
 					width: "100%",
-					bottom: 24,
+					bottom: 12,
+					left: 12,
+					right: 12,
 					display: "flex",
 					flexDirection: "row",
 					justifyContent: "center",
@@ -45,6 +51,20 @@ export function App() {
 				}}
 			>
 				<ToolBar />
+			</div>
+			<div
+				css={{
+					position: "absolute",
+					top: 12,
+					right: 12,
+					bottom: 12,
+					display: "flex",
+					flexDirection: "column",
+					alignItems: "flex-start",
+					pointerEvents: "none",
+				}}
+			>
+				<PropertyPanel />
 			</div>
 		</div>
 	);

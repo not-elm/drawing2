@@ -6,7 +6,7 @@ import { CanvasState2 } from "./CanvasState";
 import { Line } from "./Line";
 import type { Mode } from "./Mode";
 import { Page } from "./Page";
-import { Rect, RectLike } from "./Rect";
+import { Rect, RectLike, type TextAlignment } from "./Rect";
 import type { Viewport } from "./Viewport";
 
 export class CanvasStateStore
@@ -338,6 +338,19 @@ export class CanvasStateStore
 						this.select(id);
 					}
 				}
+				this.handleDragStart(canvasX, canvasY, {
+					type: "move",
+					rects: this.state.selectedShapeIds
+						.map((id) => this.state.page.rects.get(id))
+						.filter(isNotNullish),
+					lines: this.state.selectedShapeIds
+						.map((id) => this.state.page.lines.get(id))
+						.filter(isNotNullish),
+				});
+				return true;
+			}
+			case "text": {
+				this.setMode("select");
 				this.handleDragStart(canvasX, canvasY, {
 					type: "move",
 					rects: this.state.selectedShapeIds
@@ -695,6 +708,19 @@ export class CanvasStateStore
 			}
 		});
 	}
+
+	handleTextAlignButtonClick(alignX: TextAlignment, alignY: TextAlignment) {
+		this.update(() => {
+			for (const id of this.state.selectedShapeIds) {
+				const rect = this.storage.root.get("page").get("rects").get(id);
+
+				if (rect !== undefined) {
+					rect.set("textAlignX", alignX);
+					rect.set("textAlignY", alignY);
+				}
+			}
+		});
+	}
 }
 
 export interface CanvasEventHandlers {
@@ -749,6 +775,10 @@ export interface CanvasEventHandlers {
 	): boolean;
 	handleModeChange(mode: Mode): void;
 	handleLabelChange(shapeId: string, value: string): void;
+	handleTextAlignButtonClick(
+		alignX: TextAlignment,
+		alignY: TextAlignment,
+	): void;
 }
 
 export function isOverlap(

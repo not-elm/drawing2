@@ -3,7 +3,7 @@ import { isNotNullish } from "../lib/isNullish";
 import { type DragType, computeUnionRect } from "./CanvasStateStore";
 import type { Mode } from "./Mode";
 import type { Page } from "./Page";
-import type { RectLike } from "./Rect";
+import type { Rect, RectLike, TextAlignment } from "./Rect";
 import type { Viewport } from "./Viewport";
 
 export interface CanvasState {
@@ -57,6 +57,24 @@ export class CanvasState2 extends dataclass<{
 			.filter(isNotNullish);
 
 		return computeUnionRect(rects, lines);
+	}
+
+	get selectedShapes(): Rect[] {
+		return this.selectedShapeIds
+			.map((id) => this.page.rects.get(id))
+			.filter(isNotNullish);
+	}
+
+	getSelectedShapeTextAlignment():
+		| [alignX: TextAlignment, alignY: TextAlignment]
+		| null {
+		const alignXs = new Set(this.selectedShapes.map((rect) => rect.textAlignX));
+		const alignYs = new Set(this.selectedShapes.map((rect) => rect.textAlignY));
+
+		if (alignXs.size !== 1 || alignYs.size !== 1) return null;
+
+		// biome-ignore lint/style/noNonNullAssertion: <explanation>
+		return [alignXs.values().next().value!, alignYs.values().next().value!];
 	}
 
 	isTextEditing(shapeId: string): boolean {

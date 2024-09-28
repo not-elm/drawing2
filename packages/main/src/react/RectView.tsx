@@ -70,7 +70,6 @@ export function RectView({
 					pointerEvents: "none",
 				}}
 			>
-				<title>rect</title>
 				<rect
 					css={{ pointerEvents: "all" }}
 					x={0}
@@ -85,11 +84,30 @@ export function RectView({
 			<div
 				css={{
 					position: "absolute",
-					inset: 0,
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "center",
-					flexDirection: "row",
+					...{
+						"start-outside": { right: "100%", textAlign: "start" as const },
+						start: { left: 0, textAlign: "start" as const },
+						center: {
+							left: "50%",
+							transform: "translateX(-50%)",
+							textAlign: "center" as const,
+						},
+						end: { right: 0, textAlign: "end" as const },
+						"end-outside": { left: "100%", textAlign: "end" as const },
+					}[rect.textAlignX],
+					...{
+						"start-outside": { bottom: "100%" },
+						start: { top: 0 },
+						center: {
+							top: "50%",
+							transform:
+								rect.textAlignX === "center"
+									? "translate(-50%, -50%)"
+									: "translateY(-50%)",
+						},
+						end: { bottom: 0 },
+						"end-outside": { top: "100%" },
+					}[rect.textAlignY],
 				}}
 			>
 				{isLabelEditing ? (
@@ -106,6 +124,7 @@ export function RectView({
 							outline: "none",
 							resize: "none",
 							whiteSpace: "pre-wrap",
+							textAlign: "inherit",
 						}}
 						onFocus={(ev) => {
 							ev.target.setSelectionRange(0, ev.target.value.length);

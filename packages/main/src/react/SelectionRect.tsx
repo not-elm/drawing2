@@ -16,7 +16,6 @@ export function SelectionRect() {
 	return (
 		<div
 			css={{
-				"--color-selection": "#2568cd",
 				position: "absolute",
 				left: (x - state.viewport.x) * state.viewport.scale,
 				top: (y - state.viewport.y) * state.viewport.scale,

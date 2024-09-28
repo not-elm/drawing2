@@ -23,7 +23,16 @@ export interface Rect {
 	width: number;
 	height: number;
 	label: string;
+	textAlignX: TextAlignment;
+	textAlignY: TextAlignment;
 }
+
+export type TextAlignment =
+	| "start-outside"
+	| "start"
+	| "center"
+	| "end"
+	| "end-outside";
 
 export namespace Rect {
 	export function create(
@@ -40,6 +49,8 @@ export namespace Rect {
 			width,
 			height,
 			label: "",
+			textAlignX: "center",
+			textAlignY: "center",
 		};
 	}
 }
