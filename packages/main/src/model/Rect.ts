@@ -1,3 +1,5 @@
+import { randomId } from "../lib/randomId";
+
 export interface RectLike {
 	x: number;
 	y: number;
@@ -43,7 +45,7 @@ export namespace Rect {
 		label: string,
 	): Rect {
 		return {
-			id: Math.random().toString(36).slice(2, 9),
+			id: randomId(),
 			x,
 			y,
 			width,
@@ -52,5 +54,36 @@ export namespace Rect {
 			textAlignX: "center",
 			textAlignY: "center",
 		};
+	}
+
+	export function validate(object: Record<string, unknown>): object is Rect {
+		if (typeof object !== "object" || object === null) {
+			return false;
+		}
+		if (typeof object.id !== "string") {
+			return false;
+		}
+		if (typeof object.x !== "number") {
+			return false;
+		}
+		if (typeof object.y !== "number") {
+			return false;
+		}
+		if (typeof object.width !== "number") {
+			return false;
+		}
+		if (typeof object.height !== "number") {
+			return false;
+		}
+		if (typeof object.label !== "string") {
+			return false;
+		}
+		if (typeof object.textAlignX !== "string") {
+			return false;
+		}
+		if (typeof object.textAlignY !== "string") {
+			return false;
+		}
+		return true;
 	}
 }

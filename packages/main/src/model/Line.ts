@@ -1,3 +1,5 @@
+import { randomId } from "../lib/randomId";
+
 export interface Line {
 	id: string;
 	x1: number;
@@ -9,11 +11,33 @@ export interface Line {
 export namespace Line {
 	export function create(x1: number, y1: number, x2: number, y2: number): Line {
 		return {
-			id: Math.random().toString(36).slice(2, 9),
+			id: randomId(),
 			x1,
 			y1,
 			x2,
 			y2,
 		};
+	}
+
+	export function validate(object: Record<string, unknown>): object is Line {
+		if (typeof object !== "object" || object === null) {
+			return false;
+		}
+		if (typeof object.id !== "string") {
+			return false;
+		}
+		if (typeof object.x1 !== "number") {
+			return false;
+		}
+		if (typeof object.y1 !== "number") {
+			return false;
+		}
+		if (typeof object.x2 !== "number") {
+			return false;
+		}
+		if (typeof object.y2 !== "number") {
+			return false;
+		}
+		return true;
 	}
 }

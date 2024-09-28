@@ -2,6 +2,7 @@ import { LiveObject, type Room } from "@liveblocks/client";
 import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
 import { isNotNullish } from "../lib/isNullish";
+import { ClipboardService } from "../service/ClipboardService";
 import { CanvasState2 } from "./CanvasState";
 import { Line } from "./Line";
 import type { Mode } from "./Mode";
@@ -260,6 +261,43 @@ export class CanvasStateStore
 
 	private redo() {
 		this.room.history.redo();
+	}
+
+	private copy() {
+		if (this.state.selectedShapeIds.length === 0) return;
+
+		const shapes = this.state.selectedShapeIds
+			.map((id) => this.state.page.rects.get(id))
+			.filter(isNotNullish);
+		const lines = this.state.selectedShapeIds
+			.map((id) => this.state.page.lines.get(id))
+			.filter(isNotNullish);
+
+		ClipboardService.copy(shapes, lines);
+	}
+
+	private async cut() {
+		this.copy();
+		this.deleteSelectedShapes();
+	}
+
+	private async paste(): Promise<void> {
+		const { shapes, lines } = await ClipboardService.paste();
+		if (shapes.length === 0 && lines.length === 0) return;
+
+		this.update(() => {
+			for (const shape of shapes) {
+				this.addRect(shape);
+			}
+			for (const line of lines) {
+				this.addLine(line);
+			}
+		});
+
+		this.setSelectedShapeIds([
+			...shapes.map((shape) => shape.id),
+			...lines.map((line) => line.id),
+		]);
 	}
 
 	/// ---------------------------------------------------------------------------
@@ -677,19 +715,92 @@ export class CanvasStateStore
 		modifiers: { metaKey: boolean; ctrlKey: boolean; shiftKey: boolean },
 	): boolean {
 		switch (key) {
-			case "z": {
-				if (modifiers.metaKey || modifiers.ctrlKey) {
-					if (modifiers.shiftKey) {
-						this.redo();
-					} else {
-						this.undo();
+			case "a": {
+				switch (this.state.mode) {
+					case "line":
+					case "rect":
+					case "select": {
+						if (modifiers.metaKey || modifiers.ctrlKey) {
+							this.setMode("select");
+							this.setSelectedShapeIds([
+								...this.state.page.rects.keys(),
+								...this.state.page.lines.keys(),
+							]);
+							return true;
+						}
 					}
 				}
-				return true;
+				break;
 			}
 			case "r": {
-				this.setMode("rect");
-				return true;
+				switch (this.state.mode) {
+					case "rect":
+					case "select": {
+						this.setMode("rect");
+						return true;
+					}
+				}
+				break;
+			}
+			case "l": {
+				switch (this.state.mode) {
+					case "rect":
+					case "select": {
+						this.setMode("line");
+						return true;
+					}
+				}
+				break;
+			}
+			case "z": {
+				switch (this.state.mode) {
+					case "line":
+					case "rect":
+					case "select": {
+						if (modifiers.metaKey || modifiers.ctrlKey) {
+							if (modifiers.shiftKey) {
+								this.redo();
+							} else {
+								this.undo();
+							}
+							return true;
+						}
+					}
+				}
+				break;
+			}
+			case "x": {
+				switch (this.state.mode) {
+					case "select": {
+						if (modifiers.metaKey || modifiers.ctrlKey) {
+							this.cut();
+						}
+						return true;
+					}
+				}
+				break;
+			}
+			case "c": {
+				switch (this.state.mode) {
+					case "select": {
+						if (modifiers.metaKey || modifiers.ctrlKey) {
+							this.copy();
+						}
+						return true;
+					}
+				}
+				break;
+			}
+			case "v": {
+				switch (this.state.mode) {
+					case "select": {
+						if (modifiers.metaKey || modifiers.ctrlKey) {
+							this.paste();
+						}
+						return true;
+					}
+				}
+				break;
 			}
 			case "Escape": {
 				switch (this.state.mode) {
@@ -703,16 +814,15 @@ export class CanvasStateStore
 					}
 				}
 			}
-			case "l": {
-				this.setMode("line");
-				return true;
-			}
 			case "Delete":
 			case "Backspace": {
-				if (this.state.mode === "select") {
-					this.deleteSelectedShapes();
-					return true;
+				switch (this.state.mode) {
+					case "select": {
+						this.deleteSelectedShapes();
+						return true;
+					}
 				}
+				break;
 			}
 		}
 
