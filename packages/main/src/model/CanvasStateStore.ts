@@ -1,4 +1,4 @@
-import { LiveObject, type Room } from "@liveblocks/client";
+import { LiveList, LiveObject, type Room } from "@liveblocks/client";
 import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
 import { isNotNullish } from "../lib/isNullish";
@@ -51,6 +51,8 @@ export class CanvasStateStore
 				this.setState(this.state.copy({ viewport }));
 			}
 		});
+
+		this.checkSchemaVersion();
 	}
 
 	syncWithLiveBlockStorage() {
@@ -65,6 +67,32 @@ export class CanvasStateStore
 		this.setState(state);
 	}
 
+	private checkSchemaVersion() {
+		const schemaUpdatedAt =
+			this.storage.root.get("page").get("schemaUpdatedAt") ?? 0;
+
+		this.update(() => {
+			if (schemaUpdatedAt < +new Date("2024-09-28T14:58:00.000Z")) {
+				// Add "schemaUpdatedAt" field and delete old fields
+				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+				this.storage.root.get("page").delete("schemaVersion" as any);
+				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+				this.storage.root.get("page").delete("objectIds" as any);
+				this.storage.root.get("page").set("schemaUpdatedAt", 0);
+			}
+			if (schemaUpdatedAt < +new Date("2024-09-28T16:00:00.000Z")) {
+				// Add "objectIds" field
+				const objectIds = new LiveList([
+					...this.storage.root.get("page").get("shapes").keys(),
+					...this.storage.root.get("page").get("lines").keys(),
+				]);
+				this.storage.root.get("page").set("objectIds", objectIds);
+			}
+
+			this.storage.root.get("page").set("schemaUpdatedAt", Date.now());
+		});
+	}
+
 	private update(predicate: () => void) {
 		this.room.batch(() => {
 			predicate();
@@ -74,32 +102,40 @@ export class CanvasStateStore
 
 	private addShape(shape: Shape) {
 		this.update(() => {
-			this.storage.root
-				.get("page")
-				.get("shapes")
-				.set(shape.id, new LiveObject(shape));
+			const livePage = this.storage.root.get("page");
+
+			livePage.get("shapes").set(shape.id, new LiveObject(shape));
+			livePage.get("objectIds").push(shape.id);
 		});
 	}
 
 	private addLine(line: Line) {
 		this.update(() => {
-			this.storage.root
-				.get("page")
-				.get("lines")
-				.set(line.id, new LiveObject(line));
+			const livePage = this.storage.root.get("page");
+
+			livePage.get("lines").set(line.id, new LiveObject(line));
+			livePage.get("objectIds").push(line.id);
 		});
 	}
 
 	private deleteShapes(ids: string[]) {
+		const idSet = new Set(ids);
 		this.update(() => {
 			const shapes = this.storage.root.get("page").get("shapes");
 			const lines = this.storage.root.get("page").get("lines");
-
-			for (const id of ids) {
+			for (const id of idSet) {
 				shapes.delete(id);
-			}
-			for (const id of ids) {
 				lines.delete(id);
+			}
+
+			const objectIds = this.storage.root.get("page").get("objectIds");
+			for (let i = objectIds.length - 1; i >= 0; i--) {
+				const id = objectIds.get(i);
+				if (id === undefined) continue;
+
+				if (idSet.has(id)) {
+					objectIds.delete(i);
+				}
 			}
 		});
 	}
@@ -315,6 +351,84 @@ export class CanvasStateStore
 			...shapes.map((shape) => shape.id),
 			...lines.map((line) => line.id),
 		]);
+	}
+
+	/**
+	 * Find the overlapped object with the given object from the objects
+	 * located in front of it, and return the most-backward object.
+	 */
+	private findForwardOverlappedObject(
+		objectId: string,
+		ignoreObjectIds: Set<string>,
+	): { objectId: string; globalIndex: number } | null {
+		let globalIndex = 0;
+		for (; globalIndex < this.state.page.objectIds.length; globalIndex++) {
+			if (this.state.page.objectIds[globalIndex] === objectId) break;
+		}
+
+		const refObject =
+			this.state.page.shapes.get(objectId) ??
+			this.state.page.lines.get(objectId);
+		assert(refObject !== undefined, "Cannot find the reference object");
+		globalIndex++;
+
+		for (; globalIndex < this.state.page.objectIds.length; globalIndex++) {
+			const objectId = this.state.page.objectIds[globalIndex];
+			if (ignoreObjectIds.has(objectId)) {
+				continue;
+			}
+
+			const otherObject =
+				this.state.page.shapes.get(objectId) ??
+				this.state.page.lines.get(objectId);
+
+			if (otherObject === undefined) continue;
+
+			if (isOverlapped(refObject, otherObject)) {
+				return { objectId, globalIndex };
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Find the overlapped object with the given object from the objects
+	 * located behind of it, and return the most-forward object.
+	 */
+	private findBackwardOverlappedObject(
+		objectId: string,
+		ignoreObjectIds: Set<string>,
+	): { objectId: string; globalIndex: number } | null {
+		let globalIndex = this.state.page.objectIds.length - 1;
+		for (; globalIndex >= 0; globalIndex--) {
+			if (this.state.page.objectIds[globalIndex] === objectId) break;
+		}
+
+		const refObject =
+			this.state.page.shapes.get(objectId) ??
+			this.state.page.lines.get(objectId);
+		assert(refObject !== undefined, "Cannot find the reference object");
+		globalIndex--;
+
+		for (; globalIndex >= 0; globalIndex--) {
+			const objectId = this.state.page.objectIds[globalIndex];
+			if (ignoreObjectIds.has(objectId)) {
+				continue;
+			}
+
+			const otherObject =
+				this.state.page.shapes.get(objectId) ??
+				this.state.page.lines.get(objectId);
+
+			if (otherObject === undefined) continue;
+
+			if (isOverlapped(refObject, otherObject)) {
+				return { objectId, globalIndex };
+			}
+		}
+
+		return null;
 	}
 
 	/// ---------------------------------------------------------------------------
@@ -993,6 +1107,124 @@ export class CanvasStateStore
 		});
 		this.setState(this.state.copy({ defaultFillMode: fillMode }));
 	}
+
+	handleBringToFrontButtonClick() {
+		this.update(() => {
+			const selectedIdSet = new Set(this.state.selectedShapeIds);
+			const liveObjectIds = this.storage.root.get("page").get("objectIds");
+			const orderedSelectedIds = [];
+			for (let i = this.state.page.objectIds.length - 1; i >= 0; i--) {
+				const id = this.state.page.objectIds[i];
+				if (selectedIdSet.has(id)) {
+					liveObjectIds.delete(i);
+					orderedSelectedIds.unshift(id);
+				}
+			}
+
+			while (orderedSelectedIds.length > 0) {
+				liveObjectIds.push(orderedSelectedIds.shift());
+			}
+		});
+	}
+
+	handleBringForwardButtonClick() {
+		this.update(() => {
+			const selectedIdSet = new Set(this.state.selectedShapeIds);
+			const liveObjectIds = this.storage.root.get("page").get("objectIds");
+
+			let mostBackwardResult = null;
+			for (const selectedId of selectedIdSet) {
+				const result = this.findForwardOverlappedObject(
+					selectedId,
+					selectedIdSet,
+				);
+				if (result === null) continue;
+				if (mostBackwardResult === null) {
+					mostBackwardResult = result;
+				} else {
+					if (result.globalIndex < mostBackwardResult.globalIndex) {
+						mostBackwardResult = result;
+					}
+				}
+			}
+
+			if (mostBackwardResult === null) {
+				// selected objects are already at the front
+				return;
+			}
+
+			let insertPosition = mostBackwardResult.globalIndex + 1;
+			for (let i = insertPosition - 1; i >= 0; i--) {
+				const id = liveObjectIds.get(i);
+				if (id === undefined) continue;
+
+				if (selectedIdSet.has(id)) {
+					liveObjectIds.insert(id, insertPosition);
+					liveObjectIds.delete(i);
+					insertPosition -= 1;
+				}
+			}
+		});
+	}
+
+	handleSendBackwardButtonClick() {
+		this.update(() => {
+			const selectedIdSet = new Set(this.state.selectedShapeIds);
+			const liveObjectIds = this.storage.root.get("page").get("objectIds");
+
+			let mostForwardResult = null;
+			for (const selectedId of selectedIdSet) {
+				const result = this.findBackwardOverlappedObject(
+					selectedId,
+					selectedIdSet,
+				);
+				if (result === null) continue;
+				if (mostForwardResult === null) {
+					mostForwardResult = result;
+				} else {
+					if (result.globalIndex > mostForwardResult.globalIndex) {
+						mostForwardResult = result;
+					}
+				}
+			}
+
+			if (mostForwardResult === null) {
+				// Selected objects are already at the back
+				return;
+			}
+
+			let insertPosition = mostForwardResult.globalIndex;
+			for (let i = insertPosition + 1; i < liveObjectIds.length; i++) {
+				const id = liveObjectIds.get(i);
+				if (id === undefined) continue;
+
+				if (selectedIdSet.has(id)) {
+					liveObjectIds.delete(i);
+					liveObjectIds.insert(id, insertPosition);
+					insertPosition += 1;
+				}
+			}
+		});
+	}
+
+	handleSendToBackButtonClick() {
+		this.update(() => {
+			const selectedIdSet = new Set(this.state.selectedShapeIds);
+			const liveObjectIds = this.storage.root.get("page").get("objectIds");
+			const orderedSelectedIds = [];
+			for (let i = this.state.page.objectIds.length - 1; i >= 0; i--) {
+				const id = this.state.page.objectIds[i];
+				if (selectedIdSet.has(id)) {
+					liveObjectIds.delete(i);
+					orderedSelectedIds.unshift(id);
+				}
+			}
+
+			while (orderedSelectedIds.length > 0) {
+				liveObjectIds.insert(orderedSelectedIds.pop(), 0);
+			}
+		});
+	}
 }
 
 export interface CanvasEventHandlers {
@@ -1002,8 +1234,11 @@ export interface CanvasEventHandlers {
 		mouseButton: number,
 		modifiers: { shiftKey: boolean },
 	): void;
+
 	handleCanvasMouseMove(canvasX: number, canvasY: number): void;
+
 	handleCanvasMouseUp(): void;
+
 	handleShapeMouseDown(
 		id: string,
 		canvasX: number,
@@ -1013,6 +1248,7 @@ export interface CanvasEventHandlers {
 			shiftKey: boolean;
 		},
 	): boolean;
+
 	handleShapeDoubleClick(
 		id: string,
 		canvasX: number,
@@ -1022,31 +1258,39 @@ export interface CanvasEventHandlers {
 			shiftKey: boolean;
 		},
 	): boolean;
+
 	handleSelectionRectHandleMouseDown(
 		canvasX: number,
 		canvasY: number,
 		mouseButton: number,
 		handle: SelectionRectHandleType,
 	): void;
+
 	handleSelectionLineHandleMouseDown(
 		canvasX: number,
 		canvasY: number,
 		mouseButton: number,
 		point: 1 | 2,
 	): void;
+
 	handleDragStart(
 		startCanvasX: number,
 		startCanvasY: number,
 		handle: DragType,
 	): void;
+
 	handleDragMove(currentCanvasX: number, currentCanvasY: number): void;
+
 	handleDragEnd(): void;
+
 	handleScroll(deltaCanvasX: number, deltaCanvasY: number): void;
+
 	handleScale(
 		newScale: number,
 		centerCanvasX: number,
 		centerCanvasY: number,
 	): void;
+
 	handleKeyDown(
 		key: string,
 		modifiers: {
@@ -1055,14 +1299,27 @@ export interface CanvasEventHandlers {
 			shiftKey: boolean;
 		},
 	): boolean;
+
 	handleModeChange(mode: Mode): void;
+
 	handleLabelChange(shapeId: string, value: string): void;
+
 	handleTextAlignButtonClick(
 		alignX: TextAlignment,
 		alignY: TextAlignment,
 	): void;
+
 	handleColorButtonClick(colorId: ColorId): void;
+
 	handleFillModeButtonClick(fillMode: FillMode): void;
+
+	handleBringToFrontButtonClick(): void;
+
+	handleBringForwardButtonClick(): void;
+
+	handleSendBackwardButtonClick(): void;
+
+	handleSendToBackButtonClick(): void;
 }
 
 export type DragType =
@@ -1170,3 +1427,32 @@ export const MouseButton = {
 	Middle: 1,
 	Right: 2,
 };
+
+export function isOverlapped(obj1: Shape | Line, obj2: Shape | Line): boolean {
+	if ("width" in obj1) {
+		const rect1 = new Rect({
+			x: obj1.x,
+			y: obj1.y,
+			width: obj1.width,
+			height: obj1.height,
+		});
+
+		if ("width" in obj2) {
+			return rect1.isOverlapWithRect(obj2);
+		} else {
+			return rect1.isOverlapWithLine(obj2);
+		}
+	} else {
+		if ("width" in obj2) {
+			const rect2 = new Rect({
+				x: obj2.x,
+				y: obj2.y,
+				width: obj2.width,
+				height: obj2.height,
+			});
+			return rect2.isOverlapWithLine(obj1);
+		} else {
+			return Line.isOverlap(obj1, obj2);
+		}
+	}
+}

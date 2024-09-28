@@ -66,12 +66,23 @@ export function Canvas() {
 			onWheel={handleWheel}
 			onMouseDown={handleCanvasMouseDown}
 		>
-			{[...state.page.shapes.values()].map((shape) => (
-				<ShapeView key={shape.id} shape={shape} viewport={state.viewport} />
-			))}
-			{[...state.page.lines.values()].map((line) => (
-				<LineView key={line.id} line={line} viewport={state.viewport} />
-			))}
+			{state.page.objectIds.map((objectId) => {
+				const shape = state.page.shapes.get(objectId);
+				if (shape) {
+					return (
+						<ShapeView key={shape.id} shape={shape} viewport={state.viewport} />
+					);
+				}
+
+				const line = state.page.lines.get(objectId);
+				if (line) {
+					return (
+						<LineView key={line.id} line={line} viewport={state.viewport} />
+					);
+				}
+
+				return null;
+			})}
 
 			<ToolPreview />
 			<SelectorRect />

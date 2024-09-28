@@ -10,7 +10,8 @@
 				"noAutofocus": "off"
 			},
 			"style": {
-				"noParameterAssign": "off"
+				"noParameterAssign": "off",
+				"noUselessElse": "off"
 			}
 		}
 	}

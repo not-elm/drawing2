@@ -106,6 +106,8 @@ export class CanvasState extends dataclass<{
 					: alignYs.size === 1
 						? [...alignYs][0]
 						: null,
+			orderSectionVisible:
+				selectedShapes.length > 0 || selectedLines.length > 0,
 		});
 	}
 

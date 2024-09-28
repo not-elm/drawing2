@@ -1,4 +1,4 @@
-import type { LiveMap, LiveObject } from "@liveblocks/client";
+import type { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import type { Line } from "./model/Line";
 import type { Shape } from "./model/Shape";
 
@@ -15,6 +15,8 @@ declare global {
 			page: LiveObject<{
 				shapes: LiveMap<string, LiveObject<Shape>>;
 				lines: LiveMap<string, LiveObject<Line>>;
+				objectIds: LiveList<string>;
+				schemaUpdatedAt: number;
 			}>;
 		};
 

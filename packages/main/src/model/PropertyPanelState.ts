@@ -10,4 +10,5 @@ export class PropertyPanelState extends dataclass<{
 	readonly textAlignSectionVisible: boolean;
 	readonly textAlignX: TextAlignment | null;
 	readonly textAlignY: TextAlignment | null;
+	readonly orderSectionVisible: boolean;
 }>() {}
