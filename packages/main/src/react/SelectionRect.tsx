@@ -1,10 +1,11 @@
 import styled from "@emotion/styled";
 import { isNotNullish } from "../lib/isNullish";
-import { useCanvasEventHandler, useCanvasState } from "./StoreProvider";
+import { useController } from "./ControllerProvider";
+import { useCanvasState } from "./StoreProvider";
 
 export function SelectionRect() {
 	const state = useCanvasState();
-	const handlers = useCanvasEventHandler();
+	const handlers = useController();
 	const selectionRect = state.selectionRect;
 	if (selectionRect === null) return null;
 

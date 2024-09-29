@@ -4,16 +4,17 @@ import {
 	useCallback,
 	useEffect,
 } from "react";
+import { useController } from "./ControllerProvider";
 import { LineView } from "./LineView";
 import { SelectionRect } from "./SelectionRect";
 import { SelectorRect } from "./SelectorRect";
 import { ShapeView } from "./ShapeView";
-import { useCanvasEventHandler, useCanvasState } from "./StoreProvider";
+import { useCanvasState } from "./StoreProvider";
 import { ToolPreview } from "./ToolPreview";
 
 export function Canvas() {
 	const state = useCanvasState();
-	const handlers = useCanvasEventHandler();
+	const handlers = useController();
 
 	useEffect(() => {
 		function handleMouseMove(ev: MouseEvent) {

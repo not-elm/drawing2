@@ -1,5 +1,7 @@
 import { createRoot } from "react-dom/client";
+import { initializeLocalCanvasStateStore } from "./model/LocalCanvasStateStore";
 import { App } from "./react/App";
+import { ControllerProvider } from "./react/ControllerProvider";
 import { StoreProvider } from "./react/StoreProvider";
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -11,8 +13,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
 	const root = createRoot(container);
 	root.render(
-		<StoreProvider>
-			<App />
+		<StoreProvider initializeStore={initializeLocalCanvasStateStore}>
+			<ControllerProvider>
+				<App />
+			</ControllerProvider>
 		</StoreProvider>,
 	);
 });

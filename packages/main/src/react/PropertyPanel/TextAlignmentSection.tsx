@@ -1,6 +1,7 @@
 import type { TextAlignment } from "../../model/TextAlignment";
 import { CardSection } from "../Card";
-import { useCanvasEventHandler, useCanvasState } from "../StoreProvider";
+import { useController } from "../ControllerProvider";
+import { useCanvasState } from "../StoreProvider";
 
 export function TextAlignmentSection() {
 	return (
@@ -43,7 +44,7 @@ function TextAlignButton({
 	alignY,
 }: { alignX: TextAlignment; alignY: TextAlignment }) {
 	const state = useCanvasState().propertyPanelState;
-	const handlers = useCanvasEventHandler();
+	const handlers = useController();
 	const selected = state.textAlignX === alignX && state.textAlignY === alignY;
 
 	return (

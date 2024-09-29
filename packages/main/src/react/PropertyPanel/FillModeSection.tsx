@@ -2,7 +2,8 @@ import { type MouseEventHandler, useCallback } from "react";
 import { ColorPaletteBackground, Colors } from "../../model/Colors";
 import type { FillMode } from "../../model/FillMode";
 import { CardSection } from "../Card";
-import { useCanvasEventHandler, useCanvasState } from "../StoreProvider";
+import { useController } from "../ControllerProvider";
+import { useCanvasState } from "../StoreProvider";
 
 export function FillModeSection() {
 	return (
@@ -31,7 +32,7 @@ function ColorButton({
 }: { fillMode: FillMode; title: string }) {
 	const state = useCanvasState();
 	const propertyPanelState = state.propertyPanelState;
-	const handlers = useCanvasEventHandler();
+	const handlers = useController();
 	const selected = propertyPanelState.fillMode === fillMode;
 
 	const handleClick: MouseEventHandler = useCallback(

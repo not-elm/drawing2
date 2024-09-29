@@ -1,8 +1,8 @@
 import { CardSection } from "../Card";
-import { useCanvasEventHandler } from "../StoreProvider";
+import { useController } from "../ControllerProvider";
 
 export function OrderSection() {
-	const handlers = useCanvasEventHandler();
+	const handlers = useController();
 
 	return (
 		<CardSection

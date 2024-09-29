@@ -1,7 +1,8 @@
 import { type MouseEventHandler, useCallback } from "react";
 import { type ColorId, Colors } from "../../model/Colors";
 import { CardSection } from "../Card";
-import { useCanvasEventHandler, useCanvasState } from "../StoreProvider";
+import { useController } from "../ControllerProvider";
+import { useCanvasState } from "../StoreProvider";
 
 export function ColorSection() {
 	return (
@@ -36,7 +37,7 @@ export function ColorSection() {
 
 function ColorButton({ colorId }: { colorId: ColorId }) {
 	const state = useCanvasState().propertyPanelState;
-	const handlers = useCanvasEventHandler();
+	const handlers = useController();
 	const selected = state.colorId === colorId;
 
 	const handleClick: MouseEventHandler = useCallback(

@@ -5,13 +5,13 @@ import {
 	Colors,
 } from "../model/Colors";
 import type { Shape } from "../model/Shape";
-import { useCanvasEventHandler } from "./StoreProvider";
+import { useController } from "./ControllerProvider";
 
 export const ShapeView = memo(function ShapeView({
 	shape,
 	isLabelEditing,
 }: { shape: Shape; isLabelEditing: boolean }) {
-	const handlers = useCanvasEventHandler();
+	const handlers = useController();
 
 	const handleMouseDown: MouseEventHandler = useCallback(
 		(ev) => {

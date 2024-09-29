@@ -1,10 +1,11 @@
 import styled from "@emotion/styled";
 import { Card } from "./Card";
-import { useCanvasEventHandler, useCanvasState } from "./StoreProvider";
+import { useController } from "./ControllerProvider";
+import { useCanvasState } from "./StoreProvider";
 
 export function ToolBar() {
 	const state = useCanvasState();
-	const handlers = useCanvasEventHandler();
+	const handlers = useController();
 
 	return (
 		<Card
