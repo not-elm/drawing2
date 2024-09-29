@@ -23,11 +23,9 @@ export interface RoomLike {
 	batch(callback: () => void): void;
 }
 
-export class CanvasStateStore extends Store<CanvasState> {
-	constructor(
-		private readonly room: RoomLike,
-		private readonly storage: { root: LiveObject<Liveblocks["Storage"]> },
-		private readonly restoreViewportService: RestoreViewportService,
+abstract class AbstractCanvasStateStore extends Store<CanvasState> {
+	protected constructor(
+		protected readonly restoreViewportService: RestoreViewportService,
 	) {
 		super(
 			new CanvasState({
@@ -51,179 +49,40 @@ export class CanvasStateStore extends Store<CanvasState> {
 				defaultTextAlignY: "center",
 			}),
 		);
-		this.restoreViewportService.restore().then((viewport) => {
-			if (viewport !== null) {
-				this.setState(this.state.copy({ viewport }));
-			}
-		});
-
-		this.checkSchemaVersion();
 	}
 
-	syncWithLiveBlockStorage() {
-		const page = this.storage.root.get("page").toImmutable() as Page;
+	abstract addLine(line: Line): void;
 
-		const state = this.state.copy({
-			page,
-			selectedShapeIds: this.state.selectedShapeIds.filter(
-				(id) => page.shapes.get(id) || page.lines.get(id),
-			),
-		});
-		this.setState(state);
-	}
+	abstract addShape(shape: Shape): void;
 
-	private checkSchemaVersion() {
-		const schemaUpdatedAt =
-			this.storage.root.get("page").get("schemaUpdatedAt") ?? 0;
+	abstract deleteShapes(ids: string[]): void;
 
-		this.update(() => {
-			if (schemaUpdatedAt < +new Date("2024-09-28T14:58:00.000Z")) {
-				// Add "schemaUpdatedAt" field and delete old fields
-				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-				this.storage.root.get("page").delete("schemaVersion" as any);
-				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-				this.storage.root.get("page").delete("objectIds" as any);
-				this.storage.root.get("page").set("schemaUpdatedAt", 0);
-			}
-			if (schemaUpdatedAt < +new Date("2024-09-28T16:40:00.000Z")) {
-				// Add "objectIds" field
-				const objectIds = new LiveList([
-					...this.storage.root.get("page").get("shapes").keys(),
-					...this.storage.root.get("page").get("lines").keys(),
-				]);
-				this.storage.root.get("page").set("objectIds", objectIds);
-			}
+	/**
+	 * Update the state in a batch and notify to down streams
+	 * @param predicate
+	 * @private
+	 */
+	abstract update(predicate: () => void): void;
 
-			this.storage.root.get("page").set("schemaUpdatedAt", Date.now());
-		});
-	}
-
-	private update(predicate: () => void) {
-		this.room.batch(() => {
-			predicate();
-		});
-		this.syncWithLiveBlockStorage();
-	}
-
-	private addShape(shape: Shape) {
-		this.update(() => {
-			const livePage = this.storage.root.get("page");
-
-			livePage.get("shapes").set(shape.id, new LiveObject(shape));
-			livePage.get("objectIds").push(shape.id);
-		});
-	}
-
-	private addLine(line: Line) {
-		this.update(() => {
-			const livePage = this.storage.root.get("page");
-
-			livePage.get("lines").set(line.id, new LiveObject(line));
-			livePage.get("objectIds").push(line.id);
-		});
-	}
-
-	private deleteShapes(ids: string[]) {
-		const idSet = new Set(ids);
-		this.update(() => {
-			const shapes = this.storage.root.get("page").get("shapes");
-			const lines = this.storage.root.get("page").get("lines");
-			for (const id of idSet) {
-				shapes.delete(id);
-				lines.delete(id);
-			}
-
-			const objectIds = this.storage.root.get("page").get("objectIds");
-			for (let i = objectIds.length - 1; i >= 0; i--) {
-				const id = objectIds.get(i);
-				if (id === undefined) continue;
-
-				if (idSet.has(id)) {
-					objectIds.delete(i);
-				}
-			}
-		});
-	}
-
-	private moveShapes(
+	abstract moveShapes(
 		deltaX: number,
 		deltaY: number,
 		shapes: Shape[],
 		lines: Line[],
-	) {
-		this.update(() => {
-			const currentShapes = this.storage.root.get("page").get("shapes");
-			const currentLines = this.storage.root.get("page").get("lines");
+	): void;
 
-			for (const shape of shapes) {
-				const currentShape = currentShapes.get(shape.id);
-				if (currentShape === undefined) continue;
-
-				currentShape.set("x", shape.x + deltaX);
-				currentShape.set("y", shape.y + deltaY);
-			}
-			for (const line of lines) {
-				const currentLine = currentLines.get(line.id);
-				if (currentLine === undefined) continue;
-
-				currentLine.set("x1", line.x1 + deltaX);
-				currentLine.set("y1", line.y1 + deltaY);
-				currentLine.set("x2", line.x2 + deltaX);
-				currentLine.set("y2", line.y2 + deltaY);
-			}
-		});
-	}
-
-	private scaleShapes(
+	abstract scaleShapes(
 		scaleX: number,
 		scaleY: number,
 		originX: number,
 		originY: number,
 		shapes: Shape[],
 		lines: Line[],
-	) {
-		this.update(() => {
-			const currentShapes = this.storage.root.get("page").get("shapes");
-			const currentLines = this.storage.root.get("page").get("lines");
+	): void;
 
-			for (const shape of shapes) {
-				const currentShape = currentShapes.get(shape.id);
-				if (currentShape === undefined) continue;
+	abstract resumeHistory(): void;
 
-				let x = (shape.x - originX) * scaleX + originX;
-				let y = (shape.y - originY) * scaleY + originY;
-				let width = shape.width * scaleX;
-				let height = shape.height * scaleY;
-				if (width < 0) {
-					x += width;
-					width = -width;
-				}
-				if (height < 0) {
-					y += height;
-					height = -height;
-				}
-
-				currentShape.set("x", x);
-				currentShape.set("y", y);
-				currentShape.set("width", width);
-				currentShape.set("height", height);
-			}
-			for (const line of lines) {
-				const currentLine = currentLines.get(line.id);
-				if (currentLine === undefined) continue;
-
-				const x1 = (line.x1 - originX) * scaleX + originX;
-				const y1 = (line.y1 - originY) * scaleY + originY;
-				const x2 = (line.x2 - originX) * scaleX + originX;
-				const y2 = (line.y2 - originY) * scaleY + originY;
-
-				currentLine.set("x1", x1);
-				currentLine.set("y1", y1);
-				currentLine.set("x2", x2);
-				currentLine.set("y2", y2);
-			}
-		});
-	}
+	abstract pauseHistory(): void;
 
 	setMode(mode: Mode) {
 		if (this.state.dragging) {
@@ -235,6 +94,71 @@ export class CanvasStateStore extends Store<CanvasState> {
 		if (mode !== "select" && mode !== "text") {
 			this.clearSelection();
 		}
+	}
+
+	endDrag() {
+		assert(this.state.dragging, "Cannot end drag while not dragging");
+
+		this.resumeHistory();
+		this.setState(
+			this.state.copy({
+				dragging: false,
+				dragType: { type: "none" },
+			}),
+		);
+
+		switch (this.state.mode) {
+			case "select": {
+				break;
+			}
+			case "shape": {
+				const width = Math.abs(this.state.dragCurrentX - this.state.dragStartX);
+				const height = Math.abs(
+					this.state.dragCurrentY - this.state.dragStartY,
+				);
+				if (width === 0 || height === 0) break;
+
+				const x = Math.min(this.state.dragStartX, this.state.dragCurrentX);
+				const y = Math.min(this.state.dragStartY, this.state.dragCurrentY);
+				const shape = Shape.create(
+					x,
+					y,
+					width,
+					height,
+					"",
+					this.state.defaultTextAlignX,
+					this.state.defaultTextAlignY,
+					this.state.defaultColorId,
+					this.state.defaultFillMode,
+				);
+				this.addShape(shape);
+				this.setMode("select");
+				break;
+			}
+			case "line": {
+				const line = Line.create(
+					this.state.dragStartX,
+					this.state.dragStartY,
+					this.state.dragCurrentX,
+					this.state.dragCurrentY,
+					this.state.defaultColorId,
+				);
+				this.addLine(line);
+				this.setMode("select");
+			}
+		}
+	}
+
+	clearSelection() {
+		this.setSelectedShapeIds([]);
+	}
+
+	setSelectedShapeIds(ids: string[]) {
+		this.setState(
+			this.state.copy({
+				selectedShapeIds: ids,
+			}),
+		);
 	}
 
 	moveViewportPosition(deltaCanvasX: number, deltaCanvasY: number) {
@@ -281,7 +205,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 		);
 	}
 
-	private unselect(id: string) {
+	unselect(id: string) {
 		this.setState(
 			this.state.copy({
 				selectedShapeIds: this.state.selectedShapeIds.filter((i) => i !== id),
@@ -297,29 +221,13 @@ export class CanvasStateStore extends Store<CanvasState> {
 		}
 	}
 
-	clearSelection() {
-		this.setSelectedShapeIds([]);
-	}
-
-	setSelectedShapeIds(ids: string[]) {
-		this.setState(
-			this.state.copy({
-				selectedShapeIds: ids,
-			}),
-		);
-	}
-
 	deleteSelectedShapes() {
 		this.deleteShapes(this.state.selectedShapeIds);
 	}
 
-	undo() {
-		this.room.undo();
-	}
+	abstract undo(): void;
 
-	redo() {
-		this.room.redo();
-	}
+	abstract redo(): void;
 
 	copy() {
 		if (this.state.selectedShapeIds.length === 0) return;
@@ -362,7 +270,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 	 * Find the overlapped object with the given object from the objects
 	 * located in front of it, and return the most-backward object.
 	 */
-	private findForwardOverlappedObject(
+	findForwardOverlappedObject(
 		objectId: string,
 		ignoreObjectIds: Set<string>,
 	): { objectId: string; globalIndex: number } | null {
@@ -401,7 +309,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 	 * Find the overlapped object with the given object from the objects
 	 * located behind of it, and return the most-forward object.
 	 */
-	private findBackwardOverlappedObject(
+	findBackwardOverlappedObject(
 		objectId: string,
 		ignoreObjectIds: Set<string>,
 	): { objectId: string; globalIndex: number } | null {
@@ -445,7 +353,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 			this.getState().viewport,
 		);
 
-		this.room.pauseHistory();
+		this.pauseHistory();
 		this.setState(
 			this.getState().copy({
 				dragType: type,
@@ -457,6 +365,13 @@ export class CanvasStateStore extends Store<CanvasState> {
 			}),
 		);
 	}
+
+	abstract updateLinePoint(
+		lineId: string,
+		point: 1 | 2,
+		x: number,
+		y: number,
+	): void;
 
 	updateDrag(currentCanvasX: number, currentCanvasY: number) {
 		assert(this.getState().dragging, "Cannot move drag while not dragging");
@@ -508,28 +423,18 @@ export class CanvasStateStore extends Store<CanvasState> {
 					case "move-point": {
 						const { point, line } = this.state.dragType;
 						this.update(() => {
-							const currentLine = this.storage.root
-								.get("page")
-								.get("lines")
-								.get(line.id);
-							if (currentLine === undefined) return;
-
 							if (point === 1) {
-								currentLine.set(
-									"x1",
+								this.updateLinePoint(
+									line.id,
+									1,
 									line.x1 + currentX - this.state.dragStartX,
-								);
-								currentLine.set(
-									"y1",
 									line.y1 + currentY - this.state.dragStartY,
 								);
 							} else {
-								currentLine.set(
-									"x2",
+								this.updateLinePoint(
+									line.id,
+									2,
 									line.x2 + currentX - this.state.dragStartX,
-								);
-								currentLine.set(
-									"y2",
 									line.y2 + currentY - this.state.dragStartY,
 								);
 							}
@@ -580,57 +485,215 @@ export class CanvasStateStore extends Store<CanvasState> {
 		}
 	}
 
-	endDrag() {
-		assert(this.state.dragging, "Cannot end drag while not dragging");
+	abstract setLabel(shapeId: string, value: string): void;
 
-		this.room.resumeHistory();
-		this.setState(
-			this.state.copy({
-				dragging: false,
-				dragType: { type: "none" },
-			}),
-		);
+	abstract setTextAlign(alignX: TextAlignment, alignY: TextAlignment): void;
 
-		switch (this.state.mode) {
-			case "select": {
-				break;
-			}
-			case "shape": {
-				const width = Math.abs(this.state.dragCurrentX - this.state.dragStartX);
-				const height = Math.abs(
-					this.state.dragCurrentY - this.state.dragStartY,
-				);
-				if (width === 0 || height === 0) break;
+	abstract setColor(colorId: ColorId): void;
 
-				const x = Math.min(this.state.dragStartX, this.state.dragCurrentX);
-				const y = Math.min(this.state.dragStartY, this.state.dragCurrentY);
-				const shape = Shape.create(
-					x,
-					y,
-					width,
-					height,
-					"",
-					this.state.defaultTextAlignX,
-					this.state.defaultTextAlignY,
-					this.state.defaultColorId,
-					this.state.defaultFillMode,
-				);
-				this.addShape(shape);
-				this.setMode("select");
-				break;
+	abstract setFillMode(fillMode: FillMode): void;
+
+	abstract bringToFront(): void;
+
+	abstract bringForward(): void;
+
+	abstract sendBackward(): void;
+
+	abstract sendToBack(): void;
+}
+
+export class CanvasStateStore extends AbstractCanvasStateStore {
+	constructor(
+		private readonly room: RoomLike,
+		private readonly storage: { root: LiveObject<Liveblocks["Storage"]> },
+		restoreViewportService: RestoreViewportService,
+	) {
+		super(restoreViewportService);
+		this.restoreViewportService.restore().then((viewport) => {
+			if (viewport !== null) {
+				this.setState(this.state.copy({ viewport }));
 			}
-			case "line": {
-				const line = Line.create(
-					this.state.dragStartX,
-					this.state.dragStartY,
-					this.state.dragCurrentX,
-					this.state.dragCurrentY,
-					this.state.defaultColorId,
-				);
-				this.addLine(line);
-				this.setMode("select");
+		});
+
+		this.checkSchemaVersion();
+	}
+
+	syncWithLiveBlockStorage() {
+		const page = this.storage.root.get("page").toImmutable() as Page;
+
+		const state = this.state.copy({
+			page,
+			selectedShapeIds: this.state.selectedShapeIds.filter(
+				(id) => page.shapes.get(id) || page.lines.get(id),
+			),
+		});
+		this.setState(state);
+	}
+
+	private checkSchemaVersion() {
+		const schemaUpdatedAt =
+			this.storage.root.get("page").get("schemaUpdatedAt") ?? 0;
+
+		this.update(() => {
+			if (schemaUpdatedAt < +new Date("2024-09-28T14:58:00.000Z")) {
+				// Add "schemaUpdatedAt" field and delete old fields
+				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+				this.storage.root.get("page").delete("schemaVersion" as any);
+				// biome-ignore lint/suspicious/noExplicitAny: <explanation>
+				this.storage.root.get("page").delete("objectIds" as any);
+				this.storage.root.get("page").set("schemaUpdatedAt", 0);
 			}
-		}
+			if (schemaUpdatedAt < +new Date("2024-09-28T16:40:00.000Z")) {
+				// Add "objectIds" field
+				const objectIds = new LiveList([
+					...this.storage.root.get("page").get("shapes").keys(),
+					...this.storage.root.get("page").get("lines").keys(),
+				]);
+				this.storage.root.get("page").set("objectIds", objectIds);
+			}
+
+			this.storage.root.get("page").set("schemaUpdatedAt", Date.now());
+		});
+	}
+
+	addShape(shape: Shape) {
+		this.update(() => {
+			const livePage = this.storage.root.get("page");
+
+			livePage.get("shapes").set(shape.id, new LiveObject(shape));
+			livePage.get("objectIds").push(shape.id);
+		});
+	}
+
+	update(predicate: () => void) {
+		this.room.batch(() => {
+			predicate();
+		});
+		this.syncWithLiveBlockStorage();
+	}
+
+	addLine(line: Line) {
+		this.update(() => {
+			const livePage = this.storage.root.get("page");
+
+			livePage.get("lines").set(line.id, new LiveObject(line));
+			livePage.get("objectIds").push(line.id);
+		});
+	}
+
+	deleteShapes(ids: string[]) {
+		const idSet = new Set(ids);
+		this.update(() => {
+			const shapes = this.storage.root.get("page").get("shapes");
+			const lines = this.storage.root.get("page").get("lines");
+			for (const id of idSet) {
+				shapes.delete(id);
+				lines.delete(id);
+			}
+
+			const objectIds = this.storage.root.get("page").get("objectIds");
+			for (let i = objectIds.length - 1; i >= 0; i--) {
+				const id = objectIds.get(i);
+				if (id === undefined) continue;
+
+				if (idSet.has(id)) {
+					objectIds.delete(i);
+				}
+			}
+		});
+	}
+
+	moveShapes(deltaX: number, deltaY: number, shapes: Shape[], lines: Line[]) {
+		this.update(() => {
+			const currentShapes = this.storage.root.get("page").get("shapes");
+			const currentLines = this.storage.root.get("page").get("lines");
+
+			for (const shape of shapes) {
+				const currentShape = currentShapes.get(shape.id);
+				if (currentShape === undefined) continue;
+
+				currentShape.set("x", shape.x + deltaX);
+				currentShape.set("y", shape.y + deltaY);
+			}
+			for (const line of lines) {
+				const currentLine = currentLines.get(line.id);
+				if (currentLine === undefined) continue;
+
+				currentLine.set("x1", line.x1 + deltaX);
+				currentLine.set("y1", line.y1 + deltaY);
+				currentLine.set("x2", line.x2 + deltaX);
+				currentLine.set("y2", line.y2 + deltaY);
+			}
+		});
+	}
+
+	scaleShapes(
+		scaleX: number,
+		scaleY: number,
+		originX: number,
+		originY: number,
+		shapes: Shape[],
+		lines: Line[],
+	) {
+		this.update(() => {
+			const currentShapes = this.storage.root.get("page").get("shapes");
+			const currentLines = this.storage.root.get("page").get("lines");
+
+			for (const shape of shapes) {
+				const currentShape = currentShapes.get(shape.id);
+				if (currentShape === undefined) continue;
+
+				let x = (shape.x - originX) * scaleX + originX;
+				let y = (shape.y - originY) * scaleY + originY;
+				let width = shape.width * scaleX;
+				let height = shape.height * scaleY;
+				if (width < 0) {
+					x += width;
+					width = -width;
+				}
+				if (height < 0) {
+					y += height;
+					height = -height;
+				}
+
+				currentShape.set("x", x);
+				currentShape.set("y", y);
+				currentShape.set("width", width);
+				currentShape.set("height", height);
+			}
+			for (const line of lines) {
+				const currentLine = currentLines.get(line.id);
+				if (currentLine === undefined) continue;
+
+				const x1 = (line.x1 - originX) * scaleX + originX;
+				const y1 = (line.y1 - originY) * scaleY + originY;
+				const x2 = (line.x2 - originX) * scaleX + originX;
+				const y2 = (line.y2 - originY) * scaleY + originY;
+
+				currentLine.set("x1", x1);
+				currentLine.set("y1", y1);
+				currentLine.set("x2", x2);
+				currentLine.set("y2", y2);
+			}
+		});
+	}
+
+	updateLinePoint(lineId: string, point: 1 | 2, x: number, y: number) {
+		this.update(() => {
+			const currentLine = this.storage.root
+				.get("page")
+				.get("lines")
+				.get(lineId);
+			if (currentLine === undefined) return;
+
+			if (point === 1) {
+				currentLine.set("x1", x);
+				currentLine.set("y1", y);
+			} else {
+				currentLine.set("x2", x);
+				currentLine.set("y2", y);
+			}
+		});
 	}
 
 	setLabel(shapeId: string, value: string) {
@@ -808,6 +871,22 @@ export class CanvasStateStore extends Store<CanvasState> {
 				liveObjectIds.insert(id, 0);
 			}
 		});
+	}
+
+	resumeHistory() {
+		this.room.resumeHistory();
+	}
+
+	pauseHistory() {
+		this.room.pauseHistory();
+	}
+
+	undo() {
+		this.room.undo();
+	}
+
+	redo() {
+		this.room.redo();
 	}
 }
 
