@@ -7,7 +7,7 @@ import {
 	useSyncExternalStore,
 } from "react";
 import type { CanvasState } from "../model/CanvasState";
-import type { CanvasStateStore } from "../model/CanvasStateStore";
+import type { CanvasStateStore } from "../store/CanvasStateStore";
 
 const context = createContext<CanvasStateStore>(null as never);
 

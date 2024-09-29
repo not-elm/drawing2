@@ -1,10 +1,10 @@
+import type { ColorId } from "../model/Colors";
+import type { FillMode } from "../model/FillMode";
+import type { Line } from "../model/Line";
+import type { Shape } from "../model/Shape";
+import type { TextAlignment } from "../model/TextAlignment";
 import { getRestoreViewportService } from "../service/RestoreViewportService";
 import { CanvasStateStore } from "./CanvasStateStore";
-import type { ColorId } from "./Colors";
-import type { FillMode } from "./FillMode";
-import type { Line } from "./Line";
-import type { Shape } from "./Shape";
-import type { TextAlignment } from "./TextAlignment";
 
 const LOCAL_STORAGE_KEY = "LocalCanvasStateStore.state.page";
 interface SerializedPage {
@@ -327,156 +327,11 @@ class LocalCanvasStateStore extends CanvasStateStore {
 		this.setState(this.state.copy({ defaultFillMode: fillMode }));
 	}
 
-	bringToFront() {
-		const newObjectIds = this.state.page.objectIds.slice();
-
+	updateZIndex(currentIndex: number, newIndex: number) {
 		this.update(() => {
-			const selectedIdSet = new Set(this.state.selectedShapeIds);
-			const orderedSelectedIds = [];
-			for (let i = this.state.page.objectIds.length - 1; i >= 0; i--) {
-				const id = this.state.page.objectIds[i];
-				if (selectedIdSet.has(id)) {
-					newObjectIds.splice(i);
-					orderedSelectedIds.unshift(id);
-				}
-			}
-
-			while (orderedSelectedIds.length > 0) {
-				const id = orderedSelectedIds.shift();
-				if (id === undefined) break;
-				newObjectIds.push(id);
-			}
-
-			this.setState(
-				this.state.copy({
-					page: {
-						...this.state.page,
-						objectIds: newObjectIds,
-					},
-				}),
-			);
-		});
-	}
-
-	bringForward() {
-		const newObjectIds = this.state.page.objectIds.slice();
-
-		this.update(() => {
-			const selectedIdSet = new Set(this.state.selectedShapeIds);
-
-			let mostBackwardResult = null;
-			for (const selectedId of selectedIdSet) {
-				const result = this.findForwardOverlappedObject(
-					selectedId,
-					selectedIdSet,
-				);
-				if (result === null) continue;
-				if (mostBackwardResult === null) {
-					mostBackwardResult = result;
-				} else {
-					if (result.globalIndex < mostBackwardResult.globalIndex) {
-						mostBackwardResult = result;
-					}
-				}
-			}
-
-			if (mostBackwardResult === null) {
-				// selected objects are already at the front
-				return;
-			}
-
-			let insertPosition = mostBackwardResult.globalIndex + 1;
-			for (let i = insertPosition - 1; i >= 0; i--) {
-				const id = newObjectIds[i];
-				if (id === undefined) continue;
-
-				if (selectedIdSet.has(id)) {
-					newObjectIds.splice(insertPosition, 0, id);
-					newObjectIds.splice(i, 1);
-					insertPosition -= 1;
-				}
-			}
-
-			this.setState(
-				this.state.copy({
-					page: {
-						...this.state.page,
-						objectIds: newObjectIds,
-					},
-				}),
-			);
-		});
-	}
-
-	sendBackward() {
-		const newObjectIds = this.state.page.objectIds.slice();
-
-		this.update(() => {
-			const selectedIdSet = new Set(this.state.selectedShapeIds);
-
-			let mostForwardResult = null;
-			for (const selectedId of selectedIdSet) {
-				const result = this.findBackwardOverlappedObject(
-					selectedId,
-					selectedIdSet,
-				);
-				if (result === null) continue;
-				if (mostForwardResult === null) {
-					mostForwardResult = result;
-				} else {
-					if (result.globalIndex > mostForwardResult.globalIndex) {
-						mostForwardResult = result;
-					}
-				}
-			}
-
-			if (mostForwardResult === null) {
-				// Selected objects are already at the back
-				return;
-			}
-
-			let insertPosition = mostForwardResult.globalIndex;
-			for (let i = insertPosition + 1; i < newObjectIds.length; i++) {
-				const id = newObjectIds[i];
-				if (id === undefined) continue;
-
-				if (selectedIdSet.has(id)) {
-					newObjectIds.splice(i, 1);
-					newObjectIds.splice(insertPosition, 0, id);
-					insertPosition += 1;
-				}
-			}
-
-			this.setState(
-				this.state.copy({
-					page: {
-						...this.state.page,
-						objectIds: newObjectIds,
-					},
-				}),
-			);
-		});
-	}
-
-	sendToBack() {
-		const newObjectIds = this.state.page.objectIds.slice();
-
-		this.update(() => {
-			const selectedIdSet = new Set(this.state.selectedShapeIds);
-			const orderedSelectedIds = [];
-			for (let i = this.state.page.objectIds.length - 1; i >= 0; i--) {
-				const id = this.state.page.objectIds[i];
-				if (selectedIdSet.has(id)) {
-					newObjectIds.splice(i);
-					orderedSelectedIds.unshift(id);
-				}
-			}
-
-			while (orderedSelectedIds.length > 0) {
-				const id = orderedSelectedIds.pop();
-				if (id === undefined) break;
-				newObjectIds.unshift(id);
-			}
+			const newObjectIds = this.state.page.objectIds.slice();
+			const [id] = newObjectIds.splice(currentIndex, 1);
+			newObjectIds.splice(newIndex, 0, id);
 
 			this.setState(
 				this.state.copy({

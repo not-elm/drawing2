@@ -1,5 +1,9 @@
 import { assert } from "../lib/assert";
 import { isNotNullish } from "../lib/isNullish";
+import type { ColorId } from "../model/Colors";
+import type { FillMode } from "../model/FillMode";
+import type { Mode } from "../model/Mode";
+import type { TextAlignment } from "../model/TextAlignment";
 import {
 	type CanvasStateStore,
 	type DragType,
@@ -7,11 +11,7 @@ import {
 	type SelectionRectHandleType,
 	computeUnionRect,
 	fromCanvasCoordinate,
-} from "../model/CanvasStateStore";
-import type { ColorId } from "../model/Colors";
-import type { FillMode } from "../model/FillMode";
-import type { Mode } from "../model/Mode";
-import type { TextAlignment } from "../model/TextAlignment";
+} from "../store/CanvasStateStore";
 
 export class Controller {
 	constructor(private readonly store: CanvasStateStore) {}

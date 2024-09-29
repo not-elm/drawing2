@@ -1,18 +1,18 @@
 import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
 import { isNotNullish } from "../lib/isNullish";
+import { CanvasState } from "../model/CanvasState";
+import type { ColorId } from "../model/Colors";
+import type { FillMode } from "../model/FillMode";
+import { Line } from "../model/Line";
+import type { Mode } from "../model/Mode";
+import { Page } from "../model/Page";
+import { Rect } from "../model/Rect";
+import { Shape } from "../model/Shape";
+import type { TextAlignment } from "../model/TextAlignment";
+import type { Viewport } from "../model/Viewport";
 import { ClipboardService } from "../service/ClipboardService";
 import type { RestoreViewportService } from "../service/RestoreViewportService";
-import { CanvasState } from "./CanvasState";
-import type { ColorId } from "./Colors";
-import type { FillMode } from "./FillMode";
-import { Line } from "./Line";
-import type { Mode } from "./Mode";
-import { Page } from "./Page";
-import { Rect } from "./Rect";
-import { Shape } from "./Shape";
-import type { TextAlignment } from "./TextAlignment";
-import type { Viewport } from "./Viewport";
 
 export type DragType =
 	| { type: "none" }
@@ -570,13 +570,122 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 
 	abstract setFillMode(fillMode: FillMode): void;
 
-	abstract bringToFront(): void;
+	// Z-index manipulation
 
-	abstract bringForward(): void;
+	/**
+	 * Update the z-index of the object
+	 * @param currentIndex
+	 * @param newIndex
+	 */
+	abstract updateZIndex(currentIndex: number, newIndex: number): void;
 
-	abstract sendBackward(): void;
+	bringToFront() {
+		this.bringForwardOf(this.state.page.objectIds.length - 1);
+	}
 
-	abstract sendToBack(): void;
+	bringForward() {
+		const selectedIdSet = new Set(this.state.selectedShapeIds);
+
+		let mostBackwardResult = null;
+		for (const selectedId of selectedIdSet) {
+			const result = this.findForwardOverlappedObject(
+				selectedId,
+				selectedIdSet,
+			);
+			if (result === null) continue;
+			if (mostBackwardResult === null) {
+				mostBackwardResult = result;
+			} else {
+				if (result.globalIndex < mostBackwardResult.globalIndex) {
+					mostBackwardResult = result;
+				}
+			}
+		}
+		if (mostBackwardResult === null) {
+			// selected objects are already at the front
+			return;
+		}
+
+		this.bringForwardOf(mostBackwardResult.globalIndex + 1);
+	}
+
+	sendToBack() {
+		this.sendBackwardOf(0);
+	}
+
+	sendBackward() {
+		const selectedIdSet = new Set(this.state.selectedShapeIds);
+
+		let mostForwardResult = null;
+		for (const selectedId of selectedIdSet) {
+			const result = this.findBackwardOverlappedObject(
+				selectedId,
+				selectedIdSet,
+			);
+			if (result === null) continue;
+			if (mostForwardResult === null) {
+				mostForwardResult = result;
+			} else {
+				if (result.globalIndex > mostForwardResult.globalIndex) {
+					mostForwardResult = result;
+				}
+			}
+		}
+		if (mostForwardResult === null) {
+			// selected objects are already at the front
+			return;
+		}
+
+		this.sendBackwardOf(mostForwardResult.globalIndex);
+	}
+
+	/**
+	 * Update the z-index of the selected objects to bring them
+	 * forward of the target object
+	 * @param targetObjectZIndex
+	 */
+	private bringForwardOf(targetObjectZIndex: number) {
+		const selectedIdSet = new Set(this.state.selectedShapeIds);
+
+		// Current z-index of selected objects
+		const currentIndices = [];
+		for (let i = 0; i < this.state.page.objectIds.length; i++) {
+			if (selectedIdSet.has(this.state.page.objectIds[i])) {
+				currentIndices.push(i);
+			}
+		}
+
+		for (const currentIndex of currentIndices.toReversed()) {
+			if (currentIndex >= targetObjectZIndex) continue;
+
+			this.updateZIndex(currentIndex, targetObjectZIndex);
+			targetObjectZIndex -= 1;
+		}
+	}
+
+	/**
+	 * Update the z-index of the selected objects to send them
+	 * backward of the target object
+	 * @param targetObjectZIndex
+	 */
+	private sendBackwardOf(targetObjectZIndex: number) {
+		const selectedIdSet = new Set(this.state.selectedShapeIds);
+
+		// Current z-index of selected objects
+		const currentIndices = [];
+		for (let i = 0; i < this.state.page.objectIds.length; i++) {
+			if (selectedIdSet.has(this.state.page.objectIds[i])) {
+				currentIndices.push(i);
+			}
+		}
+
+		for (const currentIndex of currentIndices) {
+			if (currentIndex <= targetObjectZIndex) continue;
+
+			this.updateZIndex(currentIndex, targetObjectZIndex);
+			targetObjectZIndex += 1;
+		}
+	}
 }
 
 export type SelectionRectHandleType =

@@ -4,17 +4,17 @@ import {
 	LiveObject,
 	createClient,
 } from "@liveblocks/client";
+import type { ColorId } from "../model/Colors";
+import type { FillMode } from "../model/FillMode";
+import type { Line } from "../model/Line";
+import type { Page } from "../model/Page";
+import type { Shape } from "../model/Shape";
+import type { TextAlignment } from "../model/TextAlignment";
 import {
 	type RestoreViewportService,
 	getRestoreViewportService,
 } from "../service/RestoreViewportService";
 import { CanvasStateStore } from "./CanvasStateStore";
-import type { ColorId } from "./Colors";
-import type { FillMode } from "./FillMode";
-import type { Line } from "./Line";
-import type { Page } from "./Page";
-import type { Shape } from "./Shape";
-import type { TextAlignment } from "./TextAlignment";
 
 interface RoomLike {
 	resumeHistory(): void;
@@ -267,125 +267,12 @@ class LiveBlockCanvasStateStore extends CanvasStateStore {
 		this.setState(this.state.copy({ defaultFillMode: fillMode }));
 	}
 
-	bringToFront() {
+	updateZIndex(currentIndex: number, newIndex: number) {
 		this.update(() => {
-			const selectedIdSet = new Set(this.state.selectedShapeIds);
 			const liveObjectIds = this.storage.root.get("page").get("objectIds");
-			const orderedSelectedIds = [];
-			for (let i = this.state.page.objectIds.length - 1; i >= 0; i--) {
-				const id = this.state.page.objectIds[i];
-				if (selectedIdSet.has(id)) {
-					liveObjectIds.delete(i);
-					orderedSelectedIds.unshift(id);
-				}
-			}
-
-			while (orderedSelectedIds.length > 0) {
-				const id = orderedSelectedIds.shift();
-				if (id === undefined) break;
-				liveObjectIds.push(id);
-			}
-		});
-	}
-
-	bringForward() {
-		this.update(() => {
-			const selectedIdSet = new Set(this.state.selectedShapeIds);
-			const liveObjectIds = this.storage.root.get("page").get("objectIds");
-
-			let mostBackwardResult = null;
-			for (const selectedId of selectedIdSet) {
-				const result = this.findForwardOverlappedObject(
-					selectedId,
-					selectedIdSet,
-				);
-				if (result === null) continue;
-				if (mostBackwardResult === null) {
-					mostBackwardResult = result;
-				} else {
-					if (result.globalIndex < mostBackwardResult.globalIndex) {
-						mostBackwardResult = result;
-					}
-				}
-			}
-
-			if (mostBackwardResult === null) {
-				// selected objects are already at the front
-				return;
-			}
-
-			let insertPosition = mostBackwardResult.globalIndex + 1;
-			for (let i = insertPosition - 1; i >= 0; i--) {
-				const id = liveObjectIds.get(i);
-				if (id === undefined) continue;
-
-				if (selectedIdSet.has(id)) {
-					liveObjectIds.insert(id, insertPosition);
-					liveObjectIds.delete(i);
-					insertPosition -= 1;
-				}
-			}
-		});
-	}
-
-	sendBackward() {
-		this.update(() => {
-			const selectedIdSet = new Set(this.state.selectedShapeIds);
-			const liveObjectIds = this.storage.root.get("page").get("objectIds");
-
-			let mostForwardResult = null;
-			for (const selectedId of selectedIdSet) {
-				const result = this.findBackwardOverlappedObject(
-					selectedId,
-					selectedIdSet,
-				);
-				if (result === null) continue;
-				if (mostForwardResult === null) {
-					mostForwardResult = result;
-				} else {
-					if (result.globalIndex > mostForwardResult.globalIndex) {
-						mostForwardResult = result;
-					}
-				}
-			}
-
-			if (mostForwardResult === null) {
-				// Selected objects are already at the back
-				return;
-			}
-
-			let insertPosition = mostForwardResult.globalIndex;
-			for (let i = insertPosition + 1; i < liveObjectIds.length; i++) {
-				const id = liveObjectIds.get(i);
-				if (id === undefined) continue;
-
-				if (selectedIdSet.has(id)) {
-					liveObjectIds.delete(i);
-					liveObjectIds.insert(id, insertPosition);
-					insertPosition += 1;
-				}
-			}
-		});
-	}
-
-	sendToBack() {
-		this.update(() => {
-			const selectedIdSet = new Set(this.state.selectedShapeIds);
-			const liveObjectIds = this.storage.root.get("page").get("objectIds");
-			const orderedSelectedIds = [];
-			for (let i = this.state.page.objectIds.length - 1; i >= 0; i--) {
-				const id = this.state.page.objectIds[i];
-				if (selectedIdSet.has(id)) {
-					liveObjectIds.delete(i);
-					orderedSelectedIds.unshift(id);
-				}
-			}
-
-			while (orderedSelectedIds.length > 0) {
-				const id = orderedSelectedIds.pop();
-				if (id === undefined) break;
-				liveObjectIds.insert(id, 0);
-			}
+			const id = this.state.page.objectIds[currentIndex];
+			liveObjectIds.delete(currentIndex);
+			liveObjectIds.insert(id, newIndex);
 		});
 	}
 

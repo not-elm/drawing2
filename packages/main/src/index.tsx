@@ -1,8 +1,8 @@
 import { createRoot } from "react-dom/client";
-import { initializeLocalCanvasStateStore } from "./model/LocalCanvasStateStore";
 import { App } from "./react/App";
 import { ControllerProvider } from "./react/ControllerProvider";
 import { StoreProvider } from "./react/StoreProvider";
+import { initializeLocalCanvasStateStore } from "./store/LocalCanvasStateStore";
 
 window.addEventListener("DOMContentLoaded", () => {
 	const container = document.getElementById("root");
