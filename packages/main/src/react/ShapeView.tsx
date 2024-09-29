@@ -62,7 +62,10 @@ export const ShapeView = memo(function ShapeView({
 				height={shape.height}
 				css={{ overflow: "visible" }}
 			>
-				<rect
+				<path
+					d={`M${shape.path
+						.map(([x, y]) => `${x * shape.width},${y * shape.height}`)
+						.join("L")}Z`}
 					css={{
 						pointerEvents: "all",
 						stroke: Colors[shape.colorId],
@@ -72,10 +75,6 @@ export const ShapeView = memo(function ShapeView({
 							color: { fill: ColorPaletteBackground[shape.colorId] },
 						}[shape.fillMode],
 					}}
-					x={0}
-					y={0}
-					width={shape.width}
-					height={shape.height}
 					strokeWidth={5}
 					onMouseDown={handleMouseDown}
 					onDoubleClick={handleDoubleClick}

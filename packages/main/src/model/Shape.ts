@@ -3,6 +3,23 @@ import type { ColorId } from "./Colors";
 import type { FillMode } from "./FillMode";
 import type { TextAlignment } from "./TextAlignment";
 
+export function getRectanglePath() {
+	return [
+		[0, 0],
+		[0, 1],
+		[1, 1],
+		[1, 0],
+	];
+}
+
+export function getTrianglePath() {
+	return [
+		[0.5, 0],
+		[1, 1],
+		[0, 1],
+	];
+}
+
 export interface Shape {
 	id: string;
 	x: number;
@@ -14,6 +31,7 @@ export interface Shape {
 	textAlignY: TextAlignment;
 	colorId: ColorId;
 	fillMode: FillMode;
+	path: number[][];
 }
 
 export namespace Shape {
@@ -27,6 +45,7 @@ export namespace Shape {
 		textAlignY: TextAlignment,
 		colorId: ColorId,
 		fillMode: FillMode,
+		path: number[][],
 	): Shape {
 		return {
 			id: randomId(),
@@ -39,6 +58,7 @@ export namespace Shape {
 			textAlignY,
 			colorId,
 			fillMode,
+			path,
 		};
 	}
 

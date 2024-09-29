@@ -8,7 +8,7 @@ import { Line } from "../model/Line";
 import type { Mode } from "../model/Mode";
 import { Page } from "../model/Page";
 import { Rect } from "../model/Rect";
-import { Shape } from "../model/Shape";
+import { Shape, getTrianglePath } from "../model/Shape";
 import type { TextAlignment } from "../model/TextAlignment";
 import type { Viewport } from "../model/Viewport";
 import { ClipboardService } from "../service/ClipboardService";
@@ -686,6 +686,7 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 					this.state.defaultTextAlignY,
 					this.state.defaultColorId,
 					this.state.defaultFillMode,
+					getTrianglePath(),
 				);
 				this.addShape(shape);
 				this.setMode("select");
