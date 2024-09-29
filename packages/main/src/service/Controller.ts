@@ -50,7 +50,7 @@ export class Controller {
 							});
 						} else {
 							if (!modifiers.shiftKey) {
-								this.store.clearSelection();
+								this.store.unselectAll();
 							}
 							this.handleDragStart(canvasX, canvasY, {
 								type: "select",
@@ -68,7 +68,7 @@ export class Controller {
 					}
 					case "text": {
 						this.store.setMode("select");
-						this.store.clearSelection();
+						this.store.unselectAll();
 						break;
 					}
 				}
@@ -106,7 +106,7 @@ export class Controller {
 							if (this.store.getState().selectedShapeIds.includes(id)) {
 								// Do nothing
 							} else {
-								this.store.clearSelection();
+								this.store.unselectAll();
 								this.store.select(id);
 							}
 						}
@@ -162,7 +162,8 @@ export class Controller {
 	) {
 		switch (mouseButton) {
 			case MouseButton.Left: {
-				this.store.setSelectedShapeIds([id]);
+				this.store.unselectAll();
+				this.store.select(id);
 				this.store.setMode("text");
 				return true;
 			}
@@ -423,10 +424,7 @@ export class Controller {
 					case "select": {
 						if (modifiers.metaKey || modifiers.ctrlKey) {
 							this.store.setMode("select");
-							this.store.setSelectedShapeIds([
-								...this.store.getState().page.shapes.keys(),
-								...this.store.getState().page.lines.keys(),
-							]);
+							this.store.selectAll();
 							return true;
 						}
 					}
@@ -506,7 +504,7 @@ export class Controller {
 			case "Escape": {
 				switch (this.store.getState().mode) {
 					case "select": {
-						this.store.clearSelection();
+						this.store.unselectAll();
 						return true;
 					}
 					default: {
@@ -534,8 +532,8 @@ export class Controller {
 		this.store.setMode(mode);
 	}
 
-	handleLabelChange(shapeId: string, value: string) {
-		this.store.setLabel(shapeId, value);
+	handleLabelChange(id: string, label: string) {
+		this.store.setLabel(id, label);
 	}
 
 	handleTextAlignButtonClick(alignX: TextAlignment, alignY: TextAlignment) {

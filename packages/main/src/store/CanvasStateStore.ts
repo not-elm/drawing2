@@ -14,88 +14,8 @@ import type { Viewport } from "../model/Viewport";
 import { ClipboardService } from "../service/ClipboardService";
 import type { RestoreViewportService } from "../service/RestoreViewportService";
 
-export type DragType =
-	| { type: "none" }
-	| { type: "select"; originalSelectedShapeIds: string[] }
-	| {
-			type: "move"; // moving multiple objects
-			shapes: Shape[];
-			lines: Line[];
-	  }
-	| {
-			type: "move-point"; // moving a point in a path
-			line: Line;
-			point: 1 | 2;
-	  }
-	| {
-			type: "nwse-resize";
-			originX: number;
-			originY: number;
-			shapes: Shape[];
-			lines: Line[];
-	  }
-	| {
-			type: "nesw-resize";
-			originX: number;
-			originY: number;
-			shapes: Shape[];
-			lines: Line[];
-	  }
-	| {
-			type: "ns-resize";
-			originY: number;
-			shapes: Shape[];
-			lines: Line[];
-	  }
-	| {
-			type: "ew-resize";
-			originX: number;
-			shapes: Shape[];
-			lines: Line[];
-	  };
-
-export function fromCanvasCoordinate(
-	canvasX: number,
-	canvasY: number,
-	viewport: Viewport,
-): [x: number, y: number] {
-	return [
-		canvasX / viewport.scale + viewport.x,
-		canvasY / viewport.scale + viewport.y,
-	];
-}
-
-export function isOverlapped(obj1: Shape | Line, obj2: Shape | Line): boolean {
-	if ("width" in obj1) {
-		const rect1 = new Rect({
-			x: obj1.x,
-			y: obj1.y,
-			width: obj1.width,
-			height: obj1.height,
-		});
-
-		if ("width" in obj2) {
-			return rect1.isOverlapWithRect(obj2);
-		} else {
-			return rect1.isOverlapWithLine(obj2);
-		}
-	} else {
-		if ("width" in obj2) {
-			const rect2 = new Rect({
-				x: obj2.x,
-				y: obj2.y,
-				width: obj2.width,
-				height: obj2.height,
-			});
-			return rect2.isOverlapWithLine(obj1);
-		} else {
-			return Line.isOverlap(obj1, obj2);
-		}
-	}
-}
-
 export abstract class CanvasStateStore extends Store<CanvasState> {
-	constructor(
+	protected constructor(
 		protected readonly restoreViewportService: RestoreViewportService,
 	) {
 		super(
@@ -128,12 +48,6 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 		});
 	}
 
-	abstract addLine(line: Line): void;
-
-	abstract addShape(shape: Shape): void;
-
-	abstract deleteShapes(ids: string[]): void;
-
 	/**
 	 * Update the state in a batch and notify to down streams
 	 * @param predicate
@@ -141,25 +55,340 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 	 */
 	abstract update(predicate: () => void): void;
 
-	abstract moveShapes(
-		deltaX: number,
-		deltaY: number,
-		shapes: Shape[],
-		lines: Line[],
+	abstract addShape(shape: Shape): void;
+
+	abstract addLine(line: Line): void;
+
+	abstract deleteShapes(ids: string[]): void;
+
+	protected abstract updateShapes(
+		ids: string[],
+		updater: (shape: ShapeAccessor) => void,
 	): void;
 
-	abstract scaleShapes(
+	protected abstract updateLines(
+		ids: string[],
+		updater: (line: LineAccessor) => void,
+	): void;
+
+	/**
+	 * Update the z-index of the object
+	 * @param currentIndex
+	 * @param newIndex
+	 */
+	abstract updateZIndex(currentIndex: number, newIndex: number): void;
+
+	abstract resumeHistory(): void;
+
+	abstract pauseHistory(): void;
+
+	abstract undo(): void;
+
+	abstract redo(): void;
+
+	deleteSelectedShapes() {
+		this.deleteShapes(this.state.selectedShapeIds);
+	}
+
+	moveShapes(deltaX: number, deltaY: number, shapes: Shape[], lines: Line[]) {
+		this.updateSelectedShapes((shape) => {
+			const originalShape = shapes.find((s) => s.id === shape.getId());
+			if (originalShape === undefined) return;
+
+			shape.setX(originalShape.x + deltaX);
+			shape.setY(originalShape.y + deltaY);
+		});
+		this.updateSelectedLines((line) => {
+			const originalLine = lines.find((l) => l.id === line.getId());
+			if (originalLine === undefined) return;
+
+			line.setX1(originalLine.x1 + deltaX);
+			line.setY1(originalLine.y1 + deltaY);
+			line.setX2(originalLine.x2 + deltaX);
+			line.setY2(originalLine.y2 + deltaY);
+		});
+	}
+
+	scaleShapes(
 		scaleX: number,
 		scaleY: number,
 		originX: number,
 		originY: number,
 		shapes: Shape[],
 		lines: Line[],
-	): void;
+	) {
+		this.updateSelectedShapes((shape) => {
+			const originalShape = shapes.find((s) => s.id === shape.getId());
+			if (originalShape === undefined) return;
 
-	abstract resumeHistory(): void;
+			let x = (originalShape.x - originX) * scaleX + originX;
+			let y = (originalShape.y - originY) * scaleY + originY;
+			let width = originalShape.width * scaleX;
+			let height = originalShape.height * scaleY;
+			if (width < 0) {
+				x += width;
+				width = -width;
+			}
+			if (height < 0) {
+				y += height;
+				height = -height;
+			}
 
-	abstract pauseHistory(): void;
+			shape.setX(x);
+			shape.setY(y);
+			shape.setWidth(width);
+			shape.setHeight(height);
+		});
+		this.updateSelectedLines((line) => {
+			const originalLine = lines.find((l) => l.id === line.getId());
+			if (originalLine === undefined) return;
+
+			const x1 = (originalLine.x1 - originX) * scaleX + originX;
+			const y1 = (originalLine.y1 - originY) * scaleY + originY;
+			const x2 = (originalLine.x2 - originX) * scaleX + originX;
+			const y2 = (originalLine.y2 - originY) * scaleY + originY;
+
+			line.setX1(x1);
+			line.setY1(y1);
+			line.setX2(x2);
+			line.setY2(y2);
+		});
+	}
+
+	updateLinePoint(id: string, point: 1 | 2, x: number, y: number) {
+		this.updateLines([id], (line) => {
+			if (point === 1) {
+				line.setX1(x);
+				line.setY1(y);
+			} else {
+				line.setX2(x);
+				line.setY2(y);
+			}
+		});
+	}
+
+	setLabel(id: string, value: string) {
+		this.updateShapes([id], (shape) => shape.setLabel(value));
+	}
+
+	setTextAlign(textAlignX: TextAlignment, textAlignY: TextAlignment) {
+		this.updateSelectedShapes((shape) => {
+			shape.setTextAlignX(textAlignX);
+			shape.setTextAlignY(textAlignY);
+		});
+		this.setState(
+			this.state.copy({
+				defaultTextAlignX: textAlignX,
+				defaultTextAlignY: textAlignY,
+			}),
+		);
+	}
+
+	setColor(colorId: ColorId) {
+		this.updateSelectedShapes((shape) => shape.setColorId(colorId));
+		this.updateSelectedLines((line) => line.setColorId(colorId));
+
+		this.setState(this.state.copy({ defaultColorId: colorId }));
+	}
+
+	setFillMode(fillMode: FillMode) {
+		this.updateSelectedShapes((shape) => shape.setFillMode(fillMode));
+		this.setState(this.state.copy({ defaultFillMode: fillMode }));
+	}
+
+	protected updateSelectedShapes(updater: (shape: ShapeAccessor) => void) {
+		this.updateShapes(this.state.selectedShapeIds, updater);
+	}
+
+	protected updateSelectedLines(updater: (line: LineAccessor) => void) {
+		this.updateLines(this.state.selectedShapeIds, updater);
+	}
+
+	bringToFront() {
+		this.bringForwardOf(this.state.page.objectIds.length - 1);
+	}
+
+	bringForward() {
+		const selectedIdSet = new Set(this.state.selectedShapeIds);
+
+		let mostBackwardResult = null;
+		for (const selectedId of selectedIdSet) {
+			const result = this.findForwardOverlappedObject(
+				selectedId,
+				selectedIdSet,
+			);
+			if (result === null) continue;
+			if (mostBackwardResult === null) {
+				mostBackwardResult = result;
+			} else {
+				if (result.globalIndex < mostBackwardResult.globalIndex) {
+					mostBackwardResult = result;
+				}
+			}
+		}
+		if (mostBackwardResult === null) {
+			// selected objects are already at the front
+			return;
+		}
+
+		this.bringForwardOf(mostBackwardResult.globalIndex + 1);
+	}
+
+	sendToBack() {
+		this.sendBackwardOf(0);
+	}
+
+	sendBackward() {
+		const selectedIdSet = new Set(this.state.selectedShapeIds);
+
+		let mostForwardResult = null;
+		for (const selectedId of selectedIdSet) {
+			const result = this.findBackwardOverlappedObject(
+				selectedId,
+				selectedIdSet,
+			);
+			if (result === null) continue;
+			if (mostForwardResult === null) {
+				mostForwardResult = result;
+			} else {
+				if (result.globalIndex > mostForwardResult.globalIndex) {
+					mostForwardResult = result;
+				}
+			}
+		}
+		if (mostForwardResult === null) {
+			// selected objects are already at the front
+			return;
+		}
+
+		this.sendBackwardOf(mostForwardResult.globalIndex);
+	}
+
+	/**
+	 * Update the z-index of the selected objects to bring them
+	 * forward of the target object
+	 * @param targetObjectZIndex
+	 */
+	private bringForwardOf(targetObjectZIndex: number) {
+		const selectedIdSet = new Set(this.state.selectedShapeIds);
+
+		// Current z-index of selected objects
+		const currentIndices = [];
+		for (let i = 0; i < this.state.page.objectIds.length; i++) {
+			if (selectedIdSet.has(this.state.page.objectIds[i])) {
+				currentIndices.push(i);
+			}
+		}
+
+		for (const currentIndex of currentIndices.toReversed()) {
+			if (currentIndex >= targetObjectZIndex) continue;
+
+			this.updateZIndex(currentIndex, targetObjectZIndex);
+			targetObjectZIndex -= 1;
+		}
+	}
+
+	/**
+	 * Update the z-index of the selected objects to send them
+	 * backward of the target object
+	 * @param targetObjectZIndex
+	 */
+	private sendBackwardOf(targetObjectZIndex: number) {
+		const selectedIdSet = new Set(this.state.selectedShapeIds);
+
+		// Current z-index of selected objects
+		const currentIndices = [];
+		for (let i = 0; i < this.state.page.objectIds.length; i++) {
+			if (selectedIdSet.has(this.state.page.objectIds[i])) {
+				currentIndices.push(i);
+			}
+		}
+
+		for (const currentIndex of currentIndices) {
+			if (currentIndex <= targetObjectZIndex) continue;
+
+			this.updateZIndex(currentIndex, targetObjectZIndex);
+			targetObjectZIndex += 1;
+		}
+	}
+
+	/**
+	 * Find the overlapped object with the given object from the objects
+	 * located in front of it, and return the most-backward object.
+	 */
+	private findForwardOverlappedObject(
+		objectId: string,
+		ignoreObjectIds: Set<string>,
+	): { objectId: string; globalIndex: number } | null {
+		let globalIndex = 0;
+		for (; globalIndex < this.state.page.objectIds.length; globalIndex++) {
+			if (this.state.page.objectIds[globalIndex] === objectId) break;
+		}
+
+		const refObject =
+			this.state.page.shapes.get(objectId) ??
+			this.state.page.lines.get(objectId);
+		assert(refObject !== undefined, "Cannot find the reference object");
+		globalIndex++;
+
+		for (; globalIndex < this.state.page.objectIds.length; globalIndex++) {
+			const objectId = this.state.page.objectIds[globalIndex];
+			if (ignoreObjectIds.has(objectId)) {
+				continue;
+			}
+
+			const otherObject =
+				this.state.page.shapes.get(objectId) ??
+				this.state.page.lines.get(objectId);
+
+			if (otherObject === undefined) continue;
+
+			if (isOverlapped(refObject, otherObject)) {
+				return { objectId, globalIndex };
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Find the overlapped object with the given object from the objects
+	 * located behind of it, and return the most-forward object.
+	 */
+	private findBackwardOverlappedObject(
+		objectId: string,
+		ignoreObjectIds: Set<string>,
+	): { objectId: string; globalIndex: number } | null {
+		let globalIndex = this.state.page.objectIds.length - 1;
+		for (; globalIndex >= 0; globalIndex--) {
+			if (this.state.page.objectIds[globalIndex] === objectId) break;
+		}
+
+		const refObject =
+			this.state.page.shapes.get(objectId) ??
+			this.state.page.lines.get(objectId);
+		assert(refObject !== undefined, "Cannot find the reference object");
+		globalIndex--;
+
+		for (; globalIndex >= 0; globalIndex--) {
+			const objectId = this.state.page.objectIds[globalIndex];
+			if (ignoreObjectIds.has(objectId)) {
+				continue;
+			}
+
+			const otherObject =
+				this.state.page.shapes.get(objectId) ??
+				this.state.page.lines.get(objectId);
+
+			if (otherObject === undefined) continue;
+
+			if (isOverlapped(refObject, otherObject)) {
+				return { objectId, globalIndex };
+			}
+		}
+
+		return null;
+	}
 
 	setMode(mode: Mode) {
 		if (this.state.dragging) {
@@ -169,73 +398,8 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 		this.setState(this.state.copy({ mode }));
 
 		if (mode !== "select" && mode !== "text") {
-			this.clearSelection();
+			this.unselectAll();
 		}
-	}
-
-	endDrag() {
-		assert(this.state.dragging, "Cannot end drag while not dragging");
-
-		this.resumeHistory();
-		this.setState(
-			this.state.copy({
-				dragging: false,
-				dragType: { type: "none" },
-			}),
-		);
-
-		switch (this.state.mode) {
-			case "select": {
-				break;
-			}
-			case "shape": {
-				const width = Math.abs(this.state.dragCurrentX - this.state.dragStartX);
-				const height = Math.abs(
-					this.state.dragCurrentY - this.state.dragStartY,
-				);
-				if (width === 0 || height === 0) break;
-
-				const x = Math.min(this.state.dragStartX, this.state.dragCurrentX);
-				const y = Math.min(this.state.dragStartY, this.state.dragCurrentY);
-				const shape = Shape.create(
-					x,
-					y,
-					width,
-					height,
-					"",
-					this.state.defaultTextAlignX,
-					this.state.defaultTextAlignY,
-					this.state.defaultColorId,
-					this.state.defaultFillMode,
-				);
-				this.addShape(shape);
-				this.setMode("select");
-				break;
-			}
-			case "line": {
-				const line = Line.create(
-					this.state.dragStartX,
-					this.state.dragStartY,
-					this.state.dragCurrentX,
-					this.state.dragCurrentY,
-					this.state.defaultColorId,
-				);
-				this.addLine(line);
-				this.setMode("select");
-			}
-		}
-	}
-
-	clearSelection() {
-		this.setSelectedShapeIds([]);
-	}
-
-	setSelectedShapeIds(ids: string[]) {
-		this.setState(
-			this.state.copy({
-				selectedShapeIds: ids,
-			}),
-		);
 	}
 
 	moveViewportPosition(deltaCanvasX: number, deltaCanvasY: number) {
@@ -282,12 +446,23 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 		);
 	}
 
+	selectAll() {
+		this.setSelectedShapeIds([
+			...this.state.page.shapes.keys(),
+			...this.state.page.lines.keys(),
+		]);
+	}
+
 	unselect(id: string) {
 		this.setState(
 			this.state.copy({
 				selectedShapeIds: this.state.selectedShapeIds.filter((i) => i !== id),
 			}),
 		);
+	}
+
+	unselectAll() {
+		this.setSelectedShapeIds([]);
 	}
 
 	toggleSelect(id: string) {
@@ -298,13 +473,13 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 		}
 	}
 
-	deleteSelectedShapes() {
-		this.deleteShapes(this.state.selectedShapeIds);
+	private setSelectedShapeIds(ids: string[]) {
+		this.setState(
+			this.state.copy({
+				selectedShapeIds: ids,
+			}),
+		);
 	}
-
-	abstract undo(): void;
-
-	abstract redo(): void;
 
 	copy() {
 		if (this.state.selectedShapeIds.length === 0) return;
@@ -343,84 +518,6 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 		]);
 	}
 
-	/**
-	 * Find the overlapped object with the given object from the objects
-	 * located in front of it, and return the most-backward object.
-	 */
-	findForwardOverlappedObject(
-		objectId: string,
-		ignoreObjectIds: Set<string>,
-	): { objectId: string; globalIndex: number } | null {
-		let globalIndex = 0;
-		for (; globalIndex < this.state.page.objectIds.length; globalIndex++) {
-			if (this.state.page.objectIds[globalIndex] === objectId) break;
-		}
-
-		const refObject =
-			this.state.page.shapes.get(objectId) ??
-			this.state.page.lines.get(objectId);
-		assert(refObject !== undefined, "Cannot find the reference object");
-		globalIndex++;
-
-		for (; globalIndex < this.state.page.objectIds.length; globalIndex++) {
-			const objectId = this.state.page.objectIds[globalIndex];
-			if (ignoreObjectIds.has(objectId)) {
-				continue;
-			}
-
-			const otherObject =
-				this.state.page.shapes.get(objectId) ??
-				this.state.page.lines.get(objectId);
-
-			if (otherObject === undefined) continue;
-
-			if (isOverlapped(refObject, otherObject)) {
-				return { objectId, globalIndex };
-			}
-		}
-
-		return null;
-	}
-
-	/**
-	 * Find the overlapped object with the given object from the objects
-	 * located behind of it, and return the most-forward object.
-	 */
-	findBackwardOverlappedObject(
-		objectId: string,
-		ignoreObjectIds: Set<string>,
-	): { objectId: string; globalIndex: number } | null {
-		let globalIndex = this.state.page.objectIds.length - 1;
-		for (; globalIndex >= 0; globalIndex--) {
-			if (this.state.page.objectIds[globalIndex] === objectId) break;
-		}
-
-		const refObject =
-			this.state.page.shapes.get(objectId) ??
-			this.state.page.lines.get(objectId);
-		assert(refObject !== undefined, "Cannot find the reference object");
-		globalIndex--;
-
-		for (; globalIndex >= 0; globalIndex--) {
-			const objectId = this.state.page.objectIds[globalIndex];
-			if (ignoreObjectIds.has(objectId)) {
-				continue;
-			}
-
-			const otherObject =
-				this.state.page.shapes.get(objectId) ??
-				this.state.page.lines.get(objectId);
-
-			if (otherObject === undefined) continue;
-
-			if (isOverlapped(refObject, otherObject)) {
-				return { objectId, globalIndex };
-			}
-		}
-
-		return null;
-	}
-
 	startDrag(startCanvasX: number, startCanvasY: number, type: DragType) {
 		assert(!this.getState().dragging, "Cannot start dragging while dragging");
 
@@ -442,13 +539,6 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 			}),
 		);
 	}
-
-	abstract updateLinePoint(
-		lineId: string,
-		point: 1 | 2,
-		x: number,
-		y: number,
-	): void;
 
 	updateDrag(currentCanvasX: number, currentCanvasY: number) {
 		assert(this.getState().dragging, "Cannot move drag while not dragging");
@@ -562,130 +652,110 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 		}
 	}
 
-	abstract setLabel(shapeId: string, value: string): void;
+	endDrag() {
+		assert(this.state.dragging, "Cannot end drag while not dragging");
 
-	abstract setTextAlign(alignX: TextAlignment, alignY: TextAlignment): void;
+		this.resumeHistory();
+		this.setState(
+			this.state.copy({
+				dragging: false,
+				dragType: { type: "none" },
+			}),
+		);
 
-	abstract setColor(colorId: ColorId): void;
+		switch (this.state.mode) {
+			case "select": {
+				break;
+			}
+			case "shape": {
+				const width = Math.abs(this.state.dragCurrentX - this.state.dragStartX);
+				const height = Math.abs(
+					this.state.dragCurrentY - this.state.dragStartY,
+				);
+				if (width === 0 || height === 0) break;
 
-	abstract setFillMode(fillMode: FillMode): void;
-
-	// Z-index manipulation
-
-	/**
-	 * Update the z-index of the object
-	 * @param currentIndex
-	 * @param newIndex
-	 */
-	abstract updateZIndex(currentIndex: number, newIndex: number): void;
-
-	bringToFront() {
-		this.bringForwardOf(this.state.page.objectIds.length - 1);
-	}
-
-	bringForward() {
-		const selectedIdSet = new Set(this.state.selectedShapeIds);
-
-		let mostBackwardResult = null;
-		for (const selectedId of selectedIdSet) {
-			const result = this.findForwardOverlappedObject(
-				selectedId,
-				selectedIdSet,
-			);
-			if (result === null) continue;
-			if (mostBackwardResult === null) {
-				mostBackwardResult = result;
-			} else {
-				if (result.globalIndex < mostBackwardResult.globalIndex) {
-					mostBackwardResult = result;
-				}
+				const x = Math.min(this.state.dragStartX, this.state.dragCurrentX);
+				const y = Math.min(this.state.dragStartY, this.state.dragCurrentY);
+				const shape = Shape.create(
+					x,
+					y,
+					width,
+					height,
+					"",
+					this.state.defaultTextAlignX,
+					this.state.defaultTextAlignY,
+					this.state.defaultColorId,
+					this.state.defaultFillMode,
+				);
+				this.addShape(shape);
+				this.setMode("select");
+				this.select(shape.id);
+				break;
+			}
+			case "line": {
+				const line = Line.create(
+					this.state.dragStartX,
+					this.state.dragStartY,
+					this.state.dragCurrentX,
+					this.state.dragCurrentY,
+					this.state.defaultColorId,
+				);
+				this.addLine(line);
+				this.setMode("select");
+				this.select(line.id);
 			}
 		}
-		if (mostBackwardResult === null) {
-			// selected objects are already at the front
-			return;
-		}
-
-		this.bringForwardOf(mostBackwardResult.globalIndex + 1);
 	}
+}
 
-	sendToBack() {
-		this.sendBackwardOf(0);
-	}
+export interface ShapeAccessor {
+	getId(): string;
 
-	sendBackward() {
-		const selectedIdSet = new Set(this.state.selectedShapeIds);
+	getX(): number;
+	setX(x: number): void;
 
-		let mostForwardResult = null;
-		for (const selectedId of selectedIdSet) {
-			const result = this.findBackwardOverlappedObject(
-				selectedId,
-				selectedIdSet,
-			);
-			if (result === null) continue;
-			if (mostForwardResult === null) {
-				mostForwardResult = result;
-			} else {
-				if (result.globalIndex > mostForwardResult.globalIndex) {
-					mostForwardResult = result;
-				}
-			}
-		}
-		if (mostForwardResult === null) {
-			// selected objects are already at the front
-			return;
-		}
+	getY(): number;
+	setY(y: number): void;
 
-		this.sendBackwardOf(mostForwardResult.globalIndex);
-	}
+	getWidth(): number;
+	setWidth(width: number): void;
 
-	/**
-	 * Update the z-index of the selected objects to bring them
-	 * forward of the target object
-	 * @param targetObjectZIndex
-	 */
-	private bringForwardOf(targetObjectZIndex: number) {
-		const selectedIdSet = new Set(this.state.selectedShapeIds);
+	getHeight(): number;
+	setHeight(height: number): void;
 
-		// Current z-index of selected objects
-		const currentIndices = [];
-		for (let i = 0; i < this.state.page.objectIds.length; i++) {
-			if (selectedIdSet.has(this.state.page.objectIds[i])) {
-				currentIndices.push(i);
-			}
-		}
+	getColorId(): ColorId;
+	setColorId(colorId: ColorId): void;
 
-		for (const currentIndex of currentIndices.toReversed()) {
-			if (currentIndex >= targetObjectZIndex) continue;
+	getFillMode(): FillMode;
+	setFillMode(fillMode: FillMode): void;
 
-			this.updateZIndex(currentIndex, targetObjectZIndex);
-			targetObjectZIndex -= 1;
-		}
-	}
+	getTextAlignX(): TextAlignment;
+	setTextAlignX(textAlignX: TextAlignment): void;
 
-	/**
-	 * Update the z-index of the selected objects to send them
-	 * backward of the target object
-	 * @param targetObjectZIndex
-	 */
-	private sendBackwardOf(targetObjectZIndex: number) {
-		const selectedIdSet = new Set(this.state.selectedShapeIds);
+	getTextAlignY(): TextAlignment;
+	setTextAlignY(textAlignY: TextAlignment): void;
 
-		// Current z-index of selected objects
-		const currentIndices = [];
-		for (let i = 0; i < this.state.page.objectIds.length; i++) {
-			if (selectedIdSet.has(this.state.page.objectIds[i])) {
-				currentIndices.push(i);
-			}
-		}
+	getLabel(): string;
+	setLabel(label: string): void;
+}
 
-		for (const currentIndex of currentIndices) {
-			if (currentIndex <= targetObjectZIndex) continue;
+export interface LineAccessor {
+	getId(): string;
 
-			this.updateZIndex(currentIndex, targetObjectZIndex);
-			targetObjectZIndex += 1;
-		}
-	}
+	getX1(): number;
+	setX1(x1: number): void;
+
+	getY1(): number;
+	setY1(y1: number): void;
+
+	getX2(): number;
+	setX2(x2: number): void;
+
+	getY2(): number;
+	setY2(y2: number): void;
+
+	getColorId(): ColorId;
+	setColorId(colorId: ColorId): void;
 }
 
 export type SelectionRectHandleType =
@@ -734,3 +804,83 @@ export const MouseButton = {
 	Middle: 1,
 	Right: 2,
 };
+
+export type DragType =
+	| { type: "none" }
+	| { type: "select"; originalSelectedShapeIds: string[] }
+	| {
+			type: "move"; // moving multiple objects
+			shapes: Shape[];
+			lines: Line[];
+	  }
+	| {
+			type: "move-point"; // moving a point in a path
+			line: Line;
+			point: 1 | 2;
+	  }
+	| {
+			type: "nwse-resize";
+			originX: number;
+			originY: number;
+			shapes: Shape[];
+			lines: Line[];
+	  }
+	| {
+			type: "nesw-resize";
+			originX: number;
+			originY: number;
+			shapes: Shape[];
+			lines: Line[];
+	  }
+	| {
+			type: "ns-resize";
+			originY: number;
+			shapes: Shape[];
+			lines: Line[];
+	  }
+	| {
+			type: "ew-resize";
+			originX: number;
+			shapes: Shape[];
+			lines: Line[];
+	  };
+
+export function fromCanvasCoordinate(
+	canvasX: number,
+	canvasY: number,
+	viewport: Viewport,
+): [x: number, y: number] {
+	return [
+		canvasX / viewport.scale + viewport.x,
+		canvasY / viewport.scale + viewport.y,
+	];
+}
+
+export function isOverlapped(obj1: Shape | Line, obj2: Shape | Line): boolean {
+	if ("width" in obj1) {
+		const rect1 = new Rect({
+			x: obj1.x,
+			y: obj1.y,
+			width: obj1.width,
+			height: obj1.height,
+		});
+
+		if ("width" in obj2) {
+			return rect1.isOverlapWithRect(obj2);
+		} else {
+			return rect1.isOverlapWithLine(obj2);
+		}
+	} else {
+		if ("width" in obj2) {
+			const rect2 = new Rect({
+				x: obj2.x,
+				y: obj2.y,
+				width: obj2.width,
+				height: obj2.height,
+			});
+			return rect2.isOverlapWithLine(obj1);
+		} else {
+			return Line.isOverlap(obj1, obj2);
+		}
+	}
+}

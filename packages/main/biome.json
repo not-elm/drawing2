@@ -12,6 +12,9 @@
 			"style": {
 				"noParameterAssign": "off",
 				"noUselessElse": "off"
+			},
+			"suspicious": {
+				"noAssignInExpressions": "off"
 			}
 		}
 	},

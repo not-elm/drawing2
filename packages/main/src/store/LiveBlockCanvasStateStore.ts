@@ -14,7 +14,11 @@ import {
 	type RestoreViewportService,
 	getRestoreViewportService,
 } from "../service/RestoreViewportService";
-import { CanvasStateStore } from "./CanvasStateStore";
+import {
+	CanvasStateStore,
+	type LineAccessor,
+	type ShapeAccessor,
+} from "./CanvasStateStore";
 
 interface RoomLike {
 	resumeHistory(): void;
@@ -32,6 +36,108 @@ class LiveBlockCanvasStateStore extends CanvasStateStore {
 	) {
 		super(restoreViewportService);
 		this.checkSchemaVersion();
+	}
+
+	update(predicate: () => void) {
+		this.room.batch(() => {
+			predicate();
+		});
+		this.syncWithLiveBlockStorage();
+	}
+
+	addShape(shape: Shape) {
+		this.update(() => {
+			const livePage = this.storage.root.get("page");
+
+			livePage.get("shapes").set(shape.id, new LiveObject(shape));
+			livePage.get("objectIds").push(shape.id);
+		});
+	}
+
+	addLine(line: Line) {
+		this.update(() => {
+			const livePage = this.storage.root.get("page");
+
+			livePage.get("lines").set(line.id, new LiveObject(line));
+			livePage.get("objectIds").push(line.id);
+		});
+	}
+
+	deleteShapes(ids: string[]) {
+		const idSet = new Set(ids);
+		this.update(() => {
+			const shapes = this.storage.root.get("page").get("shapes");
+			const lines = this.storage.root.get("page").get("lines");
+			for (const id of idSet) {
+				shapes.delete(id);
+				lines.delete(id);
+			}
+
+			const objectIds = this.storage.root.get("page").get("objectIds");
+			for (let i = objectIds.length - 1; i >= 0; i--) {
+				const id = objectIds.get(i);
+				if (id === undefined) continue;
+
+				if (idSet.has(id)) {
+					objectIds.delete(i);
+				}
+			}
+		});
+	}
+
+	updateZIndex(currentIndex: number, newIndex: number) {
+		this.update(() => {
+			const liveObjectIds = this.storage.root.get("page").get("objectIds");
+			const id = this.state.page.objectIds[currentIndex];
+			liveObjectIds.delete(currentIndex);
+			liveObjectIds.insert(id, newIndex);
+		});
+	}
+
+	resumeHistory() {
+		this.room.resumeHistory();
+	}
+
+	pauseHistory() {
+		this.room.pauseHistory();
+	}
+
+	undo() {
+		this.room.undo();
+	}
+
+	redo() {
+		this.room.redo();
+	}
+
+	protected updateShapes(
+		ids: string[],
+		updater: (shape: ShapeAccessor) => void,
+	): void {
+		this.update(() => {
+			for (const id of ids) {
+				const liveShape = this.storage.root.get("page").get("shapes").get(id);
+				if (liveShape !== undefined) {
+					liveBlockShapeAccessor.liveShape = liveShape;
+					updater(liveBlockShapeAccessor);
+				}
+			}
+		});
+	}
+
+	protected updateLines(
+		ids: string[],
+		updater: (line: LineAccessor) => void,
+	): void {
+		this.update(() => {
+			for (const id of ids) {
+				const liveLine = this.storage.root.get("page").get("lines").get(id);
+				if (liveLine !== undefined) {
+					liveBlockLineAccessor.liveLine = liveLine;
+					updater(liveBlockLineAccessor);
+				}
+			}
+		});
 	}
 
 	syncWithLiveBlockStorage() {
@@ -71,227 +177,107 @@ class LiveBlockCanvasStateStore extends CanvasStateStore {
 			this.storage.root.get("page").set("schemaUpdatedAt", Date.now());
 		});
 	}
-
-	addShape(shape: Shape) {
-		this.update(() => {
-			const livePage = this.storage.root.get("page");
-
-			livePage.get("shapes").set(shape.id, new LiveObject(shape));
-			livePage.get("objectIds").push(shape.id);
-		});
-	}
-
-	update(predicate: () => void) {
-		this.room.batch(() => {
-			predicate();
-		});
-		this.syncWithLiveBlockStorage();
-	}
-
-	addLine(line: Line) {
-		this.update(() => {
-			const livePage = this.storage.root.get("page");
-
-			livePage.get("lines").set(line.id, new LiveObject(line));
-			livePage.get("objectIds").push(line.id);
-		});
-	}
-
-	deleteShapes(ids: string[]) {
-		const idSet = new Set(ids);
-		this.update(() => {
-			const shapes = this.storage.root.get("page").get("shapes");
-			const lines = this.storage.root.get("page").get("lines");
-			for (const id of idSet) {
-				shapes.delete(id);
-				lines.delete(id);
-			}
-
-			const objectIds = this.storage.root.get("page").get("objectIds");
-			for (let i = objectIds.length - 1; i >= 0; i--) {
-				const id = objectIds.get(i);
-				if (id === undefined) continue;
-
-				if (idSet.has(id)) {
-					objectIds.delete(i);
-				}
-			}
-		});
-	}
-
-	moveShapes(deltaX: number, deltaY: number, shapes: Shape[], lines: Line[]) {
-		this.update(() => {
-			const currentShapes = this.storage.root.get("page").get("shapes");
-			const currentLines = this.storage.root.get("page").get("lines");
-
-			for (const shape of shapes) {
-				const currentShape = currentShapes.get(shape.id);
-				if (currentShape === undefined) continue;
-
-				currentShape.set("x", shape.x + deltaX);
-				currentShape.set("y", shape.y + deltaY);
-			}
-			for (const line of lines) {
-				const currentLine = currentLines.get(line.id);
-				if (currentLine === undefined) continue;
-
-				currentLine.set("x1", line.x1 + deltaX);
-				currentLine.set("y1", line.y1 + deltaY);
-				currentLine.set("x2", line.x2 + deltaX);
-				currentLine.set("y2", line.y2 + deltaY);
-			}
-		});
-	}
-
-	scaleShapes(
-		scaleX: number,
-		scaleY: number,
-		originX: number,
-		originY: number,
-		shapes: Shape[],
-		lines: Line[],
-	) {
-		this.update(() => {
-			const currentShapes = this.storage.root.get("page").get("shapes");
-			const currentLines = this.storage.root.get("page").get("lines");
-
-			for (const shape of shapes) {
-				const currentShape = currentShapes.get(shape.id);
-				if (currentShape === undefined) continue;
-
-				let x = (shape.x - originX) * scaleX + originX;
-				let y = (shape.y - originY) * scaleY + originY;
-				let width = shape.width * scaleX;
-				let height = shape.height * scaleY;
-				if (width < 0) {
-					x += width;
-					width = -width;
-				}
-				if (height < 0) {
-					y += height;
-					height = -height;
-				}
-
-				currentShape.set("x", x);
-				currentShape.set("y", y);
-				currentShape.set("width", width);
-				currentShape.set("height", height);
-			}
-			for (const line of lines) {
-				const currentLine = currentLines.get(line.id);
-				if (currentLine === undefined) continue;
-
-				const x1 = (line.x1 - originX) * scaleX + originX;
-				const y1 = (line.y1 - originY) * scaleY + originY;
-				const x2 = (line.x2 - originX) * scaleX + originX;
-				const y2 = (line.y2 - originY) * scaleY + originY;
-
-				currentLine.set("x1", x1);
-				currentLine.set("y1", y1);
-				currentLine.set("x2", x2);
-				currentLine.set("y2", y2);
-			}
-		});
-	}
-
-	updateLinePoint(lineId: string, point: 1 | 2, x: number, y: number) {
-		this.update(() => {
-			const currentLine = this.storage.root
-				.get("page")
-				.get("lines")
-				.get(lineId);
-			if (currentLine === undefined) return;
-
-			if (point === 1) {
-				currentLine.set("x1", x);
-				currentLine.set("y1", y);
-			} else {
-				currentLine.set("x2", x);
-				currentLine.set("y2", y);
-			}
-		});
-	}
-
-	setLabel(shapeId: string, value: string) {
-		this.update(() => {
-			const shape = this.storage.root.get("page").get("shapes").get(shapeId);
-
-			if (shape !== undefined) {
-				shape.set("label", value);
-			}
-		});
-	}
-
-	setTextAlign(alignX: TextAlignment, alignY: TextAlignment) {
-		this.update(() => {
-			for (const id of this.state.selectedShapeIds) {
-				const shape = this.storage.root.get("page").get("shapes").get(id);
-
-				if (shape !== undefined) {
-					shape.set("textAlignX", alignX);
-					shape.set("textAlignY", alignY);
-				}
-			}
-		});
-		this.setState(
-			this.state.copy({ defaultTextAlignX: alignX, defaultTextAlignY: alignY }),
-		);
-	}
-
-	setColor(colorId: ColorId) {
-		this.update(() => {
-			for (const id of this.state.selectedShapeIds) {
-				const shape = this.storage.root.get("page").get("shapes").get(id);
-				if (shape !== undefined) {
-					shape.set("colorId", colorId);
-				}
-
-				const line = this.storage.root.get("page").get("lines").get(id);
-				if (line !== undefined) {
-					line.set("colorId", colorId);
-				}
-			}
-		});
-		this.setState(this.state.copy({ defaultColorId: colorId }));
-	}
-
-	setFillMode(fillMode: FillMode) {
-		this.update(() => {
-			for (const id of this.state.selectedShapeIds) {
-				const shape = this.storage.root.get("page").get("shapes").get(id);
-				if (shape !== undefined) {
-					shape.set("fillMode", fillMode);
-				}
-			}
-		});
-		this.setState(this.state.copy({ defaultFillMode: fillMode }));
-	}
-
-	updateZIndex(currentIndex: number, newIndex: number) {
-		this.update(() => {
-			const liveObjectIds = this.storage.root.get("page").get("objectIds");
-			const id = this.state.page.objectIds[currentIndex];
-			liveObjectIds.delete(currentIndex);
-			liveObjectIds.insert(id, newIndex);
-		});
-	}
-
-	resumeHistory() {
-		this.room.resumeHistory();
-	}
-
-	pauseHistory() {
-		this.room.pauseHistory();
-	}
-
-	undo() {
-		this.room.undo();
-	}
-
-	redo() {
-		this.room.redo();
-	}
 }
+
+const liveBlockShapeAccessor = new (class implements ShapeAccessor {
+	public liveShape: LiveObject<Shape> = null as never;
+
+	getId(): string {
+		return this.liveShape.get("id");
+	}
+	getX(): number {
+		return this.liveShape.get("x");
+	}
+	setX(x: number): void {
+		this.liveShape.set("x", x);
+	}
+	getY(): number {
+		return this.liveShape.get("y");
+	}
+	setY(y: number): void {
+		this.liveShape.set("y", y);
+	}
+	getWidth(): number {
+		return this.liveShape.get("width");
+	}
+	setWidth(width: number): void {
+		this.liveShape.set("width", width);
+	}
+	getHeight(): number {
+		return this.liveShape.get("height");
+	}
+	setHeight(height: number): void {
+		this.liveShape.set("height", height);
+	}
+	getColorId(): ColorId {
+		return this.liveShape.get("colorId");
+	}
+	setColorId(colorId: ColorId): void {
+		this.liveShape.set("colorId", colorId);
+	}
+	getFillMode(): FillMode {
+		return this.liveShape.get("fillMode");
+	}
+	setFillMode(fillMode: FillMode): void {
+		this.liveShape.set("fillMode", fillMode);
+	}
+	getTextAlignX(): TextAlignment {
+		return this.liveShape.get("textAlignX");
+	}
+	setTextAlignX(textAlignX: TextAlignment): void {
+		this.liveShape.set("textAlignX", textAlignX);
+	}
+	getTextAlignY(): TextAlignment {
+		return this.liveShape.get("textAlignY");
+	}
+	setTextAlignY(textAlignY: TextAlignment): void {
+		this.liveShape.set("textAlignY", textAlignY);
+	}
+	getLabel(): string {
+		return this.liveShape.get("label");
+	}
+	setLabel(label: string): void {
+		this.liveShape.set("label", label);
+	}
+})();
+
+const liveBlockLineAccessor = new (class implements LineAccessor {
+	public liveLine: LiveObject<Line> = null as never;
+
+	getId(): string {
+		return this.liveLine.get("id");
+	}
+	getX1(): number {
+		return this.liveLine.get("x1");
+	}
+	setX1(x1: number): void {
+		this.liveLine.set("x1", x1);
+	}
+	getY1(): number {
+		return this.liveLine.get("y1");
+	}
+	setY1(y1: number): void {
+		this.liveLine.set("y1", y1);
+	}
+	getX2(): number {
+		return this.liveLine.get("x2");
+	}
+	setX2(x2: number): void {
+		this.liveLine.set("x2", x2);
+	}
+	getY2(): number {
+		return this.liveLine.get("y2");
+	}
+	setY2(y2: number): void {
+		this.liveLine.set("y2", y2);
+	}
+	getColorId(): ColorId {
+		return this.liveLine.get("colorId");
+	}
+	setColorId(colorId: ColorId): void {
+		this.liveLine.set("colorId", colorId);
+	}
+})();
 
 export async function initializeLiveBlockCanvasStateStore(): Promise<CanvasStateStore> {
 	const client = createClient({

@@ -53,22 +53,14 @@ export const ShapeView = memo(function ShapeView({
 
 	return (
 		<div
-			css={{
-				position: "absolute",
-				left: shape.x,
-				top: shape.y,
-			}}
-			onMouseDown={handleMouseDown}
-			onDoubleClick={handleDoubleClick}
+			style={{ transform: `translate(${shape.x}px, ${shape.y}px)` }}
+			css={{ position: "absolute", pointerEvents: "none" }}
 		>
 			<svg
 				viewBox={`0 0 ${shape.width} ${shape.height}`}
 				width={shape.width}
 				height={shape.height}
-				css={{
-					overflow: "visible",
-					pointerEvents: "none",
-				}}
+				css={{ overflow: "visible" }}
 			>
 				<rect
 					css={{
@@ -85,6 +77,8 @@ export const ShapeView = memo(function ShapeView({
 					width={shape.width}
 					height={shape.height}
 					strokeWidth={5}
+					onMouseDown={handleMouseDown}
+					onDoubleClick={handleDoubleClick}
 				/>
 			</svg>
 			<div
@@ -129,6 +123,7 @@ export const ShapeView = memo(function ShapeView({
 							resize: "none",
 							whiteSpace: "pre-wrap",
 							textAlign: "inherit",
+							pointerEvents: "all",
 						}}
 						onFocus={(ev) => {
 							ev.target.setSelectionRange(0, ev.target.value.length);
