@@ -14,5 +14,8 @@
 				"noUselessElse": "off"
 			}
 		}
+	},
+	"formatter": {
+		"formatWithErrors": true
 	}
 }

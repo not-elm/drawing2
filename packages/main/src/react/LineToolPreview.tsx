@@ -19,5 +19,5 @@ export function LineToolPreview() {
 		state.defaultColorId,
 	);
 
-	return <LineView line={line} viewport={state.viewport} />;
+	return <LineView line={line} />;
 }

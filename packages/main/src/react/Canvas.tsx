@@ -72,9 +72,9 @@ export function Canvas() {
 			<div
 				css={{
 					position: "relative",
-					transform: `translate(${-state.viewport.x * scale}px, ${
-						-state.viewport.y * scale
-					}px)`,
+					transform: `translate(${-state.viewport.x}px, ${-state.viewport
+						.y}px) scale(${scale})`,
+					transformOrigin: `${state.viewport.x}px ${state.viewport.y}px`,
 				}}
 			>
 				{state.page.objectIds.map((objectId) => {
@@ -84,7 +84,6 @@ export function Canvas() {
 							<ShapeView
 								key={shape.id}
 								shape={shape}
-								scale={scale}
 								isLabelEditing={state.isTextEditing(shape.id)}
 							/>
 						);
@@ -92,14 +91,14 @@ export function Canvas() {
 
 					const line = state.page.lines.get(objectId);
 					if (line) {
-						return <LineView key={line.id} line={line} scale={scale} />;
+						return <LineView key={line.id} line={line} />;
 					}
 
 					return null;
 				})}
+				<ToolPreview />
 			</div>
 
-			<ToolPreview />
 			<SelectorRect />
 			<SelectionRect />
 		</div>

@@ -28,5 +28,5 @@ export function ShapeToolPreview() {
 		state.defaultFillMode,
 	);
 
-	return <ShapeView shape={rect} viewport={state.viewport} />;
+	return <ShapeView shape={rect} isLabelEditing={false} />;
 }

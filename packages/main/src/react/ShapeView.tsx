@@ -9,9 +9,8 @@ import { useCanvasEventHandler } from "./StoreProvider";
 
 export const ShapeView = memo(function ShapeView({
 	shape,
-	scale,
 	isLabelEditing,
-}: { shape: Shape; scale: number; isLabelEditing: boolean }) {
+}: { shape: Shape; isLabelEditing: boolean }) {
 	const handlers = useCanvasEventHandler();
 
 	const handleMouseDown: MouseEventHandler = useCallback(
@@ -56,16 +55,16 @@ export const ShapeView = memo(function ShapeView({
 		<div
 			css={{
 				position: "absolute",
-				left: shape.x * scale,
-				top: shape.y * scale,
+				left: shape.x,
+				top: shape.y,
 			}}
 			onMouseDown={handleMouseDown}
 			onDoubleClick={handleDoubleClick}
 		>
 			<svg
-				viewBox={`0 0 ${shape.width * scale} ${shape.height * scale}`}
-				width={shape.width * scale}
-				height={shape.height * scale}
+				viewBox={`0 0 ${shape.width} ${shape.height}`}
+				width={shape.width}
+				height={shape.height}
 				css={{
 					overflow: "visible",
 					pointerEvents: "none",
@@ -83,8 +82,8 @@ export const ShapeView = memo(function ShapeView({
 					}}
 					x={0}
 					y={0}
-					width={shape.width * scale}
-					height={shape.height * scale}
+					width={shape.width}
+					height={shape.height}
 					strokeWidth={5}
 				/>
 			</svg>
@@ -92,7 +91,7 @@ export const ShapeView = memo(function ShapeView({
 				css={{
 					position: "absolute",
 					width: "100%",
-					fontSize: 24 * scale,
+					fontSize: 24,
 					...{
 						"start-outside": { right: "100%", textAlign: "start" as const },
 						start: { left: 0, textAlign: "start" as const },

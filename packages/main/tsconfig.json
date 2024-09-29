@@ -1,23 +1,17 @@
 {
-  "compilerOptions": {
-    "target": "ES2020",
-    "strict": true,
-    "sourceMap": true,
-    "moduleResolution": "node",
-    "forceConsistentCasingInFileNames": true,
-    "lib": [
-      "DOM",
-      "ES2020"
-    ],
-    "outDir": "../../build",
-    "jsx": "react-jsx",
-    "jsxImportSource": "@emotion/react",
-    "skipLibCheck": true
-  },
-  "include": [
-    "./src/**/*"
-  ],
-  "exclude": [
-    "**/*.test.*"
-  ]
+	"compilerOptions": {
+		"target": "ES2020",
+		"strict": true,
+		"sourceMap": true,
+		"moduleResolution": "node",
+		"forceConsistentCasingInFileNames": true,
+		"lib": ["DOM", "ES2020"],
+		"outDir": "../../build",
+		"jsx": "react-jsx",
+		"jsxImportSource": "@emotion/react",
+		"skipLibCheck": true
+	},
+	"types": ["@emotion/react/types/css-prop"],
+	"include": ["./src/**/*"],
+	"exclude": ["**/*.test.*"]
 }

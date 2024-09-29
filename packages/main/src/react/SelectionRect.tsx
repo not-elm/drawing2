@@ -29,11 +29,9 @@ export function SelectionRect() {
 			}}
 		>
 			<svg
-				viewBox={`0 0 ${width * state.viewport.scale} ${
-					height * state.viewport.scale
-				}`}
-				width={width * state.viewport.scale}
-				height={height * state.viewport.scale}
+				viewBox="0 0 1 1"
+				width={1}
+				height={1}
 				css={{
 					position: "absolute",
 					inset: 0,
