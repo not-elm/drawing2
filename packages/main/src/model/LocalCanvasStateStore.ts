@@ -6,7 +6,22 @@ import type { Line } from "./Line";
 import type { Shape } from "./Shape";
 import type { TextAlignment } from "./TextAlignment";
 
+const LOCAL_STORAGE_KEY = "LocalCanvasStateStore.state.page";
+interface SerializedPage {
+	shapes: Shape[];
+	lines: Line[];
+	objectIds: string[];
+}
+
 class LocalCanvasStateStore extends CanvasStateStore {
+	constructor(
+		restoreViewportService: ReturnType<typeof getRestoreViewportService>,
+	) {
+		super(restoreViewportService);
+
+		this.loadFromLocalStorage();
+	}
+
 	addShape(shape: Shape) {
 		this.update(() => {
 			const newShapes = new Map(this.state.page.shapes);
@@ -26,6 +41,47 @@ class LocalCanvasStateStore extends CanvasStateStore {
 
 	update(predicate: () => void) {
 		predicate();
+		this.saveToLocalStorage();
+	}
+
+	private saveToLocalStorage() {
+		const serializedPage: SerializedPage = {
+			shapes: Array.from(this.state.page.shapes.values()),
+			lines: Array.from(this.state.page.lines.values()),
+			objectIds: this.state.page.objectIds,
+		};
+
+		localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(serializedPage));
+	}
+
+	private loadFromLocalStorage() {
+		try {
+			const data = localStorage.getItem(LOCAL_STORAGE_KEY);
+			if (data === null) return;
+
+			const serializedPage: SerializedPage = JSON.parse(data);
+
+			const shapes = new Map<string, Shape>();
+			const lines = new Map<string, Line>();
+			for (const shape of serializedPage.shapes) {
+				shapes.set(shape.id, shape);
+			}
+			for (const line of serializedPage.lines) {
+				lines.set(line.id, line);
+			}
+
+			this.setState(
+				this.state.copy({
+					page: {
+						schemaUpdatedAt: 0,
+						shapes,
+						lines,
+						objectIds: serializedPage.objectIds,
+					},
+					selectedShapeIds: [],
+				}),
+			);
+		} catch {}
 	}
 
 	addLine(line: Line) {
