@@ -23,10 +23,7 @@ export interface RoomLike {
 	batch(callback: () => void): void;
 }
 
-export class CanvasStateStore
-	extends Store<CanvasState>
-	implements CanvasEventHandlers
-{
+export class CanvasStateStore extends Store<CanvasState> {
 	constructor(
 		private readonly room: RoomLike,
 		private readonly storage: { root: LiveObject<Liveblocks["Storage"]> },
@@ -228,9 +225,9 @@ export class CanvasStateStore
 		});
 	}
 
-	private setMode(mode: Mode) {
+	setMode(mode: Mode) {
 		if (this.state.dragging) {
-			this.handleDragEnd();
+			this.endDrag();
 		}
 
 		this.setState(this.state.copy({ mode }));
@@ -240,7 +237,7 @@ export class CanvasStateStore
 		}
 	}
 
-	private moveViewportPosition(deltaCanvasX: number, deltaCanvasY: number) {
+	moveViewportPosition(deltaCanvasX: number, deltaCanvasY: number) {
 		this.setState(
 			this.state.copy({
 				viewport: {
@@ -253,7 +250,7 @@ export class CanvasStateStore
 		this.restoreViewportService.save(this.state.viewport);
 	}
 
-	private setViewportScale(
+	setViewportScale(
 		newScale: number,
 		centerCanvasX: number,
 		centerCanvasY: number,
@@ -276,7 +273,7 @@ export class CanvasStateStore
 		this.restoreViewportService.save(this.state.viewport);
 	}
 
-	private select(id: string) {
+	select(id: string) {
 		this.setState(
 			this.state.copy({
 				selectedShapeIds: [...this.state.selectedShapeIds, id],
@@ -292,7 +289,7 @@ export class CanvasStateStore
 		);
 	}
 
-	private toggleSelect(id: string) {
+	toggleSelect(id: string) {
 		if (this.state.selectedShapeIds.includes(id)) {
 			this.unselect(id);
 		} else {
@@ -300,11 +297,11 @@ export class CanvasStateStore
 		}
 	}
 
-	private clearSelection() {
+	clearSelection() {
 		this.setSelectedShapeIds([]);
 	}
 
-	private setSelectedShapeIds(ids: string[]) {
+	setSelectedShapeIds(ids: string[]) {
 		this.setState(
 			this.state.copy({
 				selectedShapeIds: ids,
@@ -312,19 +309,19 @@ export class CanvasStateStore
 		);
 	}
 
-	private deleteSelectedShapes() {
+	deleteSelectedShapes() {
 		this.deleteShapes(this.state.selectedShapeIds);
 	}
 
-	private undo() {
+	undo() {
 		this.room.undo();
 	}
 
-	private redo() {
+	redo() {
 		this.room.redo();
 	}
 
-	private copy() {
+	copy() {
 		if (this.state.selectedShapeIds.length === 0) return;
 
 		const shapes = this.state.selectedShapeIds
@@ -337,12 +334,12 @@ export class CanvasStateStore
 		ClipboardService.copy(shapes, lines);
 	}
 
-	private async cut() {
+	async cut() {
 		this.copy();
 		this.deleteSelectedShapes();
 	}
 
-	private async paste(): Promise<void> {
+	async paste(): Promise<void> {
 		const { shapes, lines } = await ClipboardService.paste();
 		if (shapes.length === 0 && lines.length === 0) return;
 
@@ -439,314 +436,18 @@ export class CanvasStateStore
 		return null;
 	}
 
-	/// ---------------------------------------------------------------------------
-	/// handlers
-
-	handleCanvasMouseDown(
-		canvasX: number,
-		canvasY: number,
-		mouseButton: number,
-		modifiers: { shiftKey: boolean },
-	) {
-		switch (mouseButton) {
-			case MouseButton.Left: {
-				switch (this.state.mode) {
-					case "select": {
-						const selectionRect = this.state.selectionRect;
-						const [x, y] = fromCanvasCoordinate(
-							canvasX,
-							canvasY,
-							this.state.viewport,
-						);
-						if (selectionRect?.isOverlapWithPoint(x, y) ?? false) {
-							this.handleDragStart(canvasX, canvasY, {
-								type: "move",
-								shapes: this.state.selectedShapeIds
-									.map((id) => this.state.page.shapes.get(id))
-									.filter(isNotNullish),
-								lines: this.state.selectedShapeIds
-									.map((id) => this.state.page.lines.get(id))
-									.filter(isNotNullish),
-							});
-						} else {
-							if (!modifiers.shiftKey) {
-								this.clearSelection();
-							}
-							this.handleDragStart(canvasX, canvasY, {
-								type: "select",
-								originalSelectedShapeIds: this.state.selectedShapeIds.slice(),
-							});
-						}
-						break;
-					}
-					case "line":
-					case "shape": {
-						this.handleDragStart(canvasX, canvasY, { type: "none" });
-						break;
-					}
-					case "text": {
-						this.setMode("select");
-						this.clearSelection();
-						break;
-					}
-				}
-				break;
-			}
-		}
-	}
-
-	handleCanvasMouseMove(canvasX: number, canvasY: number) {
-		if (this.state.dragging) {
-			this.handleDragMove(canvasX, canvasY);
-		}
-	}
-
-	handleCanvasMouseUp() {
-		if (this.state.dragging) {
-			this.handleDragEnd();
-		}
-	}
-
-	handleShapeMouseDown(
-		id: string,
-		canvasX: number,
-		canvasY: number,
-		mouseButton: number,
-		modifiers: { shiftKey: boolean },
-	): boolean {
-		switch (mouseButton) {
-			case MouseButton.Left: {
-				switch (this.state.mode) {
-					case "select": {
-						if (modifiers.shiftKey) {
-							this.toggleSelect(id);
-						} else {
-							if (this.state.selectedShapeIds.includes(id)) {
-								// Do nothing
-							} else {
-								this.clearSelection();
-								this.select(id);
-							}
-						}
-						this.handleDragStart(canvasX, canvasY, {
-							type: "move",
-							shapes: this.state.selectedShapeIds
-								.map((id) => this.state.page.shapes.get(id))
-								.filter(isNotNullish),
-							lines: this.state.selectedShapeIds
-								.map((id) => this.state.page.lines.get(id))
-								.filter(isNotNullish),
-						});
-						return true;
-					}
-					case "text": {
-						this.setMode("select");
-						this.handleDragStart(canvasX, canvasY, {
-							type: "move",
-							shapes: this.state.selectedShapeIds
-								.map((id) => this.state.page.shapes.get(id))
-								.filter(isNotNullish),
-							lines: this.state.selectedShapeIds
-								.map((id) => this.state.page.lines.get(id))
-								.filter(isNotNullish),
-						});
-						return true;
-					}
-				}
-				break;
-			}
-		}
-		return false;
-	}
-
-	handleShapeDoubleClick(
-		id: string,
-		canvasX: number,
-		canvasY: number,
-		mouseButton: number,
-		modifiers: { shiftKey: boolean },
-	) {
-		switch (mouseButton) {
-			case MouseButton.Left: {
-				this.setSelectedShapeIds([id]);
-				this.setMode("text");
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	handleSelectionRectHandleMouseDown(
-		canvasX: number,
-		canvasY: number,
-		mouseButton: number,
-		handle: SelectionRectHandleType,
-	) {
-		switch (mouseButton) {
-			case MouseButton.Left: {
-				const selectionRect = computeUnionRect(
-					this.state.selectedShapeIds
-						.map((id) => this.state.page.shapes.get(id))
-						.filter(isNotNullish),
-					this.state.selectedShapeIds
-						.map((id) => this.state.page.lines.get(id))
-						.filter(isNotNullish),
-				);
-				assert(selectionRect !== null, "Cannot resize without a selection");
-
-				let dragType: DragType;
-				switch (handle) {
-					case "center": {
-						dragType = {
-							type: "move",
-							shapes: this.state.selectedShapeIds
-								.map((id) => this.state.page.shapes.get(id))
-								.filter(isNotNullish),
-							lines: this.state.selectedShapeIds
-								.map((id) => this.state.page.lines.get(id))
-								.filter(isNotNullish),
-						};
-						break;
-					}
-					case "topLeft":
-						dragType = {
-							type: "nwse-resize",
-							originX: selectionRect.x + selectionRect.width,
-							originY: selectionRect.y + selectionRect.height,
-							shapes: this.state.selectedShapeIds
-								.map((id) => this.state.page.shapes.get(id))
-								.filter(isNotNullish),
-							lines: this.state.selectedShapeIds
-								.map((id) => this.state.page.lines.get(id))
-								.filter(isNotNullish),
-						};
-						break;
-					case "top":
-						dragType = {
-							type: "ns-resize",
-							originY: selectionRect.y + selectionRect.height,
-							shapes: this.state.selectedShapeIds
-								.map((id) => this.state.page.shapes.get(id))
-								.filter(isNotNullish),
-							lines: this.state.selectedShapeIds
-								.map((id) => this.state.page.lines.get(id))
-								.filter(isNotNullish),
-						};
-						break;
-					case "topRight":
-						dragType = {
-							type: "nesw-resize",
-							originX: selectionRect.x,
-							originY: selectionRect.y + selectionRect.height,
-							shapes: this.state.selectedShapeIds
-								.map((id) => this.state.page.shapes.get(id))
-								.filter(isNotNullish),
-							lines: this.state.selectedShapeIds
-								.map((id) => this.state.page.lines.get(id))
-								.filter(isNotNullish),
-						};
-						break;
-					case "right":
-						dragType = {
-							type: "ew-resize",
-							originX: selectionRect.x,
-							shapes: this.state.selectedShapeIds
-								.map((id) => this.state.page.shapes.get(id))
-								.filter(isNotNullish),
-							lines: this.state.selectedShapeIds
-								.map((id) => this.state.page.lines.get(id))
-								.filter(isNotNullish),
-						};
-						break;
-					case "bottomRight":
-						dragType = {
-							type: "nwse-resize",
-							originX: selectionRect.x,
-							originY: selectionRect.y,
-							shapes: this.state.selectedShapeIds
-								.map((id) => this.state.page.shapes.get(id))
-								.filter(isNotNullish),
-							lines: this.state.selectedShapeIds
-								.map((id) => this.state.page.lines.get(id))
-								.filter(isNotNullish),
-						};
-						break;
-					case "bottomLeft":
-						dragType = {
-							type: "nesw-resize",
-							originX: selectionRect.x + selectionRect.width,
-							originY: selectionRect.y,
-							shapes: this.state.selectedShapeIds
-								.map((id) => this.state.page.shapes.get(id))
-								.filter(isNotNullish),
-							lines: this.state.selectedShapeIds
-								.map((id) => this.state.page.lines.get(id))
-								.filter(isNotNullish),
-						};
-						break;
-					case "left":
-						dragType = {
-							type: "ew-resize",
-							originX: selectionRect.x + selectionRect.width,
-							shapes: this.state.selectedShapeIds
-								.map((id) => this.state.page.shapes.get(id))
-								.filter(isNotNullish),
-							lines: this.state.selectedShapeIds
-								.map((id) => this.state.page.lines.get(id))
-								.filter(isNotNullish),
-						};
-						break;
-					case "bottom":
-						dragType = {
-							type: "ns-resize",
-							originY: selectionRect.y,
-							shapes: this.state.selectedShapeIds
-								.map((id) => this.state.page.shapes.get(id))
-								.filter(isNotNullish),
-							lines: this.state.selectedShapeIds
-								.map((id) => this.state.page.lines.get(id))
-								.filter(isNotNullish),
-						};
-						break;
-				}
-
-				this.handleDragStart(canvasX, canvasY, dragType);
-				break;
-			}
-		}
-	}
-
-	handleSelectionLineHandleMouseDown(
-		canvasX: number,
-		canvasY: number,
-		mouseButton: number,
-		point: 1 | 2,
-	) {
-		switch (mouseButton) {
-			case MouseButton.Left: {
-				const line = this.state.page.lines.get(this.state.selectedShapeIds[0]);
-				assert(isNotNullish(line), "Cannot edit without selecting a line");
-
-				const dragType: DragType = { type: "move-point", line, point };
-				this.handleDragStart(canvasX, canvasY, dragType);
-				break;
-			}
-		}
-	}
-
-	handleDragStart(startCanvasX: number, startCanvasY: number, type: DragType) {
-		assert(!this.state.dragging, "Cannot start dragging while dragging");
+	startDrag(startCanvasX: number, startCanvasY: number, type: DragType) {
+		assert(!this.getState().dragging, "Cannot start dragging while dragging");
 
 		const [startX, startY] = fromCanvasCoordinate(
 			startCanvasX,
 			startCanvasY,
-			this.state.viewport,
+			this.getState().viewport,
 		);
 
 		this.room.pauseHistory();
 		this.setState(
-			this.state.copy({
+			this.getState().copy({
 				dragType: type,
 				dragging: true,
 				dragStartX: startX,
@@ -757,17 +458,17 @@ export class CanvasStateStore
 		);
 	}
 
-	handleDragMove(currentCanvasX: number, currentCanvasY: number) {
-		assert(this.state.dragging, "Cannot move drag while not dragging");
+	updateDrag(currentCanvasX: number, currentCanvasY: number) {
+		assert(this.getState().dragging, "Cannot move drag while not dragging");
 
 		const [currentX, currentY] = fromCanvasCoordinate(
 			currentCanvasX,
 			currentCanvasY,
-			this.state.viewport,
+			this.getState().viewport,
 		);
 
 		this.setState(
-			this.state.copy({
+			this.getState().copy({
 				dragCurrentX: currentX,
 				dragCurrentY: currentY,
 			}),
@@ -879,7 +580,7 @@ export class CanvasStateStore
 		}
 	}
 
-	handleDragEnd() {
+	endDrag() {
 		assert(this.state.dragging, "Cannot end drag while not dragging");
 
 		this.room.resumeHistory();
@@ -932,138 +633,7 @@ export class CanvasStateStore
 		}
 	}
 
-	handleScroll(deltaCanvasX: number, deltaCanvasY: number) {
-		this.moveViewportPosition(deltaCanvasX, deltaCanvasY);
-	}
-
-	handleScale(newScale: number, centerCanvasX: number, centerCanvasY: number) {
-		this.setViewportScale(newScale, centerCanvasX, centerCanvasY);
-	}
-
-	handleKeyDown(
-		key: string,
-		modifiers: { metaKey: boolean; ctrlKey: boolean; shiftKey: boolean },
-	): boolean {
-		switch (key) {
-			case "a": {
-				switch (this.state.mode) {
-					case "line":
-					case "shape":
-					case "select": {
-						if (modifiers.metaKey || modifiers.ctrlKey) {
-							this.setMode("select");
-							this.setSelectedShapeIds([
-								...this.state.page.shapes.keys(),
-								...this.state.page.lines.keys(),
-							]);
-							return true;
-						}
-					}
-				}
-				break;
-			}
-			case "r": {
-				switch (this.state.mode) {
-					case "shape":
-					case "select": {
-						this.setMode("shape");
-						return true;
-					}
-				}
-				break;
-			}
-			case "l": {
-				switch (this.state.mode) {
-					case "shape":
-					case "select": {
-						this.setMode("line");
-						return true;
-					}
-				}
-				break;
-			}
-			case "z": {
-				switch (this.state.mode) {
-					case "line":
-					case "shape":
-					case "select": {
-						if (modifiers.metaKey || modifiers.ctrlKey) {
-							if (modifiers.shiftKey) {
-								this.redo();
-							} else {
-								this.undo();
-							}
-							return true;
-						}
-					}
-				}
-				break;
-			}
-			case "x": {
-				switch (this.state.mode) {
-					case "select": {
-						if (modifiers.metaKey || modifiers.ctrlKey) {
-							this.cut();
-						}
-						return true;
-					}
-				}
-				break;
-			}
-			case "c": {
-				switch (this.state.mode) {
-					case "select": {
-						if (modifiers.metaKey || modifiers.ctrlKey) {
-							this.copy();
-						}
-						return true;
-					}
-				}
-				break;
-			}
-			case "v": {
-				switch (this.state.mode) {
-					case "select": {
-						if (modifiers.metaKey || modifiers.ctrlKey) {
-							this.paste();
-						}
-						return true;
-					}
-				}
-				break;
-			}
-			case "Escape": {
-				switch (this.state.mode) {
-					case "select": {
-						this.clearSelection();
-						return true;
-					}
-					default: {
-						this.setMode("select");
-						return true;
-					}
-				}
-			}
-			case "Delete":
-			case "Backspace": {
-				switch (this.state.mode) {
-					case "select": {
-						this.deleteSelectedShapes();
-						return true;
-					}
-				}
-				break;
-			}
-		}
-
-		return false;
-	}
-
-	handleModeChange(mode: Mode) {
-		this.setMode(mode);
-	}
-
-	handleLabelChange(shapeId: string, value: string) {
+	setLabel(shapeId: string, value: string) {
 		this.update(() => {
 			const shape = this.storage.root.get("page").get("shapes").get(shapeId);
 
@@ -1073,7 +643,7 @@ export class CanvasStateStore
 		});
 	}
 
-	handleTextAlignButtonClick(alignX: TextAlignment, alignY: TextAlignment) {
+	setTextAlign(alignX: TextAlignment, alignY: TextAlignment) {
 		this.update(() => {
 			for (const id of this.state.selectedShapeIds) {
 				const shape = this.storage.root.get("page").get("shapes").get(id);
@@ -1089,7 +659,7 @@ export class CanvasStateStore
 		);
 	}
 
-	handleColorButtonClick(colorId: ColorId) {
+	setColor(colorId: ColorId) {
 		this.update(() => {
 			for (const id of this.state.selectedShapeIds) {
 				const shape = this.storage.root.get("page").get("shapes").get(id);
@@ -1106,7 +676,7 @@ export class CanvasStateStore
 		this.setState(this.state.copy({ defaultColorId: colorId }));
 	}
 
-	handleFillModeButtonClick(fillMode: FillMode) {
+	setFillMode(fillMode: FillMode) {
 		this.update(() => {
 			for (const id of this.state.selectedShapeIds) {
 				const shape = this.storage.root.get("page").get("shapes").get(id);
@@ -1118,7 +688,7 @@ export class CanvasStateStore
 		this.setState(this.state.copy({ defaultFillMode: fillMode }));
 	}
 
-	handleBringToFrontButtonClick() {
+	bringToFront() {
 		this.update(() => {
 			const selectedIdSet = new Set(this.state.selectedShapeIds);
 			const liveObjectIds = this.storage.root.get("page").get("objectIds");
@@ -1139,7 +709,7 @@ export class CanvasStateStore
 		});
 	}
 
-	handleBringForwardButtonClick() {
+	bringForward() {
 		this.update(() => {
 			const selectedIdSet = new Set(this.state.selectedShapeIds);
 			const liveObjectIds = this.storage.root.get("page").get("objectIds");
@@ -1179,7 +749,7 @@ export class CanvasStateStore
 		});
 	}
 
-	handleSendBackwardButtonClick() {
+	sendBackward() {
 		this.update(() => {
 			const selectedIdSet = new Set(this.state.selectedShapeIds);
 			const liveObjectIds = this.storage.root.get("page").get("objectIds");
@@ -1219,7 +789,7 @@ export class CanvasStateStore
 		});
 	}
 
-	handleSendToBackButtonClick() {
+	sendToBack() {
 		this.update(() => {
 			const selectedIdSet = new Set(this.state.selectedShapeIds);
 			const liveObjectIds = this.storage.root.get("page").get("objectIds");
@@ -1239,101 +809,6 @@ export class CanvasStateStore
 			}
 		});
 	}
-}
-
-export interface CanvasEventHandlers {
-	handleCanvasMouseDown(
-		canvasX: number,
-		canvasY: number,
-		mouseButton: number,
-		modifiers: { shiftKey: boolean },
-	): void;
-
-	handleCanvasMouseMove(canvasX: number, canvasY: number): void;
-
-	handleCanvasMouseUp(): void;
-
-	handleShapeMouseDown(
-		id: string,
-		canvasX: number,
-		canvasY: number,
-		mouseButton: number,
-		modifiers: {
-			shiftKey: boolean;
-		},
-	): boolean;
-
-	handleShapeDoubleClick(
-		id: string,
-		canvasX: number,
-		canvasY: number,
-		mouseButton: number,
-		modifiers: {
-			shiftKey: boolean;
-		},
-	): boolean;
-
-	handleSelectionRectHandleMouseDown(
-		canvasX: number,
-		canvasY: number,
-		mouseButton: number,
-		handle: SelectionRectHandleType,
-	): void;
-
-	handleSelectionLineHandleMouseDown(
-		canvasX: number,
-		canvasY: number,
-		mouseButton: number,
-		point: 1 | 2,
-	): void;
-
-	handleDragStart(
-		startCanvasX: number,
-		startCanvasY: number,
-		handle: DragType,
-	): void;
-
-	handleDragMove(currentCanvasX: number, currentCanvasY: number): void;
-
-	handleDragEnd(): void;
-
-	handleScroll(deltaCanvasX: number, deltaCanvasY: number): void;
-
-	handleScale(
-		newScale: number,
-		centerCanvasX: number,
-		centerCanvasY: number,
-	): void;
-
-	handleKeyDown(
-		key: string,
-		modifiers: {
-			metaKey: boolean;
-			ctrlKey: boolean;
-			shiftKey: boolean;
-		},
-	): boolean;
-
-	handleModeChange(mode: Mode): void;
-
-	handleLabelChange(shapeId: string, value: string): void;
-
-	handleTextAlignButtonClick(
-		alignX: TextAlignment,
-		alignY: TextAlignment,
-	): void;
-
-	handleColorButtonClick(colorId: ColorId): void;
-
-	handleFillModeButtonClick(fillMode: FillMode): void;
-
-	handleBringToFrontButtonClick(): void;
-
-	handleBringForwardButtonClick(): void;
-
-	handleSendBackwardButtonClick(): void;
-
-	handleSendToBackButtonClick(): void;
 }
 
 export type DragType =
@@ -1396,14 +871,6 @@ export function fromCanvasCoordinate(
 		canvasX / viewport.scale + viewport.x,
 		canvasY / viewport.scale + viewport.y,
 	];
-}
-
-export function toCanvasCoordinate(
-	x: number,
-	y: number,
-	viewport: Viewport,
-): [canvasX: number, canvasY: number] {
-	return [(x - viewport.x) * viewport.scale, (y - viewport.y) * viewport.scale];
 }
 
 export function computeUnionRect(shapes: Shape[], lines: Line[]): Rect | null {

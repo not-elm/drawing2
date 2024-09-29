@@ -1,4 +1,9 @@
-import { LiveMap, LiveObject, createClient } from "@liveblocks/client";
+import {
+	LiveList,
+	LiveMap,
+	LiveObject,
+	createClient,
+} from "@liveblocks/client";
 import {
 	type ReactNode,
 	createContext,
@@ -8,29 +13,34 @@ import {
 	useSyncExternalStore,
 } from "react";
 import type { CanvasState } from "../model/CanvasState";
-import {
-	type CanvasEventHandlers,
-	CanvasStateStore,
-} from "../model/CanvasStateStore";
+import { CanvasStateStore } from "../model/CanvasStateStore";
 import type { Line } from "../model/Line";
 import type { Shape } from "../model/Shape";
+import { Controller } from "../service/Controller";
 import { getRestoreViewportService } from "../service/RestoreViewportService";
 
-const context = createContext<CanvasStateStore>(null as never);
+const context = createContext<{
+	store: CanvasStateStore;
+	controller: Controller;
+}>(null as never);
 
 export function StoreProvider({ children }: { children?: ReactNode }) {
-	const [store, setStore] = useState<CanvasStateStore | null>(null);
+	const [state, setState] = useState<{
+		store: CanvasStateStore;
+		controller: Controller;
+	} | null>(null);
 	useEffect(() => {
 		initializeStore().then((store) => {
-			setStore(store);
+			const controller = new Controller(store);
+			setState({ store, controller });
 		});
 	}, []);
 
-	if (store === null) {
+	if (state === null) {
 		return null;
 	}
 
-	return <context.Provider value={store}>{children}</context.Provider>;
+	return <context.Provider value={state}>{children}</context.Provider>;
 }
 
 async function initializeStore(): Promise<CanvasStateStore> {
@@ -44,6 +54,8 @@ async function initializeStore(): Promise<CanvasStateStore> {
 			page: new LiveObject({
 				shapes: new LiveMap<string, LiveObject<Shape>>(),
 				lines: new LiveMap<string, LiveObject<Line>>(),
+				objectIds: new LiveList<string>([]),
+				schemaUpdatedAt: 0,
 			}),
 		},
 	});
@@ -83,7 +95,7 @@ async function initializeStore(): Promise<CanvasStateStore> {
 }
 
 export function useCanvasState(): CanvasState {
-	const store = useContext(context);
+	const { store } = useContext(context);
 
 	return useSyncExternalStore(
 		(callback) => {
@@ -94,6 +106,6 @@ export function useCanvasState(): CanvasState {
 	);
 }
 
-export function useCanvasEventHandler(): CanvasEventHandlers {
-	return useContext(context);
+export function useCanvasEventHandler(): Controller {
+	return useContext(context).controller;
 }
