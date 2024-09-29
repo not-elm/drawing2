@@ -1,4 +1,4 @@
-import { LiveList, LiveObject, type Room } from "@liveblocks/client";
+import { LiveList, LiveObject } from "@liveblocks/client";
 import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
 import { isNotNullish } from "../lib/isNullish";
@@ -15,12 +15,20 @@ import { Shape } from "./Shape";
 import type { TextAlignment } from "./TextAlignment";
 import type { Viewport } from "./Viewport";
 
+export interface RoomLike {
+	resumeHistory(): void;
+	pauseHistory(): void;
+	undo(): void;
+	redo(): void;
+	batch(callback: () => void): void;
+}
+
 export class CanvasStateStore
 	extends Store<CanvasState>
 	implements CanvasEventHandlers
 {
 	constructor(
-		private readonly room: Room,
+		private readonly room: RoomLike,
 		private readonly storage: { root: LiveObject<Liveblocks["Storage"]> },
 		private readonly restoreViewportService: RestoreViewportService,
 	) {
@@ -309,11 +317,11 @@ export class CanvasStateStore
 	}
 
 	private undo() {
-		this.room.history.undo();
+		this.room.undo();
 	}
 
 	private redo() {
-		this.room.history.redo();
+		this.room.redo();
 	}
 
 	private copy() {
@@ -565,6 +573,8 @@ export class CanvasStateStore
 				return true;
 			}
 		}
+
+		return false;
 	}
 
 	handleSelectionRectHandleMouseDown(
@@ -734,7 +744,7 @@ export class CanvasStateStore
 			this.state.viewport,
 		);
 
-		this.room.history.pause();
+		this.room.pauseHistory();
 		this.setState(
 			this.state.copy({
 				dragType: type,
@@ -872,7 +882,7 @@ export class CanvasStateStore
 	handleDragEnd() {
 		assert(this.state.dragging, "Cannot end drag while not dragging");
 
-		this.room.history.resume();
+		this.room.resumeHistory();
 		this.setState(
 			this.state.copy({
 				dragging: false,
@@ -1122,7 +1132,9 @@ export class CanvasStateStore
 			}
 
 			while (orderedSelectedIds.length > 0) {
-				liveObjectIds.push(orderedSelectedIds.shift());
+				const id = orderedSelectedIds.shift();
+				if (id === undefined) break;
+				liveObjectIds.push(id);
 			}
 		});
 	}
@@ -1221,7 +1233,9 @@ export class CanvasStateStore
 			}
 
 			while (orderedSelectedIds.length > 0) {
-				liveObjectIds.insert(orderedSelectedIds.pop(), 0);
+				const id = orderedSelectedIds.pop();
+				if (id === undefined) break;
+				liveObjectIds.insert(id, 0);
 			}
 		});
 	}

@@ -49,7 +49,23 @@ async function initializeStore(): Promise<CanvasStateStore> {
 	});
 	const storage = await room.getStorage();
 	const store = new CanvasStateStore(
-		room,
+		{
+			resumeHistory() {
+				room.history.resume();
+			},
+			pauseHistory() {
+				room.history.pause();
+			},
+			undo() {
+				room.history.undo();
+			},
+			redo() {
+				room.history.redo();
+			},
+			batch(callback: () => void) {
+				room.batch(callback);
+			},
+		},
 		storage,
 		getRestoreViewportService(),
 	);
