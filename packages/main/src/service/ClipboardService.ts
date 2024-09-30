@@ -1,37 +1,30 @@
 import { assert } from "../lib/assert";
 import { randomId } from "../lib/randomId";
 import { Line } from "../model/Line";
+import type { Obj } from "../model/Page";
 import { Shape } from "../model/Shape";
 
 export const ClipboardService = new (class {
-	copy(shapes: Shape[], lines: Line[]): Promise<void> {
-		const json = JSON.stringify({ shapes, lines });
+	copy(objects: Obj[]): Promise<void> {
+		const json = JSON.stringify({ objects });
 		return navigator.clipboard.writeText(json);
 	}
 
 	async paste(): Promise<{
-		shapes: Shape[];
-		lines: Line[];
+		objects: Obj[];
 	}> {
 		try {
 			const json = await navigator.clipboard.readText();
-			const data = JSON.parse(json);
+			const data = JSON.parse(json) as { objects: Obj[] };
 
-			assert(
-				data.shapes.every(Shape.validate) && data.lines.every(Line.validate),
-			);
-
-			for (const shape of data.shapes) {
-				shape.id = randomId();
-			}
-			for (const line of data.lines) {
-				line.id = randomId();
+			for (const obj of data.objects) {
+				assert(Shape.validate(obj) || Line.validate(obj));
+				obj.id = randomId();
 			}
 			return data;
 		} catch {
 			return {
-				shapes: [],
-				lines: [],
+				objects: [],
 			};
 		}
 	}

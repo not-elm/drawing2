@@ -6,16 +6,19 @@ import type { ColorId } from "../model/Colors";
 import type { FillMode } from "../model/FillMode";
 import { Line } from "../model/Line";
 import type { Mode } from "../model/Mode";
-import { Page } from "../model/Page";
+import { type Obj, Page, isShape } from "../model/Page";
 import { Rect } from "../model/Rect";
-import { Shape, getTrianglePath } from "../model/Shape";
+import { Shape, getRectanglePath } from "../model/Shape";
 import type { TextAlignment } from "../model/TextAlignment";
 import type { Viewport } from "../model/Viewport";
 import { ClipboardService } from "../service/ClipboardService";
-import type { RestoreViewportService } from "../service/RestoreViewportService";
+import {
+	type RestoreViewportService,
+	getRestoreViewportService,
+} from "../service/RestoreViewportService";
 
-export abstract class CanvasStateStore extends Store<CanvasState> {
-	protected constructor(
+export class CanvasStateStore extends Store<CanvasState> {
+	constructor(
 		protected readonly restoreViewportService: RestoreViewportService,
 	) {
 		super(
@@ -46,66 +49,114 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 				this.setState(this.state.copy({ viewport }));
 			}
 		});
+		this.loadFromLocalStorage();
+
+		setInterval(() => {
+			this.saveToLocalStorage();
+		}, 1000);
 	}
 
-	/**
-	 * Update the state in a batch and notify to down streams
-	 * @param predicate
-	 * @private
-	 */
-	abstract update(predicate: () => void): void;
+	update(predicate: () => void) {
+		predicate();
+	}
 
-	abstract addShape(shape: Shape): void;
+	addObject(object: Obj) {
+		this.update(() => {
+			const newObjects = new Map(this.state.page.objects);
+			newObjects.set(object.id, object);
 
-	abstract addLine(line: Line): void;
+			this.setState(
+				this.state.copy({
+					page: {
+						...this.state.page,
+						objects: newObjects,
+						objectIds: [...this.state.page.objectIds, object.id],
+					},
+				}),
+			);
+		});
+	}
 
-	abstract deleteShapes(ids: string[]): void;
+	deleteObject(ids: string[]) {
+		const idSet = new Set(ids);
+		this.update(() => {
+			const newObjects = new Map(this.state.page.objects);
+			for (const id of idSet) {
+				newObjects.delete(id);
+			}
 
-	protected abstract updateShapes(
-		ids: string[],
-		updater: (shape: ShapeAccessor) => void,
-	): void;
+			this.setState(
+				this.state.copy({
+					page: {
+						...this.state.page,
+						objects: newObjects,
+						objectIds: this.state.page.objectIds.filter((id) => !idSet.has(id)),
+					},
+				}),
+			);
+		});
+	}
 
-	protected abstract updateLines(
-		ids: string[],
-		updater: (line: LineAccessor) => void,
-	): void;
+	updateZIndex(currentIndex: number, newIndex: number) {
+		this.update(() => {
+			const newObjectIds = this.state.page.objectIds.slice();
+			const [id] = newObjectIds.splice(currentIndex, 1);
+			newObjectIds.splice(newIndex, 0, id);
 
-	/**
-	 * Update the z-index of the object
-	 * @param currentIndex
-	 * @param newIndex
-	 */
-	abstract updateZIndex(currentIndex: number, newIndex: number): void;
+			this.setState(
+				this.state.copy({
+					page: {
+						...this.state.page,
+						objectIds: newObjectIds,
+					},
+				}),
+			);
+		});
+	}
 
-	abstract resumeHistory(): void;
+	resumeHistory() {}
 
-	abstract pauseHistory(): void;
+	pauseHistory() {}
 
-	abstract undo(): void;
+	// Command or Pageをスタックで管理
+	undo() {}
 
-	abstract redo(): void;
+	redo() {}
 
 	deleteSelectedShapes() {
-		this.deleteShapes(this.state.selectedShapeIds);
+		this.deleteObject(this.state.selectedShapeIds);
 	}
 
-	moveShapes(deltaX: number, deltaY: number, shapes: Shape[], lines: Line[]) {
-		this.updateSelectedShapes((shape) => {
-			const originalShape = shapes.find((s) => s.id === shape.getId());
-			if (originalShape === undefined) return;
+	moveShapes(deltaX: number, deltaY: number, objects: Obj[]) {
+		const newObjects = new Map(this.state.page.objects);
 
-			shape.setX(originalShape.x + deltaX);
-			shape.setY(originalShape.y + deltaY);
-		});
-		this.updateSelectedLines((line) => {
-			const originalLine = lines.find((l) => l.id === line.getId());
-			if (originalLine === undefined) return;
+		for (const original of objects) {
+			if (isShape(original)) {
+				newObjects.set(original.id, {
+					...original,
+					x: original.x + deltaX,
+					y: original.y + deltaY,
+				});
+			} else {
+				newObjects.set(original.id, {
+					...original,
+					x1: original.x1 + deltaX,
+					y1: original.y1 + deltaY,
+					x2: original.x2 + deltaX,
+					y2: original.y2 + deltaY,
+				});
+			}
+		}
 
-			line.setX1(originalLine.x1 + deltaX);
-			line.setY1(originalLine.y1 + deltaY);
-			line.setX2(originalLine.x2 + deltaX);
-			line.setY2(originalLine.y2 + deltaY);
+		this.update(() => {
+			this.setState(
+				this.state.copy({
+					page: {
+						...this.state.page,
+						objects: newObjects,
+					},
+				}),
+			);
 		});
 	}
 
@@ -114,94 +165,154 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 		scaleY: number,
 		originX: number,
 		originY: number,
-		shapes: Shape[],
-		lines: Line[],
+		objects: Obj[],
 	) {
-		this.updateSelectedShapes((shape) => {
-			const originalShape = shapes.find((s) => s.id === shape.getId());
-			if (originalShape === undefined) return;
+		const newObjects = new Map(this.state.page.objects);
 
-			let x = (originalShape.x - originX) * scaleX + originX;
-			let y = (originalShape.y - originY) * scaleY + originY;
-			let width = originalShape.width * scaleX;
-			let height = originalShape.height * scaleY;
-			if (width < 0) {
-				x += width;
-				width = -width;
+		for (const original of objects) {
+			if (isShape(original)) {
+				let x = (original.x - originX) * scaleX + originX;
+				let y = (original.y - originY) * scaleY + originY;
+				let width = original.width * scaleX;
+				let height = original.height * scaleY;
+				if (width < 0) {
+					x += width;
+					width = -width;
+				}
+				if (height < 0) {
+					y += height;
+					height = -height;
+				}
+
+				newObjects.set(original.id, { ...original, x, y, width, height });
+			} else {
+				newObjects.set(original.id, {
+					...original,
+					x1: (original.x1 - originX) * scaleX + originX,
+					y1: (original.y1 - originY) * scaleY + originY,
+					x2: (original.x2 - originX) * scaleX + originX,
+					y2: (original.y2 - originY) * scaleY + originY,
+				});
 			}
-			if (height < 0) {
-				y += height;
-				height = -height;
-			}
+		}
 
-			shape.setX(x);
-			shape.setY(y);
-			shape.setWidth(width);
-			shape.setHeight(height);
-		});
-		this.updateSelectedLines((line) => {
-			const originalLine = lines.find((l) => l.id === line.getId());
-			if (originalLine === undefined) return;
-
-			const x1 = (originalLine.x1 - originX) * scaleX + originX;
-			const y1 = (originalLine.y1 - originY) * scaleY + originY;
-			const x2 = (originalLine.x2 - originX) * scaleX + originX;
-			const y2 = (originalLine.y2 - originY) * scaleY + originY;
-
-			line.setX1(x1);
-			line.setY1(y1);
-			line.setX2(x2);
-			line.setY2(y2);
+		this.update(() => {
+			this.setState(
+				this.state.copy({
+					page: {
+						...this.state.page,
+						objects: newObjects,
+					},
+				}),
+			);
 		});
 	}
 
 	updateLinePoint(id: string, point: 1 | 2, x: number, y: number) {
-		this.updateLines([id], (line) => {
+		const obj = this.state.page.objects.get(id);
+		if (obj === undefined) return;
+		if (isShape(obj)) return;
+
+		this.update(() => {
+			const newObjects = new Map(this.state.page.objects);
+
 			if (point === 1) {
-				line.setX1(x);
-				line.setY1(y);
+				newObjects.set(id, { ...obj, x1: x, y1: y });
 			} else {
-				line.setX2(x);
-				line.setY2(y);
+				newObjects.set(id, { ...obj, x2: x, y2: y });
 			}
+
+			this.setState(
+				this.state.copy({
+					page: {
+						...this.state.page,
+						objects: newObjects,
+					},
+				}),
+			);
 		});
 	}
 
-	setLabel(id: string, value: string) {
-		this.updateShapes([id], (shape) => shape.setLabel(value));
+	setLabel(id: string, label: string) {
+		const obj = this.state.page.objects.get(id);
+		if (obj === undefined) return;
+		if (!isShape(obj)) return;
+
+		this.update(() => {
+			const newObjects = new Map(this.state.page.objects);
+			newObjects.set(id, { ...obj, label });
+
+			this.setState(
+				this.state.copy({
+					page: {
+						...this.state.page,
+						objects: newObjects,
+					},
+				}),
+			);
+		});
 	}
 
 	setTextAlign(textAlignX: TextAlignment, textAlignY: TextAlignment) {
-		this.updateSelectedShapes((shape) => {
-			shape.setTextAlignX(textAlignX);
-			shape.setTextAlignY(textAlignY);
+		const newObjects = new Map(this.state.page.objects);
+		for (const obj of this.state.getSelectedObjects()) {
+			if (!isShape(obj)) continue;
+
+			newObjects.set(obj.id, { ...obj, textAlignX, textAlignY });
+		}
+
+		this.update(() => {
+			this.setState(
+				this.state.copy({
+					page: {
+						...this.state.page,
+						objects: newObjects,
+					},
+					defaultTextAlignX: textAlignX,
+					defaultTextAlignY: textAlignY,
+				}),
+			);
 		});
-		this.setState(
-			this.state.copy({
-				defaultTextAlignX: textAlignX,
-				defaultTextAlignY: textAlignY,
-			}),
-		);
 	}
 
 	setColor(colorId: ColorId) {
-		this.updateSelectedShapes((shape) => shape.setColorId(colorId));
-		this.updateSelectedLines((line) => line.setColorId(colorId));
+		const newObjects = new Map(this.state.page.objects);
+		for (const obj of this.state.getSelectedObjects()) {
+			newObjects.set(obj.id, { ...obj, colorId });
+		}
 
-		this.setState(this.state.copy({ defaultColorId: colorId }));
+		this.update(() => {
+			this.setState(
+				this.state.copy({
+					page: {
+						...this.state.page,
+						objects: newObjects,
+					},
+					defaultColorId: colorId,
+				}),
+			);
+		});
 	}
 
 	setFillMode(fillMode: FillMode) {
-		this.updateSelectedShapes((shape) => shape.setFillMode(fillMode));
-		this.setState(this.state.copy({ defaultFillMode: fillMode }));
-	}
+		const newObjects = new Map(this.state.page.objects);
+		for (const obj of this.state.getSelectedObjects()) {
+			if (!isShape(obj)) continue;
 
-	protected updateSelectedShapes(updater: (shape: ShapeAccessor) => void) {
-		this.updateShapes(this.state.selectedShapeIds, updater);
-	}
+			newObjects.set(obj.id, { ...obj, fillMode });
+		}
 
-	protected updateSelectedLines(updater: (line: LineAccessor) => void) {
-		this.updateLines(this.state.selectedShapeIds, updater);
+		this.update(() => {
+			this.setState(
+				this.state.copy({
+					page: {
+						...this.state.page,
+						objects: newObjects,
+					},
+					defaultFillMode: fillMode,
+				}),
+			);
+		});
 	}
 
 	bringToFront() {
@@ -325,9 +436,7 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 			if (this.state.page.objectIds[globalIndex] === objectId) break;
 		}
 
-		const refObject =
-			this.state.page.shapes.get(objectId) ??
-			this.state.page.lines.get(objectId);
+		const refObject = this.state.page.objects.get(objectId);
 		assert(refObject !== undefined, "Cannot find the reference object");
 		globalIndex++;
 
@@ -337,9 +446,7 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 				continue;
 			}
 
-			const otherObject =
-				this.state.page.shapes.get(objectId) ??
-				this.state.page.lines.get(objectId);
+			const otherObject = this.state.page.objects.get(objectId);
 
 			if (otherObject === undefined) continue;
 
@@ -364,9 +471,7 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 			if (this.state.page.objectIds[globalIndex] === objectId) break;
 		}
 
-		const refObject =
-			this.state.page.shapes.get(objectId) ??
-			this.state.page.lines.get(objectId);
+		const refObject = this.state.page.objects.get(objectId);
 		assert(refObject !== undefined, "Cannot find the reference object");
 		globalIndex--;
 
@@ -376,9 +481,7 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 				continue;
 			}
 
-			const otherObject =
-				this.state.page.shapes.get(objectId) ??
-				this.state.page.lines.get(objectId);
+			const otherObject = this.state.page.objects.get(objectId);
 
 			if (otherObject === undefined) continue;
 
@@ -447,10 +550,7 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 	}
 
 	selectAll() {
-		this.setSelectedShapeIds([
-			...this.state.page.shapes.keys(),
-			...this.state.page.lines.keys(),
-		]);
+		this.setSelectedShapeIds(this.state.page.objectIds);
 	}
 
 	unselect(id: string) {
@@ -484,14 +584,9 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 	copy() {
 		if (this.state.selectedShapeIds.length === 0) return;
 
-		const shapes = this.state.selectedShapeIds
-			.map((id) => this.state.page.shapes.get(id))
-			.filter(isNotNullish);
-		const lines = this.state.selectedShapeIds
-			.map((id) => this.state.page.lines.get(id))
-			.filter(isNotNullish);
+		const objects = this.state.getSelectedObjects();
 
-		ClipboardService.copy(shapes, lines);
+		ClipboardService.copy(objects);
 	}
 
 	async cut() {
@@ -500,22 +595,16 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 	}
 
 	async paste(): Promise<void> {
-		const { shapes, lines } = await ClipboardService.paste();
-		if (shapes.length === 0 && lines.length === 0) return;
+		const { objects } = await ClipboardService.paste();
+		if (objects.length === 0) return;
 
 		this.update(() => {
-			for (const shape of shapes) {
-				this.addShape(shape);
-			}
-			for (const line of lines) {
-				this.addLine(line);
+			for (const obj of objects) {
+				this.addObject(obj);
 			}
 		});
 
-		this.setSelectedShapeIds([
-			...shapes.map((shape) => shape.id),
-			...lines.map((line) => line.id),
-		]);
+		this.setSelectedShapeIds(objects.map((obj) => obj.id));
 	}
 
 	startDrag(startCanvasX: number, startCanvasY: number, type: DragType) {
@@ -565,14 +654,15 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 						const selectedShapeIds =
 							this.state.dragType.originalSelectedShapeIds.slice();
 
-						for (const shape of this.state.page.shapes.values()) {
-							if (selectionRect.isOverlapWithRect(shape)) {
-								selectedShapeIds.push(shape.id);
-							}
-						}
-						for (const line of this.state.page.lines.values()) {
-							if (selectionRect.isOverlapWithLine(line)) {
-								selectedShapeIds.push(line.id);
+						for (const obj of this.state.page.objects.values()) {
+							if (isShape(obj)) {
+								if (selectionRect.isOverlapWithRect(obj)) {
+									selectedShapeIds.push(obj.id);
+								}
+							} else {
+								if (selectionRect.isOverlapWithLine(obj)) {
+									selectedShapeIds.push(obj.id);
+								}
 							}
 						}
 						this.setSelectedShapeIds(selectedShapeIds);
@@ -582,8 +672,7 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 						this.moveShapes(
 							this.state.dragCurrentX - this.state.dragStartX,
 							this.state.dragCurrentY - this.state.dragStartY,
-							this.state.dragType.shapes,
-							this.state.dragType.lines,
+							this.state.dragType.objects,
 						);
 						break;
 					}
@@ -617,8 +706,7 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 								(this.state.dragStartY - this.state.dragType.originY),
 							this.state.dragType.originX,
 							this.state.dragType.originY,
-							this.state.dragType.shapes,
-							this.state.dragType.lines,
+							this.state.dragType.objects,
 						);
 						break;
 					}
@@ -629,8 +717,7 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 								(this.state.dragStartY - this.state.dragType.originY),
 							0,
 							this.state.dragType.originY,
-							this.state.dragType.shapes,
-							this.state.dragType.lines,
+							this.state.dragType.objects,
 						);
 						break;
 					}
@@ -641,8 +728,7 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 							1,
 							this.state.dragType.originX,
 							0,
-							this.state.dragType.shapes,
-							this.state.dragType.lines,
+							this.state.dragType.objects,
 						);
 						break;
 					}
@@ -686,9 +772,9 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 					this.state.defaultTextAlignY,
 					this.state.defaultColorId,
 					this.state.defaultFillMode,
-					getTrianglePath(),
+					getRectanglePath(),
 				);
-				this.addShape(shape);
+				this.addObject(shape);
 				this.setMode("select");
 				this.select(shape.id);
 				break;
@@ -701,62 +787,48 @@ export abstract class CanvasStateStore extends Store<CanvasState> {
 					this.state.dragCurrentY,
 					this.state.defaultColorId,
 				);
-				this.addLine(line);
+				this.addObject(line);
 				this.setMode("select");
 				this.select(line.id);
 			}
 		}
 	}
-}
 
-export interface ShapeAccessor {
-	getId(): string;
+	private saveToLocalStorage() {
+		const serializedPage: SerializedPage = {
+			objects: this.state.page.objectIds
+				.map((id) => this.state.page.objects.get(id))
+				.filter(isNotNullish),
+		};
 
-	getX(): number;
-	setX(x: number): void;
+		localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(serializedPage));
+	}
 
-	getY(): number;
-	setY(y: number): void;
+	private loadFromLocalStorage() {
+		try {
+			const data = localStorage.getItem(LOCAL_STORAGE_KEY);
+			if (data === null) return;
 
-	getWidth(): number;
-	setWidth(width: number): void;
+			const serializedPage: SerializedPage = JSON.parse(data);
 
-	getHeight(): number;
-	setHeight(height: number): void;
+			const objects = new Map<string, Obj>();
+			for (const shape of serializedPage.objects) {
+				objects.set(shape.id, shape);
+			}
 
-	getColorId(): ColorId;
-	setColorId(colorId: ColorId): void;
+			const objectIds = serializedPage.objects.map((object) => object.id);
 
-	getFillMode(): FillMode;
-	setFillMode(fillMode: FillMode): void;
-
-	getTextAlignX(): TextAlignment;
-	setTextAlignX(textAlignX: TextAlignment): void;
-
-	getTextAlignY(): TextAlignment;
-	setTextAlignY(textAlignY: TextAlignment): void;
-
-	getLabel(): string;
-	setLabel(label: string): void;
-}
-
-export interface LineAccessor {
-	getId(): string;
-
-	getX1(): number;
-	setX1(x1: number): void;
-
-	getY1(): number;
-	setY1(y1: number): void;
-
-	getX2(): number;
-	setX2(x2: number): void;
-
-	getY2(): number;
-	setY2(y2: number): void;
-
-	getColorId(): ColorId;
-	setColorId(colorId: ColorId): void;
+			this.setState(
+				this.state.copy({
+					page: {
+						objects,
+						objectIds,
+					},
+					selectedShapeIds: [],
+				}),
+			);
+		} catch {}
+	}
 }
 
 export type SelectionRectHandleType =
@@ -770,26 +842,26 @@ export type SelectionRectHandleType =
 	| "bottomLeft"
 	| "left";
 
-export function computeUnionRect(shapes: Shape[], lines: Line[]): Rect | null {
-	if (shapes.length === 0 && lines.length === 0) return null;
+export function computeUnionRect(objects: Obj[]): Rect | null {
+	if (objects.length === 0) return null;
 
 	let minX = Number.POSITIVE_INFINITY;
 	let minY = Number.POSITIVE_INFINITY;
 	let maxX = Number.NEGATIVE_INFINITY;
 	let maxY = Number.NEGATIVE_INFINITY;
 
-	for (const shape of shapes) {
-		minX = Math.min(minX, shape.x);
-		minY = Math.min(minY, shape.y);
-		maxX = Math.max(maxX, shape.x + shape.width);
-		maxY = Math.max(maxY, shape.y + shape.height);
-	}
-
-	for (const line of lines) {
-		minX = Math.min(minX, line.x1, line.x2);
-		minY = Math.min(minY, line.y1, line.y2);
-		maxX = Math.max(maxX, line.x1, line.x2);
-		maxY = Math.max(maxY, line.y1, line.y2);
+	for (const object of objects) {
+		if (isShape(object)) {
+			minX = Math.min(minX, object.x);
+			minY = Math.min(minY, object.y);
+			maxX = Math.max(maxX, object.x + object.width);
+			maxY = Math.max(maxY, object.y + object.height);
+		} else {
+			minX = Math.min(minX, object.x1, object.x2);
+			minY = Math.min(minY, object.y1, object.y2);
+			maxX = Math.max(maxX, object.x1, object.x2);
+			maxY = Math.max(maxY, object.y1, object.y2);
+		}
 	}
 
 	return new Rect({
@@ -811,8 +883,7 @@ export type DragType =
 	| { type: "select"; originalSelectedShapeIds: string[] }
 	| {
 			type: "move"; // moving multiple objects
-			shapes: Shape[];
-			lines: Line[];
+			objects: Obj[];
 	  }
 	| {
 			type: "move-point"; // moving a point in a path
@@ -823,27 +894,23 @@ export type DragType =
 			type: "nwse-resize";
 			originX: number;
 			originY: number;
-			shapes: Shape[];
-			lines: Line[];
+			objects: Obj[];
 	  }
 	| {
 			type: "nesw-resize";
 			originX: number;
 			originY: number;
-			shapes: Shape[];
-			lines: Line[];
+			objects: Obj[];
 	  }
 	| {
 			type: "ns-resize";
 			originY: number;
-			shapes: Shape[];
-			lines: Line[];
+			objects: Obj[];
 	  }
 	| {
 			type: "ew-resize";
 			originX: number;
-			shapes: Shape[];
-			lines: Line[];
+			objects: Obj[];
 	  };
 
 export function fromCanvasCoordinate(
@@ -884,4 +951,13 @@ export function isOverlapped(obj1: Shape | Line, obj2: Shape | Line): boolean {
 			return Line.isOverlap(obj1, obj2);
 		}
 	}
+}
+
+const LOCAL_STORAGE_KEY = "LocalCanvasStateStore.state.page";
+interface SerializedPage {
+	objects: Obj[];
+}
+
+export async function initializeCanvasStateStore(): Promise<CanvasStateStore> {
+	return Promise.resolve(new CanvasStateStore(getRestoreViewportService()));
 }

@@ -1,5 +1,6 @@
 import styled from "@emotion/styled";
-import { isNotNullish } from "../lib/isNullish";
+import type { Line } from "../model/Line";
+import { isShape } from "../model/Page";
 import { useController } from "./ControllerProvider";
 import { useCanvasState } from "./StoreProvider";
 
@@ -10,13 +11,8 @@ export function SelectionRect() {
 	if (selectionRect === null) return null;
 
 	const { x, y, width, height } = selectionRect;
-	const shapes = state.selectedShapeIds
-		.map((id) => state.page.shapes.get(id))
-		.filter(isNotNullish);
-	const lines = state.selectedShapeIds
-		.map((id) => state.page.lines.get(id))
-		.filter(isNotNullish);
-	const isSingleLineMode = shapes.length === 0 && lines.length === 1;
+	const objects = state.getSelectedObjects();
+	const isSingleLineMode = objects.length === 1 && !isShape(objects[0]);
 
 	return (
 		<div
@@ -52,41 +48,46 @@ export function SelectionRect() {
 						strokeWidth={3}
 					/>
 				)}
-				{shapes.map((shape) => (
-					<rect
-						key={shape.id}
-						css={{
-							stroke: "var(--color-selection)",
-							fill: "none",
-						}}
-						x={(shape.x - x) * state.viewport.scale}
-						y={(shape.y - y) * state.viewport.scale}
-						width={shape.width * state.viewport.scale}
-						height={shape.height * state.viewport.scale}
-						strokeWidth={1}
-					/>
-				))}
-				{lines.map((line) => (
-					<line
-						key={line.id}
-						css={{
-							stroke: "var(--color-selection)",
-							fill: "none",
-						}}
-						x1={(line.x1 - x) * state.viewport.scale}
-						y1={(line.y1 - y) * state.viewport.scale}
-						x2={(line.x2 - x) * state.viewport.scale}
-						y2={(line.y2 - y) * state.viewport.scale}
-						strokeWidth={1}
-					/>
-				))}
+				{objects.map((obj) => {
+					if (isShape(obj)) {
+						return (
+							<rect
+								key={obj.id}
+								css={{
+									stroke: "var(--color-selection)",
+									fill: "none",
+								}}
+								x={(obj.x - x) * state.viewport.scale}
+								y={(obj.y - y) * state.viewport.scale}
+								width={obj.width * state.viewport.scale}
+								height={obj.height * state.viewport.scale}
+								strokeWidth={1}
+							/>
+						);
+					} else {
+						return (
+							<line
+								key={obj.id}
+								css={{
+									stroke: "var(--color-selection)",
+									fill: "none",
+								}}
+								x1={(obj.x1 - x) * state.viewport.scale}
+								y1={(obj.y1 - y) * state.viewport.scale}
+								x2={(obj.x2 - x) * state.viewport.scale}
+								y2={(obj.y2 - y) * state.viewport.scale}
+								strokeWidth={1}
+							/>
+						);
+					}
+				})}
 			</svg>
 			{isSingleLineMode && state.mode === "select" && (
 				<>
 					<ResizeHandle
 						css={{
-							left: (lines[0].x1 - x) * state.viewport.scale,
-							top: (lines[0].y1 - y) * state.viewport.scale,
+							left: ((objects[0] as Line).x1 - x) * state.viewport.scale,
+							top: ((objects[0] as Line).y1 - y) * state.viewport.scale,
 							cursor: "grab",
 						}}
 						onMouseDown={(ev) => {
@@ -104,8 +105,8 @@ export function SelectionRect() {
 					</ResizeHandle>
 					<ResizeHandle
 						css={{
-							left: (lines[0].x2 - x) * state.viewport.scale,
-							top: (lines[0].y2 - y) * state.viewport.scale,
+							left: ((objects[0] as Line).x2 - x) * state.viewport.scale,
+							top: ((objects[0] as Line).y2 - y) * state.viewport.scale,
 							cursor: "grab",
 						}}
 						onMouseDown={(ev) => {

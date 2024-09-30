@@ -3,12 +3,10 @@ import { isNotNullish } from "../lib/isNullish";
 import { type DragType, computeUnionRect } from "../store/CanvasStateStore";
 import type { ColorId } from "./Colors";
 import type { FillMode } from "./FillMode";
-import type { Line } from "./Line";
 import type { Mode } from "./Mode";
-import type { Page } from "./Page";
+import { type Obj, type Page, isShape } from "./Page";
 import { PropertyPanelState } from "./PropertyPanelState";
 import { Rect } from "./Rect";
-import type { Shape } from "./Shape";
 import type { TextAlignment } from "./TextAlignment";
 import type { Viewport } from "./Viewport";
 
@@ -40,31 +38,19 @@ export class CanvasState extends dataclass<{
 	}
 
 	get selectionRect(): Rect | null {
-		const shapes = this.selectedShapeIds
-			.map((id) => this.page.shapes.get(id))
-			.filter(isNotNullish);
-		const lines = this.selectedShapeIds
-			.map((id) => this.page.lines.get(id))
-			.filter(isNotNullish);
-
-		return computeUnionRect(shapes, lines);
+		return computeUnionRect(this.getSelectedObjects());
 	}
 
-	get selectedShapes(): Shape[] {
+	getSelectedObjects(): Obj[] {
 		return this.selectedShapeIds
-			.map((id) => this.page.shapes.get(id))
-			.filter(isNotNullish);
-	}
-
-	get selectedLines(): Line[] {
-		return this.selectedShapeIds
-			.map((id) => this.page.lines.get(id))
+			.map((id) => this.page.objects.get(id))
 			.filter(isNotNullish);
 	}
 
 	get propertyPanelState(): PropertyPanelState {
-		const selectedShapes = this.selectedShapes;
-		const selectedLines = this.selectedLines;
+		const selectedObjects = this.getSelectedObjects();
+		const selectedShapes = selectedObjects.filter(isShape);
+		const selectedLines = selectedObjects.filter((obj) => !isShape(obj));
 
 		const alignXs = new Set(selectedShapes.map((shape) => shape.textAlignX));
 		const alignYs = new Set(selectedShapes.map((shape) => shape.textAlignY));

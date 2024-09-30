@@ -1,5 +1,5 @@
 import { assert } from "../lib/assert";
-import { Shape, getTrianglePath } from "../model/Shape";
+import { Shape, getRectanglePath } from "../model/Shape";
 import { ShapeView } from "./ShapeView";
 import { useCanvasState } from "./StoreProvider";
 
@@ -26,7 +26,7 @@ export function ShapeToolPreview() {
 		state.defaultTextAlignY,
 		state.defaultColorId,
 		state.defaultFillMode,
-		getTrianglePath(),
+		getRectanglePath(),
 	);
 
 	return <ShapeView shape={rect} isLabelEditing={false} />;

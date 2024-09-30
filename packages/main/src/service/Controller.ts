@@ -3,6 +3,7 @@ import { isNotNullish } from "../lib/isNullish";
 import type { ColorId } from "../model/Colors";
 import type { FillMode } from "../model/FillMode";
 import type { Mode } from "../model/Mode";
+import { isShape } from "../model/Page";
 import type { TextAlignment } from "../model/TextAlignment";
 import {
 	type CanvasStateStore,
@@ -35,18 +36,7 @@ export class Controller {
 						if (selectionRect?.isOverlapWithPoint(x, y) ?? false) {
 							this.handleDragStart(canvasX, canvasY, {
 								type: "move",
-								shapes: this.store
-									.getState()
-									.selectedShapeIds.map((id) =>
-										this.store.getState().page.shapes.get(id),
-									)
-									.filter(isNotNullish),
-								lines: this.store
-									.getState()
-									.selectedShapeIds.map((id) =>
-										this.store.getState().page.lines.get(id),
-									)
-									.filter(isNotNullish),
+								objects: this.store.getState().getSelectedObjects(),
 							});
 						} else {
 							if (!modifiers.shiftKey) {
@@ -112,18 +102,7 @@ export class Controller {
 						}
 						this.handleDragStart(canvasX, canvasY, {
 							type: "move",
-							shapes: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.shapes.get(id),
-								)
-								.filter(isNotNullish),
-							lines: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.lines.get(id),
-								)
-								.filter(isNotNullish),
+							objects: this.store.getState().getSelectedObjects(),
 						});
 						return true;
 					}
@@ -131,18 +110,7 @@ export class Controller {
 						this.store.setMode("select");
 						this.handleDragStart(canvasX, canvasY, {
 							type: "move",
-							shapes: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.shapes.get(id),
-								)
-								.filter(isNotNullish),
-							lines: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.lines.get(id),
-								)
-								.filter(isNotNullish),
+							objects: this.store.getState().getSelectedObjects(),
 						});
 						return true;
 					}
@@ -181,18 +149,7 @@ export class Controller {
 		switch (mouseButton) {
 			case MouseButton.Left: {
 				const selectionRect = computeUnionRect(
-					this.store
-						.getState()
-						.selectedShapeIds.map((id) =>
-							this.store.getState().page.shapes.get(id),
-						)
-						.filter(isNotNullish),
-					this.store
-						.getState()
-						.selectedShapeIds.map((id) =>
-							this.store.getState().page.lines.get(id),
-						)
-						.filter(isNotNullish),
+					this.store.getState().getSelectedObjects(),
 				);
 				assert(selectionRect !== null, "Cannot resize without a selection");
 
@@ -201,18 +158,7 @@ export class Controller {
 					case "center": {
 						dragType = {
 							type: "move",
-							shapes: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.shapes.get(id),
-								)
-								.filter(isNotNullish),
-							lines: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.lines.get(id),
-								)
-								.filter(isNotNullish),
+							objects: this.store.getState().getSelectedObjects(),
 						};
 						break;
 					}
@@ -221,36 +167,14 @@ export class Controller {
 							type: "nwse-resize",
 							originX: selectionRect.x + selectionRect.width,
 							originY: selectionRect.y + selectionRect.height,
-							shapes: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.shapes.get(id),
-								)
-								.filter(isNotNullish),
-							lines: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.lines.get(id),
-								)
-								.filter(isNotNullish),
+							objects: this.store.getState().getSelectedObjects(),
 						};
 						break;
 					case "top":
 						dragType = {
 							type: "ns-resize",
 							originY: selectionRect.y + selectionRect.height,
-							shapes: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.shapes.get(id),
-								)
-								.filter(isNotNullish),
-							lines: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.lines.get(id),
-								)
-								.filter(isNotNullish),
+							objects: this.store.getState().getSelectedObjects(),
 						};
 						break;
 					case "topRight":
@@ -258,36 +182,14 @@ export class Controller {
 							type: "nesw-resize",
 							originX: selectionRect.x,
 							originY: selectionRect.y + selectionRect.height,
-							shapes: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.shapes.get(id),
-								)
-								.filter(isNotNullish),
-							lines: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.lines.get(id),
-								)
-								.filter(isNotNullish),
+							objects: this.store.getState().getSelectedObjects(),
 						};
 						break;
 					case "right":
 						dragType = {
 							type: "ew-resize",
 							originX: selectionRect.x,
-							shapes: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.shapes.get(id),
-								)
-								.filter(isNotNullish),
-							lines: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.lines.get(id),
-								)
-								.filter(isNotNullish),
+							objects: this.store.getState().getSelectedObjects(),
 						};
 						break;
 					case "bottomRight":
@@ -295,18 +197,7 @@ export class Controller {
 							type: "nwse-resize",
 							originX: selectionRect.x,
 							originY: selectionRect.y,
-							shapes: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.shapes.get(id),
-								)
-								.filter(isNotNullish),
-							lines: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.lines.get(id),
-								)
-								.filter(isNotNullish),
+							objects: this.store.getState().getSelectedObjects(),
 						};
 						break;
 					case "bottomLeft":
@@ -314,54 +205,21 @@ export class Controller {
 							type: "nesw-resize",
 							originX: selectionRect.x + selectionRect.width,
 							originY: selectionRect.y,
-							shapes: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.shapes.get(id),
-								)
-								.filter(isNotNullish),
-							lines: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.lines.get(id),
-								)
-								.filter(isNotNullish),
+							objects: this.store.getState().getSelectedObjects(),
 						};
 						break;
 					case "left":
 						dragType = {
 							type: "ew-resize",
 							originX: selectionRect.x + selectionRect.width,
-							shapes: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.shapes.get(id),
-								)
-								.filter(isNotNullish),
-							lines: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.lines.get(id),
-								)
-								.filter(isNotNullish),
+							objects: this.store.getState().getSelectedObjects(),
 						};
 						break;
 					case "bottom":
 						dragType = {
 							type: "ns-resize",
 							originY: selectionRect.y,
-							shapes: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.shapes.get(id),
-								)
-								.filter(isNotNullish),
-							lines: this.store
-								.getState()
-								.selectedShapeIds.map((id) =>
-									this.store.getState().page.lines.get(id),
-								)
-								.filter(isNotNullish),
+							objects: this.store.getState().getSelectedObjects(),
 						};
 						break;
 				}
@@ -380,10 +238,9 @@ export class Controller {
 	) {
 		switch (mouseButton) {
 			case MouseButton.Left: {
-				const line = this.store
-					.getState()
-					.page.lines.get(this.store.getState().selectedShapeIds[0]);
+				const line = this.store.getState().getSelectedObjects()[0];
 				assert(isNotNullish(line), "Cannot edit without selecting a line");
+				assert(!isShape(line), "Cannot edit a shape with line handles");
 
 				const dragType: DragType = { type: "move-point", line, point };
 				this.handleDragStart(canvasX, canvasY, dragType);

@@ -4,6 +4,7 @@ import {
 	useCallback,
 	useEffect,
 } from "react";
+import { isShape } from "../model/Page";
 import { useController } from "./ControllerProvider";
 import { LineView } from "./LineView";
 import { SelectionRect } from "./SelectionRect";
@@ -79,23 +80,20 @@ export function Canvas() {
 				}}
 			>
 				{state.page.objectIds.map((objectId) => {
-					const shape = state.page.shapes.get(objectId);
-					if (shape) {
+					const object = state.page.objects.get(objectId);
+					if (object === undefined) return null;
+
+					if (isShape(object)) {
 						return (
 							<ShapeView
-								key={shape.id}
-								shape={shape}
-								isLabelEditing={state.isTextEditing(shape.id)}
+								key={object.id}
+								shape={object}
+								isLabelEditing={state.isTextEditing(object.id)}
 							/>
 						);
 					}
 
-					const line = state.page.lines.get(objectId);
-					if (line) {
-						return <LineView key={line.id} line={line} />;
-					}
-
-					return null;
+					return <LineView key={object.id} line={object} />;
 				})}
 				<ToolPreview />
 			</div>
