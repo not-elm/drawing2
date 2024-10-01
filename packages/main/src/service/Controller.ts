@@ -12,9 +12,17 @@ import {
 	type SelectionRectHandleType,
 	fromCanvasCoordinate,
 } from "../store/CanvasStateStore";
+import { HoverStateStore } from "../store/HoverStateStore";
+import { PointerStateStore } from "../store/PointerStateStore";
 
 export class Controller {
-	constructor(private readonly store: CanvasStateStore) {}
+	readonly pointerStore = new PointerStateStore();
+	readonly hoverStateStore: HoverStateStore;
+
+	constructor(private readonly store: CanvasStateStore) {
+		this.hoverStateStore = new HoverStateStore(store, this.pointerStore);
+		this.store.setHoverStateProvider(this.hoverStateStore);
+	}
 
 	handleCanvasMouseDown(
 		canvasX: number,
@@ -53,7 +61,13 @@ export class Controller {
 						}
 						break;
 					}
-					case "line":
+					case "line": {
+						this.handleDragStart(canvasX, canvasY, {
+							type: "new-line",
+							p1Id: this.hoverStateStore.getState().pointIds[0] ?? null,
+						});
+						break;
+					}
 					case "shape": {
 						this.handleDragStart(canvasX, canvasY, { type: "none" });
 						break;
@@ -70,6 +84,12 @@ export class Controller {
 	}
 
 	handleCanvasMouseMove(canvasX: number, canvasY: number) {
+		const viewport = this.store.getState().viewport;
+		this.pointerStore.setPosition(
+			canvasX / viewport.scale + viewport.x,
+			canvasY / viewport.scale + viewport.y,
+		);
+
 		if (this.store.getState().dragging) {
 			this.handleDragMove(canvasX, canvasY);
 		}

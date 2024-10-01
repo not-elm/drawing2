@@ -1,9 +1,9 @@
 import { type MouseEventHandler, useCallback } from "react";
 import { ColorPaletteBackground, Colors } from "../../model/Colors";
 import type { FillMode } from "../../model/FillMode";
+import { useCanvasState } from "../CanvasStateStoreProvider";
 import { CardSection } from "../Card";
 import { useController } from "../ControllerProvider";
-import { useCanvasState } from "../StoreProvider";
 
 export function FillModeSection() {
 	return (

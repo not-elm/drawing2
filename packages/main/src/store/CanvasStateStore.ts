@@ -4,7 +4,7 @@ import {
 	isRectOverlapWithPoint,
 	isRectOverlapWithRect,
 } from "../geo/Rect";
-import { Store } from "../lib/Store";
+import { type StateProvider, Store } from "../lib/Store";
 import { assert } from "../lib/assert";
 import { CanvasState } from "../model/CanvasState";
 import type { ColorId } from "../model/Colors";
@@ -31,8 +31,13 @@ import {
 	type RestoreViewportService,
 	getRestoreViewportService,
 } from "../service/RestoreViewportService";
+import type { HoverStateStore } from "./HoverStateStore";
+
+// CanvasStateStore -> HighlightPointStore
 
 export class CanvasStateStore extends Store<CanvasState> {
+	private hoverStateProvider: StateProvider<HoverStateStore> | null = null;
+
 	constructor(
 		protected readonly restoreViewportService: RestoreViewportService,
 	) {
@@ -69,6 +74,10 @@ export class CanvasStateStore extends Store<CanvasState> {
 		setInterval(() => {
 			this.saveToLocalStorage();
 		}, 1000);
+	}
+
+	setHoverStateProvider(provider: StateProvider<HoverStateStore>) {
+		this.hoverStateProvider = provider;
 	}
 
 	addPoints(...points: PointObject[]) {
@@ -258,15 +267,15 @@ export class CanvasStateStore extends Store<CanvasState> {
 					newPoints,
 					newObjects,
 					p1,
-					(p1.x - originX) * scaleX + originX,
-					(p1.y - originY) * scaleY + originY,
+					(original.x1 - originX) * scaleX + originX,
+					(original.y1 - originY) * scaleY + originY,
 				);
 				this.updatePoint(
 					newPoints,
 					newObjects,
 					p2,
-					(p2.x - originX) * scaleX + originX,
-					(p2.y - originY) * scaleY + originY,
+					(original.x2 - originX) * scaleX + originX,
+					(original.y2 - originY) * scaleY + originY,
 				);
 			}
 		}
@@ -821,6 +830,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 
 	endDrag() {
 		assert(this.state.dragging, "Cannot end drag while not dragging");
+		const dragType = this.state.dragType;
 
 		this.setState(
 			this.state.copy({
@@ -860,15 +870,36 @@ export class CanvasStateStore extends Store<CanvasState> {
 				break;
 			}
 			case "line": {
-				// TODO
-				const p1 =
-					Array.from(this.state.page.points.values())[0] ??
-					createPointObject(this.state.dragStartX, this.state.dragStartY);
+				assert(dragType.type === "new-line", "Invalid drag type");
 
-				const p2 = createPointObject(
-					this.state.dragCurrentX,
-					this.state.dragCurrentY,
-				);
+				let p1: PointObject;
+				if (dragType.p1Id !== null) {
+					const _p1 = this.state.page.points.get(dragType.p1Id);
+					assert(
+						_p1 !== undefined,
+						`Cannot find the highlighted point(${dragType.p1Id})`,
+					);
+					p1 = _p1;
+				} else {
+					p1 = createPointObject(this.state.dragStartX, this.state.dragStartY);
+				}
+
+				let p2: PointObject;
+				const hoveredPointIds =
+					this.hoverStateProvider?.getState()?.pointIds ?? [];
+				if (hoveredPointIds.length > 0) {
+					const _p2 = this.state.page.points.get(hoveredPointIds[0]);
+					assert(
+						_p2 !== undefined,
+						`Cannot find the highlighted point(${hoveredPointIds[0]})`,
+					);
+					p2 = _p2;
+				} else {
+					p2 = createPointObject(
+						this.state.dragCurrentX,
+						this.state.dragCurrentY,
+					);
+				}
 
 				const line = createLineObject(p1, p2, this.state.defaultColorId);
 				this.addPoints(p1, p2);
@@ -960,6 +991,7 @@ export const MouseButton = {
 
 export type DragType =
 	| { type: "none" }
+	| { type: "new-line"; p1Id: string | null }
 	| { type: "select"; originalSelectedObjectIds: string[] }
 	| {
 			type: "move"; // moving multiple objects

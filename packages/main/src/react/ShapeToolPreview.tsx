@@ -1,7 +1,7 @@
 import { assert } from "../lib/assert";
 import { createShapeObject, getRectanglePath } from "../model/obj/ShapeObject";
+import { useCanvasState } from "./CanvasStateStoreProvider";
 import { ShapeView } from "./ShapeView";
-import { useCanvasState } from "./StoreProvider";
 
 export function ShapeToolPreview() {
 	const state = useCanvasState();

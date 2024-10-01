@@ -4,13 +4,15 @@ import {
 	useCallback,
 	useEffect,
 } from "react";
+import { assert } from "../lib/assert";
+import { useCanvasState } from "./CanvasStateStoreProvider";
 import { useController } from "./ControllerProvider";
 import { LineView } from "./LineView";
 import { SelectionRect } from "./SelectionRect";
 import { SelectorRect } from "./SelectorRect";
 import { ShapeView } from "./ShapeView";
-import { useCanvasState } from "./StoreProvider";
 import { ToolPreview } from "./ToolPreview";
+import { useStore } from "./hooks/useStore";
 
 export function Canvas() {
 	const state = useCanvasState();
@@ -103,6 +105,37 @@ export function Canvas() {
 
 			<SelectorRect />
 			<SelectionRect />
+			<PointHighlightLayer />
+		</div>
+	);
+}
+
+function PointHighlightLayer() {
+	const state = useCanvasState();
+	const controller = useController();
+	const { pointIds } = useStore(controller.hoverStateStore);
+
+	if (pointIds.length === 0) return null;
+
+	const highlightPoints = pointIds.map((pointId) => {
+		const point = state.page.points.get(pointId);
+		assert(point !== undefined, `Point(${pointId}) is not found`);
+		return point;
+	});
+
+	return (
+		<div css={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+			<svg viewBox="0 0 1 1" width={1} height={1} css={{ overflow: "visible" }}>
+				{highlightPoints.map((point) => (
+					<circle
+						key={point.id}
+						r={8}
+						cx={(point.x - state.viewport.x) * state.viewport.scale}
+						cy={(point.y - state.viewport.y) * state.viewport.scale}
+						css={{ fill: "var(--color-selection)", opacity: 0.3 }}
+					/>
+				))}
+			</svg>
 		</div>
 	);
 }

@@ -1,7 +1,7 @@
 import styled from "@emotion/styled";
 import type { LineObject } from "../model/obj/LineObject";
+import { useCanvasState } from "./CanvasStateStoreProvider";
 import { useController } from "./ControllerProvider";
-import { useCanvasState } from "./StoreProvider";
 
 export function SelectionRect() {
 	const state = useCanvasState();

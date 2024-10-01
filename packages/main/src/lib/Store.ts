@@ -1,9 +1,15 @@
-export abstract class Store<T> {
+type StateOf<T> = T extends Store<infer S> ? S : never;
+
+export interface StateProvider<T> {
+	getState(): StateOf<T>;
+}
+
+export abstract class Store<T> implements StateProvider<Store<T>> {
 	private callbacks: Set<(state: T) => void> = new Set();
 
 	protected constructor(protected state: T) {}
 
-	getState() {
+	getState(): T {
 		return this.state;
 	}
 

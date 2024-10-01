@@ -1,6 +1,6 @@
 import { type ReactNode, createContext, useContext, useMemo } from "react";
 import { Controller } from "../service/Controller";
-import { useCanvasStateStore } from "./StoreProvider";
+import { useCanvasStateStore } from "./CanvasStateStoreProvider";
 
 const context = createContext<Controller>(null as never);
 

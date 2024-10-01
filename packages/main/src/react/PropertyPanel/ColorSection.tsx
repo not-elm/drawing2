@@ -1,8 +1,8 @@
 import { type MouseEventHandler, useCallback } from "react";
 import { type ColorId, Colors } from "../../model/Colors";
+import { useCanvasState } from "../CanvasStateStoreProvider";
 import { CardSection } from "../Card";
 import { useController } from "../ControllerProvider";
-import { useCanvasState } from "../StoreProvider";
 
 export function ColorSection() {
 	return (

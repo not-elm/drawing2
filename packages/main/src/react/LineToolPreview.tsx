@@ -1,8 +1,8 @@
 import { assert } from "../lib/assert";
 import { createLineObject } from "../model/obj/LineObject";
 import { createPointObject } from "../model/obj/PointObject";
+import { useCanvasState } from "./CanvasStateStoreProvider";
 import { LineView } from "./LineView";
-import { useCanvasState } from "./StoreProvider";
 
 export function LineToolPreview() {
 	const state = useCanvasState();

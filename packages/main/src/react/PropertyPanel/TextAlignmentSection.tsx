@@ -1,7 +1,7 @@
 import type { TextAlignment } from "../../model/TextAlignment";
+import { useCanvasState } from "../CanvasStateStoreProvider";
 import { CardSection } from "../Card";
 import { useController } from "../ControllerProvider";
-import { useCanvasState } from "../StoreProvider";
 
 export function TextAlignmentSection() {
 	return (

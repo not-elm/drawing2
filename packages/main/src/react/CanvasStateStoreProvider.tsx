@@ -11,7 +11,7 @@ import type { CanvasStateStore } from "../store/CanvasStateStore";
 
 const context = createContext<CanvasStateStore>(null as never);
 
-export function StoreProvider({
+export function CanvasStateStoreProvider({
 	initializeStore,
 	children,
 }: {

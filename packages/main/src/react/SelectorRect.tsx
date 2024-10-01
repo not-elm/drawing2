@@ -1,4 +1,4 @@
-import { useCanvasState } from "./StoreProvider";
+import { useCanvasState } from "./CanvasStateStoreProvider";
 
 export function SelectorRect() {
 	const state = useCanvasState();

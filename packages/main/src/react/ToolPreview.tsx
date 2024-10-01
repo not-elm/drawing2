@@ -1,6 +1,6 @@
+import { useCanvasState } from "./CanvasStateStoreProvider";
 import { LineToolPreview } from "./LineToolPreview";
 import { ShapeToolPreview } from "./ShapeToolPreview";
-import { useCanvasState } from "./StoreProvider";
 
 export function ToolPreview() {
 	const state = useCanvasState();

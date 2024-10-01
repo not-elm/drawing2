@@ -1,6 +1,6 @@
 import { type MouseEventHandler, useCallback } from "react";
+import { useCanvasState } from "../CanvasStateStoreProvider";
 import { Card } from "../Card";
-import { useCanvasState } from "../StoreProvider";
 import { ColorSection } from "./ColorSection";
 import { FillModeSection } from "./FillModeSection";
 import { OrderSection } from "./OrderSection";
