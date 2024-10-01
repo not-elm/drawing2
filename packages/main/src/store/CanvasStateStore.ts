@@ -6,12 +6,16 @@ import {
 } from "../geo/Rect";
 import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
-import { isNotNullish } from "../lib/isNullish";
 import { CanvasState } from "../model/CanvasState";
 import type { ColorId } from "../model/Colors";
 import type { FillMode } from "../model/FillMode";
 import type { Mode } from "../model/Mode";
 import { Page } from "../model/Page";
+import {
+	type SerializedPage,
+	deserializePage,
+	serializePage,
+} from "../model/SerializedPage";
 import type { TextAlignment } from "../model/TextAlignment";
 import type { Viewport } from "../model/Viewport";
 import { type LineObject, createLineObject } from "../model/obj/LineObject";
@@ -210,7 +214,6 @@ export class CanvasStateStore extends Store<CanvasState> {
 
 		const newObjects = new Map(this.state.page.objects);
 
-		console.log(this.state, id);
 		const original = this.state.page.objects.get(
 			point === 1 ? obj.p1Id : obj.p2Id,
 		);
@@ -801,8 +804,14 @@ export class CanvasStateStore extends Store<CanvasState> {
 				break;
 			}
 			case "line": {
+				// TODO
+				const _p1 =
+					Array.from(this.state.page.objects.values()).find(
+						(obj) => obj.type === "point",
+					) ?? createPointObject(this.state.dragStartX, this.state.dragStartY);
+
 				const [p1, p2, line] = createLineObject(
-					createPointObject(this.state.dragStartX, this.state.dragStartY),
+					_p1,
 					createPointObject(this.state.dragCurrentX, this.state.dragCurrentY),
 					this.state.defaultColorId,
 				);
@@ -814,11 +823,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 	}
 
 	private saveToLocalStorage() {
-		const serializedPage: SerializedPage = {
-			objects: this.state.page.objectIds
-				.map((id) => this.state.page.objects.get(id))
-				.filter(isNotNullish),
-		};
+		const serializedPage = serializePage(this.state.page);
 
 		localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(serializedPage));
 	}
@@ -829,20 +834,11 @@ export class CanvasStateStore extends Store<CanvasState> {
 			if (data === null) return;
 
 			const serializedPage: SerializedPage = JSON.parse(data);
-
-			const objects = new Map<string, Obj>();
-			for (const object of serializedPage.objects) {
-				objects.set(object.id, object);
-			}
-
-			const objectIds = serializedPage.objects.map((object) => object.id);
+			const page = deserializePage(serializedPage);
 
 			this.setState(
 				this.state.copy({
-					page: {
-						objects,
-						objectIds,
-					},
+					page,
 					selectedObjectIds: [],
 				}),
 			);
@@ -969,9 +965,6 @@ export function isOverlapped(
 }
 
 const LOCAL_STORAGE_KEY = "LocalCanvasStateStore.state.page";
-interface SerializedPage {
-	objects: Obj[];
-}
 
 export async function initializeCanvasStateStore(): Promise<CanvasStateStore> {
 	return Promise.resolve(new CanvasStateStore(getRestoreViewportService()));

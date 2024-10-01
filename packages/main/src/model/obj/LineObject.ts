@@ -38,8 +38,8 @@ export function createLineObject(
 		y2: p2.y,
 		colorId,
 	} as const;
-	p1 = { ...p1, children: new Set([...p1.children, line.id]) };
-	p2 = { ...p2, children: new Set([...p2.children, line.id]) };
+	p1 = { ...p1, children: new Set([...Array.from(p1.children), line.id]) };
+	p2 = { ...p2, children: new Set([...Array.from(p2.children), line.id]) };
 
 	return [p1, p2, line];
 }
