@@ -31,7 +31,7 @@ function ColorButton({
 	title,
 }: { fillMode: FillMode; title: string }) {
 	const state = useCanvasState();
-	const propertyPanelState = state.propertyPanelState;
+	const propertyPanelState = state.getPropertyPanelState();
 	const handlers = useController();
 	const selected = propertyPanelState.fillMode === fillMode;
 

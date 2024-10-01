@@ -43,7 +43,7 @@ function TextAlignButton({
 	alignX,
 	alignY,
 }: { alignX: TextAlignment; alignY: TextAlignment }) {
-	const state = useCanvasState().propertyPanelState;
+	const state = useCanvasState().getPropertyPanelState();
 	const handlers = useController();
 	const selected = state.textAlignX === alignX && state.textAlignY === alignY;
 

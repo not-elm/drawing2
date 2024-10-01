@@ -1,3 +1,4 @@
+import { isRectOverlapWithPoint } from "../geo/Rect";
 import { assert } from "../lib/assert";
 import { isNotNullish } from "../lib/isNullish";
 import type { ColorId } from "../model/Colors";
@@ -10,7 +11,6 @@ import {
 	type DragType,
 	MouseButton,
 	type SelectionRectHandleType,
-	computeUnionRect,
 	fromCanvasCoordinate,
 } from "../store/CanvasStateStore";
 
@@ -27,13 +27,16 @@ export class Controller {
 			case MouseButton.Left: {
 				switch (this.store.getState().mode) {
 					case "select": {
-						const selectionRect = this.store.getState().selectionRect;
+						const selectionRect = this.store.getState().getSelectionRect();
 						const [x, y] = fromCanvasCoordinate(
 							canvasX,
 							canvasY,
 							this.store.getState().viewport,
 						);
-						if (selectionRect?.isOverlapWithPoint(x, y) ?? false) {
+						if (
+							selectionRect !== null &&
+							isRectOverlapWithPoint(selectionRect, x, y)
+						) {
 							this.handleDragStart(canvasX, canvasY, {
 								type: "move",
 								objects: this.store.getState().getSelectedObjects(),
@@ -44,9 +47,9 @@ export class Controller {
 							}
 							this.handleDragStart(canvasX, canvasY, {
 								type: "select",
-								originalSelectedShapeIds: this.store
+								originalSelectedObjectIds: this.store
 									.getState()
-									.selectedShapeIds.slice(),
+									.selectedObjectIds.slice(),
 							});
 						}
 						break;
@@ -93,7 +96,7 @@ export class Controller {
 						if (modifiers.shiftKey) {
 							this.store.toggleSelect(id);
 						} else {
-							if (this.store.getState().selectedShapeIds.includes(id)) {
+							if (this.store.getState().selectedObjectIds.includes(id)) {
 								// Do nothing
 							} else {
 								this.store.unselectAll();
@@ -148,9 +151,7 @@ export class Controller {
 	) {
 		switch (mouseButton) {
 			case MouseButton.Left: {
-				const selectionRect = computeUnionRect(
-					this.store.getState().getSelectedObjects(),
-				);
+				const selectionRect = this.store.getState().getSelectionRect();
 				assert(selectionRect !== null, "Cannot resize without a selection");
 
 				let dragType: DragType;
@@ -290,7 +291,7 @@ export class Controller {
 			}
 			case "r": {
 				switch (this.store.getState().mode) {
-					case "shape":
+					case "line":
 					case "select": {
 						this.store.setMode("shape");
 						return true;
@@ -374,7 +375,7 @@ export class Controller {
 			case "Backspace": {
 				switch (this.store.getState().mode) {
 					case "select": {
-						this.store.deleteSelectedShapes();
+						this.store.deleteSelectedObjects();
 						return true;
 					}
 				}

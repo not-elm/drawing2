@@ -7,7 +7,7 @@ import { OrderSection } from "./OrderSection";
 import { TextAlignmentSection } from "./TextAlignmentSection";
 
 export function PropertyPanel() {
-	const state = useCanvasState().propertyPanelState;
+	const state = useCanvasState().getPropertyPanelState();
 	const handleMouseDown: MouseEventHandler = useCallback((ev) => {
 		ev.stopPropagation();
 	}, []);

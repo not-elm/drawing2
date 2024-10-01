@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { Line } from "./Line";
+import { isLineOverlapWithLine } from "./Line";
 
-describe("Line", () => {
+describe("isLineOverlapWithLine", () => {
 	test.each([
 		[{ x1: 0, y1: 0, x2: 1, y2: 1 }, { x1: 0, y1: 1, x2: 1, y2: 0 }, true],
 
@@ -16,7 +16,7 @@ describe("Line", () => {
 
 		// Same lines
 		[{ x1: 0, y1: 0, x2: 1, y2: 1 }, { x1: 0, y1: 0, x2: 1, y2: 1 }, true],
-	])("isOverlap(%o, %o) === %o", (l1, l2, expected) => {
-		expect(Line.isOverlap(l1, l2)).toBe(expected);
+	])("case %#", (line1, line2, expected) => {
+		expect(isLineOverlapWithLine(line1, line2)).toBe(expected);
 	});
 });

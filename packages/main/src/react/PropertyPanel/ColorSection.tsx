@@ -36,7 +36,7 @@ export function ColorSection() {
 }
 
 function ColorButton({ colorId }: { colorId: ColorId }) {
-	const state = useCanvasState().propertyPanelState;
+	const state = useCanvasState().getPropertyPanelState();
 	const handlers = useController();
 	const selected = state.colorId === colorId;
 

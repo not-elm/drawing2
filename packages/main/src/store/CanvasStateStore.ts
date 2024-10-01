@@ -1,16 +1,21 @@
+import { isLineOverlapWithLine } from "../geo/Line";
+import { isRectOverlapWithLine, isRectOverlapWithRect } from "../geo/Rect";
 import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
 import { isNotNullish } from "../lib/isNullish";
 import { CanvasState } from "../model/CanvasState";
 import type { ColorId } from "../model/Colors";
 import type { FillMode } from "../model/FillMode";
-import { Line } from "../model/Line";
 import type { Mode } from "../model/Mode";
 import { type Obj, Page, isShape } from "../model/Page";
-import { Rect } from "../model/Rect";
-import { Shape, getRectanglePath } from "../model/Shape";
 import type { TextAlignment } from "../model/TextAlignment";
 import type { Viewport } from "../model/Viewport";
+import { type LineObject, createLineObject } from "../model/obj/LineObject";
+import {
+	type ShapeObject,
+	createShapeObject,
+	getRectanglePath,
+} from "../model/obj/ShapeObject";
 import { ClipboardService } from "../service/ClipboardService";
 import {
 	type RestoreViewportService,
@@ -30,7 +35,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 					y: 0,
 					scale: 1,
 				},
-				selectedShapeIds: [],
+				selectedObjectIds: [],
 				dragType: { type: "none" },
 				dragging: false,
 				dragStartX: 0,
@@ -56,78 +61,64 @@ export class CanvasStateStore extends Store<CanvasState> {
 		}, 1000);
 	}
 
-	update(predicate: () => void) {
-		predicate();
-	}
-
 	addObject(object: Obj) {
-		this.update(() => {
-			const newObjects = new Map(this.state.page.objects);
-			newObjects.set(object.id, object);
+		const newObjects = new Map(this.state.page.objects);
+		newObjects.set(object.id, object);
 
-			this.setState(
-				this.state.copy({
-					page: {
-						...this.state.page,
-						objects: newObjects,
-						objectIds: [...this.state.page.objectIds, object.id],
-					},
-				}),
-			);
-		});
+		this.setState(
+			this.state.copy({
+				page: {
+					...this.state.page,
+					objects: newObjects,
+					objectIds: [...this.state.page.objectIds, object.id],
+				},
+			}),
+		);
 	}
 
 	deleteObject(ids: string[]) {
 		const idSet = new Set(ids);
-		this.update(() => {
-			const newObjects = new Map(this.state.page.objects);
-			for (const id of idSet) {
-				newObjects.delete(id);
-			}
+		const newObjects = new Map(this.state.page.objects);
+		for (const id of idSet) {
+			newObjects.delete(id);
+		}
 
-			this.setState(
-				this.state.copy({
-					page: {
-						...this.state.page,
-						objects: newObjects,
-						objectIds: this.state.page.objectIds.filter((id) => !idSet.has(id)),
-					},
-				}),
-			);
-		});
+		this.setState(
+			this.state.copy({
+				page: {
+					...this.state.page,
+					objects: newObjects,
+					objectIds: this.state.page.objectIds.filter((id) => !idSet.has(id)),
+				},
+			}),
+		);
+	}
+
+	deleteSelectedObjects() {
+		this.deleteObject(this.state.selectedObjectIds);
 	}
 
 	updateZIndex(currentIndex: number, newIndex: number) {
-		this.update(() => {
-			const newObjectIds = this.state.page.objectIds.slice();
-			const [id] = newObjectIds.splice(currentIndex, 1);
-			newObjectIds.splice(newIndex, 0, id);
+		const newObjectIds = this.state.page.objectIds.slice();
+		const [id] = newObjectIds.splice(currentIndex, 1);
+		newObjectIds.splice(newIndex, 0, id);
 
-			this.setState(
-				this.state.copy({
-					page: {
-						...this.state.page,
-						objectIds: newObjectIds,
-					},
-				}),
-			);
-		});
+		this.setState(
+			this.state.copy({
+				page: {
+					...this.state.page,
+					objectIds: newObjectIds,
+				},
+			}),
+		);
 	}
-
-	resumeHistory() {}
-
-	pauseHistory() {}
 
 	// Command or Pageをスタックで管理
 	undo() {}
 
 	redo() {}
 
-	deleteSelectedShapes() {
-		this.deleteObject(this.state.selectedShapeIds);
-	}
-
-	moveShapes(deltaX: number, deltaY: number, objects: Obj[]) {
+	moveObjects(deltaX: number, deltaY: number, objects: Obj[]) {
 		const newObjects = new Map(this.state.page.objects);
 
 		for (const original of objects) {
@@ -148,19 +139,17 @@ export class CanvasStateStore extends Store<CanvasState> {
 			}
 		}
 
-		this.update(() => {
-			this.setState(
-				this.state.copy({
-					page: {
-						...this.state.page,
-						objects: newObjects,
-					},
-				}),
-			);
-		});
+		this.setState(
+			this.state.copy({
+				page: {
+					...this.state.page,
+					objects: newObjects,
+				},
+			}),
+		);
 	}
 
-	scaleShapes(
+	scaleObjects(
 		scaleX: number,
 		scaleY: number,
 		originX: number,
@@ -196,16 +185,14 @@ export class CanvasStateStore extends Store<CanvasState> {
 			}
 		}
 
-		this.update(() => {
-			this.setState(
-				this.state.copy({
-					page: {
-						...this.state.page,
-						objects: newObjects,
-					},
-				}),
-			);
-		});
+		this.setState(
+			this.state.copy({
+				page: {
+					...this.state.page,
+					objects: newObjects,
+				},
+			}),
+		);
 	}
 
 	updateLinePoint(id: string, point: 1 | 2, x: number, y: number) {
@@ -213,24 +200,22 @@ export class CanvasStateStore extends Store<CanvasState> {
 		if (obj === undefined) return;
 		if (isShape(obj)) return;
 
-		this.update(() => {
-			const newObjects = new Map(this.state.page.objects);
+		const newObjects = new Map(this.state.page.objects);
 
-			if (point === 1) {
-				newObjects.set(id, { ...obj, x1: x, y1: y });
-			} else {
-				newObjects.set(id, { ...obj, x2: x, y2: y });
-			}
+		if (point === 1) {
+			newObjects.set(id, { ...obj, x1: x, y1: y });
+		} else {
+			newObjects.set(id, { ...obj, x2: x, y2: y });
+		}
 
-			this.setState(
-				this.state.copy({
-					page: {
-						...this.state.page,
-						objects: newObjects,
-					},
-				}),
-			);
-		});
+		this.setState(
+			this.state.copy({
+				page: {
+					...this.state.page,
+					objects: newObjects,
+				},
+			}),
+		);
 	}
 
 	setLabel(id: string, label: string) {
@@ -238,19 +223,17 @@ export class CanvasStateStore extends Store<CanvasState> {
 		if (obj === undefined) return;
 		if (!isShape(obj)) return;
 
-		this.update(() => {
-			const newObjects = new Map(this.state.page.objects);
-			newObjects.set(id, { ...obj, label });
+		const newObjects = new Map(this.state.page.objects);
+		newObjects.set(id, { ...obj, label });
 
-			this.setState(
-				this.state.copy({
-					page: {
-						...this.state.page,
-						objects: newObjects,
-					},
-				}),
-			);
-		});
+		this.setState(
+			this.state.copy({
+				page: {
+					...this.state.page,
+					objects: newObjects,
+				},
+			}),
+		);
 	}
 
 	setTextAlign(textAlignX: TextAlignment, textAlignY: TextAlignment) {
@@ -261,18 +244,16 @@ export class CanvasStateStore extends Store<CanvasState> {
 			newObjects.set(obj.id, { ...obj, textAlignX, textAlignY });
 		}
 
-		this.update(() => {
-			this.setState(
-				this.state.copy({
-					page: {
-						...this.state.page,
-						objects: newObjects,
-					},
-					defaultTextAlignX: textAlignX,
-					defaultTextAlignY: textAlignY,
-				}),
-			);
-		});
+		this.setState(
+			this.state.copy({
+				page: {
+					...this.state.page,
+					objects: newObjects,
+				},
+				defaultTextAlignX: textAlignX,
+				defaultTextAlignY: textAlignY,
+			}),
+		);
 	}
 
 	setColor(colorId: ColorId) {
@@ -281,17 +262,15 @@ export class CanvasStateStore extends Store<CanvasState> {
 			newObjects.set(obj.id, { ...obj, colorId });
 		}
 
-		this.update(() => {
-			this.setState(
-				this.state.copy({
-					page: {
-						...this.state.page,
-						objects: newObjects,
-					},
-					defaultColorId: colorId,
-				}),
-			);
-		});
+		this.setState(
+			this.state.copy({
+				page: {
+					...this.state.page,
+					objects: newObjects,
+				},
+				defaultColorId: colorId,
+			}),
+		);
 	}
 
 	setFillMode(fillMode: FillMode) {
@@ -302,17 +281,15 @@ export class CanvasStateStore extends Store<CanvasState> {
 			newObjects.set(obj.id, { ...obj, fillMode });
 		}
 
-		this.update(() => {
-			this.setState(
-				this.state.copy({
-					page: {
-						...this.state.page,
-						objects: newObjects,
-					},
-					defaultFillMode: fillMode,
-				}),
-			);
-		});
+		this.setState(
+			this.state.copy({
+				page: {
+					...this.state.page,
+					objects: newObjects,
+				},
+				defaultFillMode: fillMode,
+			}),
+		);
 	}
 
 	bringToFront() {
@@ -320,7 +297,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 	}
 
 	bringForward() {
-		const selectedIdSet = new Set(this.state.selectedShapeIds);
+		const selectedIdSet = new Set(this.state.selectedObjectIds);
 
 		let mostBackwardResult = null;
 		for (const selectedId of selectedIdSet) {
@@ -350,7 +327,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 	}
 
 	sendBackward() {
-		const selectedIdSet = new Set(this.state.selectedShapeIds);
+		const selectedIdSet = new Set(this.state.selectedObjectIds);
 
 		let mostForwardResult = null;
 		for (const selectedId of selectedIdSet) {
@@ -381,7 +358,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 	 * @param targetObjectZIndex
 	 */
 	private bringForwardOf(targetObjectZIndex: number) {
-		const selectedIdSet = new Set(this.state.selectedShapeIds);
+		const selectedIdSet = new Set(this.state.selectedObjectIds);
 
 		// Current z-index of selected objects
 		const currentIndices = [];
@@ -405,7 +382,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 	 * @param targetObjectZIndex
 	 */
 	private sendBackwardOf(targetObjectZIndex: number) {
-		const selectedIdSet = new Set(this.state.selectedShapeIds);
+		const selectedIdSet = new Set(this.state.selectedObjectIds);
 
 		// Current z-index of selected objects
 		const currentIndices = [];
@@ -544,45 +521,45 @@ export class CanvasStateStore extends Store<CanvasState> {
 	select(id: string) {
 		this.setState(
 			this.state.copy({
-				selectedShapeIds: [...this.state.selectedShapeIds, id],
+				selectedObjectIds: [...this.state.selectedObjectIds, id],
 			}),
 		);
 	}
 
 	selectAll() {
-		this.setSelectedShapeIds(this.state.page.objectIds);
+		this.setSelectedObjectIds(this.state.page.objectIds);
 	}
 
 	unselect(id: string) {
 		this.setState(
 			this.state.copy({
-				selectedShapeIds: this.state.selectedShapeIds.filter((i) => i !== id),
+				selectedObjectIds: this.state.selectedObjectIds.filter((i) => i !== id),
 			}),
 		);
 	}
 
 	unselectAll() {
-		this.setSelectedShapeIds([]);
+		this.setSelectedObjectIds([]);
 	}
 
 	toggleSelect(id: string) {
-		if (this.state.selectedShapeIds.includes(id)) {
+		if (this.state.selectedObjectIds.includes(id)) {
 			this.unselect(id);
 		} else {
 			this.select(id);
 		}
 	}
 
-	private setSelectedShapeIds(ids: string[]) {
+	private setSelectedObjectIds(ids: string[]) {
 		this.setState(
 			this.state.copy({
-				selectedShapeIds: ids,
+				selectedObjectIds: ids,
 			}),
 		);
 	}
 
 	copy() {
-		if (this.state.selectedShapeIds.length === 0) return;
+		if (this.state.selectedObjectIds.length === 0) return;
 
 		const objects = this.state.getSelectedObjects();
 
@@ -591,20 +568,18 @@ export class CanvasStateStore extends Store<CanvasState> {
 
 	async cut() {
 		this.copy();
-		this.deleteSelectedShapes();
+		this.deleteSelectedObjects();
 	}
 
 	async paste(): Promise<void> {
 		const { objects } = await ClipboardService.paste();
 		if (objects.length === 0) return;
 
-		this.update(() => {
-			for (const obj of objects) {
-				this.addObject(obj);
-			}
-		});
+		for (const obj of objects) {
+			this.addObject(obj);
+		}
 
-		this.setSelectedShapeIds(objects.map((obj) => obj.id));
+		this.setSelectedObjectIds(objects.map((obj) => obj.id));
 	}
 
 	startDrag(startCanvasX: number, startCanvasY: number, type: DragType) {
@@ -616,7 +591,6 @@ export class CanvasStateStore extends Store<CanvasState> {
 			this.getState().viewport,
 		);
 
-		this.pauseHistory();
 		this.setState(
 			this.getState().copy({
 				dragType: type,
@@ -649,27 +623,27 @@ export class CanvasStateStore extends Store<CanvasState> {
 			case "select": {
 				switch (this.state.dragType.type) {
 					case "select": {
-						const selectionRect = this.state.selectorRect;
+						const selectionRect = this.state.getSelectorRect();
 						assert(selectionRect !== null, "Cannot select without a selection");
-						const selectedShapeIds =
-							this.state.dragType.originalSelectedShapeIds.slice();
+						const selectedObjectIds =
+							this.state.dragType.originalSelectedObjectIds.slice();
 
 						for (const obj of this.state.page.objects.values()) {
 							if (isShape(obj)) {
-								if (selectionRect.isOverlapWithRect(obj)) {
-									selectedShapeIds.push(obj.id);
+								if (isRectOverlapWithRect(selectionRect, obj)) {
+									selectedObjectIds.push(obj.id);
 								}
 							} else {
-								if (selectionRect.isOverlapWithLine(obj)) {
-									selectedShapeIds.push(obj.id);
+								if (isRectOverlapWithLine(selectionRect, obj)) {
+									selectedObjectIds.push(obj.id);
 								}
 							}
 						}
-						this.setSelectedShapeIds(selectedShapeIds);
+						this.setSelectedObjectIds(selectedObjectIds);
 						break;
 					}
 					case "move": {
-						this.moveShapes(
+						this.moveObjects(
 							this.state.dragCurrentX - this.state.dragStartX,
 							this.state.dragCurrentY - this.state.dragStartY,
 							this.state.dragType.objects,
@@ -678,28 +652,26 @@ export class CanvasStateStore extends Store<CanvasState> {
 					}
 					case "move-point": {
 						const { point, line } = this.state.dragType;
-						this.update(() => {
-							if (point === 1) {
-								this.updateLinePoint(
-									line.id,
-									1,
-									line.x1 + currentX - this.state.dragStartX,
-									line.y1 + currentY - this.state.dragStartY,
-								);
-							} else {
-								this.updateLinePoint(
-									line.id,
-									2,
-									line.x2 + currentX - this.state.dragStartX,
-									line.y2 + currentY - this.state.dragStartY,
-								);
-							}
-						});
+						if (point === 1) {
+							this.updateLinePoint(
+								line.id,
+								1,
+								line.x1 + currentX - this.state.dragStartX,
+								line.y1 + currentY - this.state.dragStartY,
+							);
+						} else {
+							this.updateLinePoint(
+								line.id,
+								2,
+								line.x2 + currentX - this.state.dragStartX,
+								line.y2 + currentY - this.state.dragStartY,
+							);
+						}
 						break;
 					}
 					case "nwse-resize":
 					case "nesw-resize": {
-						this.scaleShapes(
+						this.scaleObjects(
 							(this.state.dragCurrentX - this.state.dragType.originX) /
 								(this.state.dragStartX - this.state.dragType.originX),
 							(this.state.dragCurrentY - this.state.dragType.originY) /
@@ -711,7 +683,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 						break;
 					}
 					case "ns-resize": {
-						this.scaleShapes(
+						this.scaleObjects(
 							1,
 							(this.state.dragCurrentY - this.state.dragType.originY) /
 								(this.state.dragStartY - this.state.dragType.originY),
@@ -722,7 +694,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 						break;
 					}
 					case "ew-resize": {
-						this.scaleShapes(
+						this.scaleObjects(
 							(this.state.dragCurrentX - this.state.dragType.originX) /
 								(this.state.dragStartX - this.state.dragType.originX),
 							1,
@@ -741,7 +713,6 @@ export class CanvasStateStore extends Store<CanvasState> {
 	endDrag() {
 		assert(this.state.dragging, "Cannot end drag while not dragging");
 
-		this.resumeHistory();
 		this.setState(
 			this.state.copy({
 				dragging: false,
@@ -762,7 +733,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 
 				const x = Math.min(this.state.dragStartX, this.state.dragCurrentX);
 				const y = Math.min(this.state.dragStartY, this.state.dragCurrentY);
-				const shape = Shape.create(
+				const shape = createShapeObject(
 					x,
 					y,
 					width,
@@ -780,7 +751,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 				break;
 			}
 			case "line": {
-				const line = Line.create(
+				const line = createLineObject(
 					this.state.dragStartX,
 					this.state.dragStartY,
 					this.state.dragCurrentX,
@@ -812,8 +783,8 @@ export class CanvasStateStore extends Store<CanvasState> {
 			const serializedPage: SerializedPage = JSON.parse(data);
 
 			const objects = new Map<string, Obj>();
-			for (const shape of serializedPage.objects) {
-				objects.set(shape.id, shape);
+			for (const object of serializedPage.objects) {
+				objects.set(object.id, object);
 			}
 
 			const objectIds = serializedPage.objects.map((object) => object.id);
@@ -824,7 +795,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 						objects,
 						objectIds,
 					},
-					selectedShapeIds: [],
+					selectedObjectIds: [],
 				}),
 			);
 		} catch {}
@@ -842,36 +813,6 @@ export type SelectionRectHandleType =
 	| "bottomLeft"
 	| "left";
 
-export function computeUnionRect(objects: Obj[]): Rect | null {
-	if (objects.length === 0) return null;
-
-	let minX = Number.POSITIVE_INFINITY;
-	let minY = Number.POSITIVE_INFINITY;
-	let maxX = Number.NEGATIVE_INFINITY;
-	let maxY = Number.NEGATIVE_INFINITY;
-
-	for (const object of objects) {
-		if (isShape(object)) {
-			minX = Math.min(minX, object.x);
-			minY = Math.min(minY, object.y);
-			maxX = Math.max(maxX, object.x + object.width);
-			maxY = Math.max(maxY, object.y + object.height);
-		} else {
-			minX = Math.min(minX, object.x1, object.x2);
-			minY = Math.min(minY, object.y1, object.y2);
-			maxX = Math.max(maxX, object.x1, object.x2);
-			maxY = Math.max(maxY, object.y1, object.y2);
-		}
-	}
-
-	return new Rect({
-		x: minX,
-		y: minY,
-		width: maxX - minX,
-		height: maxY - minY,
-	});
-}
-
 export const MouseButton = {
 	Left: 0,
 	Middle: 1,
@@ -880,14 +821,14 @@ export const MouseButton = {
 
 export type DragType =
 	| { type: "none" }
-	| { type: "select"; originalSelectedShapeIds: string[] }
+	| { type: "select"; originalSelectedObjectIds: string[] }
 	| {
 			type: "move"; // moving multiple objects
 			objects: Obj[];
 	  }
 	| {
 			type: "move-point"; // moving a point in a path
-			line: Line;
+			line: LineObject;
 			point: 1 | 2;
 	  }
 	| {
@@ -924,31 +865,34 @@ export function fromCanvasCoordinate(
 	];
 }
 
-export function isOverlapped(obj1: Shape | Line, obj2: Shape | Line): boolean {
+export function isOverlapped(
+	obj1: ShapeObject | LineObject,
+	obj2: ShapeObject | LineObject,
+): boolean {
 	if ("width" in obj1) {
-		const rect1 = new Rect({
+		const rect1 = {
 			x: obj1.x,
 			y: obj1.y,
 			width: obj1.width,
 			height: obj1.height,
-		});
+		};
 
 		if ("width" in obj2) {
-			return rect1.isOverlapWithRect(obj2);
+			return isRectOverlapWithRect(rect1, obj2);
 		} else {
-			return rect1.isOverlapWithLine(obj2);
+			return isRectOverlapWithLine(rect1, obj2);
 		}
 	} else {
 		if ("width" in obj2) {
-			const rect2 = new Rect({
+			const rect2 = {
 				x: obj2.x,
 				y: obj2.y,
 				width: obj2.width,
 				height: obj2.height,
-			});
-			return rect2.isOverlapWithLine(obj1);
+			};
+			return isRectOverlapWithLine(rect2, obj1);
 		} else {
-			return Line.isOverlap(obj1, obj2);
+			return isLineOverlapWithLine(obj1, obj2);
 		}
 	}
 }

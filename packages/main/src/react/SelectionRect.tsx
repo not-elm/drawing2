@@ -1,13 +1,13 @@
 import styled from "@emotion/styled";
-import type { Line } from "../model/Line";
 import { isShape } from "../model/Page";
+import type { LineObject } from "../model/obj/LineObject";
 import { useController } from "./ControllerProvider";
 import { useCanvasState } from "./StoreProvider";
 
 export function SelectionRect() {
 	const state = useCanvasState();
 	const handlers = useController();
-	const selectionRect = state.selectionRect;
+	const selectionRect = state.getSelectionRect();
 	if (selectionRect === null) return null;
 
 	const { x, y, width, height } = selectionRect;
@@ -86,8 +86,8 @@ export function SelectionRect() {
 				<>
 					<ResizeHandle
 						css={{
-							left: ((objects[0] as Line).x1 - x) * state.viewport.scale,
-							top: ((objects[0] as Line).y1 - y) * state.viewport.scale,
+							left: ((objects[0] as LineObject).x1 - x) * state.viewport.scale,
+							top: ((objects[0] as LineObject).y1 - y) * state.viewport.scale,
 							cursor: "grab",
 						}}
 						onMouseDown={(ev) => {
@@ -105,8 +105,8 @@ export function SelectionRect() {
 					</ResizeHandle>
 					<ResizeHandle
 						css={{
-							left: ((objects[0] as Line).x2 - x) * state.viewport.scale,
-							top: ((objects[0] as Line).y2 - y) * state.viewport.scale,
+							left: ((objects[0] as LineObject).x2 - x) * state.viewport.scale,
+							top: ((objects[0] as LineObject).y2 - y) * state.viewport.scale,
 							cursor: "grab",
 						}}
 						onMouseDown={(ev) => {

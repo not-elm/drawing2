@@ -1,9 +1,9 @@
 import { memo } from "react";
 import { Colors } from "../model/Colors";
-import type { Line } from "../model/Line";
+import type { LineObject } from "../model/obj/LineObject";
 import { useController } from "./ControllerProvider";
 
-export const LineView = memo(function LineView({ line }: { line: Line }) {
+export const LineView = memo(function LineView({ line }: { line: LineObject }) {
 	const handlers = useController();
 
 	const canvasX1 = line.x1;

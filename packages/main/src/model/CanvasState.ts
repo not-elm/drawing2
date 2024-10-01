@@ -1,20 +1,22 @@
+import { type Rect, unionRect } from "../geo/Rect";
 import { dataclass } from "../lib/dataclass";
 import { isNotNullish } from "../lib/isNullish";
-import { type DragType, computeUnionRect } from "../store/CanvasStateStore";
+import type { DragType } from "../store/CanvasStateStore";
 import type { ColorId } from "./Colors";
 import type { FillMode } from "./FillMode";
 import type { Mode } from "./Mode";
 import { type Obj, type Page, isShape } from "./Page";
 import { PropertyPanelState } from "./PropertyPanelState";
-import { Rect } from "./Rect";
 import type { TextAlignment } from "./TextAlignment";
 import type { Viewport } from "./Viewport";
+import { getBoundingRectOfLineObject } from "./obj/LineObject";
+import { getBoundingRectOfShapeObject } from "./obj/ShapeObject";
 
 export class CanvasState extends dataclass<{
 	readonly page: Page;
 	readonly mode: Mode;
 	readonly viewport: Viewport;
-	readonly selectedShapeIds: string[];
+	readonly selectedObjectIds: string[];
 	readonly dragType: DragType;
 	readonly dragging: boolean;
 	readonly dragStartX: number;
@@ -26,28 +28,39 @@ export class CanvasState extends dataclass<{
 	readonly defaultTextAlignX: TextAlignment;
 	readonly defaultTextAlignY: TextAlignment;
 }>() {
-	get selectorRect(): Rect | null {
+	getSelectorRect(): Rect | null {
 		if (this.dragType.type !== "select") return null;
 
-		return new Rect({
+		return {
 			x: Math.min(this.dragStartX, this.dragCurrentX),
 			y: Math.min(this.dragStartY, this.dragCurrentY),
 			width: Math.abs(this.dragCurrentX - this.dragStartX),
 			height: Math.abs(this.dragCurrentY - this.dragStartY),
-		});
+		};
 	}
 
-	get selectionRect(): Rect | null {
-		return computeUnionRect(this.getSelectedObjects());
+	getSelectionRect(): Rect | null {
+		const rects = this.getSelectedObjects().map((obj) =>
+			isShape(obj)
+				? getBoundingRectOfShapeObject(obj)
+				: getBoundingRectOfLineObject(obj),
+		);
+		let rect = rects.shift();
+		if (rect === undefined) return null;
+
+		for (const r of rects) {
+			rect = unionRect(rect, r);
+		}
+		return rect;
 	}
 
 	getSelectedObjects(): Obj[] {
-		return this.selectedShapeIds
+		return this.selectedObjectIds
 			.map((id) => this.page.objects.get(id))
 			.filter(isNotNullish);
 	}
 
-	get propertyPanelState(): PropertyPanelState {
+	getPropertyPanelState(): PropertyPanelState {
 		const selectedObjects = this.getSelectedObjects();
 		const selectedShapes = selectedObjects.filter(isShape);
 		const selectedLines = selectedObjects.filter((obj) => !isShape(obj));
@@ -98,6 +111,6 @@ export class CanvasState extends dataclass<{
 	}
 
 	isTextEditing(shapeId: string): boolean {
-		return this.mode === "text" && this.selectedShapeIds.includes(shapeId);
+		return this.mode === "text" && this.selectedObjectIds.includes(shapeId);
 	}
 }

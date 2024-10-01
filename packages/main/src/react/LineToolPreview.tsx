@@ -1,5 +1,5 @@
 import { assert } from "../lib/assert";
-import { Line } from "../model/Line";
+import { createLineObject } from "../model/obj/LineObject";
 import { LineView } from "./LineView";
 import { useCanvasState } from "./StoreProvider";
 
@@ -11,7 +11,7 @@ export function LineToolPreview() {
 	);
 	assert(state.dragging, "LineToolPreview must be rendered while dragging");
 
-	const line = Line.create(
+	const line = createLineObject(
 		state.dragStartX,
 		state.dragStartY,
 		state.dragCurrentX,

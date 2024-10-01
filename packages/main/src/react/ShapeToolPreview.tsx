@@ -1,5 +1,5 @@
 import { assert } from "../lib/assert";
-import { Shape, getRectanglePath } from "../model/Shape";
+import { createShapeObject, getRectanglePath } from "../model/obj/ShapeObject";
 import { ShapeView } from "./ShapeView";
 import { useCanvasState } from "./StoreProvider";
 
@@ -16,7 +16,7 @@ export function ShapeToolPreview() {
 	const x = Math.min(state.dragStartX, state.dragCurrentX);
 	const y = Math.min(state.dragStartY, state.dragCurrentY);
 
-	const rect = Shape.create(
+	const rect = createShapeObject(
 		x,
 		y,
 		width,

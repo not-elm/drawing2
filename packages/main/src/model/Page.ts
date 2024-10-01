@@ -1,7 +1,7 @@
-import type { Line } from "./Line";
-import type { Shape } from "./Shape";
+import type { LineObject } from "./obj/LineObject";
+import type { ShapeObject } from "./obj/ShapeObject";
 
-export type Obj = Shape | Line;
+export type Obj = ShapeObject | LineObject;
 
 export interface Page {
 	objects: Map<string, Obj>;
