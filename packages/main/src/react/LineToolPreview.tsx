@@ -1,6 +1,6 @@
 import { assert } from "../lib/assert";
-import { createPointObject } from "../model/Page";
 import { createLineObject } from "../model/obj/LineObject";
+import { createPointObject } from "../model/obj/PointObject";
 import { LineView } from "./LineView";
 import { useCanvasState } from "./StoreProvider";
 

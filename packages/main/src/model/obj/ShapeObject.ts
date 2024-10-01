@@ -2,8 +2,8 @@ import type { Rect } from "../../geo/Rect";
 import { randomId } from "../../lib/randomId";
 import type { ColorId } from "../Colors";
 import type { FillMode } from "../FillMode";
-import type { ObjBase } from "../Page";
 import type { TextAlignment } from "../TextAlignment";
+import type { ObjBase } from "./Obj";
 
 export function getRectanglePath() {
 	return [

@@ -1,5 +1,5 @@
-import type { Point } from "../model/Page";
 import { type Line, isLineOverlapWithLine } from "./Line";
+import type { Point } from "./Point";
 
 export interface Rect {
 	x: number;

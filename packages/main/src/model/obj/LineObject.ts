@@ -1,7 +1,8 @@
 import type { Rect } from "../../geo/Rect";
 import { randomId } from "../../lib/randomId";
 import type { ColorId } from "../Colors";
-import type { ObjBase, PointObject } from "../Page";
+import type { ObjBase } from "./Obj";
+import type { PointObject } from "./PointObject";
 
 export interface LineObject extends ObjBase<"line"> {
 	p1Id: string;

@@ -1,4 +1,4 @@
-import type { Point } from "../model/Page";
+import type { Point } from "./Point";
 
 export interface Line {
 	x1: number;

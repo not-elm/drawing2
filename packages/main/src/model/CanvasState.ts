@@ -5,11 +5,13 @@ import type { DragType } from "../store/CanvasStateStore";
 import type { ColorId } from "./Colors";
 import type { FillMode } from "./FillMode";
 import type { Mode } from "./Mode";
-import { type Obj, type Page, getBoundingRectOfPointObject } from "./Page";
+import type { Page } from "./Page";
 import { PropertyPanelState } from "./PropertyPanelState";
 import type { TextAlignment } from "./TextAlignment";
 import type { Viewport } from "./Viewport";
 import { getBoundingRectOfLineObject } from "./obj/LineObject";
+import type { Obj } from "./obj/Obj";
+import { getBoundingRectOfPointObject } from "./obj/PointObject";
 import { getBoundingRectOfShapeObject } from "./obj/ShapeObject";
 
 export class CanvasState extends dataclass<{

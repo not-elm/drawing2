@@ -1,5 +1,6 @@
 import { randomId } from "../lib/randomId";
-import type { Obj } from "../model/Page";
+
+import type { Obj } from "../model/obj/Obj";
 
 export const ClipboardService = new (class {
 	copy(objects: Obj[]): Promise<void> {

@@ -11,15 +11,12 @@ import { CanvasState } from "../model/CanvasState";
 import type { ColorId } from "../model/Colors";
 import type { FillMode } from "../model/FillMode";
 import type { Mode } from "../model/Mode";
-import {
-	type Obj,
-	Page,
-	type PointObject,
-	createPointObject,
-} from "../model/Page";
+import { Page } from "../model/Page";
 import type { TextAlignment } from "../model/TextAlignment";
 import type { Viewport } from "../model/Viewport";
 import { type LineObject, createLineObject } from "../model/obj/LineObject";
+import type { Obj } from "../model/obj/Obj";
+import { type PointObject, createPointObject } from "../model/obj/PointObject";
 import {
 	type ShapeObject,
 	createShapeObject,
