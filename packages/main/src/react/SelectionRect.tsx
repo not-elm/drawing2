@@ -2,10 +2,12 @@ import styled from "@emotion/styled";
 import type { LineObject } from "../model/obj/LineObject";
 import { useCanvasState } from "./CanvasStateStoreProvider";
 import { useController } from "./ControllerProvider";
+import { useStore } from "./hooks/useStore";
 
 export function SelectionRect() {
 	const state = useCanvasState();
-	const handlers = useController();
+	const controller = useController();
+	const viewport = useStore(controller.viewportStore);
 	const selectionRect = state.getSelectionRect();
 	if (selectionRect === null) return null;
 
@@ -17,10 +19,10 @@ export function SelectionRect() {
 		<div
 			css={{
 				position: "absolute",
-				left: (x - state.viewport.x) * state.viewport.scale,
-				top: (y - state.viewport.y) * state.viewport.scale,
-				width: width * state.viewport.scale,
-				height: height * state.viewport.scale,
+				left: (x - viewport.x) * viewport.scale,
+				top: (y - viewport.y) * viewport.scale,
+				width: width * viewport.scale,
+				height: height * viewport.scale,
 				pointerEvents: "none",
 			}}
 		>
@@ -42,8 +44,8 @@ export function SelectionRect() {
 						}}
 						x={0}
 						y={0}
-						width={width * state.viewport.scale}
-						height={height * state.viewport.scale}
+						width={width * viewport.scale}
+						height={height * viewport.scale}
 						strokeWidth={3}
 					/>
 				)}
@@ -56,10 +58,10 @@ export function SelectionRect() {
 									stroke: "var(--color-selection)",
 									fill: "none",
 								}}
-								x={(obj.x - x) * state.viewport.scale}
-								y={(obj.y - y) * state.viewport.scale}
-								width={obj.width * state.viewport.scale}
-								height={obj.height * state.viewport.scale}
+								x={(obj.x - x) * viewport.scale}
+								y={(obj.y - y) * viewport.scale}
+								width={obj.width * viewport.scale}
+								height={obj.height * viewport.scale}
 								strokeWidth={1}
 							/>
 						);
@@ -72,10 +74,10 @@ export function SelectionRect() {
 									stroke: "var(--color-selection)",
 									fill: "none",
 								}}
-								x1={(obj.x1 - x) * state.viewport.scale}
-								y1={(obj.y1 - y) * state.viewport.scale}
-								x2={(obj.x2 - x) * state.viewport.scale}
-								y2={(obj.y2 - y) * state.viewport.scale}
+								x1={(obj.x1 - x) * viewport.scale}
+								y1={(obj.y1 - y) * viewport.scale}
+								x2={(obj.x2 - x) * viewport.scale}
+								y2={(obj.y2 - y) * viewport.scale}
 								strokeWidth={1}
 							/>
 						);
@@ -86,14 +88,14 @@ export function SelectionRect() {
 				<>
 					<ResizeHandle
 						css={{
-							left: ((objects[0] as LineObject).x1 - x) * state.viewport.scale,
-							top: ((objects[0] as LineObject).y1 - y) * state.viewport.scale,
+							left: ((objects[0] as LineObject).x1 - x) * viewport.scale,
+							top: ((objects[0] as LineObject).y1 - y) * viewport.scale,
 							cursor: "grab",
 						}}
 						onMouseDown={(ev) => {
 							ev.stopPropagation();
 							ev.preventDefault();
-							handlers.handleSelectionLineHandleMouseDown(
+							controller.handleSelectionLineHandleMouseDown(
 								ev.clientX,
 								ev.clientY,
 								ev.button,
@@ -105,14 +107,14 @@ export function SelectionRect() {
 					</ResizeHandle>
 					<ResizeHandle
 						css={{
-							left: ((objects[0] as LineObject).x2 - x) * state.viewport.scale,
-							top: ((objects[0] as LineObject).y2 - y) * state.viewport.scale,
+							left: ((objects[0] as LineObject).x2 - x) * viewport.scale,
+							top: ((objects[0] as LineObject).y2 - y) * viewport.scale,
 							cursor: "grab",
 						}}
 						onMouseDown={(ev) => {
 							ev.stopPropagation();
 							ev.preventDefault();
-							handlers.handleSelectionLineHandleMouseDown(
+							controller.handleSelectionLineHandleMouseDown(
 								ev.clientX,
 								ev.clientY,
 								ev.button,
@@ -131,7 +133,7 @@ export function SelectionRect() {
 						onMouseDown={(ev) => {
 							ev.stopPropagation();
 							ev.preventDefault();
-							handlers.handleSelectionRectHandleMouseDown(
+							controller.handleSelectionRectHandleMouseDown(
 								ev.clientX,
 								ev.clientY,
 								ev.button,
@@ -149,7 +151,7 @@ export function SelectionRect() {
 						onMouseDown={(ev) => {
 							ev.stopPropagation();
 							ev.preventDefault();
-							handlers.handleSelectionRectHandleMouseDown(
+							controller.handleSelectionRectHandleMouseDown(
 								ev.clientX,
 								ev.clientY,
 								ev.button,
@@ -167,7 +169,7 @@ export function SelectionRect() {
 						onMouseDown={(ev) => {
 							ev.stopPropagation();
 							ev.preventDefault();
-							handlers.handleSelectionRectHandleMouseDown(
+							controller.handleSelectionRectHandleMouseDown(
 								ev.clientX,
 								ev.clientY,
 								ev.button,
@@ -180,7 +182,7 @@ export function SelectionRect() {
 						onMouseDown={(ev) => {
 							ev.stopPropagation();
 							ev.preventDefault();
-							handlers.handleSelectionRectHandleMouseDown(
+							controller.handleSelectionRectHandleMouseDown(
 								ev.clientX,
 								ev.clientY,
 								ev.button,
@@ -194,7 +196,7 @@ export function SelectionRect() {
 						onMouseDown={(ev) => {
 							ev.stopPropagation();
 							ev.preventDefault();
-							handlers.handleSelectionRectHandleMouseDown(
+							controller.handleSelectionRectHandleMouseDown(
 								ev.clientX,
 								ev.clientY,
 								ev.button,
@@ -209,7 +211,7 @@ export function SelectionRect() {
 						onMouseDown={(ev) => {
 							ev.stopPropagation();
 							ev.preventDefault();
-							handlers.handleSelectionRectHandleMouseDown(
+							controller.handleSelectionRectHandleMouseDown(
 								ev.clientX,
 								ev.clientY,
 								ev.button,
@@ -224,7 +226,7 @@ export function SelectionRect() {
 						onMouseDown={(ev) => {
 							ev.stopPropagation();
 							ev.preventDefault();
-							handlers.handleSelectionRectHandleMouseDown(
+							controller.handleSelectionRectHandleMouseDown(
 								ev.clientX,
 								ev.clientY,
 								ev.button,
@@ -239,7 +241,7 @@ export function SelectionRect() {
 						onMouseDown={(ev) => {
 							ev.stopPropagation();
 							ev.preventDefault();
-							handlers.handleSelectionRectHandleMouseDown(
+							controller.handleSelectionRectHandleMouseDown(
 								ev.clientX,
 								ev.clientY,
 								ev.button,

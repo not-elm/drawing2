@@ -14,14 +14,22 @@ import {
 } from "../store/CanvasStateStore";
 import { HoverStateStore } from "../store/HoverStateStore";
 import { PointerStateStore } from "../store/PointerStateStore";
+import { ViewportStore } from "../store/ViewportStore";
+import { getRestoreViewportService } from "./RestoreViewportService";
 
 export class Controller {
 	readonly pointerStore = new PointerStateStore();
 	readonly hoverStateStore: HoverStateStore;
+	readonly viewportStore = new ViewportStore(getRestoreViewportService());
 
 	constructor(private readonly store: CanvasStateStore) {
-		this.hoverStateStore = new HoverStateStore(store, this.pointerStore);
+		this.hoverStateStore = new HoverStateStore(
+			store,
+			this.pointerStore,
+			this.viewportStore,
+		);
 		this.store.setHoverStateProvider(this.hoverStateStore);
+		this.store.setViewportProvider(this.viewportStore);
 	}
 
 	handleCanvasMouseDown(
@@ -38,7 +46,7 @@ export class Controller {
 						const [x, y] = fromCanvasCoordinate(
 							canvasX,
 							canvasY,
-							this.store.getState().viewport,
+							this.viewportStore.getState(),
 						);
 						if (
 							selectionRect !== null &&
@@ -84,7 +92,7 @@ export class Controller {
 	}
 
 	handleCanvasMouseMove(canvasX: number, canvasY: number) {
-		const viewport = this.store.getState().viewport;
+		const viewport = this.viewportStore.getState();
 		this.pointerStore.setPosition(
 			canvasX / viewport.scale + viewport.x,
 			canvasY / viewport.scale + viewport.y,
@@ -282,11 +290,11 @@ export class Controller {
 	}
 
 	handleScroll(deltaCanvasX: number, deltaCanvasY: number) {
-		this.store.moveViewportPosition(deltaCanvasX, deltaCanvasY);
+		this.viewportStore.movePosition(deltaCanvasX, deltaCanvasY);
 	}
 
 	handleScale(newScale: number, centerCanvasX: number, centerCanvasY: number) {
-		this.store.setViewportScale(newScale, centerCanvasX, centerCanvasY);
+		this.viewportStore.setScale(newScale, centerCanvasX, centerCanvasY);
 	}
 
 	handleKeyDown(

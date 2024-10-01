@@ -1,6 +1,7 @@
 import { Store } from "../lib/Store";
 import type { CanvasStateStore } from "./CanvasStateStore";
 import type { PointerStateStore } from "./PointerStateStore";
+import type { ViewportStore } from "./ViewportStore";
 
 export class HoverStateStore extends Store<{
 	pointIds: string[];
@@ -13,6 +14,7 @@ export class HoverStateStore extends Store<{
 	constructor(
 		private readonly canvasStateStore: CanvasStateStore,
 		private readonly pointerStateStore: PointerStateStore,
+		private readonly viewportStore: ViewportStore,
 	) {
 		super({
 			pointIds: [],
@@ -23,10 +25,8 @@ export class HoverStateStore extends Store<{
 	}
 
 	recompute(): void {
-		const {
-			page,
-			viewport: { scale },
-		} = this.canvasStateStore.getState();
+		const { page } = this.canvasStateStore.getState();
+		const { scale } = this.viewportStore.getState();
 		const { x: pointerX, y: pointerY } = this.pointerStateStore.getState();
 
 		const pointIds: string[] = [];

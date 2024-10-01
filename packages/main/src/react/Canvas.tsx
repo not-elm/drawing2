@@ -16,14 +16,15 @@ import { useStore } from "./hooks/useStore";
 
 export function Canvas() {
 	const state = useCanvasState();
-	const handlers = useController();
+	const controller = useController();
+	const viewport = useStore(controller.viewportStore);
 
 	useEffect(() => {
 		function handleMouseMove(ev: MouseEvent) {
-			handlers.handleCanvasMouseMove(ev.clientX, ev.clientY);
+			controller.handleCanvasMouseMove(ev.clientX, ev.clientY);
 		}
 		function handleMouseUp() {
-			handlers.handleCanvasMouseUp();
+			controller.handleCanvasMouseUp();
 		}
 		window.addEventListener("mousemove", handleMouseMove);
 		window.addEventListener("mouseup", handleMouseUp);
@@ -32,35 +33,35 @@ export function Canvas() {
 			window.removeEventListener("mousemove", handleMouseMove);
 			window.removeEventListener("mouseup", handleMouseUp);
 		};
-	}, [handlers]);
+	}, [controller]);
 
 	const handleWheel: WheelEventHandler = useCallback(
 		(ev) => {
 			if (ev.ctrlKey) {
-				handlers.handleScale(
-					Math.min(Math.max(0.1, state.viewport.scale - ev.deltaY * 0.0005), 4),
+				controller.handleScale(
+					Math.min(Math.max(0.1, viewport.scale - ev.deltaY * 0.0005), 4),
 					ev.clientX,
 					ev.clientY,
 				);
 			} else {
-				handlers.handleScroll(ev.deltaX, ev.deltaY);
+				controller.handleScroll(ev.deltaX, ev.deltaY);
 			}
 		},
-		[handlers, state.viewport.scale],
+		[controller, viewport.scale],
 	);
 
 	const handleCanvasMouseDown: MouseEventHandler = useCallback(
 		(ev) => {
 			ev.stopPropagation();
 			ev.preventDefault();
-			handlers.handleCanvasMouseDown(ev.clientX, ev.clientY, ev.button, {
+			controller.handleCanvasMouseDown(ev.clientX, ev.clientY, ev.button, {
 				shiftKey: ev.shiftKey,
 			});
 		},
-		[handlers],
+		[controller],
 	);
 
-	const scale = state.viewport.scale;
+	const scale = viewport.scale;
 
 	return (
 		<div
@@ -75,9 +76,8 @@ export function Canvas() {
 			<div
 				css={{
 					position: "relative",
-					transform: `translate(${-state.viewport.x}px, ${-state.viewport
-						.y}px) scale(${scale})`,
-					transformOrigin: `${state.viewport.x}px ${state.viewport.y}px`,
+					transform: `translate(${-viewport.x}px, ${-viewport.y}px) scale(${scale})`,
+					transformOrigin: `${viewport.x}px ${viewport.y}px`,
 				}}
 			>
 				{state.page.objectIds.map((objectId) => {
@@ -113,6 +113,7 @@ export function Canvas() {
 function PointHighlightLayer() {
 	const state = useCanvasState();
 	const controller = useController();
+	const viewport = useStore(controller.viewportStore);
 	const { pointIds } = useStore(controller.hoverStateStore);
 
 	if (pointIds.length === 0) return null;
@@ -130,8 +131,8 @@ function PointHighlightLayer() {
 					<circle
 						key={point.id}
 						r={8}
-						cx={(point.x - state.viewport.x) * state.viewport.scale}
-						cy={(point.y - state.viewport.y) * state.viewport.scale}
+						cx={(point.x - viewport.x) * viewport.scale}
+						cy={(point.y - viewport.y) * viewport.scale}
 						css={{ fill: "var(--color-selection)", opacity: 0.3 }}
 					/>
 				))}

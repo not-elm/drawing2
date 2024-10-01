@@ -27,29 +27,20 @@ import {
 	getRectanglePath,
 } from "../model/obj/ShapeObject";
 import { ClipboardService } from "../service/ClipboardService";
-import {
-	type RestoreViewportService,
-	getRestoreViewportService,
-} from "../service/RestoreViewportService";
 import type { HoverStateStore } from "./HoverStateStore";
+import type { ViewportStore } from "./ViewportStore";
 
 // CanvasStateStore -> HighlightPointStore
 
 export class CanvasStateStore extends Store<CanvasState> {
 	private hoverStateProvider: StateProvider<HoverStateStore> | null = null;
+	private viewportProvider: StateProvider<ViewportStore> | null = null;
 
-	constructor(
-		protected readonly restoreViewportService: RestoreViewportService,
-	) {
+	constructor() {
 		super(
 			new CanvasState({
 				page: Page.create(),
 				mode: "select",
-				viewport: {
-					x: 0,
-					y: 0,
-					scale: 1,
-				},
 				selectedObjectIds: [],
 				dragType: { type: "none" },
 				dragging: false,
@@ -64,11 +55,6 @@ export class CanvasStateStore extends Store<CanvasState> {
 			}),
 		);
 
-		this.restoreViewportService.restore().then((viewport) => {
-			if (viewport !== null) {
-				this.setState(this.state.copy({ viewport }));
-			}
-		});
 		this.loadFromLocalStorage();
 
 		setInterval(() => {
@@ -78,6 +64,10 @@ export class CanvasStateStore extends Store<CanvasState> {
 
 	setHoverStateProvider(provider: StateProvider<HoverStateStore>) {
 		this.hoverStateProvider = provider;
+	}
+
+	setViewportProvider(provider: StateProvider<ViewportStore>) {
+		this.viewportProvider = provider;
 	}
 
 	addPoints(...points: PointObject[]) {
@@ -98,6 +88,8 @@ export class CanvasStateStore extends Store<CanvasState> {
 		const newObjects = new Map(this.state.page.objects);
 		const newObjectIds = this.state.page.objectIds.slice();
 		for (const object of objects) {
+			assert(object.type !== "line", "Cannot add a line object directly");
+
 			newObjects.set(object.id, object);
 			newObjectIds.push(object.id);
 		}
@@ -107,6 +99,38 @@ export class CanvasStateStore extends Store<CanvasState> {
 				...this.state.page,
 				objects: newObjects,
 				objectIds: newObjectIds,
+			}),
+		);
+	}
+
+	addLine(p1Id: string, p2Id: string, options: { colorId: ColorId }) {
+		const p1 = this.state.page.points.get(p1Id);
+		assert(p1 !== undefined, "Cannot find p1");
+
+		const p2 = this.state.page.points.get(p2Id);
+		assert(p2 !== undefined, "Cannot find p2");
+
+		const line = createLineObject(p1, p2, options.colorId);
+
+		const newPoints = new Map(this.state.page.points);
+		const newObjects = new Map(this.state.page.objects);
+
+		newPoints.set(p1.id, {
+			...p1,
+			children: new Set([...p1.children, line.id]),
+		});
+		newPoints.set(p2.id, {
+			...p2,
+			children: new Set([...p2.children, line.id]),
+		});
+		newObjects.set(line.id, line);
+
+		this.setState(
+			this.state.setPage({
+				...this.state.page,
+				objects: newObjects,
+				points: newPoints,
+				objectIds: [...this.state.page.objectIds, line.id],
 			}),
 		);
 	}
@@ -607,42 +631,6 @@ export class CanvasStateStore extends Store<CanvasState> {
 		}
 	}
 
-	moveViewportPosition(deltaCanvasX: number, deltaCanvasY: number) {
-		this.setState(
-			this.state.copy({
-				viewport: {
-					...this.state.viewport,
-					x: this.state.viewport.x + deltaCanvasX / this.state.viewport.scale,
-					y: this.state.viewport.y + deltaCanvasY / this.state.viewport.scale,
-				},
-			}),
-		);
-		this.restoreViewportService.save(this.state.viewport);
-	}
-
-	setViewportScale(
-		newScale: number,
-		centerCanvasX: number,
-		centerCanvasY: number,
-	) {
-		this.setState(
-			this.state.copy({
-				viewport: {
-					x:
-						centerCanvasX / this.state.viewport.scale -
-						centerCanvasX / newScale +
-						this.state.viewport.x,
-					y:
-						centerCanvasY / this.state.viewport.scale -
-						centerCanvasY / newScale +
-						this.state.viewport.y,
-					scale: newScale,
-				},
-			}),
-		);
-		this.restoreViewportService.save(this.state.viewport);
-	}
-
 	select(id: string) {
 		this.setState(this.state.select(id));
 	}
@@ -685,12 +673,10 @@ export class CanvasStateStore extends Store<CanvasState> {
 	}
 
 	async paste(): Promise<void> {
-		const { objects } = await ClipboardService.paste();
-		if (objects.length === 0) return;
+		const { objects, points } = await ClipboardService.paste();
 
-		for (const obj of objects) {
-			this.addObjects(obj);
-		}
+		this.addPoints(...points);
+		this.addObjects(...objects);
 
 		this.setSelectedObjectIds(objects.map((obj) => obj.id));
 	}
@@ -701,7 +687,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 		const [startX, startY] = fromCanvasCoordinate(
 			startCanvasX,
 			startCanvasY,
-			this.getState().viewport,
+			this.viewportProvider?.getState() ?? { x: 0, y: 0, scale: 1 },
 		);
 
 		this.setState(
@@ -722,7 +708,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 		const [currentX, currentY] = fromCanvasCoordinate(
 			currentCanvasX,
 			currentCanvasY,
-			this.getState().viewport,
+			this.viewportProvider?.getState() ?? { x: 0, y: 0, scale: 1 },
 		);
 
 		this.setState(
@@ -912,38 +898,6 @@ export class CanvasStateStore extends Store<CanvasState> {
 		}
 	}
 
-	addLine(p1Id: string, p2Id: string, options: { colorId: ColorId }) {
-		const p1 = this.state.page.points.get(p1Id);
-		assert(p1 !== undefined, "Cannot find p1");
-
-		const p2 = this.state.page.points.get(p2Id);
-		assert(p2 !== undefined, "Cannot find p2");
-
-		const line = createLineObject(p1, p2, options.colorId);
-
-		const newPoints = new Map(this.state.page.points);
-		const newObjects = new Map(this.state.page.objects);
-
-		newPoints.set(p1.id, {
-			...p1,
-			children: new Set([...p1.children, line.id]),
-		});
-		newPoints.set(p2.id, {
-			...p2,
-			children: new Set([...p2.children, line.id]),
-		});
-		newObjects.set(line.id, line);
-
-		this.setState(
-			this.state.setPage({
-				...this.state.page,
-				objects: newObjects,
-				points: newPoints,
-				objectIds: [...this.state.page.objectIds, line.id],
-			}),
-		);
-	}
-
 	private saveToLocalStorage() {
 		const serializedPage = serializePage(this.state.page);
 
@@ -1094,5 +1048,5 @@ export function isOverlapped(
 const LOCAL_STORAGE_KEY = "LocalCanvasStateStore.state.page";
 
 export async function initializeCanvasStateStore(): Promise<CanvasStateStore> {
-	return Promise.resolve(new CanvasStateStore(getRestoreViewportService()));
+	return Promise.resolve(new CanvasStateStore());
 }

@@ -9,7 +9,6 @@ import type { Mode } from "./Mode";
 import type { Page } from "./Page";
 import { PropertyPanelState } from "./PropertyPanelState";
 import type { TextAlignment } from "./TextAlignment";
-import type { Viewport } from "./Viewport";
 import { getBoundingRectOfLineObject } from "./obj/LineObject";
 import type { Obj } from "./obj/Obj";
 import { getBoundingRectOfShapeObject } from "./obj/ShapeObject";
@@ -17,7 +16,6 @@ import { getBoundingRectOfShapeObject } from "./obj/ShapeObject";
 export class CanvasState extends dataclass<{
 	readonly page: Page;
 	readonly mode: Mode;
-	readonly viewport: Viewport;
 	readonly selectedObjectIds: string[];
 	readonly dragType: DragType;
 	readonly dragging: boolean;
