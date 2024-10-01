@@ -71,6 +71,22 @@ export class CanvasStateStore extends Store<CanvasState> {
 		}, 1000);
 	}
 
+	addPoints(...points: PointObject[]) {
+		const newPoints = new Map(this.state.page.points);
+		for (const point of points) {
+			newPoints.set(point.id, point);
+		}
+
+		this.setState(
+			this.state.copy({
+				page: {
+					...this.state.page,
+					points: newPoints,
+				},
+			}),
+		);
+	}
+
 	addObjects(...objects: Obj[]) {
 		const newObjects = new Map(this.state.page.objects);
 		const newObjectIds = this.state.page.objectIds.slice();
@@ -93,7 +109,43 @@ export class CanvasStateStore extends Store<CanvasState> {
 	deleteObject(ids: string[]) {
 		const idSet = new Set(ids);
 		const newObjects = new Map(this.state.page.objects);
+		const newPoints = new Map(this.state.page.points);
+
 		for (const id of idSet) {
+			const object = this.state.page.objects.get(id);
+			assert(object !== undefined, "Cannot find the object to delete");
+
+			switch (object.type) {
+				case "shape": {
+					break;
+				}
+				case "line": {
+					const p1 = newPoints.get(object.p1Id);
+					assert(p1 !== undefined, "Cannot find p1");
+
+					const p2 = newPoints.get(object.p2Id);
+					assert(p2 !== undefined, "Cannot find p2");
+
+					const newChildren1 = new Set(p1.children);
+					newChildren1.delete(object.id);
+					if (newChildren1.size === 0) {
+						newPoints.delete(p1.id);
+					} else {
+						newPoints.set(p1.id, { ...p1, children: newChildren1 });
+					}
+
+					const newChildren2 = new Set(p2.children);
+					newChildren2.delete(object.id);
+					if (newChildren2.size === 0) {
+						newPoints.delete(p2.id);
+					} else {
+						newPoints.set(p2.id, { ...p2, children: newChildren2 });
+					}
+
+					break;
+				}
+			}
+
 			newObjects.delete(id);
 		}
 
@@ -102,6 +154,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 				page: {
 					...this.state.page,
 					objects: newObjects,
+					points: newPoints,
 					objectIds: this.state.page.objectIds.filter((id) => !idSet.has(id)),
 				},
 			}),
@@ -134,6 +187,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 
 	moveObjects(deltaX: number, deltaY: number, objects: Obj[]) {
 		const newObjects = new Map(this.state.page.objects);
+		const newPoints = new Map(this.state.page.points);
 
 		for (const original of objects) {
 			if (original.type === "shape") {
@@ -142,12 +196,26 @@ export class CanvasStateStore extends Store<CanvasState> {
 					x: original.x + deltaX,
 					y: original.y + deltaY,
 				});
-			} else if (original.type === "point") {
+			} else if (original.type === "line") {
+				const p1 = this.state.page.points.get(original.p1Id);
+				assert(p1 !== undefined, "Cannot find p1");
+
+				const p2 = this.state.page.points.get(original.p2Id);
+				assert(p2 !== undefined, "Cannot find p2");
+
 				this.updatePoint(
+					newPoints,
 					newObjects,
-					original,
-					original.x + deltaX,
-					original.y + deltaY,
+					p1,
+					p1.x + deltaX,
+					p1.y + deltaY,
+				);
+				this.updatePoint(
+					newPoints,
+					newObjects,
+					p2,
+					p2.x + deltaX,
+					p2.y + deltaY,
 				);
 			}
 		}
@@ -157,6 +225,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 				page: {
 					...this.state.page,
 					objects: newObjects,
+					points: newPoints,
 				},
 			}),
 		);
@@ -170,6 +239,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 		objects: Obj[],
 	) {
 		const newObjects = new Map(this.state.page.objects);
+		const newPoints = new Map(this.state.page.points);
 
 		for (const original of objects) {
 			if (original.type === "shape") {
@@ -187,12 +257,26 @@ export class CanvasStateStore extends Store<CanvasState> {
 				}
 
 				newObjects.set(original.id, { ...original, x, y, width, height });
-			} else if (original.type === "point") {
+			} else if (original.type === "line") {
+				const p1 = this.state.page.points.get(original.p1Id);
+				assert(p1 !== undefined, "Cannot find p1");
+
+				const p2 = this.state.page.points.get(original.p2Id);
+				assert(p2 !== undefined, "Cannot find p2");
+
 				this.updatePoint(
+					newPoints,
 					newObjects,
-					original,
-					(original.x - originX) * scaleX + originX,
-					(original.y - originY) * scaleY + originY,
+					p1,
+					(p1.x - originX) * scaleX + originX,
+					(p1.y - originY) * scaleY + originY,
+				);
+				this.updatePoint(
+					newPoints,
+					newObjects,
+					p2,
+					(p2.x - originX) * scaleX + originX,
+					(p2.y - originY) * scaleY + originY,
 				);
 			}
 		}
@@ -202,6 +286,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 				page: {
 					...this.state.page,
 					objects: newObjects,
+					points: newPoints,
 				},
 			}),
 		);
@@ -213,33 +298,35 @@ export class CanvasStateStore extends Store<CanvasState> {
 		if (obj.type !== "line") return;
 
 		const newObjects = new Map(this.state.page.objects);
+		const newPoints = new Map(this.state.page.points);
 
-		const original = this.state.page.objects.get(
+		const original = this.state.page.points.get(
 			point === 1 ? obj.p1Id : obj.p2Id,
 		);
 		assert(original !== undefined, "Cannot find the original point object");
-		assert(original.type === "point", "The original object is not a point");
 
-		this.updatePoint(newObjects, original, x, y);
+		this.updatePoint(newPoints, newObjects, original, x, y);
 
 		this.setState(
 			this.state.copy({
 				page: {
 					...this.state.page,
 					objects: newObjects,
+					points: newPoints,
 				},
 			}),
 		);
 	}
 
 	private updatePoint(
+		newPoints: Map<string, PointObject>,
 		newObjects: Map<String, Obj>,
 		original: PointObject,
 		x: number,
 		y: number,
 	) {
 		const newObject = { ...original, x, y };
-		newObjects.set(original.id, newObject);
+		newPoints.set(original.id, newObject);
 
 		// Move children
 		for (const childId of original.children) {
@@ -684,12 +771,6 @@ export class CanvasStateStore extends Store<CanvasState> {
 									}
 									break;
 								}
-								case "point": {
-									if (isRectOverlapWithPoint(selectionRect, obj)) {
-										selectedObjectIds.push(obj.id);
-									}
-									break;
-								}
 							}
 						}
 						this.setSelectedObjectIds(selectedObjectIds);
@@ -806,16 +887,16 @@ export class CanvasStateStore extends Store<CanvasState> {
 			case "line": {
 				// TODO
 				const _p1 =
-					Array.from(this.state.page.objects.values()).find(
-						(obj) => obj.type === "point",
-					) ?? createPointObject(this.state.dragStartX, this.state.dragStartY);
+					Array.from(this.state.page.points.values())[0] ??
+					createPointObject(this.state.dragStartX, this.state.dragStartY);
 
 				const [p1, p2, line] = createLineObject(
 					_p1,
 					createPointObject(this.state.dragCurrentX, this.state.dragCurrentY),
 					this.state.defaultColorId,
 				);
-				this.addObjects(line, p1, p2);
+				this.addPoints(p1, p2);
+				this.addObjects(line);
 				this.setMode("select");
 				this.select(line.id);
 			}

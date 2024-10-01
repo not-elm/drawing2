@@ -11,7 +11,6 @@ import type { TextAlignment } from "./TextAlignment";
 import type { Viewport } from "./Viewport";
 import { getBoundingRectOfLineObject } from "./obj/LineObject";
 import type { Obj } from "./obj/Obj";
-import { getBoundingRectOfPointObject } from "./obj/PointObject";
 import { getBoundingRectOfShapeObject } from "./obj/ShapeObject";
 
 export class CanvasState extends dataclass<{
@@ -48,8 +47,6 @@ export class CanvasState extends dataclass<{
 					return getBoundingRectOfShapeObject(obj);
 				case "line":
 					return getBoundingRectOfLineObject(obj);
-				case "point":
-					return getBoundingRectOfPointObject(obj);
 			}
 		});
 		let rect = rects.shift();

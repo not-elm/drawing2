@@ -11,10 +11,7 @@ export function SelectionRect() {
 
 	const { x, y, width, height } = selectionRect;
 	const objects = state.getSelectedObjects();
-	const objectsWithoutPoints = objects.filter((obj) => obj.type !== "point");
-	const isSingleLineMode =
-		objectsWithoutPoints.length === 1 &&
-		objectsWithoutPoints[0].type === "line";
+	const isSingleLineMode = objects.length === 1 && objects[0].type === "line";
 
 	return (
 		<div

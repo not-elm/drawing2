@@ -10,12 +10,10 @@ import type { ShapeObject } from "./obj/ShapeObject";
 
 export interface SerializedPage {
 	objects: SerializedObj[];
+	points: SerializedPointObject[];
 }
 
-export type SerializedObj =
-	| SerializedShapeObject
-	| SerializedLineObject
-	| SerializedPointObject;
+export type SerializedObj = SerializedShapeObject | SerializedLineObject;
 
 export interface SerializedShapeObject {
 	type: "shape";
@@ -58,8 +56,6 @@ function serializeObject(obj: Obj): SerializedObj {
 			return serializeShapeObject(obj);
 		case "line":
 			return serializeLineObject(obj);
-		case "point":
-			return serializePointObject(obj);
 	}
 }
 
@@ -110,6 +106,7 @@ export function serializePage(page: Page): SerializedPage {
 			.map((id) => page.objects.get(id))
 			.filter(isNotNullish)
 			.map(serializeObject),
+		points: Array.from(page.points.values()).map(serializePointObject),
 	};
 }
 
@@ -117,13 +114,20 @@ export function deserializePage(serializedPage: SerializedPage): Page {
 	const objects = new Map<string, Obj>();
 	for (const serializedObj of serializedPage.objects) {
 		const obj = deserializeObject(serializedObj);
-		objects.set(serializedObj.id, obj);
+		objects.set(obj.id, obj);
+	}
+
+	const points = new Map<string, PointObject>();
+	for (const serializedPoint of serializedPage.points) {
+		const point = deserializePointObject(serializedPoint);
+		points.set(point.id, point);
 	}
 
 	const objectIds = serializedPage.objects.map((object) => object.id);
 
 	return {
 		objects,
+		points,
 		objectIds,
 	};
 }
@@ -134,8 +138,6 @@ function deserializeObject(serializedObj: SerializedObj): Obj {
 			return deserializeShapeObject(serializedObj);
 		case "line":
 			return deserializeLineObject(serializedObj);
-		case "point":
-			return deserializePointObject(serializedObj);
 	}
 }
 
