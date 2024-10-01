@@ -78,11 +78,9 @@ export class CanvasStateStore extends Store<CanvasState> {
 		}
 
 		this.setState(
-			this.state.copy({
-				page: {
-					...this.state.page,
-					points: newPoints,
-				},
+			this.state.setPage({
+				...this.state.page,
+				points: newPoints,
 			}),
 		);
 	}
@@ -96,12 +94,10 @@ export class CanvasStateStore extends Store<CanvasState> {
 		}
 
 		this.setState(
-			this.state.copy({
-				page: {
-					...this.state.page,
-					objects: newObjects,
-					objectIds: newObjectIds,
-				},
+			this.state.setPage({
+				...this.state.page,
+				objects: newObjects,
+				objectIds: newObjectIds,
 			}),
 		);
 	}
@@ -150,13 +146,11 @@ export class CanvasStateStore extends Store<CanvasState> {
 		}
 
 		this.setState(
-			this.state.copy({
-				page: {
-					...this.state.page,
-					objects: newObjects,
-					points: newPoints,
-					objectIds: this.state.page.objectIds.filter((id) => !idSet.has(id)),
-				},
+			this.state.setPage({
+				...this.state.page,
+				objects: newObjects,
+				points: newPoints,
+				objectIds: this.state.page.objectIds.filter((id) => !idSet.has(id)),
 			}),
 		);
 	}
@@ -171,11 +165,9 @@ export class CanvasStateStore extends Store<CanvasState> {
 		newObjectIds.splice(newIndex, 0, id);
 
 		this.setState(
-			this.state.copy({
-				page: {
-					...this.state.page,
-					objectIds: newObjectIds,
-				},
+			this.state.setPage({
+				...this.state.page,
+				objectIds: newObjectIds,
 			}),
 		);
 	}
@@ -207,26 +199,24 @@ export class CanvasStateStore extends Store<CanvasState> {
 					newPoints,
 					newObjects,
 					p1,
-					p1.x + deltaX,
-					p1.y + deltaY,
+					original.x1 + deltaX,
+					original.y1 + deltaY,
 				);
 				this.updatePoint(
 					newPoints,
 					newObjects,
 					p2,
-					p2.x + deltaX,
-					p2.y + deltaY,
+					original.x2 + deltaX,
+					original.y2 + deltaY,
 				);
 			}
 		}
 
 		this.setState(
-			this.state.copy({
-				page: {
-					...this.state.page,
-					objects: newObjects,
-					points: newPoints,
-				},
+			this.state.setPage({
+				...this.state.page,
+				objects: newObjects,
+				points: newPoints,
 			}),
 		);
 	}
@@ -282,12 +272,10 @@ export class CanvasStateStore extends Store<CanvasState> {
 		}
 
 		this.setState(
-			this.state.copy({
-				page: {
-					...this.state.page,
-					objects: newObjects,
-					points: newPoints,
-				},
+			this.state.setPage({
+				...this.state.page,
+				objects: newObjects,
+				points: newPoints,
 			}),
 		);
 	}
@@ -308,12 +296,10 @@ export class CanvasStateStore extends Store<CanvasState> {
 		this.updatePoint(newPoints, newObjects, original, x, y);
 
 		this.setState(
-			this.state.copy({
-				page: {
-					...this.state.page,
-					objects: newObjects,
-					points: newPoints,
-				},
+			this.state.setPage({
+				...this.state.page,
+				objects: newObjects,
+				points: newPoints,
 			}),
 		);
 	}
@@ -354,11 +340,9 @@ export class CanvasStateStore extends Store<CanvasState> {
 		newObjects.set(id, { ...obj, label });
 
 		this.setState(
-			this.state.copy({
-				page: {
-					...this.state.page,
-					objects: newObjects,
-				},
+			this.state.setPage({
+				...this.state.page,
+				objects: newObjects,
 			}),
 		);
 	}
@@ -372,14 +356,15 @@ export class CanvasStateStore extends Store<CanvasState> {
 		}
 
 		this.setState(
-			this.state.copy({
-				page: {
+			this.state
+				.setPage({
 					...this.state.page,
 					objects: newObjects,
-				},
-				defaultTextAlignX: textAlignX,
-				defaultTextAlignY: textAlignY,
-			}),
+				})
+				.copy({
+					defaultTextAlignX: textAlignX,
+					defaultTextAlignY: textAlignY,
+				}),
 		);
 	}
 
@@ -392,13 +377,14 @@ export class CanvasStateStore extends Store<CanvasState> {
 		}
 
 		this.setState(
-			this.state.copy({
-				page: {
+			this.state
+				.setPage({
 					...this.state.page,
 					objects: newObjects,
-				},
-				defaultColorId: colorId,
-			}),
+				})
+				.copy({
+					defaultColorId: colorId,
+				}),
 		);
 	}
 
@@ -411,13 +397,14 @@ export class CanvasStateStore extends Store<CanvasState> {
 		}
 
 		this.setState(
-			this.state.copy({
-				page: {
+			this.state
+				.setPage({
 					...this.state.page,
 					objects: newObjects,
-				},
-				defaultFillMode: fillMode,
-			}),
+				})
+				.copy({
+					defaultFillMode: fillMode,
+				}),
 		);
 	}
 
@@ -648,27 +635,19 @@ export class CanvasStateStore extends Store<CanvasState> {
 	}
 
 	select(id: string) {
-		this.setState(
-			this.state.copy({
-				selectedObjectIds: [...this.state.selectedObjectIds, id],
-			}),
-		);
+		this.setState(this.state.select(id));
 	}
 
 	selectAll() {
-		this.setSelectedObjectIds(this.state.page.objectIds);
+		this.setState(this.state.selectAll());
 	}
 
 	unselect(id: string) {
-		this.setState(
-			this.state.copy({
-				selectedObjectIds: this.state.selectedObjectIds.filter((i) => i !== id),
-			}),
-		);
+		this.setState(this.state.unselect(id));
 	}
 
 	unselectAll() {
-		this.setSelectedObjectIds([]);
+		this.setState(this.state.unselectAll());
 	}
 
 	toggleSelect(id: string) {
@@ -680,11 +659,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 	}
 
 	private setSelectedObjectIds(ids: string[]) {
-		this.setState(
-			this.state.copy({
-				selectedObjectIds: ids,
-			}),
-		);
+		this.setState(this.state.setSelectedObjectIds(ids));
 	}
 
 	copy() {
@@ -886,21 +861,56 @@ export class CanvasStateStore extends Store<CanvasState> {
 			}
 			case "line": {
 				// TODO
-				const _p1 =
+				const p1 =
 					Array.from(this.state.page.points.values())[0] ??
 					createPointObject(this.state.dragStartX, this.state.dragStartY);
 
-				const [p1, p2, line] = createLineObject(
-					_p1,
-					createPointObject(this.state.dragCurrentX, this.state.dragCurrentY),
-					this.state.defaultColorId,
+				const p2 = createPointObject(
+					this.state.dragCurrentX,
+					this.state.dragCurrentY,
 				);
+
+				const line = createLineObject(p1, p2, this.state.defaultColorId);
 				this.addPoints(p1, p2);
-				this.addObjects(line);
+				this.addLine(p1.id, p2.id, {
+					colorId: this.state.defaultColorId,
+				});
 				this.setMode("select");
 				this.select(line.id);
 			}
 		}
+	}
+
+	addLine(p1Id: string, p2Id: string, options: { colorId: ColorId }) {
+		const p1 = this.state.page.points.get(p1Id);
+		assert(p1 !== undefined, "Cannot find p1");
+
+		const p2 = this.state.page.points.get(p2Id);
+		assert(p2 !== undefined, "Cannot find p2");
+
+		const line = createLineObject(p1, p2, options.colorId);
+
+		const newPoints = new Map(this.state.page.points);
+		const newObjects = new Map(this.state.page.objects);
+
+		newPoints.set(p1.id, {
+			...p1,
+			children: new Set([...p1.children, line.id]),
+		});
+		newPoints.set(p2.id, {
+			...p2,
+			children: new Set([...p2.children, line.id]),
+		});
+		newObjects.set(line.id, line);
+
+		this.setState(
+			this.state.setPage({
+				...this.state.page,
+				objects: newObjects,
+				points: newPoints,
+				objectIds: [...this.state.page.objectIds, line.id],
+			}),
+		);
 	}
 
 	private saveToLocalStorage() {
@@ -918,12 +928,16 @@ export class CanvasStateStore extends Store<CanvasState> {
 			const page = deserializePage(serializedPage);
 
 			this.setState(
-				this.state.copy({
-					page,
+				this.state.setPage(page).copy({
 					selectedObjectIds: [],
 				}),
 			);
 		} catch {}
+	}
+
+	protected setState(newState: CanvasState) {
+		newState.validate();
+		super.setState(newState);
 	}
 }
 

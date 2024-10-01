@@ -1,4 +1,5 @@
 import { type Rect, unionRect } from "../geo/Rect";
+import { assert } from "../lib/assert";
 import { dataclass } from "../lib/dataclass";
 import { isNotNullish } from "../lib/isNullish";
 import type { DragType } from "../store/CanvasStateStore";
@@ -29,6 +30,41 @@ export class CanvasState extends dataclass<{
 	readonly defaultTextAlignX: TextAlignment;
 	readonly defaultTextAlignY: TextAlignment;
 }>() {
+	setPage(page: Page): CanvasState {
+		return this.copy({
+			page,
+			selectedObjectIds: this.selectedObjectIds.filter((id) =>
+				page.objects.has(id),
+			),
+		});
+	}
+
+	select(id: string): CanvasState {
+		return this.setSelectedObjectIds([...this.selectedObjectIds, id]);
+	}
+
+	selectAll(): CanvasState {
+		return this.setSelectedObjectIds(this.page.objectIds);
+	}
+
+	unselect(id: string): CanvasState {
+		return this.setSelectedObjectIds(
+			this.selectedObjectIds.filter((i) => i !== id),
+		);
+	}
+
+	unselectAll(): CanvasState {
+		return this.setSelectedObjectIds([]);
+	}
+
+	setSelectedObjectIds(selectedObjectIds: string[]): CanvasState {
+		return this.copy({
+			selectedObjectIds: selectedObjectIds.filter((id) =>
+				this.page.objects.has(id),
+			),
+		});
+	}
+
 	getSelectorRect(): Rect | null {
 		if (this.dragType.type !== "select") return null;
 
@@ -118,5 +154,62 @@ export class CanvasState extends dataclass<{
 
 	isTextEditing(shapeId: string): boolean {
 		return this.mode === "text" && this.selectedObjectIds.includes(shapeId);
+	}
+
+	validate(): void {
+		for (const point of this.page.points.values()) {
+			// assert(point.children.size > 0, `Point(${point.id}) have 0 children`);
+
+			for (const childId of point.children) {
+				const child = this.page.objects.get(childId);
+				assert(
+					child !== undefined,
+					`Point(${point.id}) has invalid child Id ${childId}`,
+				);
+				assert(
+					child.type === "line",
+					`Point(${point.id})'s child ${childId} is not a LineObject`,
+				);
+			}
+		}
+
+		for (const object of this.page.objects.values()) {
+			switch (object.type) {
+				case "shape": {
+					assert(
+						this.page.objectIds.indexOf(object.id) >= 0,
+						`ShapeObject(${object.id}) is not included in Page.objectIds`,
+					);
+					break;
+				}
+				case "line": {
+					assert(
+						this.page.objectIds.indexOf(object.id) >= 0,
+						`LineObject(${object.id}) is not included in Page.objectIds`,
+					);
+
+					const p1 = this.page.points.get(object.p1Id);
+					assert(p1 !== undefined, `LineObject(${object.id}).p1 is not found`);
+
+					const p2 = this.page.points.get(object.p2Id);
+					assert(p2 !== undefined, `LineObject(${object.id}).p2 is not found`);
+					break;
+				}
+			}
+		}
+
+		for (const objectId of this.page.objectIds) {
+			assert(
+				this.page.objects.has(objectId),
+				`Page has invalid objectId ${objectId}`,
+			);
+		}
+
+		for (const objectId of this.selectedObjectIds) {
+			assert(
+				this.page.objects.has(objectId),
+				`SelectedObject ${objectId} doesn't exist`,
+			);
+		}
 	}
 }

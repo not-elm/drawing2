@@ -26,8 +26,8 @@ export function createLineObject(
 	p1: PointObject,
 	p2: PointObject,
 	colorId: ColorId,
-): [p1: PointObject, p2: PointObject, line: LineObject] {
-	const line = {
+): LineObject {
+	return {
 		type: "line",
 		id: randomId(),
 		p1Id: p1.id,
@@ -37,11 +37,7 @@ export function createLineObject(
 		x2: p2.x,
 		y2: p2.y,
 		colorId,
-	} as const;
-	p1 = { ...p1, children: new Set([...Array.from(p1.children), line.id]) };
-	p2 = { ...p2, children: new Set([...Array.from(p2.children), line.id]) };
-
-	return [p1, p2, line];
+	};
 }
 
 export function getBoundingRectOfLineObject(obj: LineObject): Rect {

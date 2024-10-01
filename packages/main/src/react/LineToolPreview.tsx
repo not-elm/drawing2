@@ -14,8 +14,7 @@ export function LineToolPreview() {
 
 	const p1 = createPointObject(state.dragStartX, state.dragStartY);
 	const p2 = createPointObject(state.dragCurrentX, state.dragCurrentY);
-
-	const [_p1, _p2, line] = createLineObject(p1, p2, state.defaultColorId);
+	const line = createLineObject(p1, p2, state.defaultColorId);
 
 	return <LineView line={line} />;
 }
