@@ -1,3 +1,4 @@
+import type { Point } from "../model/Page";
 import { type Line, isLineOverlapWithLine } from "./Line";
 
 export interface Rect {
@@ -5,19 +6,6 @@ export interface Rect {
 	y: number;
 	width: number;
 	height: number;
-}
-
-export function isRectOverlapWithPoint(
-	rect: Rect,
-	x: number,
-	y: number,
-): boolean {
-	return (
-		x >= rect.x &&
-		x <= rect.x + rect.width &&
-		y >= rect.y &&
-		y <= rect.y + rect.height
-	);
 }
 
 export function isRectOverlapWithRect(rect1: Rect, rect2: Rect): boolean {
@@ -31,8 +19,8 @@ export function isRectOverlapWithRect(rect1: Rect, rect2: Rect): boolean {
 
 export function isRectOverlapWithLine(rect: Rect, line: Line): boolean {
 	return (
-		isRectOverlapWithPoint(rect, line.x1, line.y1) ||
-		isRectOverlapWithPoint(rect, line.x2, line.y2) ||
+		isRectOverlapWithPoint(rect, { x: line.x1, y: line.y1 }) ||
+		isRectOverlapWithPoint(rect, { x: line.x2, y: line.y2 }) ||
 		isLineOverlapWithLine(line, {
 			x1: rect.x,
 			y1: rect.y,
@@ -57,6 +45,15 @@ export function isRectOverlapWithLine(rect: Rect, line: Line): boolean {
 			x2: rect.x,
 			y2: rect.y,
 		})
+	);
+}
+
+export function isRectOverlapWithPoint(rect: Rect, point: Point): boolean {
+	return (
+		rect.x <= point.x &&
+		point.x <= rect.x + rect.width &&
+		rect.y <= point.y &&
+		point.y <= rect.y + rect.height
 	);
 }
 

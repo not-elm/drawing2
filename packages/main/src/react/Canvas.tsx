@@ -4,7 +4,6 @@ import {
 	useCallback,
 	useEffect,
 } from "react";
-import { isShape } from "../model/Page";
 import { useController } from "./ControllerProvider";
 import { LineView } from "./LineView";
 import { SelectionRect } from "./SelectionRect";
@@ -83,7 +82,7 @@ export function Canvas() {
 					const object = state.page.objects.get(objectId);
 					if (object === undefined) return null;
 
-					if (isShape(object)) {
+					if (object.type === "shape") {
 						return (
 							<ShapeView
 								key={object.id}
@@ -93,7 +92,11 @@ export function Canvas() {
 						);
 					}
 
-					return <LineView key={object.id} line={object} />;
+					if (object.type === "line") {
+						return <LineView key={object.id} line={object} />;
+					}
+
+					return null;
 				})}
 				<ToolPreview />
 			</div>

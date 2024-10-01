@@ -1,3 +1,5 @@
+import type { Point } from "../model/Page";
+
 export interface Line {
 	x1: number;
 	y1: number;
@@ -24,3 +26,18 @@ export function isLineOverlapWithLine(line1: Line, line2: Line): boolean {
 
 	return true;
 }
+
+export function isLineOverlapWithPoint(line: Line, point: Point): boolean {
+	const dX = line.x2 - line.x1;
+	const dY = line.y2 - line.y1;
+
+	const dx = point.x - line.x1;
+	const dy = point.y - line.y1;
+
+	const rx = dx / dX;
+	const ry = dy / dY;
+
+	return Math.abs(rx - ry) < EPS && 0 <= rx && rx <= 1;
+}
+
+const EPS = 1e-6;

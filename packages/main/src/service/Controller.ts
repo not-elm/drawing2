@@ -4,7 +4,6 @@ import { isNotNullish } from "../lib/isNullish";
 import type { ColorId } from "../model/Colors";
 import type { FillMode } from "../model/FillMode";
 import type { Mode } from "../model/Mode";
-import { isShape } from "../model/Page";
 import type { TextAlignment } from "../model/TextAlignment";
 import {
 	type CanvasStateStore,
@@ -35,7 +34,7 @@ export class Controller {
 						);
 						if (
 							selectionRect !== null &&
-							isRectOverlapWithPoint(selectionRect, x, y)
+							isRectOverlapWithPoint(selectionRect, { x, y })
 						) {
 							this.handleDragStart(canvasX, canvasY, {
 								type: "move",
@@ -241,7 +240,7 @@ export class Controller {
 			case MouseButton.Left: {
 				const line = this.store.getState().getSelectedObjects()[0];
 				assert(isNotNullish(line), "Cannot edit without selecting a line");
-				assert(!isShape(line), "Cannot edit a shape with line handles");
+				assert(line.type === "line", "Cannot edit a shape with line handles");
 
 				const dragType: DragType = { type: "move-point", line, point };
 				this.handleDragStart(canvasX, canvasY, dragType);

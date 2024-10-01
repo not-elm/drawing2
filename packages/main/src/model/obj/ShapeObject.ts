@@ -2,6 +2,7 @@ import type { Rect } from "../../geo/Rect";
 import { randomId } from "../../lib/randomId";
 import type { ColorId } from "../Colors";
 import type { FillMode } from "../FillMode";
+import type { ObjBase } from "../Page";
 import type { TextAlignment } from "../TextAlignment";
 
 export function getRectanglePath() {
@@ -21,8 +22,7 @@ export function getTrianglePath() {
 	];
 }
 
-export interface ShapeObject {
-	id: string;
+export interface ShapeObject extends ObjBase<"shape"> {
 	x: number;
 	y: number;
 	width: number;
@@ -48,6 +48,7 @@ export function createShapeObject(
 	path: number[][],
 ): ShapeObject {
 	return {
+		type: "shape",
 		id: randomId(),
 		x,
 		y,

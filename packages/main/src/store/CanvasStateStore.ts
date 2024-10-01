@@ -1,5 +1,9 @@
-import { isLineOverlapWithLine } from "../geo/Line";
-import { isRectOverlapWithLine, isRectOverlapWithRect } from "../geo/Rect";
+import { isLineOverlapWithLine, isLineOverlapWithPoint } from "../geo/Line";
+import {
+	isRectOverlapWithLine,
+	isRectOverlapWithPoint,
+	isRectOverlapWithRect,
+} from "../geo/Rect";
 import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
 import { isNotNullish } from "../lib/isNullish";
@@ -7,7 +11,12 @@ import { CanvasState } from "../model/CanvasState";
 import type { ColorId } from "../model/Colors";
 import type { FillMode } from "../model/FillMode";
 import type { Mode } from "../model/Mode";
-import { type Obj, Page, isShape } from "../model/Page";
+import {
+	type Obj,
+	Page,
+	type PointObject,
+	createPointObject,
+} from "../model/Page";
 import type { TextAlignment } from "../model/TextAlignment";
 import type { Viewport } from "../model/Viewport";
 import { type LineObject, createLineObject } from "../model/obj/LineObject";
@@ -61,16 +70,20 @@ export class CanvasStateStore extends Store<CanvasState> {
 		}, 1000);
 	}
 
-	addObject(object: Obj) {
+	addObjects(...objects: Obj[]) {
 		const newObjects = new Map(this.state.page.objects);
-		newObjects.set(object.id, object);
+		const newObjectIds = this.state.page.objectIds.slice();
+		for (const object of objects) {
+			newObjects.set(object.id, object);
+			newObjectIds.push(object.id);
+		}
 
 		this.setState(
 			this.state.copy({
 				page: {
 					...this.state.page,
 					objects: newObjects,
-					objectIds: [...this.state.page.objectIds, object.id],
+					objectIds: newObjectIds,
 				},
 			}),
 		);
@@ -122,20 +135,19 @@ export class CanvasStateStore extends Store<CanvasState> {
 		const newObjects = new Map(this.state.page.objects);
 
 		for (const original of objects) {
-			if (isShape(original)) {
+			if (original.type === "shape") {
 				newObjects.set(original.id, {
 					...original,
 					x: original.x + deltaX,
 					y: original.y + deltaY,
 				});
-			} else {
-				newObjects.set(original.id, {
-					...original,
-					x1: original.x1 + deltaX,
-					y1: original.y1 + deltaY,
-					x2: original.x2 + deltaX,
-					y2: original.y2 + deltaY,
-				});
+			} else if (original.type === "point") {
+				this.updatePoint(
+					newObjects,
+					original,
+					original.x + deltaX,
+					original.y + deltaY,
+				);
 			}
 		}
 
@@ -159,7 +171,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 		const newObjects = new Map(this.state.page.objects);
 
 		for (const original of objects) {
-			if (isShape(original)) {
+			if (original.type === "shape") {
 				let x = (original.x - originX) * scaleX + originX;
 				let y = (original.y - originY) * scaleY + originY;
 				let width = original.width * scaleX;
@@ -174,14 +186,13 @@ export class CanvasStateStore extends Store<CanvasState> {
 				}
 
 				newObjects.set(original.id, { ...original, x, y, width, height });
-			} else {
-				newObjects.set(original.id, {
-					...original,
-					x1: (original.x1 - originX) * scaleX + originX,
-					y1: (original.y1 - originY) * scaleY + originY,
-					x2: (original.x2 - originX) * scaleX + originX,
-					y2: (original.y2 - originY) * scaleY + originY,
-				});
+			} else if (original.type === "point") {
+				this.updatePoint(
+					newObjects,
+					original,
+					(original.x - originX) * scaleX + originX,
+					(original.y - originY) * scaleY + originY,
+				);
 			}
 		}
 
@@ -198,15 +209,18 @@ export class CanvasStateStore extends Store<CanvasState> {
 	updateLinePoint(id: string, point: 1 | 2, x: number, y: number) {
 		const obj = this.state.page.objects.get(id);
 		if (obj === undefined) return;
-		if (isShape(obj)) return;
+		if (obj.type !== "line") return;
 
 		const newObjects = new Map(this.state.page.objects);
 
-		if (point === 1) {
-			newObjects.set(id, { ...obj, x1: x, y1: y });
-		} else {
-			newObjects.set(id, { ...obj, x2: x, y2: y });
-		}
+		console.log(this.state, id);
+		const original = this.state.page.objects.get(
+			point === 1 ? obj.p1Id : obj.p2Id,
+		);
+		assert(original !== undefined, "Cannot find the original point object");
+		assert(original.type === "point", "The original object is not a point");
+
+		this.updatePoint(newObjects, original, x, y);
 
 		this.setState(
 			this.state.copy({
@@ -218,10 +232,36 @@ export class CanvasStateStore extends Store<CanvasState> {
 		);
 	}
 
+	private updatePoint(
+		newObjects: Map<String, Obj>,
+		original: PointObject,
+		x: number,
+		y: number,
+	) {
+		const newObject = { ...original, x, y };
+		newObjects.set(original.id, newObject);
+
+		// Move children
+		for (const childId of original.children) {
+			const child = newObjects.get(childId);
+			if (child === undefined) continue;
+
+			if (child.type === "line") {
+				newObjects.set(child.id, {
+					...child,
+					x1: child.p1Id === newObject.id ? newObject.x : child.x1,
+					y1: child.p1Id === newObject.id ? newObject.y : child.y1,
+					x2: child.p2Id === newObject.id ? newObject.x : child.x2,
+					y2: child.p2Id === newObject.id ? newObject.y : child.y2,
+				});
+			}
+		}
+	}
+
 	setLabel(id: string, label: string) {
 		const obj = this.state.page.objects.get(id);
 		if (obj === undefined) return;
-		if (!isShape(obj)) return;
+		if (obj.type !== "shape") return;
 
 		const newObjects = new Map(this.state.page.objects);
 		newObjects.set(id, { ...obj, label });
@@ -239,7 +279,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 	setTextAlign(textAlignX: TextAlignment, textAlignY: TextAlignment) {
 		const newObjects = new Map(this.state.page.objects);
 		for (const obj of this.state.getSelectedObjects()) {
-			if (!isShape(obj)) continue;
+			if (obj.type !== "shape") continue;
 
 			newObjects.set(obj.id, { ...obj, textAlignX, textAlignY });
 		}
@@ -259,7 +299,9 @@ export class CanvasStateStore extends Store<CanvasState> {
 	setColor(colorId: ColorId) {
 		const newObjects = new Map(this.state.page.objects);
 		for (const obj of this.state.getSelectedObjects()) {
-			newObjects.set(obj.id, { ...obj, colorId });
+			if (obj.type === "shape" || obj.type === "line") {
+				newObjects.set(obj.id, { ...obj, colorId });
+			}
 		}
 
 		this.setState(
@@ -276,7 +318,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 	setFillMode(fillMode: FillMode) {
 		const newObjects = new Map(this.state.page.objects);
 		for (const obj of this.state.getSelectedObjects()) {
-			if (!isShape(obj)) continue;
+			if (obj.type !== "shape") continue;
 
 			newObjects.set(obj.id, { ...obj, fillMode });
 		}
@@ -576,7 +618,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 		if (objects.length === 0) return;
 
 		for (const obj of objects) {
-			this.addObject(obj);
+			this.addObjects(obj);
 		}
 
 		this.setSelectedObjectIds(objects.map((obj) => obj.id));
@@ -629,13 +671,24 @@ export class CanvasStateStore extends Store<CanvasState> {
 							this.state.dragType.originalSelectedObjectIds.slice();
 
 						for (const obj of this.state.page.objects.values()) {
-							if (isShape(obj)) {
-								if (isRectOverlapWithRect(selectionRect, obj)) {
-									selectedObjectIds.push(obj.id);
+							switch (obj.type) {
+								case "shape": {
+									if (isRectOverlapWithRect(selectionRect, obj)) {
+										selectedObjectIds.push(obj.id);
+									}
+									break;
 								}
-							} else {
-								if (isRectOverlapWithLine(selectionRect, obj)) {
-									selectedObjectIds.push(obj.id);
+								case "line": {
+									if (isRectOverlapWithLine(selectionRect, obj)) {
+										selectedObjectIds.push(obj.id);
+									}
+									break;
+								}
+								case "point": {
+									if (isRectOverlapWithPoint(selectionRect, obj)) {
+										selectedObjectIds.push(obj.id);
+									}
+									break;
 								}
 							}
 						}
@@ -745,20 +798,18 @@ export class CanvasStateStore extends Store<CanvasState> {
 					this.state.defaultFillMode,
 					getRectanglePath(),
 				);
-				this.addObject(shape);
+				this.addObjects(shape);
 				this.setMode("select");
 				this.select(shape.id);
 				break;
 			}
 			case "line": {
-				const line = createLineObject(
-					this.state.dragStartX,
-					this.state.dragStartY,
-					this.state.dragCurrentX,
-					this.state.dragCurrentY,
+				const [p1, p2, line] = createLineObject(
+					createPointObject(this.state.dragStartX, this.state.dragStartY),
+					createPointObject(this.state.dragCurrentX, this.state.dragCurrentY),
 					this.state.defaultColorId,
 				);
-				this.addObject(line);
+				this.addObjects(line, p1, p2);
 				this.setMode("select");
 				this.select(line.id);
 			}
@@ -866,33 +917,56 @@ export function fromCanvasCoordinate(
 }
 
 export function isOverlapped(
-	obj1: ShapeObject | LineObject,
-	obj2: ShapeObject | LineObject,
+	obj1: ShapeObject | LineObject | PointObject,
+	obj2: ShapeObject | LineObject | PointObject,
 ): boolean {
-	if ("width" in obj1) {
-		const rect1 = {
-			x: obj1.x,
-			y: obj1.y,
-			width: obj1.width,
-			height: obj1.height,
-		};
-
-		if ("width" in obj2) {
-			return isRectOverlapWithRect(rect1, obj2);
-		} else {
-			return isRectOverlapWithLine(rect1, obj2);
-		}
-	} else {
-		if ("width" in obj2) {
-			const rect2 = {
-				x: obj2.x,
-				y: obj2.y,
-				width: obj2.width,
-				height: obj2.height,
+	switch (obj1.type) {
+		case "shape": {
+			const rect1 = {
+				x: obj1.x,
+				y: obj1.y,
+				width: obj1.width,
+				height: obj1.height,
 			};
-			return isRectOverlapWithLine(rect2, obj1);
-		} else {
-			return isLineOverlapWithLine(obj1, obj2);
+
+			switch (obj2.type) {
+				case "shape": {
+					return isRectOverlapWithRect(rect1, obj2);
+				}
+				case "line": {
+					return isRectOverlapWithLine(rect1, obj2);
+				}
+				case "point": {
+					return isRectOverlapWithPoint(rect1, obj2);
+				}
+			}
+			break;
+		}
+		case "line": {
+			switch (obj2.type) {
+				case "shape": {
+					return isOverlapped(obj2, obj1);
+				}
+				case "line": {
+					return isLineOverlapWithLine(obj1, obj2);
+				}
+				case "point": {
+					return isLineOverlapWithPoint(obj1, obj2);
+				}
+			}
+			break;
+		}
+		case "point": {
+			switch (obj2.type) {
+				case "shape":
+				case "line": {
+					return isOverlapped(obj2, obj1);
+				}
+				case "point": {
+					return obj1.x === obj2.x && obj1.y === obj2.y;
+				}
+			}
+			break;
 		}
 	}
 }

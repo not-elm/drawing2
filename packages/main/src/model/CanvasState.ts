@@ -5,7 +5,7 @@ import type { DragType } from "../store/CanvasStateStore";
 import type { ColorId } from "./Colors";
 import type { FillMode } from "./FillMode";
 import type { Mode } from "./Mode";
-import { type Obj, type Page, isShape } from "./Page";
+import { type Obj, type Page, getBoundingRectOfPointObject } from "./Page";
 import { PropertyPanelState } from "./PropertyPanelState";
 import type { TextAlignment } from "./TextAlignment";
 import type { Viewport } from "./Viewport";
@@ -40,11 +40,16 @@ export class CanvasState extends dataclass<{
 	}
 
 	getSelectionRect(): Rect | null {
-		const rects = this.getSelectedObjects().map((obj) =>
-			isShape(obj)
-				? getBoundingRectOfShapeObject(obj)
-				: getBoundingRectOfLineObject(obj),
-		);
+		const rects = this.getSelectedObjects().map((obj) => {
+			switch (obj.type) {
+				case "shape":
+					return getBoundingRectOfShapeObject(obj);
+				case "line":
+					return getBoundingRectOfLineObject(obj);
+				case "point":
+					return getBoundingRectOfPointObject(obj);
+			}
+		});
 		let rect = rects.shift();
 		if (rect === undefined) return null;
 
@@ -62,8 +67,10 @@ export class CanvasState extends dataclass<{
 
 	getPropertyPanelState(): PropertyPanelState {
 		const selectedObjects = this.getSelectedObjects();
-		const selectedShapes = selectedObjects.filter(isShape);
-		const selectedLines = selectedObjects.filter((obj) => !isShape(obj));
+		const selectedShapes = selectedObjects.filter(
+			(obj) => obj.type === "shape",
+		);
+		const selectedLines = selectedObjects.filter((obj) => obj.type === "line");
 
 		const alignXs = new Set(selectedShapes.map((shape) => shape.textAlignX));
 		const alignYs = new Set(selectedShapes.map((shape) => shape.textAlignY));

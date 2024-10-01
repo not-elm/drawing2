@@ -1,31 +1,46 @@
 import type { Rect } from "../../geo/Rect";
 import { randomId } from "../../lib/randomId";
 import type { ColorId } from "../Colors";
+import type { ObjBase, PointObject } from "../Page";
 
-export interface LineObject {
-	id: string;
+export interface LineObject extends ObjBase<"line"> {
+	p1Id: string;
 	x1: number;
 	y1: number;
+	p2Id: string;
 	x2: number;
 	y2: number;
 	colorId: ColorId;
 }
 
+/**
+ * Create a LineObject for a given pair of points.
+ * This function also returns points updated with the new line Id added.
+ *
+ * @param p1
+ * @param p2
+ * @param colorId
+ */
 export function createLineObject(
-	x1: number,
-	y1: number,
-	x2: number,
-	y2: number,
+	p1: PointObject,
+	p2: PointObject,
 	colorId: ColorId,
-): LineObject {
-	return {
+): [p1: PointObject, p2: PointObject, line: LineObject] {
+	const line = {
+		type: "line",
 		id: randomId(),
-		x1,
-		y1,
-		x2,
-		y2,
+		p1Id: p1.id,
+		x1: p1.x,
+		y1: p1.y,
+		p2Id: p2.id,
+		x2: p2.x,
+		y2: p2.y,
 		colorId,
-	};
+	} as const;
+	p1 = { ...p1, children: new Set([...p1.children, line.id]) };
+	p2 = { ...p2, children: new Set([...p2.children, line.id]) };
+
+	return [p1, p2, line];
 }
 
 export function getBoundingRectOfLineObject(obj: LineObject): Rect {

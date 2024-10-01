@@ -1,5 +1,4 @@
 import styled from "@emotion/styled";
-import { isShape } from "../model/Page";
 import type { LineObject } from "../model/obj/LineObject";
 import { useController } from "./ControllerProvider";
 import { useCanvasState } from "./StoreProvider";
@@ -12,7 +11,10 @@ export function SelectionRect() {
 
 	const { x, y, width, height } = selectionRect;
 	const objects = state.getSelectedObjects();
-	const isSingleLineMode = objects.length === 1 && !isShape(objects[0]);
+	const objectsWithoutPoints = objects.filter((obj) => obj.type !== "point");
+	const isSingleLineMode =
+		objectsWithoutPoints.length === 1 &&
+		objectsWithoutPoints[0].type === "line";
 
 	return (
 		<div
@@ -49,7 +51,7 @@ export function SelectionRect() {
 					/>
 				)}
 				{objects.map((obj) => {
-					if (isShape(obj)) {
+					if (obj.type === "shape") {
 						return (
 							<rect
 								key={obj.id}
@@ -64,7 +66,8 @@ export function SelectionRect() {
 								strokeWidth={1}
 							/>
 						);
-					} else {
+					}
+					if (obj.type === "line") {
 						return (
 							<line
 								key={obj.id}
