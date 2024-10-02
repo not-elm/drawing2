@@ -12,8 +12,8 @@ export function LineToolPreview() {
 	);
 	assert(state.dragging, "LineToolPreview must be rendered while dragging");
 
-	const p1 = createPointObject(state.dragStartX, state.dragStartY);
-	const p2 = createPointObject(state.dragCurrentX, state.dragCurrentY);
+	const p1 = createPointObject(state.dragStartX, state.dragStartY, null);
+	const p2 = createPointObject(state.dragCurrentX, state.dragCurrentY, null);
 	const line = createLineObject(p1, p2, state.defaultColorId);
 
 	return <LineView line={line} />;

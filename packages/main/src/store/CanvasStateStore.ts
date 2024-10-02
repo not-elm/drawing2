@@ -73,14 +73,29 @@ export class CanvasStateStore extends Store<CanvasState> {
 
 	addPoints(...points: PointObject[]) {
 		const newPoints = new Map(this.state.page.points);
+		const newObjects = new Map(this.state.page.objects);
+
 		for (const point of points) {
 			newPoints.set(point.id, point);
+
+			if (point.parent !== null) {
+				const parent = newObjects.get(point.parent.id);
+				assert(parent !== undefined, `Parent not found:${point.parent.id}`);
+				assert(parent.type === "line", "Parent is not a line");
+
+				const newParent = { ...parent, children: { ...parent.children } };
+				newParent.children[point.id] = {
+					relativePosition: point.parent.relativePosition,
+				};
+				newObjects.set(newParent.id, newParent);
+			}
 		}
 
 		this.setState(
 			this.state.setPage({
 				...this.state.page,
 				points: newPoints,
+				objects: newObjects,
 			}),
 		);
 	}
@@ -229,20 +244,15 @@ export class CanvasStateStore extends Store<CanvasState> {
 				const p2 = this.state.page.points.get(original.p2Id);
 				assert(p2 !== undefined, "Cannot find p2");
 
-				this.updatePoint(
-					newPoints,
-					newObjects,
-					p1.id,
-					original.x1 + deltaX,
-					original.y1 + deltaY,
-				);
-				this.updatePoint(
-					newPoints,
-					newObjects,
-					p2.id,
-					original.x2 + deltaX,
-					original.y2 + deltaY,
-				);
+				const newX1 = original.x1 + deltaX;
+				const newY1 = original.y1 + deltaY;
+				const newX2 = original.x2 + deltaX;
+				const newY2 = original.y2 + deltaY;
+
+				this.updatePoint(newPoints, newObjects, p1.id, newX1, newY1);
+				this.updatePoint(newPoints, newObjects, p2.id, newX2, newY2);
+
+				this.updateChildrenOfObject(original.id, newObjects, newPoints);
 			}
 		}
 
@@ -253,6 +263,64 @@ export class CanvasStateStore extends Store<CanvasState> {
 				points: newPoints,
 			}),
 		);
+	}
+
+	updateChildrenOfPoint(
+		pointId: string,
+		newObjects: Map<string, Obj>,
+		newPoints: Map<string, PointObject>,
+		visitedIds: Set<string> = new Set(),
+	) {
+		if (visitedIds.has(pointId)) return;
+		visitedIds.add(pointId);
+
+		const point = this.state.page.points.get(pointId);
+		assert(point !== undefined, `Point not found: ${pointId}`);
+
+		for (const childId of point.children) {
+			const child = newObjects.get(childId);
+			assert(child !== undefined, `Child not found: ${childId}`);
+			assert(child.type === "line", "Child is not a line");
+
+			newObjects.set(child.id, {
+				...child,
+				x1: child.p1Id === point.id ? point.x : child.x1,
+				y1: child.p1Id === point.id ? point.y : child.y1,
+				x2: child.p2Id === point.id ? point.x : child.x2,
+				y2: child.p2Id === point.id ? point.y : child.y2,
+			});
+
+			this.updateChildrenOfObject(child.id, newObjects, newPoints, visitedIds);
+		}
+	}
+
+	updateChildrenOfObject(
+		objectId: string,
+		newObjects: Map<string, Obj>,
+		newPoints: Map<string, PointObject>,
+		visitedIds: Set<string> = new Set(),
+	) {
+		if (visitedIds.has(objectId)) return;
+		visitedIds.add(objectId);
+
+		const object = this.state.page.objects.get(objectId);
+		assert(object !== undefined, `Object not found: ${objectId}`);
+		assert(object.type === "line", "Object is not a line");
+
+		for (const [childId, { relativePosition }] of Object.entries(
+			object.children,
+		)) {
+			const child = newPoints.get(childId);
+			assert(child !== undefined, `Point not found: ${childId}`);
+
+			newPoints.set(child.id, {
+				...child,
+				x: object.x1 * (1 - relativePosition) + object.x2 * relativePosition,
+				y: object.y1 * (1 - relativePosition) + object.y2 * relativePosition,
+			});
+
+			this.updateChildrenOfPoint(child.id, newObjects, newPoints, visitedIds);
+		}
 	}
 
 	scaleObjects(
@@ -302,6 +370,8 @@ export class CanvasStateStore extends Store<CanvasState> {
 					(original.x2 - originX) * scaleX + originX,
 					(original.y2 - originY) * scaleY + originY,
 				);
+
+				this.updateChildrenOfObject(original.id, newObjects, newPoints);
 			}
 		}
 
@@ -327,21 +397,44 @@ export class CanvasStateStore extends Store<CanvasState> {
 		const newPoint = { ...point, x, y };
 		newPoints.set(newPoint.id, newPoint);
 
-		// Move children
-		for (const childId of newPoint.children) {
-			const child = newObjects.get(childId);
-			if (child === undefined) continue;
+		this.updateChildrenOfPoint(point.id, newObjects, newPoints);
 
-			if (child.type === "line") {
-				newObjects.set(child.id, {
-					...child,
-					x1: child.p1Id === newPoint.id ? newPoint.x : child.x1,
-					y1: child.p1Id === newPoint.id ? newPoint.y : child.y1,
-					x2: child.p2Id === newPoint.id ? newPoint.x : child.x2,
-					y2: child.p2Id === newPoint.id ? newPoint.y : child.y2,
-				});
-			}
-		}
+		this.setState(
+			this.state.setPage({
+				...this.state.page,
+				objects: newObjects,
+				points: newPoints,
+			}),
+		);
+	}
+
+	updatePointParent(id: string, parentId: string, relativePosition: number) {
+		const point = this.state.page.points.get(id);
+		assert(point !== undefined, `Cannot find the point object ${id}`);
+
+		const parent = this.state.page.objects.get(parentId);
+		assert(parent !== undefined, `Cannot find the line object ${parentId}`);
+		assert(parent.type === "line", "Parent is not a line");
+
+		const newPoints = new Map(this.state.page.points);
+		const newObjects = new Map(this.state.page.objects);
+
+		newObjects.set(parent.id, {
+			...parent,
+			children: {
+				...parent.children,
+				[point.id]: { relativePosition },
+			},
+		});
+		newPoints.set(point.id, {
+			...point,
+			x: parent.x1 * (1 - relativePosition) + parent.x2 * relativePosition,
+			y: parent.y1 * (1 - relativePosition) + parent.y2 * relativePosition,
+			parent: {
+				id: parent.id,
+				relativePosition,
+			},
+		});
 
 		this.setState(
 			this.state.setPage({
@@ -394,6 +487,8 @@ export class CanvasStateStore extends Store<CanvasState> {
 
 		newPoints.delete(fromId);
 		newPoints.set(toId, { ...toPoint, children: newToPointChildren });
+
+		this.updateChildrenOfPoint(toId, newObjects, newPoints);
 
 		this.setState(
 			this.state.setPage({
@@ -883,6 +978,27 @@ export class CanvasStateStore extends Store<CanvasState> {
 
 						if (isNotNullish(nearestPoint?.pointId)) {
 							this.mergePoints(originalPoint.id, nearestPoint.pointId);
+						} else if (isNotNullish(nearestPoint?.lineId)) {
+							const line = this.state.page.objects.get(nearestPoint.lineId);
+							assert(
+								line !== undefined,
+								`Line not found: ${nearestPoint.lineId}`,
+							);
+							assert(line.type === "line", "Parent is not a line");
+
+							const width = line.x2 - line.x1;
+							const height = line.y2 - line.y1;
+
+							const relativePosition =
+								width > height
+									? (nearestPoint.x - line.x1) / width
+									: (nearestPoint.y - line.y1) / height;
+
+							this.updatePointParent(
+								originalPoint.id,
+								nearestPoint?.lineId,
+								relativePosition,
+							);
 						}
 						break;
 					}
@@ -934,8 +1050,30 @@ export class CanvasStateStore extends Store<CanvasState> {
 						`Cannot find the highlighted point(${nearestPoint1.pointId})`,
 					);
 					p1 = _p1;
+				} else if (isNotNullish(nearestPoint1?.lineId)) {
+					const parentLine = this.state.page.objects.get(nearestPoint1.lineId);
+					assert(
+						parentLine !== undefined,
+						`Line not found: ${nearestPoint1.lineId}`,
+					);
+					assert(parentLine.type === "line", "Parent is not a line");
+
+					const width = parentLine.x2 - parentLine.x1;
+					const height = parentLine.y2 - parentLine.y1;
+					const relativePosition =
+						width > height
+							? (nearestPoint1.x - parentLine.x1) / width
+							: (nearestPoint1.y - parentLine.y1) / height;
+					p1 = createPointObject(nearestPoint1.x, nearestPoint1.y, {
+						id: parentLine.id,
+						relativePosition,
+					});
 				} else {
-					p1 = createPointObject(this.state.dragStartX, this.state.dragStartY);
+					p1 = createPointObject(
+						this.state.dragStartX,
+						this.state.dragStartY,
+						null,
+					);
 				}
 
 				let p2: PointObject;
@@ -954,10 +1092,29 @@ export class CanvasStateStore extends Store<CanvasState> {
 						`Cannot find the highlighted point(${nearestPoint2.pointId})`,
 					);
 					p2 = _p2;
+				} else if (isNotNullish(nearestPoint2?.lineId)) {
+					const parentLine = this.state.page.objects.get(nearestPoint2.lineId);
+					assert(
+						parentLine !== undefined,
+						`Line not found: ${nearestPoint2.lineId}`,
+					);
+					assert(parentLine.type === "line", "Parent is not a line");
+
+					const width = parentLine.x2 - parentLine.x1;
+					const height = parentLine.y2 - parentLine.y1;
+					const relativePosition =
+						width > height
+							? (nearestPoint2.x - parentLine.x1) / width
+							: (nearestPoint2.y - parentLine.y1) / height;
+					p2 = createPointObject(nearestPoint2.x, nearestPoint2.y, {
+						id: parentLine.id,
+						relativePosition,
+					});
 				} else {
 					p2 = createPointObject(
 						this.state.dragCurrentX,
 						this.state.dragCurrentY,
+						null,
 					);
 				}
 

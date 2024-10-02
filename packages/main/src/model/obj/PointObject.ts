@@ -7,16 +7,24 @@ export interface PointObject extends ObjBase<"point"> {
 	id: string;
 	x: number;
 	y: number;
+
+	// ID of lines depending on this point
 	children: Set<string>;
+	parent: { id: string; relativePosition: number } | null;
 }
 
-export function createPointObject(x: number, y: number): PointObject {
+export function createPointObject(
+	x: number,
+	y: number,
+	parent: { id: string; relativePosition: number } | null,
+): PointObject {
 	return {
 		type: "point",
 		id: randomId(),
 		x,
 		y,
 		children: new Set(),
+		parent,
 	};
 }
 

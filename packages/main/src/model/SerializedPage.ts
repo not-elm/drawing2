@@ -40,6 +40,12 @@ export interface SerializedLineObject {
 	x2: number;
 	y2: number;
 	colorId: ColorId;
+	children: Record<
+		string,
+		{
+			relativePosition: number;
+		}
+	>;
 }
 
 export interface SerializedPointObject {
@@ -48,6 +54,7 @@ export interface SerializedPointObject {
 	x: number;
 	y: number;
 	children: string[];
+	parent: { id: string; relativePosition: number } | null;
 }
 
 function serializeObject(obj: Obj): SerializedObj {
@@ -87,6 +94,7 @@ function serializeLineObject(obj: LineObject): SerializedLineObject {
 		x2: obj.x2,
 		y2: obj.y2,
 		colorId: obj.colorId,
+		children: obj.children,
 	};
 }
 
@@ -97,6 +105,7 @@ function serializePointObject(obj: PointObject): SerializedPointObject {
 		x: obj.x,
 		y: obj.y,
 		children: Array.from(obj.children),
+		parent: obj.parent,
 	};
 }
 
@@ -173,6 +182,7 @@ function deserializeLineObject(
 		x2: serializedObj.x2,
 		y2: serializedObj.y2,
 		colorId: serializedObj.colorId,
+		children: serializedObj.children,
 	};
 }
 
@@ -185,5 +195,6 @@ function deserializePointObject(
 		x: serializedObj.x,
 		y: serializedObj.y,
 		children: new Set(serializedObj.children),
+		parent: serializedObj.parent,
 	};
 }

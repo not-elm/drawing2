@@ -12,6 +12,15 @@ export interface LineObject extends ObjBase<"line"> {
 	x2: number;
 	y2: number;
 	colorId: ColorId;
+
+	// Points depending on this line. Key is the point ID.
+	children: Record<
+		string,
+		{
+			// Relative position on the line, in [0,1].
+			relativePosition: number;
+		}
+	>;
 }
 
 /**
@@ -37,6 +46,7 @@ export function createLineObject(
 		x2: p2.x,
 		y2: p2.y,
 		colorId,
+		children: {},
 	};
 }
 
