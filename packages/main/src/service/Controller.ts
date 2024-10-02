@@ -28,7 +28,6 @@ export class Controller {
 			this.pointerStore,
 			this.viewportStore,
 		);
-		this.store.setHoverStateProvider(this.hoverStateStore);
 		this.store.setViewportProvider(this.viewportStore);
 	}
 
@@ -54,7 +53,7 @@ export class Controller {
 						) {
 							this.handleDragStart(canvasX, canvasY, {
 								type: "move",
-								objects: this.store.getState().getSelectedObjects(),
+								originalObjects: this.store.getState().getSelectedObjects(),
 							});
 						} else {
 							if (!modifiers.shiftKey) {
@@ -131,7 +130,7 @@ export class Controller {
 						}
 						this.handleDragStart(canvasX, canvasY, {
 							type: "move",
-							objects: this.store.getState().getSelectedObjects(),
+							originalObjects: this.store.getState().getSelectedObjects(),
 						});
 						return true;
 					}
@@ -139,7 +138,7 @@ export class Controller {
 						this.store.setMode("select");
 						this.handleDragStart(canvasX, canvasY, {
 							type: "move",
-							objects: this.store.getState().getSelectedObjects(),
+							originalObjects: this.store.getState().getSelectedObjects(),
 						});
 						return true;
 					}
@@ -185,7 +184,7 @@ export class Controller {
 					case "center": {
 						dragType = {
 							type: "move",
-							objects: this.store.getState().getSelectedObjects(),
+							originalObjects: this.store.getState().getSelectedObjects(),
 						};
 						break;
 					}
@@ -194,14 +193,14 @@ export class Controller {
 							type: "nwse-resize",
 							originX: selectionRect.x + selectionRect.width,
 							originY: selectionRect.y + selectionRect.height,
-							objects: this.store.getState().getSelectedObjects(),
+							originalObjects: this.store.getState().getSelectedObjects(),
 						};
 						break;
 					case "top":
 						dragType = {
 							type: "ns-resize",
 							originY: selectionRect.y + selectionRect.height,
-							objects: this.store.getState().getSelectedObjects(),
+							originalObjects: this.store.getState().getSelectedObjects(),
 						};
 						break;
 					case "topRight":
@@ -209,14 +208,14 @@ export class Controller {
 							type: "nesw-resize",
 							originX: selectionRect.x,
 							originY: selectionRect.y + selectionRect.height,
-							objects: this.store.getState().getSelectedObjects(),
+							originalObjects: this.store.getState().getSelectedObjects(),
 						};
 						break;
 					case "right":
 						dragType = {
 							type: "ew-resize",
 							originX: selectionRect.x,
-							objects: this.store.getState().getSelectedObjects(),
+							originalObjects: this.store.getState().getSelectedObjects(),
 						};
 						break;
 					case "bottomRight":
@@ -224,7 +223,7 @@ export class Controller {
 							type: "nwse-resize",
 							originX: selectionRect.x,
 							originY: selectionRect.y,
-							objects: this.store.getState().getSelectedObjects(),
+							originalObjects: this.store.getState().getSelectedObjects(),
 						};
 						break;
 					case "bottomLeft":
@@ -232,21 +231,21 @@ export class Controller {
 							type: "nesw-resize",
 							originX: selectionRect.x + selectionRect.width,
 							originY: selectionRect.y,
-							objects: this.store.getState().getSelectedObjects(),
+							originalObjects: this.store.getState().getSelectedObjects(),
 						};
 						break;
 					case "left":
 						dragType = {
 							type: "ew-resize",
 							originX: selectionRect.x + selectionRect.width,
-							objects: this.store.getState().getSelectedObjects(),
+							originalObjects: this.store.getState().getSelectedObjects(),
 						};
 						break;
 					case "bottom":
 						dragType = {
 							type: "ns-resize",
 							originY: selectionRect.y,
-							objects: this.store.getState().getSelectedObjects(),
+							originalObjects: this.store.getState().getSelectedObjects(),
 						};
 						break;
 				}
@@ -269,12 +268,28 @@ export class Controller {
 				assert(isNotNullish(line), "Cannot edit without selecting a line");
 				assert(line.type === "line", "Cannot edit a shape with line handles");
 
-				const originalPoint = this.store
+				const originalPointId = this.store
 					.getState()
-					.page.points.get(point === 1 ? line.p1Id : line.p2Id);
+					.page.dependencies.getByToObjectId(line.id)
+					.find(
+						(dependency) =>
+							dependency.type === "lineEndPoint" &&
+							dependency.lineEnd === point,
+					)?.from;
+				assert(
+					isNotNullish(originalPointId),
+					`LineEndPoint of ${line.id} is not found`,
+				);
+
+				const originalPoint =
+					this.store.getState().page.objects[originalPointId];
 				assert(
 					isNotNullish(originalPoint),
-					`Point ${point === 1 ? line.p1Id : line.p2Id} is not found`,
+					`Point ${originalPointId} is not found`,
+				);
+				assert(
+					originalPoint.type === "point",
+					`Object ${originalPointId} is not a point`,
 				);
 				const dragType: DragType = { type: "move-point", originalPoint };
 				this.handleDragStart(canvasX, canvasY, dragType);

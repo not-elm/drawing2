@@ -1,19 +1,13 @@
 import { isNotNullish } from "../lib/isNullish";
 import type { ColorId } from "./Colors";
+import { DependencyCollection } from "./DependencyCollection";
 import type { FillMode } from "./FillMode";
-import type { Page } from "./Page";
+import type { LineObject, Obj, Page, PointObject, ShapeObject } from "./Page";
 import type { TextAlignment } from "./TextAlignment";
-import type { LineObject } from "./obj/LineObject";
-import type { Obj } from "./obj/Obj";
-import type { PointObject } from "./obj/PointObject";
-import type { ShapeObject } from "./obj/ShapeObject";
 
 export interface SerializedPage {
 	objects: SerializedObj[];
-	points: SerializedPointObject[];
 }
-
-export type SerializedObj = SerializedShapeObject | SerializedLineObject;
 
 export interface SerializedShapeObject {
 	type: "shape";
@@ -29,33 +23,25 @@ export interface SerializedShapeObject {
 	fillMode: FillMode;
 	path: number[][];
 }
-
 export interface SerializedLineObject {
 	type: "line";
 	id: string;
-	p1Id: string;
 	x1: number;
 	y1: number;
-	p2Id: string;
 	x2: number;
 	y2: number;
 	colorId: ColorId;
-	children: Record<
-		string,
-		{
-			relativePosition: number;
-		}
-	>;
 }
-
 export interface SerializedPointObject {
 	type: "point";
 	id: string;
 	x: number;
 	y: number;
-	children: string[];
-	parent: { id: string; relativePosition: number } | null;
 }
+export type SerializedObj =
+	| SerializedShapeObject
+	| SerializedLineObject
+	| SerializedPointObject;
 
 function serializeObject(obj: Obj): SerializedObj {
 	switch (obj.type) {
@@ -63,6 +49,8 @@ function serializeObject(obj: Obj): SerializedObj {
 			return serializeShapeObject(obj);
 		case "line":
 			return serializeLineObject(obj);
+		case "point":
+			return serializePointObject(obj);
 	}
 }
 
@@ -87,14 +75,11 @@ function serializeLineObject(obj: LineObject): SerializedLineObject {
 	return {
 		type: "line",
 		id: obj.id,
-		p1Id: obj.p1Id,
 		x1: obj.x1,
 		y1: obj.y1,
-		p2Id: obj.p2Id,
 		x2: obj.x2,
 		y2: obj.y2,
 		colorId: obj.colorId,
-		children: obj.children,
 	};
 }
 
@@ -104,40 +89,32 @@ function serializePointObject(obj: PointObject): SerializedPointObject {
 		id: obj.id,
 		x: obj.x,
 		y: obj.y,
-		children: Array.from(obj.children),
-		parent: obj.parent,
 	};
 }
 
 export function serializePage(page: Page): SerializedPage {
 	return {
 		objects: page.objectIds
-			.map((id) => page.objects.get(id))
+			.map((id) => page.objects[id])
 			.filter(isNotNullish)
 			.map(serializeObject),
-		points: Array.from(page.points.values()).map(serializePointObject),
+		// TODO: Dependency
 	};
 }
 
 export function deserializePage(serializedPage: SerializedPage): Page {
-	const objects = new Map<string, Obj>();
+	const objects: Record<string, Obj> = {};
 	for (const serializedObj of serializedPage.objects) {
 		const obj = deserializeObject(serializedObj);
-		objects.set(obj.id, obj);
-	}
-
-	const points = new Map<string, PointObject>();
-	for (const serializedPoint of serializedPage.points) {
-		const point = deserializePointObject(serializedPoint);
-		points.set(point.id, point);
+		objects[obj.id] = obj;
 	}
 
 	const objectIds = serializedPage.objects.map((object) => object.id);
 
 	return {
 		objects,
-		points,
 		objectIds,
+		dependencies: new DependencyCollection(),
 	};
 }
 
@@ -147,6 +124,8 @@ function deserializeObject(serializedObj: SerializedObj): Obj {
 			return deserializeShapeObject(serializedObj);
 		case "line":
 			return deserializeLineObject(serializedObj);
+		case "point":
+			return deserializePointObject(serializedObj);
 	}
 }
 
@@ -175,14 +154,11 @@ function deserializeLineObject(
 	return {
 		type: "line",
 		id: serializedObj.id,
-		p1Id: serializedObj.p1Id,
 		x1: serializedObj.x1,
 		y1: serializedObj.y1,
-		p2Id: serializedObj.p2Id,
 		x2: serializedObj.x2,
 		y2: serializedObj.y2,
 		colorId: serializedObj.colorId,
-		children: serializedObj.children,
 	};
 }
 
@@ -194,7 +170,5 @@ function deserializePointObject(
 		id: serializedObj.id,
 		x: serializedObj.x,
 		y: serializedObj.y,
-		children: new Set(serializedObj.children),
-		parent: serializedObj.parent,
 	};
 }

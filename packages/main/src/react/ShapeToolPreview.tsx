@@ -1,5 +1,7 @@
+import { getRectanglePath } from "../geo/path";
 import { assert } from "../lib/assert";
-import { createShapeObject, getRectanglePath } from "../model/obj/ShapeObject";
+import { randomId } from "../lib/randomId";
+import type { ShapeObject } from "../model/Page";
 import { useCanvasState } from "./CanvasStateStoreProvider";
 import { ShapeView } from "./ShapeView";
 
@@ -16,18 +18,20 @@ export function ShapeToolPreview() {
 	const x = Math.min(state.dragStartX, state.dragCurrentX);
 	const y = Math.min(state.dragStartY, state.dragCurrentY);
 
-	const rect = createShapeObject(
+	const rect: ShapeObject = {
+		type: "shape",
+		id: randomId(),
 		x,
 		y,
 		width,
 		height,
-		"",
-		state.defaultTextAlignX,
-		state.defaultTextAlignY,
-		state.defaultColorId,
-		state.defaultFillMode,
-		getRectanglePath(),
-	);
+		label: "",
+		textAlignX: state.defaultTextAlignX,
+		textAlignY: state.defaultTextAlignY,
+		colorId: state.defaultColorId,
+		fillMode: state.defaultFillMode,
+		path: getRectanglePath(),
+	};
 
 	return <ShapeView shape={rect} isLabelEditing={false} />;
 }

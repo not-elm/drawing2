@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Colors } from "../model/Colors";
-import type { LineObject } from "../model/obj/LineObject";
+import type { LineObject } from "../model/Page";
 import { useController } from "./ControllerProvider";
 
 export const LineView = memo(function LineView({ line }: { line: LineObject }) {

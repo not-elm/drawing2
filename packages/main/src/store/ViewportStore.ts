@@ -4,11 +4,7 @@ import type { RestoreViewportService } from "../service/RestoreViewportService";
 
 export class ViewportStore extends Store<Viewport> {
 	constructor(private readonly restoreViewportService: RestoreViewportService) {
-		super({
-			x: 0,
-			y: 0,
-			scale: 1,
-		});
+		super({ x: 0, y: 0, scale: 1 });
 	}
 
 	movePosition(deltaCanvasX: number, deltaCanvasY: number) {

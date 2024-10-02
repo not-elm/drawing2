@@ -64,3 +64,7 @@ export function unionRect(rect1: Rect, rect2: Rect): Rect {
 	const height = Math.max(rect1.y + rect1.height, rect2.y + rect2.height) - y;
 	return { x, y, width, height };
 }
+
+export function getBoundingRectOfRect(rect: Rect): Rect {
+	return rect;
+}

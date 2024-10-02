@@ -4,7 +4,7 @@ import {
 	ColorPaletteBackgroundMonoColor,
 	Colors,
 } from "../model/Colors";
-import type { ShapeObject } from "../model/obj/ShapeObject";
+import type { ShapeObject } from "../model/Page";
 import { useController } from "./ControllerProvider";
 
 export const ShapeView = memo(function ShapeView({

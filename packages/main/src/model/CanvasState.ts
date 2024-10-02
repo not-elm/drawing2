@@ -1,17 +1,15 @@
-import { type Rect, unionRect } from "../geo/Rect";
-import { assert } from "../lib/assert";
+import { getBoundingRectOfLine } from "../geo/Line";
+import { getBoundingRectOfPoint } from "../geo/Point";
+import { type Rect, getBoundingRectOfRect, unionRect } from "../geo/Rect";
 import { dataclass } from "../lib/dataclass";
 import { isNotNullish } from "../lib/isNullish";
 import type { DragType } from "../store/CanvasStateStore";
 import type { ColorId } from "./Colors";
 import type { FillMode } from "./FillMode";
 import type { Mode } from "./Mode";
-import type { Page } from "./Page";
+import type { Obj, Page } from "./Page";
 import { PropertyPanelState } from "./PropertyPanelState";
 import type { TextAlignment } from "./TextAlignment";
-import { getBoundingRectOfLineObject } from "./obj/LineObject";
-import type { Obj } from "./obj/Obj";
-import { getBoundingRectOfShapeObject } from "./obj/ShapeObject";
 
 export class CanvasState extends dataclass<{
 	readonly page: Page;
@@ -31,8 +29,8 @@ export class CanvasState extends dataclass<{
 	setPage(page: Page): CanvasState {
 		return this.copy({
 			page,
-			selectedObjectIds: this.selectedObjectIds.filter((id) =>
-				page.objects.has(id),
+			selectedObjectIds: this.selectedObjectIds.filter(
+				(id) => id in page.objects,
 			),
 		});
 	}
@@ -57,8 +55,8 @@ export class CanvasState extends dataclass<{
 
 	setSelectedObjectIds(selectedObjectIds: string[]): CanvasState {
 		return this.copy({
-			selectedObjectIds: selectedObjectIds.filter((id) =>
-				this.page.objects.has(id),
+			selectedObjectIds: selectedObjectIds.filter(
+				(id) => id in this.page.objects,
 			),
 		});
 	}
@@ -78,9 +76,11 @@ export class CanvasState extends dataclass<{
 		const rects = this.getSelectedObjects().map((obj) => {
 			switch (obj.type) {
 				case "shape":
-					return getBoundingRectOfShapeObject(obj);
+					return getBoundingRectOfRect(obj);
 				case "line":
-					return getBoundingRectOfLineObject(obj);
+					return getBoundingRectOfLine(obj);
+				case "point":
+					return getBoundingRectOfPoint(obj);
 			}
 		});
 		let rect = rects.shift();
@@ -94,7 +94,7 @@ export class CanvasState extends dataclass<{
 
 	getSelectedObjects(): Obj[] {
 		return this.selectedObjectIds
-			.map((id) => this.page.objects.get(id))
+			.map((id) => this.page.objects[id])
 			.filter(isNotNullish);
 	}
 
@@ -152,62 +152,5 @@ export class CanvasState extends dataclass<{
 
 	isTextEditing(shapeId: string): boolean {
 		return this.mode === "text" && this.selectedObjectIds.includes(shapeId);
-	}
-
-	validate(): void {
-		for (const point of this.page.points.values()) {
-			// assert(point.children.size > 0, `Point(${point.id}) have 0 children`);
-
-			for (const childId of point.children) {
-				const child = this.page.objects.get(childId);
-				assert(
-					child !== undefined,
-					`Point(${point.id}) has invalid child Id ${childId}`,
-				);
-				assert(
-					child.type === "line",
-					`Point(${point.id})'s child ${childId} is not a LineObject`,
-				);
-			}
-		}
-
-		for (const object of this.page.objects.values()) {
-			switch (object.type) {
-				case "shape": {
-					assert(
-						this.page.objectIds.indexOf(object.id) >= 0,
-						`ShapeObject(${object.id}) is not included in Page.objectIds`,
-					);
-					break;
-				}
-				case "line": {
-					assert(
-						this.page.objectIds.indexOf(object.id) >= 0,
-						`LineObject(${object.id}) is not included in Page.objectIds`,
-					);
-
-					const p1 = this.page.points.get(object.p1Id);
-					assert(p1 !== undefined, `LineObject(${object.id}).p1 is not found`);
-
-					const p2 = this.page.points.get(object.p2Id);
-					assert(p2 !== undefined, `LineObject(${object.id}).p2 is not found`);
-					break;
-				}
-			}
-		}
-
-		for (const objectId of this.page.objectIds) {
-			assert(
-				this.page.objects.has(objectId),
-				`Page has invalid objectId ${objectId}`,
-			);
-		}
-
-		for (const objectId of this.selectedObjectIds) {
-			assert(
-				this.page.objects.has(objectId),
-				`SelectedObject ${objectId} doesn't exist`,
-			);
-		}
 	}
 }

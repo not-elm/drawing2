@@ -7,10 +7,7 @@ interface PointerState {
 
 export class PointerStateStore extends Store<PointerState> {
 	constructor() {
-		super({
-			x: 0,
-			y: 0,
-		});
+		super({ x: 0, y: 0 });
 	}
 
 	setPosition(x: number, y: number): void {

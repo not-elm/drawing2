@@ -80,7 +80,7 @@ export function Canvas() {
 				}}
 			>
 				{state.page.objectIds.map((objectId) => {
-					const object = state.page.objects.get(objectId);
+					const object = state.page.objects[objectId];
 					if (object === undefined) return null;
 
 					if (object.type === "shape") {

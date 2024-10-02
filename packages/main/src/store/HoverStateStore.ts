@@ -27,25 +27,32 @@ export function getNearestPoint(
 	ignorePointIds: string[],
 	threshold = THRESHOLD,
 ) {
+	const objects = Object.values(page.objects);
+	const points = objects.filter((object) => object.type === "point");
+	const lines = objects.filter((object) => object.type === "line");
+
 	const ignoreIdSet = new Set();
 	for (const pointId of ignorePointIds) {
-		const point = page.points.get(pointId);
+		const point = page.objects[pointId];
 		assert(point !== undefined, `Point not found: ${pointId}`);
 
 		ignoreIdSet.add(point.id);
-		for (const lineId of point.children) {
-			const line = page.objects.get(lineId);
-			assert(line !== undefined, `Line not found: ${lineId}`);
-			assert(line.type === "line", `Expected line: ${lineId}`);
+		for (const dependency of page.dependencies.getByFromObjectId(pointId)) {
+			if (dependency.type !== "lineEndPoint") continue;
+			const line = page.objects[dependency.to];
+			assert(line !== undefined, `Line not found: ${dependency.to}`);
+			assert(line.type === "line", `Expected line: ${dependency.to}`);
+			ignoreIdSet.add(line.id);
 
-			ignoreIdSet.add(lineId);
-			ignoreIdSet.add(line.p1Id);
-			ignoreIdSet.add(line.p2Id);
+			for (const dependency of page.dependencies.getByFromObjectId(line.id)) {
+				if (dependency.type !== "lineEndPoint") continue;
+				ignoreIdSet.add(dependency.from);
+			}
 		}
 	}
 
 	let nearestPoint: NearestPoint | null = null;
-	for (const point of page.points.values()) {
+	for (const point of points) {
 		if (ignoreIdSet.has(point.id)) continue;
 
 		const distance = Math.hypot(point.x - x, point.y - y) * scale;
@@ -64,14 +71,14 @@ export function getNearestPoint(
 	// Prioritize the point over the line
 	if (nearestPoint !== null) return nearestPoint;
 
-	for (const object of page.objects.values()) {
-		if (ignoreIdSet.has(object.id)) continue;
+	for (const line of lines) {
+		if (ignoreIdSet.has(line.id)) continue;
 
-		if (object.type === "line") {
-			const { point, distance } = distanceFromPointToLine({ x, y }, object);
+		if (line.type === "line") {
+			const { point, distance } = distanceFromPointToLine({ x, y }, line);
 			if (distance < threshold) {
-				if (point.x === object.x1 && point.y === object.y1) continue;
-				if (point.x === object.x2 && point.y === object.y2) continue;
+				if (point.x === line.x1 && point.y === line.y1) continue;
+				if (point.x === line.x2 && point.y === line.y2) continue;
 
 				if (distance < (nearestPoint?.distance ?? Number.POSITIVE_INFINITY)) {
 					nearestPoint = {
@@ -79,7 +86,7 @@ export function getNearestPoint(
 						y: point.y,
 						distance,
 						pointId: null,
-						lineId: object.id,
+						lineId: line.id,
 					};
 				}
 			}

@@ -1,6 +1,6 @@
 import { assert } from "../lib/assert";
-import { createLineObject } from "../model/obj/LineObject";
-import { createPointObject } from "../model/obj/PointObject";
+import { randomId } from "../lib/randomId";
+import type { LineObject } from "../model/Page";
 import { useCanvasState } from "./CanvasStateStoreProvider";
 import { LineView } from "./LineView";
 
@@ -12,9 +12,15 @@ export function LineToolPreview() {
 	);
 	assert(state.dragging, "LineToolPreview must be rendered while dragging");
 
-	const p1 = createPointObject(state.dragStartX, state.dragStartY, null);
-	const p2 = createPointObject(state.dragCurrentX, state.dragCurrentY, null);
-	const line = createLineObject(p1, p2, state.defaultColorId);
+	const line: LineObject = {
+		type: "line",
+		id: randomId(),
+		x1: state.dragStartX,
+		y1: state.dragStartY,
+		x2: state.dragCurrentX,
+		y2: state.dragCurrentY,
+		colorId: state.defaultColorId,
+	};
 
 	return <LineView line={line} />;
 }

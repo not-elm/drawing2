@@ -2,7 +2,8 @@
 	"linter": {
 		"rules": {
 			"complexity": {
-				"noBannedTypes": "off"
+				"noBannedTypes": "off",
+				"noStaticOnlyClass": "off"
 			},
 			"a11y": {
 				"noSvgWithoutTitle": "off",

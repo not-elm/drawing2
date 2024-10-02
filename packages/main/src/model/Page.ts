@@ -1,19 +1,40 @@
-import type { Obj } from "./obj/Obj";
-import type { PointObject } from "./obj/PointObject";
+import type { ColorId } from "./Colors";
+import type { DependencyCollection } from "./DependencyCollection";
+import type { FillMode } from "./FillMode";
+import type { TextAlignment } from "./TextAlignment";
 
-export interface Page {
-	objects: Map<string, Obj>;
-	points: Map<string, PointObject>;
-	// Ordered list of objectIds. Later objects are rendered on top of earlier objects.
-	objectIds: string[];
+interface ObjectBase<T extends string> {
+	type: T;
+	id: string;
+}
+export interface PointObject extends ObjectBase<"point"> {
+	x: number;
+	y: number;
+}
+export interface LineObject extends ObjectBase<"line"> {
+	x1: number;
+	y1: number;
+	x2: number;
+	y2: number;
+	colorId: ColorId;
+}
+export interface ShapeObject extends ObjectBase<"shape"> {
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+	label: string;
+	textAlignX: TextAlignment;
+	textAlignY: TextAlignment;
+	colorId: ColorId;
+	fillMode: FillMode;
+	path: number[][];
 }
 
-export namespace Page {
-	export function create(): Page {
-		return {
-			objects: new Map(),
-			points: new Map(),
-			objectIds: [],
-		};
-	}
+export type Obj = PointObject | LineObject | ShapeObject;
+
+export interface Page {
+	objects: Record<string, Obj>;
+	objectIds: string[];
+	dependencies: DependencyCollection;
 }

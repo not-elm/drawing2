@@ -1,4 +1,5 @@
 import type { Point } from "./Point";
+import type { Rect } from "./Rect";
 
 export interface Line {
 	x1: number;
@@ -85,3 +86,12 @@ export function distanceFromPointToLine(
 }
 
 const EPS = 1e-6;
+
+export function getBoundingRectOfLine(line: Line): Rect {
+	return {
+		x: Math.min(line.x1, line.x2),
+		y: Math.min(line.y1, line.y2),
+		width: Math.abs(line.x1 - line.x2),
+		height: Math.abs(line.y1 - line.y2),
+	};
+}

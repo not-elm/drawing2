@@ -1,5 +1,5 @@
 import styled from "@emotion/styled";
-import type { LineObject } from "../model/obj/LineObject";
+import type { LineObject } from "../model/Page";
 import { useCanvasState } from "./CanvasStateStoreProvider";
 import { useController } from "./ControllerProvider";
 import { useStore } from "./hooks/useStore";

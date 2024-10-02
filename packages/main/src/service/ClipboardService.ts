@@ -1,5 +1,4 @@
-import type { Obj } from "../model/obj/Obj";
-import type { PointObject } from "../model/obj/PointObject";
+import type { Obj } from "../model/Page";
 
 export const ClipboardService = new (class {
 	copy(objects: Obj[]): Promise<void> {
@@ -9,11 +8,10 @@ export const ClipboardService = new (class {
 
 	async paste(): Promise<{
 		objects: Obj[];
-		points: PointObject[];
 	}> {
 		try {
 			const json = await navigator.clipboard.readText();
-			const { objects } = JSON.parse(json) as { objects: Obj[] };
+			const { objects } = JSON.parse(json) as { objects: Object[] };
 
 			console.error("TODO: paste");
 			throw new Error("TODO: paste");
@@ -43,7 +41,6 @@ export const ClipboardService = new (class {
 		} catch {
 			return {
 				objects: [],
-				points: [],
 			};
 		}
 	}
