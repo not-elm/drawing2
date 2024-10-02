@@ -40,4 +40,48 @@ export function isLineOverlapWithPoint(line: Line, point: Point): boolean {
 	return Math.abs(rx - ry) < EPS && 0 <= rx && rx <= 1;
 }
 
+/**
+ * Calculate the distance from a point to a line segment.
+ * @return The distance from the point to the line segment,
+ * 		and the nearest point on the line segment.
+ */
+export function distanceFromPointToLine(
+	point: Point,
+	line: Line,
+): {
+	distance: number;
+	point: Point;
+} {
+	const { x, y } = point;
+	const { x1, y1, x2, y2 } = line;
+
+	const p = (x - x1) * (x2 - x1) + (y - y1) * (y2 - y1);
+	if (p < 0)
+		return {
+			distance: Math.hypot(x - x1, y - y1),
+			point: { x: x1, y: y1 },
+		};
+
+	const q = (x - x2) * (x1 - x2) + (y - y2) * (y1 - y2);
+	if (q < 0)
+		return {
+			distance: Math.hypot(x - x2, y - y2),
+			point: { x: x2, y: y2 },
+		};
+
+	// 線分の長さ
+	const v = Math.hypot(x2 - x1, y2 - y1);
+
+	// 線分と点の距離(符号付き)
+	const d = ((x - x1) * (y2 - y1) - (y - y1) * (x2 - x1)) / v;
+
+	return {
+		distance: Math.abs(d),
+		point: {
+			x: x + ((y1 - y2) / v) * d,
+			y: y + ((x2 - x1) / v) * d,
+		},
+	};
+}
+
 const EPS = 1e-6;

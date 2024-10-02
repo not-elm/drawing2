@@ -6,6 +6,7 @@ import {
 } from "../geo/Rect";
 import { type StateProvider, Store } from "../lib/Store";
 import { assert } from "../lib/assert";
+import { isNotNullish } from "../lib/isNullish";
 import { CanvasState } from "../model/CanvasState";
 import type { ColorId } from "../model/Colors";
 import type { FillMode } from "../model/FillMode";
@@ -27,7 +28,7 @@ import {
 	getRectanglePath,
 } from "../model/obj/ShapeObject";
 import { ClipboardService } from "../service/ClipboardService";
-import type { HoverStateStore } from "./HoverStateStore";
+import { type HoverStateStore, getNearestPoint } from "./HoverStateStore";
 import type { ViewportStore } from "./ViewportStore";
 
 // CanvasStateStore -> HighlightPointStore
@@ -231,14 +232,14 @@ export class CanvasStateStore extends Store<CanvasState> {
 				this.updatePoint(
 					newPoints,
 					newObjects,
-					p1,
+					p1.id,
 					original.x1 + deltaX,
 					original.y1 + deltaY,
 				);
 				this.updatePoint(
 					newPoints,
 					newObjects,
-					p2,
+					p2.id,
 					original.x2 + deltaX,
 					original.y2 + deltaY,
 				);
@@ -290,14 +291,14 @@ export class CanvasStateStore extends Store<CanvasState> {
 				this.updatePoint(
 					newPoints,
 					newObjects,
-					p1,
+					p1.id,
 					(original.x1 - originX) * scaleX + originX,
 					(original.y1 - originY) * scaleY + originY,
 				);
 				this.updatePoint(
 					newPoints,
 					newObjects,
-					p2,
+					p2.id,
 					(original.x2 - originX) * scaleX + originX,
 					(original.y2 - originY) * scaleY + originY,
 				);
@@ -313,20 +314,34 @@ export class CanvasStateStore extends Store<CanvasState> {
 		);
 	}
 
-	updateLinePoint(id: string, point: 1 | 2, x: number, y: number) {
-		const obj = this.state.page.objects.get(id);
-		if (obj === undefined) return;
-		if (obj.type !== "line") return;
+	updatePoint(
+		newPoints: Map<string, PointObject>,
+		newObjects: Map<string, Obj>,
+		id: string,
+		x: number,
+		y: number,
+	) {
+		const point = this.state.page.points.get(id);
+		assert(point !== undefined, `Cannot find the point object ${id}`);
 
-		const newObjects = new Map(this.state.page.objects);
-		const newPoints = new Map(this.state.page.points);
+		const newPoint = { ...point, x, y };
+		newPoints.set(newPoint.id, newPoint);
 
-		const original = this.state.page.points.get(
-			point === 1 ? obj.p1Id : obj.p2Id,
-		);
-		assert(original !== undefined, "Cannot find the original point object");
+		// Move children
+		for (const childId of newPoint.children) {
+			const child = newObjects.get(childId);
+			if (child === undefined) continue;
 
-		this.updatePoint(newPoints, newObjects, original, x, y);
+			if (child.type === "line") {
+				newObjects.set(child.id, {
+					...child,
+					x1: child.p1Id === newPoint.id ? newPoint.x : child.x1,
+					y1: child.p1Id === newPoint.id ? newPoint.y : child.y1,
+					x2: child.p2Id === newPoint.id ? newPoint.x : child.x2,
+					y2: child.p2Id === newPoint.id ? newPoint.y : child.y2,
+				});
+			}
+		}
 
 		this.setState(
 			this.state.setPage({
@@ -337,31 +352,56 @@ export class CanvasStateStore extends Store<CanvasState> {
 		);
 	}
 
-	private updatePoint(
-		newPoints: Map<string, PointObject>,
-		newObjects: Map<String, Obj>,
-		original: PointObject,
-		x: number,
-		y: number,
-	) {
-		const newObject = { ...original, x, y };
-		newPoints.set(original.id, newObject);
+	updatePointAndSave(id: string, x: number, y: number) {
+		const newObjects = new Map(this.state.page.objects);
+		const newPoints = new Map(this.state.page.points);
 
-		// Move children
-		for (const childId of original.children) {
+		this.updatePoint(newPoints, newObjects, id, x, y);
+
+		this.setState(
+			this.state.setPage({
+				...this.state.page,
+				objects: newObjects,
+				points: newPoints,
+			}),
+		);
+	}
+
+	mergePoints(fromId: string, toId: string) {
+		const fromPoint = this.state.page.points.get(fromId);
+		assert(fromPoint !== undefined, `Point not found: ${fromId}`);
+		const newFromPoint = { ...fromPoint };
+
+		const toPoint = this.state.page.points.get(toId);
+		assert(toPoint !== undefined, `Point not found: ${toId}`);
+		const newToPointChildren = new Set(toPoint.children);
+
+		const newObjects = new Map(this.state.page.objects);
+		const newPoints = new Map(this.state.page.points);
+
+		for (const childId of newFromPoint.children) {
 			const child = newObjects.get(childId);
-			if (child === undefined) continue;
+			assert(child !== undefined, `Child not found: ${childId}`);
+			assert(child.type === "line", "Child is not a line");
 
-			if (child.type === "line") {
-				newObjects.set(child.id, {
-					...child,
-					x1: child.p1Id === newObject.id ? newObject.x : child.x1,
-					y1: child.p1Id === newObject.id ? newObject.y : child.y1,
-					x2: child.p2Id === newObject.id ? newObject.x : child.x2,
-					y2: child.p2Id === newObject.id ? newObject.y : child.y2,
-				});
-			}
+			newObjects.set(child.id, {
+				...child,
+				p1Id: child.p1Id === fromId ? toId : child.p1Id,
+				p2Id: child.p2Id === fromId ? toId : child.p2Id,
+			});
+			newToPointChildren.add(child.id);
 		}
+
+		newPoints.delete(fromId);
+		newPoints.set(toId, { ...toPoint, children: newToPointChildren });
+
+		this.setState(
+			this.state.setPage({
+				...this.state.page,
+				objects: newObjects,
+				points: newPoints,
+			}),
+		);
 	}
 
 	setLabel(id: string, label: string) {
@@ -755,22 +795,25 @@ export class CanvasStateStore extends Store<CanvasState> {
 						break;
 					}
 					case "move-point": {
-						const { point, line } = this.state.dragType;
-						if (point === 1) {
-							this.updateLinePoint(
-								line.id,
-								1,
-								line.x1 + currentX - this.state.dragStartX,
-								line.y1 + currentY - this.state.dragStartY,
-							);
-						} else {
-							this.updateLinePoint(
-								line.id,
-								2,
-								line.x2 + currentX - this.state.dragStartX,
-								line.y2 + currentY - this.state.dragStartY,
-							);
-						}
+						const { originalPoint } = this.state.dragType;
+						const nearestPoint = getNearestPoint(
+							this.state.page,
+							this.state.dragCurrentX,
+							this.state.dragCurrentY,
+							this.viewportProvider?.getState()?.scale ?? 1,
+							[originalPoint.id],
+						);
+
+						const x =
+							nearestPoint?.x ??
+							originalPoint.x +
+								(this.state.dragCurrentX - this.state.dragStartX);
+						const y =
+							nearestPoint?.y ??
+							originalPoint.y +
+								(this.state.dragCurrentY - this.state.dragStartY);
+
+						this.updatePointAndSave(originalPoint.id, x, y);
 						break;
 					}
 					case "nwse-resize":
@@ -827,6 +870,23 @@ export class CanvasStateStore extends Store<CanvasState> {
 
 		switch (this.state.mode) {
 			case "select": {
+				switch (dragType.type) {
+					case "move-point": {
+						const { originalPoint } = dragType;
+						const nearestPoint = getNearestPoint(
+							this.state.page,
+							this.state.dragCurrentX,
+							this.state.dragCurrentY,
+							this.viewportProvider?.getState()?.scale ?? 1,
+							[originalPoint.id],
+						);
+
+						if (isNotNullish(nearestPoint?.pointId)) {
+							this.mergePoints(originalPoint.id, nearestPoint.pointId);
+						}
+						break;
+					}
+				}
 				break;
 			}
 			case "shape": {
@@ -859,11 +919,19 @@ export class CanvasStateStore extends Store<CanvasState> {
 				assert(dragType.type === "new-line", "Invalid drag type");
 
 				let p1: PointObject;
-				if (dragType.p1Id !== null) {
-					const _p1 = this.state.page.points.get(dragType.p1Id);
+				const nearestPoint1 = getNearestPoint(
+					this.state.page,
+					this.state.dragStartX,
+					this.state.dragStartY,
+					this.viewportProvider?.getState()?.scale ?? 1,
+					[],
+				);
+
+				if (isNotNullish(nearestPoint1?.pointId)) {
+					const _p1 = this.state.page.points.get(nearestPoint1.pointId);
 					assert(
 						_p1 !== undefined,
-						`Cannot find the highlighted point(${dragType.p1Id})`,
+						`Cannot find the highlighted point(${nearestPoint1.pointId})`,
 					);
 					p1 = _p1;
 				} else {
@@ -871,13 +939,19 @@ export class CanvasStateStore extends Store<CanvasState> {
 				}
 
 				let p2: PointObject;
-				const hoveredPointIds =
-					this.hoverStateProvider?.getState()?.pointIds ?? [];
-				if (hoveredPointIds.length > 0) {
-					const _p2 = this.state.page.points.get(hoveredPointIds[0]);
+				const nearestPoint2 = getNearestPoint(
+					this.state.page,
+					this.state.dragCurrentX,
+					this.state.dragCurrentY,
+					this.viewportProvider?.getState()?.scale ?? 1,
+					[],
+				);
+
+				if (isNotNullish(nearestPoint2?.pointId)) {
+					const _p2 = this.state.page.points.get(nearestPoint2.pointId);
 					assert(
 						_p2 !== undefined,
-						`Cannot find the highlighted point(${hoveredPointIds[0]})`,
+						`Cannot find the highlighted point(${nearestPoint2.pointId})`,
 					);
 					p2 = _p2;
 				} else {
@@ -945,7 +1019,7 @@ export const MouseButton = {
 
 export type DragType =
 	| { type: "none" }
-	| { type: "new-line"; p1Id: string | null }
+	| { type: "new-line" }
 	| { type: "select"; originalSelectedObjectIds: string[] }
 	| {
 			type: "move"; // moving multiple objects
@@ -953,8 +1027,7 @@ export type DragType =
 	  }
 	| {
 			type: "move-point"; // moving a point in a path
-			line: LineObject;
-			point: 1 | 2;
+			originalPoint: PointObject;
 	  }
 	| {
 			type: "nwse-resize";

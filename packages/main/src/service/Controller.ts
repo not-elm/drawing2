@@ -72,7 +72,6 @@ export class Controller {
 					case "line": {
 						this.handleDragStart(canvasX, canvasY, {
 							type: "new-line",
-							p1Id: this.hoverStateStore.getState().pointIds[0] ?? null,
 						});
 						break;
 					}
@@ -270,7 +269,14 @@ export class Controller {
 				assert(isNotNullish(line), "Cannot edit without selecting a line");
 				assert(line.type === "line", "Cannot edit a shape with line handles");
 
-				const dragType: DragType = { type: "move-point", line, point };
+				const originalPoint = this.store
+					.getState()
+					.page.points.get(point === 1 ? line.p1Id : line.p2Id);
+				assert(
+					isNotNullish(originalPoint),
+					`Point ${point === 1 ? line.p1Id : line.p2Id} is not found`,
+				);
+				const dragType: DragType = { type: "move-point", originalPoint };
 				this.handleDragStart(canvasX, canvasY, dragType);
 				break;
 			}

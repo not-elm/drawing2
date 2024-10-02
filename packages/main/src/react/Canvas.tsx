@@ -4,7 +4,6 @@ import {
 	useCallback,
 	useEffect,
 } from "react";
-import { assert } from "../lib/assert";
 import { useCanvasState } from "./CanvasStateStoreProvider";
 import { useController } from "./ControllerProvider";
 import { LineView } from "./LineView";
@@ -114,28 +113,19 @@ function PointHighlightLayer() {
 	const state = useCanvasState();
 	const controller = useController();
 	const viewport = useStore(controller.viewportStore);
-	const { pointIds } = useStore(controller.hoverStateStore);
-
-	if (pointIds.length === 0) return null;
-
-	const highlightPoints = pointIds.map((pointId) => {
-		const point = state.page.points.get(pointId);
-		assert(point !== undefined, `Point(${pointId}) is not found`);
-		return point;
-	});
+	const { nearestPoint } = useStore(controller.hoverStateStore);
 
 	return (
 		<div css={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
 			<svg viewBox="0 0 1 1" width={1} height={1} css={{ overflow: "visible" }}>
-				{highlightPoints.map((point) => (
+				{nearestPoint !== null && (
 					<circle
-						key={point.id}
 						r={8}
-						cx={(point.x - viewport.x) * viewport.scale}
-						cy={(point.y - viewport.y) * viewport.scale}
+						cx={(nearestPoint.x - viewport.x) * viewport.scale}
+						cy={(nearestPoint.y - viewport.y) * viewport.scale}
 						css={{ fill: "var(--color-selection)", opacity: 0.3 }}
 					/>
-				))}
+				)}
 			</svg>
 		</div>
 	);
