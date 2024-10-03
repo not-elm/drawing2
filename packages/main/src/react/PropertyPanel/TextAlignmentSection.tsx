@@ -54,13 +54,14 @@ function TextAlignButton({
     return (
         <button
             type="button"
-            onClick={(ev) => {
+            onPointerDown={(ev) => {
                 ev.stopPropagation();
                 handlers.handleTextAlignButtonClick(alignX, alignY);
             }}
             aria-selected={selected}
             css={{
                 position: "absolute",
+                pointerEvents: "all",
                 ...{
                     "start-outside": { right: "100%" },
                     start: { left: 0 },
@@ -80,7 +81,6 @@ function TextAlignButton({
                 padding: 0,
                 margin: 0,
                 border: "none",
-                pointerEvents: "all",
                 cursor: "pointer",
                 background: "none",
                 display: "flex",

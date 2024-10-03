@@ -1,4 +1,9 @@
-import { type MouseEventHandler, memo, useCallback } from "react";
+import {
+    type MouseEventHandler,
+    type PointerEventHandler,
+    memo,
+    useCallback,
+} from "react";
 import {
     ColorPaletteBackground,
     ColorPaletteBackgroundMonoColor,
@@ -13,7 +18,7 @@ export const ShapeView = memo(function ShapeView({
 }: { shape: ShapeObject; isLabelEditing: boolean }) {
     const handlers = useController();
 
-    const handleMouseDown: MouseEventHandler = useCallback(
+    const handleMouseDown: PointerEventHandler = useCallback(
         (ev) => {
             const handled = handlers.handleShapeMouseDown(
                 shape.id,
@@ -54,7 +59,7 @@ export const ShapeView = memo(function ShapeView({
     return (
         <div
             style={{ transform: `translate(${shape.x}px, ${shape.y}px)` }}
-            css={{ position: "absolute", pointerEvents: "none" }}
+            css={{ position: "absolute" }}
         >
             <svg
                 viewBox={`0 0 ${shape.width} ${shape.height}`}
@@ -70,8 +75,8 @@ export const ShapeView = memo(function ShapeView({
                         )
                         .join("L")}Z`}
                     css={{
-                        pointerEvents: "all",
                         stroke: Colors[shape.colorId],
+                        pointerEvents: "all",
                         ...{
                             none: { fill: "none" },
                             mono: { fill: ColorPaletteBackgroundMonoColor },
@@ -81,7 +86,7 @@ export const ShapeView = memo(function ShapeView({
                         }[shape.fillMode],
                     }}
                     strokeWidth={5}
-                    onMouseDown={handleMouseDown}
+                    onPointerDown={handleMouseDown}
                     onDoubleClick={handleDoubleClick}
                 />
             </svg>
@@ -147,9 +152,7 @@ export const ShapeView = memo(function ShapeView({
                                 ev.target.value,
                             )
                         }
-                        onMouseDown={(ev) => {
-                            ev.stopPropagation();
-                        }}
+                        onPointerDown={(ev) => ev.stopPropagation()}
                         value={shape.label}
                     />
                 ) : (

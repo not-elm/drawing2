@@ -23,7 +23,6 @@ export function SelectionRect() {
                 top: (y - viewport.y) * viewport.scale,
                 width: width * viewport.scale,
                 height: height * viewport.scale,
-                pointerEvents: "none",
             }}
         >
             <svg
@@ -95,8 +94,9 @@ export function SelectionRect() {
                                 ((objects[0] as LineObject).y1 - y) *
                                 viewport.scale,
                             cursor: "grab",
+                            pointerEvents: "all",
                         }}
-                        onMouseDown={(ev) => {
+                        onPointerDown={(ev) => {
                             ev.stopPropagation();
                             ev.preventDefault();
                             controller.handleSelectionLineHandleMouseDown(
@@ -118,8 +118,9 @@ export function SelectionRect() {
                                 ((objects[0] as LineObject).y2 - y) *
                                 viewport.scale,
                             cursor: "grab",
+                            pointerEvents: "all",
                         }}
-                        onMouseDown={(ev) => {
+                        onPointerDown={(ev) => {
                             ev.stopPropagation();
                             ev.preventDefault();
                             controller.handleSelectionLineHandleMouseDown(
@@ -142,8 +143,9 @@ export function SelectionRect() {
                             left: "0%",
                             width: "100%",
                             cursor: "ns-resize",
+                            pointerEvents: "all",
                         }}
-                        onMouseDown={(ev) => {
+                        onPointerDown={(ev) => {
                             ev.stopPropagation();
                             ev.preventDefault();
                             controller.handleSelectionRectHandleMouseDown(
@@ -160,8 +162,9 @@ export function SelectionRect() {
                             left: "100%",
                             height: "100%",
                             cursor: "ew-resize",
+                            pointerEvents: "all",
                         }}
-                        onMouseDown={(ev) => {
+                        onPointerDown={(ev) => {
                             ev.stopPropagation();
                             ev.preventDefault();
                             controller.handleSelectionRectHandleMouseDown(
@@ -178,8 +181,9 @@ export function SelectionRect() {
                             left: "0%",
                             width: "100%",
                             cursor: "ns-resize",
+                            pointerEvents: "all",
                         }}
-                        onMouseDown={(ev) => {
+                        onPointerDown={(ev) => {
                             ev.stopPropagation();
                             ev.preventDefault();
                             controller.handleSelectionRectHandleMouseDown(
@@ -196,8 +200,9 @@ export function SelectionRect() {
                             left: "0%",
                             height: "100%",
                             cursor: "ew-resize",
+                            pointerEvents: "all",
                         }}
-                        onMouseDown={(ev) => {
+                        onPointerDown={(ev) => {
                             ev.stopPropagation();
                             ev.preventDefault();
                             controller.handleSelectionRectHandleMouseDown(
@@ -210,8 +215,13 @@ export function SelectionRect() {
                     />
 
                     <ResizeHandle
-                        css={{ top: "0%", left: "0%", cursor: "nwse-resize" }}
-                        onMouseDown={(ev) => {
+                        css={{
+                            top: "0%",
+                            left: "0%",
+                            cursor: "nwse-resize",
+                            pointerEvents: "all",
+                        }}
+                        onPointerDown={(ev) => {
                             ev.stopPropagation();
                             ev.preventDefault();
                             controller.handleSelectionRectHandleMouseDown(
@@ -225,8 +235,13 @@ export function SelectionRect() {
                         <CornerResizeHandle />
                     </ResizeHandle>
                     <ResizeHandle
-                        css={{ top: "0%", left: "100%", cursor: "nesw-resize" }}
-                        onMouseDown={(ev) => {
+                        css={{
+                            top: "0%",
+                            left: "100%",
+                            cursor: "nesw-resize",
+                            pointerEvents: "all",
+                        }}
+                        onPointerDown={(ev) => {
                             ev.stopPropagation();
                             ev.preventDefault();
                             controller.handleSelectionRectHandleMouseDown(
@@ -244,8 +259,9 @@ export function SelectionRect() {
                             top: "100%",
                             left: "100%",
                             cursor: "nwse-resize",
+                            pointerEvents: "all",
                         }}
-                        onMouseDown={(ev) => {
+                        onPointerDown={(ev) => {
                             ev.stopPropagation();
                             ev.preventDefault();
                             controller.handleSelectionRectHandleMouseDown(
@@ -259,8 +275,13 @@ export function SelectionRect() {
                         <CornerResizeHandle />
                     </ResizeHandle>
                     <ResizeHandle
-                        css={{ top: "100%", left: "0%", cursor: "nesw-resize" }}
-                        onMouseDown={(ev) => {
+                        css={{
+                            top: "100%",
+                            left: "0%",
+                            cursor: "nesw-resize",
+                            pointerEvents: "all",
+                        }}
+                        onPointerDown={(ev) => {
                             ev.stopPropagation();
                             ev.preventDefault();
                             controller.handleSelectionRectHandleMouseDown(
@@ -284,7 +305,6 @@ const ResizeHandle = styled.div({
     transform: "translate(-8px, -8px)",
     minWidth: "16px",
     minHeight: "16px",
-    pointerEvents: "all",
 });
 const CornerResizeHandle = styled.div({
     background: "#fff",
@@ -296,7 +316,6 @@ const CornerResizeHandle = styled.div({
     left: "50%",
     minWidth: "8px",
     minHeight: "8px",
-    pointerEvents: "all",
 });
 const LineEditHandle = styled.div({
     background: "#fff",
@@ -309,5 +328,4 @@ const LineEditHandle = styled.div({
     left: "50%",
     minWidth: "8px",
     minHeight: "8px",
-    pointerEvents: "all",
 });

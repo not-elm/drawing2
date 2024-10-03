@@ -19,7 +19,6 @@ export function SelectorRect() {
                 width: selectorRect.width * viewport.scale,
                 height: selectorRect.height * viewport.scale,
                 background: "rgba(40, 40 ,40, 0.1)",
-                pointerEvents: "none",
             }}
         />
     );

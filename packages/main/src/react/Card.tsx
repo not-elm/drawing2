@@ -6,7 +6,6 @@ export const Card = styled.div({
     boxShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
     padding: "4px 4px",
     borderRadius: "12px",
-    pointerEvents: "all",
 });
 export const CardSection = styled.div({
     "& + &": {

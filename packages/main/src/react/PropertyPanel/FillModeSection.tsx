@@ -1,4 +1,3 @@
-import { type MouseEventHandler, useCallback } from "react";
 import { ColorPaletteBackground, Colors } from "../../model/Colors";
 import type { FillMode } from "../../model/FillMode";
 import { useCanvasState } from "../CanvasStateStoreProvider";
@@ -39,19 +38,14 @@ function ColorButton({
     const handlers = useController();
     const selected = propertyPanelState.fillMode === fillMode;
 
-    const handleClick: MouseEventHandler = useCallback(
-        (ev) => {
-            ev.stopPropagation();
-            handlers.handleFillModeButtonClick(fillMode);
-        },
-        [handlers, fillMode],
-    );
-
     const colorId = propertyPanelState.colorId ?? state.defaultColorId;
 
     return (
         <button
-            onClick={handleClick}
+            onPointerDown={(ev) => {
+                ev.stopPropagation();
+                handlers.handleFillModeButtonClick(fillMode);
+            }}
             type="button"
             title={title}
             aria-selected={selected}
@@ -64,6 +58,7 @@ function ColorButton({
                 borderRadius: 8,
                 transition: "background 0.2s",
                 cursor: "pointer",
+                pointerEvents: "all",
 
                 "&:hover": {
                     transition: "background 0.1s",

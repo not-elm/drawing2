@@ -1,4 +1,3 @@
-import { type MouseEventHandler, useCallback } from "react";
 import { useCanvasState } from "../CanvasStateStoreProvider";
 import { Card } from "../Card";
 import { ColorSection } from "./ColorSection";
@@ -8,12 +7,14 @@ import { TextAlignmentSection } from "./TextAlignmentSection";
 
 export function PropertyPanel() {
     const state = useCanvasState().getPropertyPanelState();
-    const handleMouseDown: MouseEventHandler = useCallback((ev) => {
-        ev.stopPropagation();
-    }, []);
 
     return (
-        <Card onMouseDown={handleMouseDown}>
+        <Card
+            css={{
+                pointerEvents: "all",
+            }}
+            onPointerDown={(ev) => ev.stopPropagation()}
+        >
             {state.colorSectionVisible && <ColorSection />}
             {state.fillModeSectionVisible && <FillModeSection />}
             {state.textAlignSectionVisible && <TextAlignmentSection />}

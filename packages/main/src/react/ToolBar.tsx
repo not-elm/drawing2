@@ -29,7 +29,10 @@ export function ToolBar() {
                 <li>
                     <Button
                         aria-checked={state.mode === "select"}
-                        onClick={() => {
+                        css={{
+                            pointerEvents: "all",
+                        }}
+                        onPointerDown={() => {
                             handlers.handleModeChange("select");
                         }}
                     >
@@ -39,7 +42,10 @@ export function ToolBar() {
                 <li>
                     <Button
                         aria-checked={state.mode === "shape"}
-                        onClick={() => {
+                        css={{
+                            pointerEvents: "all",
+                        }}
+                        onPointerDown={() => {
                             handlers.handleModeChange("shape");
                         }}
                     >
@@ -49,7 +55,10 @@ export function ToolBar() {
                 <li>
                     <Button
                         aria-checked={state.mode === "line"}
-                        onClick={() => {
+                        css={{
+                            pointerEvents: "all",
+                        }}
+                        onPointerDown={() => {
                             handlers.handleModeChange("line");
                         }}
                     >

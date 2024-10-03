@@ -1,8 +1,9 @@
 import {
-    type MouseEventHandler,
+    type PointerEventHandler,
     type WheelEventHandler,
     useCallback,
     useEffect,
+    useReducer,
 } from "react";
 import { useCanvasState } from "./CanvasStateStoreProvider";
 import { useController } from "./ControllerProvider";
@@ -14,23 +15,29 @@ import { ToolPreview } from "./ToolPreview";
 import { useStore } from "./hooks/useStore";
 
 export function Canvas() {
+    const [logs, addLog] = useReducer(
+        (logs: string[], log: string) => [...logs, log].slice(-5),
+        [],
+    );
     const state = useCanvasState();
     const controller = useController();
     const viewport = useStore(controller.viewportStore);
 
     useEffect(() => {
-        function handleMouseMove(ev: MouseEvent) {
+        function handlePointerMove(ev: PointerEvent) {
+            ev.stopPropagation();
             controller.handleCanvasMouseMove(ev.clientX, ev.clientY);
         }
-        function handleMouseUp() {
+        function handlePointerUp(ev: PointerEvent) {
+            ev.stopPropagation();
             controller.handleCanvasMouseUp();
         }
-        window.addEventListener("mousemove", handleMouseMove);
-        window.addEventListener("mouseup", handleMouseUp);
+        window.addEventListener("pointermove", handlePointerMove);
+        window.addEventListener("pointerup", handlePointerUp);
 
         return () => {
-            window.removeEventListener("mousemove", handleMouseMove);
-            window.removeEventListener("mouseup", handleMouseUp);
+            window.removeEventListener("pointermove", handlePointerMove);
+            window.removeEventListener("pointerup", handlePointerUp);
         };
     }, [controller]);
 
@@ -52,10 +59,9 @@ export function Canvas() {
         [controller, viewport.scale],
     );
 
-    const handleCanvasMouseDown: MouseEventHandler = useCallback(
+    const handleCanvasPointerDown: PointerEventHandler = useCallback(
         (ev) => {
             ev.stopPropagation();
-            ev.preventDefault();
             controller.handleCanvasMouseDown(
                 ev.clientX,
                 ev.clientY,
@@ -76,9 +82,10 @@ export function Canvas() {
                 position: "fixed",
                 inset: 0,
                 overflow: "clip",
+                pointerEvents: "all",
             }}
             onWheel={handleWheel}
-            onMouseDown={handleCanvasMouseDown}
+            onPointerDown={handleCanvasPointerDown}
         >
             <div
                 css={{
@@ -118,13 +125,17 @@ export function Canvas() {
 }
 
 function PointHighlightLayer() {
-    const state = useCanvasState();
     const controller = useController();
     const viewport = useStore(controller.viewportStore);
     const { nearestPoint } = useStore(controller.hoverStateStore);
 
     return (
-        <div css={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+        <div
+            css={{
+                position: "absolute",
+                inset: 0,
+            }}
+        >
             <svg
                 viewBox="0 0 1 1"
                 width={1}

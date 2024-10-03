@@ -29,11 +29,18 @@ export function App() {
     return (
         <div
             css={{
-                position: "fixed",
+                position: "absolute",
                 inset: 0,
+                overflow: "clip",
                 "--color-ui-primary": "#2568cd",
                 "--color-ui-selected": "var(--color-ui-primary)",
                 "--color-selection": "var(--color-ui-primary)",
+
+                // Disable mobile browser's default touch gestures (pan, zoom)
+                // to prevent conflicts with our event handling such as "pointermove".
+                touchAction: "none",
+                pointerEvents: "none",
+                userSelect: "none",
             }}
         >
             <Canvas />
@@ -47,7 +54,6 @@ export function App() {
                     display: "flex",
                     flexDirection: "row",
                     justifyContent: "center",
-                    pointerEvents: "none",
                 }}
             >
                 <ToolBar />
@@ -61,7 +67,6 @@ export function App() {
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "flex-start",
-                    pointerEvents: "none",
                 }}
             >
                 <PropertyPanel />

@@ -21,7 +21,6 @@ export const LineView = memo(function LineView({ line }: { line: LineObject }) {
             height={1}
             css={{
                 position: "absolute",
-                pointerEvents: "none",
                 left,
                 top,
                 overflow: "visible",
@@ -48,7 +47,7 @@ export const LineView = memo(function LineView({ line }: { line: LineObject }) {
                 css={{
                     pointerEvents: "all",
                 }}
-                onMouseDown={(ev) => {
+                onPointerDown={(ev) => {
                     const handled = handlers.handleShapeMouseDown(
                         line.id,
                         ev.clientX,

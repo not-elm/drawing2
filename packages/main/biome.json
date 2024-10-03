@@ -1,29 +1,27 @@
 {
-	"formatter": {
-		"indentStyle": "space",
-		"indentWidth": 4
-	},
-	"linter": {
-		"rules": {
-			"complexity": {
-				"noBannedTypes": "off",
-				"noStaticOnlyClass": "off"
-			},
-			"a11y": {
-				"noSvgWithoutTitle": "off",
-				"useKeyWithClickEvents": "off",
-				"noAutofocus": "off"
-			},
-			"style": {
-				"noParameterAssign": "off",
-				"noUselessElse": "off"
-			},
-			"suspicious": {
-				"noAssignInExpressions": "off"
-			}
-		}
-	},
-	"formatter": {
-		"formatWithErrors": true
-	}
+    "formatter": {
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "formatWithErrors": true
+    },
+    "linter": {
+        "rules": {
+            "complexity": {
+                "noBannedTypes": "off",
+                "noStaticOnlyClass": "off"
+            },
+            "a11y": {
+                "noSvgWithoutTitle": "off",
+                "useKeyWithClickEvents": "off",
+                "noAutofocus": "off"
+            },
+            "style": {
+                "noParameterAssign": "off",
+                "noUselessElse": "off"
+            },
+            "suspicious": {
+                "noAssignInExpressions": "off"
+            }
+        }
+    }
 }

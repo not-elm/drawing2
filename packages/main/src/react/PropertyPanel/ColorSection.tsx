@@ -1,4 +1,3 @@
-import { type MouseEventHandler, useCallback } from "react";
 import { type ColorId, Colors } from "../../model/Colors";
 import { useCanvasState } from "../CanvasStateStoreProvider";
 import { CardSection } from "../Card";
@@ -44,17 +43,12 @@ function ColorButton({ colorId }: { colorId: ColorId }) {
     const handlers = useController();
     const selected = state.colorId === colorId;
 
-    const handleClick: MouseEventHandler = useCallback(
-        (ev) => {
-            ev.stopPropagation();
-            handlers.handleColorButtonClick(colorId);
-        },
-        [handlers, colorId],
-    );
-
     return (
         <button
-            onClick={handleClick}
+            onPointerDown={(ev) => {
+                ev.stopPropagation();
+                handlers.handleColorButtonClick(colorId);
+            }}
             type="button"
             aria-selected={selected}
             css={{
@@ -66,6 +60,7 @@ function ColorButton({ colorId }: { colorId: ColorId }) {
                 borderRadius: 8,
                 transition: "background 0.2s",
                 cursor: "pointer",
+                pointerEvents: "all",
 
                 "&:hover": {
                     transition: "background 0.1s",

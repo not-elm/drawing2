@@ -11,14 +11,18 @@ export function OrderSection() {
                 flexDirection: "column",
                 justifyContent: "stretch",
                 gap: 4,
+                pointerEvents: "all",
             }}
-            onMouseDown={(ev) => {
+            onPointerDown={(ev) => {
                 ev.stopPropagation();
             }}
         >
             <button
                 type="button"
-                onClick={(ev) => {
+                css={{
+                    pointerEvents: "all",
+                }}
+                onPointerDown={(ev) => {
                     ev.stopPropagation();
                     handlers.handleBringToFrontButtonClick();
                 }}
@@ -27,7 +31,10 @@ export function OrderSection() {
             </button>
             <button
                 type="button"
-                onClick={(ev) => {
+                css={{
+                    pointerEvents: "all",
+                }}
+                onPointerDown={(ev) => {
                     ev.stopPropagation();
                     handlers.handleBringForwardButtonClick();
                 }}
@@ -36,7 +43,10 @@ export function OrderSection() {
             </button>
             <button
                 type="button"
-                onClick={(ev) => {
+                css={{
+                    pointerEvents: "all",
+                }}
+                onPointerDown={(ev) => {
                     ev.stopPropagation();
                     handlers.handleSendBackwardButtonClick();
                 }}
@@ -45,7 +55,10 @@ export function OrderSection() {
             </button>
             <button
                 type="button"
-                onClick={(ev) => {
+                css={{
+                    pointerEvents: "all",
+                }}
+                onPointerDown={(ev) => {
                     ev.stopPropagation();
                     handlers.handleSendToBackButtonClick();
                 }}
