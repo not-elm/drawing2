@@ -5,18 +5,18 @@ import { ControllerProvider } from "./react/ControllerProvider";
 import { initializeCanvasStateStore } from "./store/CanvasStateStore";
 
 window.addEventListener("DOMContentLoaded", () => {
-	const container = document.getElementById("root");
-	if (container === null) {
-		alert("Failed to initialize application");
-		return;
-	}
+    const container = document.getElementById("root");
+    if (container === null) {
+        alert("Failed to initialize application");
+        return;
+    }
 
-	const root = createRoot(container);
-	root.render(
-		<CanvasStateStoreProvider initializeStore={initializeCanvasStateStore}>
-			<ControllerProvider>
-				<App />
-			</ControllerProvider>
-		</CanvasStateStoreProvider>,
-	);
+    const root = createRoot(container);
+    root.render(
+        <CanvasStateStoreProvider initializeStore={initializeCanvasStateStore}>
+            <ControllerProvider>
+                <App />
+            </ControllerProvider>
+        </CanvasStateStoreProvider>,
+    );
 });

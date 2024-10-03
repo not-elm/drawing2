@@ -7,17 +7,17 @@ import { OrderSection } from "./OrderSection";
 import { TextAlignmentSection } from "./TextAlignmentSection";
 
 export function PropertyPanel() {
-	const state = useCanvasState().getPropertyPanelState();
-	const handleMouseDown: MouseEventHandler = useCallback((ev) => {
-		ev.stopPropagation();
-	}, []);
+    const state = useCanvasState().getPropertyPanelState();
+    const handleMouseDown: MouseEventHandler = useCallback((ev) => {
+        ev.stopPropagation();
+    }, []);
 
-	return (
-		<Card onMouseDown={handleMouseDown}>
-			{state.colorSectionVisible && <ColorSection />}
-			{state.fillModeSectionVisible && <FillModeSection />}
-			{state.textAlignSectionVisible && <TextAlignmentSection />}
-			{state.orderSectionVisible && <OrderSection />}
-		</Card>
-	);
+    return (
+        <Card onMouseDown={handleMouseDown}>
+            {state.colorSectionVisible && <ColorSection />}
+            {state.fillModeSectionVisible && <FillModeSection />}
+            {state.textAlignSectionVisible && <TextAlignmentSection />}
+            {state.orderSectionVisible && <OrderSection />}
+        </Card>
+    );
 }

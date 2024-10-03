@@ -1,10 +1,10 @@
 import {
-	type ReactNode,
-	createContext,
-	useContext,
-	useEffect,
-	useState,
-	useSyncExternalStore,
+    type ReactNode,
+    createContext,
+    useContext,
+    useEffect,
+    useState,
+    useSyncExternalStore,
 } from "react";
 import type { CanvasState } from "../model/CanvasState";
 import type { CanvasStateStore } from "../store/CanvasStateStore";
@@ -12,38 +12,38 @@ import type { CanvasStateStore } from "../store/CanvasStateStore";
 const context = createContext<CanvasStateStore>(null as never);
 
 export function CanvasStateStoreProvider({
-	initializeStore,
-	children,
+    initializeStore,
+    children,
 }: {
-	initializeStore: () => Promise<CanvasStateStore>;
-	children?: ReactNode;
+    initializeStore: () => Promise<CanvasStateStore>;
+    children?: ReactNode;
 }) {
-	const [state, setState] = useState<CanvasStateStore | null>(null);
+    const [state, setState] = useState<CanvasStateStore | null>(null);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-	useEffect(() => {
-		initializeStore().then((store) => setState(store));
-	}, []);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+    useEffect(() => {
+        initializeStore().then((store) => setState(store));
+    }, []);
 
-	if (state === null) {
-		return null;
-	}
+    if (state === null) {
+        return null;
+    }
 
-	return <context.Provider value={state}>{children}</context.Provider>;
+    return <context.Provider value={state}>{children}</context.Provider>;
 }
 
 export function useCanvasState(): CanvasState {
-	const store = useContext(context);
+    const store = useContext(context);
 
-	return useSyncExternalStore(
-		(callback) => {
-			store.addListener(callback);
-			return () => store.removeListener(callback);
-		},
-		() => store.getState(),
-	);
+    return useSyncExternalStore(
+        (callback) => {
+            store.addListener(callback);
+            return () => store.removeListener(callback);
+        },
+        () => store.getState(),
+    );
 }
 
 export function useCanvasStateStore(): CanvasStateStore {
-	return useContext(context);
+    return useContext(context);
 }

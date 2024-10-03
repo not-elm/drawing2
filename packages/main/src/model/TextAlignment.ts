@@ -1,6 +1,6 @@
 export type TextAlignment =
-	| "start-outside"
-	| "start"
-	| "center"
-	| "end"
-	| "end-outside";
+    | "start-outside"
+    | "start"
+    | "center"
+    | "end"
+    | "end-outside";

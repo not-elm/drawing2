@@ -5,12 +5,12 @@ import { useCanvasStateStore } from "./CanvasStateStoreProvider";
 const context = createContext<Controller>(null as never);
 
 export function ControllerProvider({ children }: { children?: ReactNode }) {
-	const store = useCanvasStateStore();
-	const controller = useMemo(() => new Controller(store), [store]);
+    const store = useCanvasStateStore();
+    const controller = useMemo(() => new Controller(store), [store]);
 
-	return <context.Provider value={controller}>{children}</context.Provider>;
+    return <context.Provider value={controller}>{children}</context.Provider>;
 }
 
 export function useController(): Controller {
-	return useContext(context);
+    return useContext(context);
 }
