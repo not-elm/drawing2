@@ -12,6 +12,7 @@ interface NearestPoint {
 	distance: number;
 	pointId: string | null;
 	lineId: string | null;
+	shapeId: string | null;
 }
 
 /**
@@ -30,6 +31,7 @@ export function getNearestPoint(
 	const objects = Object.values(page.objects);
 	const points = objects.filter((object) => object.type === "point");
 	const lines = objects.filter((object) => object.type === "line");
+	const shapes = objects.filter((object) => object.type === "shape");
 
 	const ignoreIdSet = new Set();
 	for (const pointId of ignorePointIds) {
@@ -64,6 +66,7 @@ export function getNearestPoint(
 					distance,
 					pointId: point.id,
 					lineId: null,
+					shapeId: null,
 				};
 			}
 		}
@@ -87,6 +90,7 @@ export function getNearestPoint(
 						distance,
 						pointId: null,
 						lineId: line.id,
+						shapeId: null,
 					};
 				}
 			}

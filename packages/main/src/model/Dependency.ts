@@ -20,4 +20,12 @@ export interface PointOnLineDependency extends DependencyBase<"pointOnLine"> {
 	r: number;
 }
 
-export type Dependency = LineEndPointDependency | PointOnLineDependency;
+export interface PointOnShapeDependency extends DependencyBase<"pointOnShape"> {
+	rx: number;
+	ry: number;
+}
+
+export type Dependency =
+	| LineEndPointDependency
+	| PointOnLineDependency
+	| PointOnShapeDependency;

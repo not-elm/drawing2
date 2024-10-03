@@ -334,6 +334,22 @@ export class Transaction {
 					};
 					break;
 				}
+				case "pointOnShape": {
+					const { rx, ry } = dependency;
+
+					const shape = objects[dependency.from];
+					assert(shape.type === "shape", `Invalid object type: ${shape.type}`);
+
+					const point = objects[dependency.to];
+					assert(point.type === "point", `Invalid object type: ${point.type}`);
+
+					objects[point.id] = {
+						...point,
+						x: shape.x + rx * shape.width,
+						y: shape.y + ry * shape.height,
+					};
+					break;
+				}
 			}
 		}
 
