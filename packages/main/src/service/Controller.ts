@@ -15,6 +15,7 @@ import type { Mode } from "../model/Mode";
 import type { LineObject, Obj, PointObject, ShapeObject } from "../model/Page";
 import type { TextAlignment } from "../model/TextAlignment";
 import { Transaction } from "../model/Transaction";
+import { AppStateStore } from "../store/AppStateStore";
 import {
     type CanvasStateStore,
     MouseButton,
@@ -31,9 +32,10 @@ import { getRestoreViewportService } from "./RestoreViewportService";
 
 export class Controller {
     readonly pointerStore = new PointerStateStore();
-    readonly hoverStateStore: HoverStateStore;
     readonly viewportStore = new ViewportStore(getRestoreViewportService());
     readonly gestureRecognizer = new GestureRecognizer(this.viewportStore);
+    readonly appStateStore: AppStateStore;
+    readonly hoverStateStore: HoverStateStore;
 
     constructor(private readonly store: CanvasStateStore) {
         this.hoverStateStore = new HoverStateStore(
@@ -41,6 +43,8 @@ export class Controller {
             this.pointerStore,
             this.viewportStore,
         );
+        this.appStateStore = new AppStateStore(store);
+
         this.gestureRecognizer.onPointerDown = this.handlePointerDown;
     }
 
@@ -55,7 +59,7 @@ export class Controller {
         );
         switch (ev.button) {
             case MouseButton.Left: {
-                switch (this.store.getState().mode) {
+                switch (this.appStateStore.getState().mode) {
                     case "select": {
                         const selectionRect = this.store
                             .getState()
@@ -399,7 +403,7 @@ export class Controller {
                         }
                     }
                     case "text": {
-                        this.store.setMode("select");
+                        this.appStateStore.setMode("select");
 
                         // Object
                         {
@@ -441,12 +445,18 @@ export class Controller {
                             createNewLineSessionHandlers(
                                 this.store,
                                 this.viewportStore,
+                                this.appStateStore,
                             ),
                         );
                         return;
                     }
                     case "shape": {
-                        startSession(createNewShapeSessionHandlers(this.store));
+                        startSession(
+                            createNewShapeSessionHandlers(
+                                this.store,
+                                this.appStateStore,
+                            ),
+                        );
                         return;
                     }
                 }
@@ -466,18 +476,10 @@ export class Controller {
             canvasX / viewport.scale + viewport.x,
             canvasY / viewport.scale + viewport.y,
         );
-
-        // if (this.store.getState().dragging) {
-        //     this.store.updateDrag(canvasX, canvasY);
-        // }
     }
 
     handleCanvasMouseUp(ev: PointerEvent) {
         this.gestureRecognizer.handlePointerUp(ev);
-
-        // if (this.store.getState().dragging) {
-        //     this.store.endDrag();
-        // }
     }
 
     handleShapeDoubleClick(
@@ -491,7 +493,7 @@ export class Controller {
             case MouseButton.Left: {
                 this.store.unselectAll();
                 this.store.select(id);
-                this.store.setMode("text");
+                this.appStateStore.setMode("text");
                 return true;
             }
         }
@@ -517,12 +519,12 @@ export class Controller {
     ): boolean {
         switch (key) {
             case "a": {
-                switch (this.store.getState().mode) {
+                switch (this.appStateStore.getState().mode) {
                     case "line":
                     case "shape":
                     case "select": {
                         if (modifiers.metaKey || modifiers.ctrlKey) {
-                            this.store.setMode("select");
+                            this.appStateStore.setMode("select");
                             this.store.selectAll();
                             return true;
                         }
@@ -531,27 +533,27 @@ export class Controller {
                 break;
             }
             case "r": {
-                switch (this.store.getState().mode) {
+                switch (this.appStateStore.getState().mode) {
                     case "line":
                     case "select": {
-                        this.store.setMode("shape");
+                        this.appStateStore.setMode("shape");
                         return true;
                     }
                 }
                 break;
             }
             case "l": {
-                switch (this.store.getState().mode) {
+                switch (this.appStateStore.getState().mode) {
                     case "shape":
                     case "select": {
-                        this.store.setMode("line");
+                        this.appStateStore.setMode("line");
                         return true;
                     }
                 }
                 break;
             }
             case "z": {
-                switch (this.store.getState().mode) {
+                switch (this.appStateStore.getState().mode) {
                     case "line":
                     case "shape":
                     case "select": {
@@ -568,7 +570,7 @@ export class Controller {
                 break;
             }
             case "x": {
-                switch (this.store.getState().mode) {
+                switch (this.appStateStore.getState().mode) {
                     case "select": {
                         if (modifiers.metaKey || modifiers.ctrlKey) {
                             this.store.cut();
@@ -579,7 +581,7 @@ export class Controller {
                 break;
             }
             case "c": {
-                switch (this.store.getState().mode) {
+                switch (this.appStateStore.getState().mode) {
                     case "select": {
                         if (modifiers.metaKey || modifiers.ctrlKey) {
                             this.store.copy();
@@ -590,7 +592,7 @@ export class Controller {
                 break;
             }
             case "v": {
-                switch (this.store.getState().mode) {
+                switch (this.appStateStore.getState().mode) {
                     case "select": {
                         if (modifiers.metaKey || modifiers.ctrlKey) {
                             this.store.paste();
@@ -601,20 +603,20 @@ export class Controller {
                 break;
             }
             case "Escape": {
-                switch (this.store.getState().mode) {
+                switch (this.appStateStore.getState().mode) {
                     case "select": {
                         this.store.unselectAll();
                         return true;
                     }
                     default: {
-                        this.store.setMode("select");
+                        this.appStateStore.setMode("select");
                         return true;
                     }
                 }
             }
             case "Delete":
             case "Backspace": {
-                switch (this.store.getState().mode) {
+                switch (this.appStateStore.getState().mode) {
                     case "select": {
                         this.store.deleteSelectedObjects();
                         return true;
@@ -628,7 +630,7 @@ export class Controller {
     }
 
     handleModeChange(mode: Mode) {
-        this.store.setMode(mode);
+        this.appStateStore.setMode(mode);
     }
 
     handleLabelChange(id: string, label: string) {
@@ -637,14 +639,17 @@ export class Controller {
 
     handleTextAlignButtonClick(alignX: TextAlignment, alignY: TextAlignment) {
         this.store.setTextAlign(alignX, alignY);
+        this.appStateStore.setDefaultTextAlign(alignX, alignY);
     }
 
     handleColorButtonClick(colorId: ColorId) {
         this.store.setColor(colorId);
+        this.appStateStore.setDefaultColor(colorId);
     }
 
     handleFillModeButtonClick(fillMode: FillMode) {
         this.store.setFillMode(fillMode);
+        this.appStateStore.setDefaultFillMode(fillMode);
     }
 
     handleBringToFrontButtonClick() {
@@ -667,6 +672,7 @@ export class Controller {
 function createNewLineSessionHandlers(
     canvasStateStore: CanvasStateStore,
     viewportProvider: StateProvider<ViewportStore>,
+    appStateStore: AppStateStore,
 ): PointerEventSessionHandlers {
     return {
         type: "new-line",
@@ -684,6 +690,7 @@ function createNewLineSessionHandlers(
                 data.startY,
                 scale,
             );
+
             if (nearestPoint1.entries.length === 0) {
                 p1 = {
                     type: "point",
@@ -693,57 +700,66 @@ function createNewLineSessionHandlers(
                 };
                 transaction.insertObjects([p1]);
             } else {
-                const hitEntry = nearestPoint1.entries[0];
-                switch (hitEntry.object.type) {
-                    case "point": {
-                        p1 = hitEntry.object;
-                        break;
-                    }
-                    case "line": {
-                        const width = hitEntry.object.x2 - hitEntry.object.x1;
-                        const height = hitEntry.object.y2 - hitEntry.object.y1;
-                        const relativePosition =
-                            width > height
-                                ? (hitEntry.point.x - hitEntry.object.x1) /
-                                  width
-                                : (hitEntry.point.y - hitEntry.object.y1) /
-                                  height;
-                        p1 = {
-                            type: "point",
-                            id: randomId(),
-                            x: hitEntry.point.x,
-                            y: hitEntry.point.y,
-                        };
-                        transaction.insertObjects([p1]).addDependency({
-                            type: "pointOnLine",
-                            id: randomId(),
-                            from: hitEntry.object.id,
-                            to: p1.id,
-                            r: relativePosition,
-                        });
-                        break;
-                    }
-                    case "shape": {
-                        const rx =
-                            (hitEntry.point.x - hitEntry.object.x) /
-                            hitEntry.object.width;
-                        const ry =
-                            (hitEntry.point.y - hitEntry.object.y) /
-                            hitEntry.object.height;
-                        p1 = {
-                            type: "point",
-                            id: randomId(),
-                            x: hitEntry.point.x,
-                            y: hitEntry.point.y,
-                        };
-                        transaction.insertObjects([p1]).addDependency({
-                            type: "pointOnShape",
-                            id: randomId(),
-                            from: hitEntry.object.id,
-                            to: p1.id,
-                            rx,
-                            ry,
-                        });
+                const hitPointEntry = nearestPoint1.entries.find(
+                    (entry) => entry.object.type === "point",
+                );
+                if (hitPointEntry) {
+                    p1 = hitPointEntry.object as PointObject;
+                } else {
+                    const hitEntry = nearestPoint1.entries[0];
+                    switch (hitEntry.object.type) {
+                        case "point": {
+                            assert(false, "unreachable");
+                            break;
+                        }
+                        case "line": {
+                            const width =
+                                hitEntry.object.x2 - hitEntry.object.x1;
+                            const height =
+                                hitEntry.object.y2 - hitEntry.object.y1;
+                            const relativePosition =
+                                width > height
+                                    ? (hitEntry.point.x - hitEntry.object.x1) /
+                                      width
+                                    : (hitEntry.point.y - hitEntry.object.y1) /
+                                      height;
+                            p1 = {
+                                type: "point",
+                                id: randomId(),
+                                x: hitEntry.point.x,
+                                y: hitEntry.point.y,
+                            };
+                            transaction.insertObjects([p1]).addDependency({
+                                type: "pointOnLine",
+                                id: randomId(),
+                                from: hitEntry.object.id,
+                                to: p1.id,
+                                r: relativePosition,
+                            });
+                            break;
+                        }
+                        case "shape": {
+                            const rx =
+                                (hitEntry.point.x - hitEntry.object.x) /
+                                hitEntry.object.width;
+                            const ry =
+                                (hitEntry.point.y - hitEntry.object.y) /
+                                hitEntry.object.height;
+                            p1 = {
+                                type: "point",
+                                id: randomId(),
+                                x: hitEntry.point.x,
+                                y: hitEntry.point.y,
+                            };
+                            transaction.insertObjects([p1]).addDependency({
+                                type: "pointOnShape",
+                                id: randomId(),
+                                from: hitEntry.object.id,
+                                to: p1.id,
+                                rx,
+                                ry,
+                            });
+                        }
                     }
                 }
             }
@@ -755,6 +771,7 @@ function createNewLineSessionHandlers(
                 data.newY,
                 scale,
             );
+
             if (nearestPoint2.entries.length === 0) {
                 p2 = {
                     type: "point",
@@ -764,57 +781,66 @@ function createNewLineSessionHandlers(
                 };
                 transaction.insertObjects([p2]);
             } else {
-                const hitEntry = nearestPoint2.entries[0];
-                switch (hitEntry.object.type) {
-                    case "point": {
-                        p2 = hitEntry.object;
-                        break;
-                    }
-                    case "line": {
-                        const width = hitEntry.object.x2 - hitEntry.object.x1;
-                        const height = hitEntry.object.y2 - hitEntry.object.y1;
-                        const relativePosition =
-                            width > height
-                                ? (hitEntry.point.x - hitEntry.object.x1) /
-                                  width
-                                : (hitEntry.point.y - hitEntry.object.y1) /
-                                  height;
-                        p2 = {
-                            type: "point",
-                            id: randomId(),
-                            x: hitEntry.point.x,
-                            y: hitEntry.point.y,
-                        };
-                        transaction.insertObjects([p2]).addDependency({
-                            type: "pointOnLine",
-                            id: randomId(),
-                            from: hitEntry.object.id,
-                            to: p2.id,
-                            r: relativePosition,
-                        });
-                        break;
-                    }
-                    case "shape": {
-                        const rx =
-                            (hitEntry.point.x - hitEntry.object.x) /
-                            hitEntry.object.width;
-                        const ry =
-                            (hitEntry.point.y - hitEntry.object.y) /
-                            hitEntry.object.height;
-                        p2 = {
-                            type: "point",
-                            id: randomId(),
-                            x: hitEntry.point.x,
-                            y: hitEntry.point.y,
-                        };
-                        transaction.insertObjects([p2]).addDependency({
-                            type: "pointOnShape",
-                            id: randomId(),
-                            from: hitEntry.object.id,
-                            to: p2.id,
-                            rx,
-                            ry,
-                        });
+                const hitPointEntry = nearestPoint2.entries.find(
+                    (entry) => entry.object.type === "point",
+                );
+                if (hitPointEntry) {
+                    p2 = hitPointEntry.object as PointObject;
+                } else {
+                    const hitEntry = nearestPoint2.entries[0];
+                    switch (hitEntry.object.type) {
+                        case "point": {
+                            assert(false, "unreachable");
+                            break;
+                        }
+                        case "line": {
+                            const width =
+                                hitEntry.object.x2 - hitEntry.object.x1;
+                            const height =
+                                hitEntry.object.y2 - hitEntry.object.y1;
+                            const relativePosition =
+                                width > height
+                                    ? (hitEntry.point.x - hitEntry.object.x1) /
+                                      width
+                                    : (hitEntry.point.y - hitEntry.object.y1) /
+                                      height;
+                            p2 = {
+                                type: "point",
+                                id: randomId(),
+                                x: hitEntry.point.x,
+                                y: hitEntry.point.y,
+                            };
+                            transaction.insertObjects([p2]).addDependency({
+                                type: "pointOnLine",
+                                id: randomId(),
+                                from: hitEntry.object.id,
+                                to: p2.id,
+                                r: relativePosition,
+                            });
+                            break;
+                        }
+                        case "shape": {
+                            const rx =
+                                (hitEntry.point.x - hitEntry.object.x) /
+                                hitEntry.object.width;
+                            const ry =
+                                (hitEntry.point.y - hitEntry.object.y) /
+                                hitEntry.object.height;
+                            p2 = {
+                                type: "point",
+                                id: randomId(),
+                                x: hitEntry.point.x,
+                                y: hitEntry.point.y,
+                            };
+                            transaction.insertObjects([p2]).addDependency({
+                                type: "pointOnShape",
+                                id: randomId(),
+                                from: hitEntry.object.id,
+                                to: p2.id,
+                                rx,
+                                ry,
+                            });
+                        }
                     }
                 }
             }
@@ -826,7 +852,7 @@ function createNewLineSessionHandlers(
                 y1: p1.y,
                 x2: p2.x,
                 y2: p2.y,
-                colorId: canvasStateStore.getState().defaultColorId,
+                colorId: appStateStore.getState().defaultColorId,
             };
             transaction
                 .insertObjects([line])
@@ -846,7 +872,7 @@ function createNewLineSessionHandlers(
                 });
 
             canvasStateStore.setPage(transaction.commit());
-            canvasStateStore.setMode("select");
+            appStateStore.setMode("select");
             canvasStateStore.unselectAll();
             canvasStateStore.select(line.id);
         },
@@ -855,6 +881,7 @@ function createNewLineSessionHandlers(
 
 function createNewShapeSessionHandlers(
     canvasStateStore: CanvasStateStore,
+    appStateStore: AppStateStore,
 ): PointerEventSessionHandlers {
     return {
         type: "new-shape",
@@ -873,14 +900,14 @@ function createNewShapeSessionHandlers(
                 width,
                 height,
                 label: "",
-                textAlignX: canvasStateStore.getState().defaultTextAlignX,
-                textAlignY: canvasStateStore.getState().defaultTextAlignY,
-                colorId: canvasStateStore.getState().defaultColorId,
-                fillMode: canvasStateStore.getState().defaultFillMode,
+                textAlignX: appStateStore.getState().defaultTextAlignX,
+                textAlignY: appStateStore.getState().defaultTextAlignY,
+                colorId: appStateStore.getState().defaultColorId,
+                fillMode: appStateStore.getState().defaultFillMode,
                 path: getRectanglePath(),
             };
             canvasStateStore.addObjects(shape);
-            canvasStateStore.setMode("select");
+            appStateStore.setMode("select");
             canvasStateStore.unselectAll();
             canvasStateStore.select(shape.id);
         },
@@ -901,7 +928,7 @@ function createMoveSelectedObjectsSessionHandlers(
         viewportStore.getState().scale,
     );
     const selectedObjects = canvasStateStore.getState().getSelectedObjects();
-
+    console.log(selectedObjects);
     return {
         type: "move",
         onPointerMove: (data) => {
@@ -950,6 +977,139 @@ function createMoveObjectSessionHandlers(
     };
 }
 
+function createMovePointSessionHandlers(
+    originalPoint: PointObject,
+    canvasStateStore: CanvasStateStore,
+    viewportProvider: StateProvider<ViewportStore>,
+): PointerEventSessionHandlers {
+    const ignoreObjectIds = new Set([originalPoint.id]);
+    const connectedLineIds = canvasStateStore
+        .getState()
+        .page.dependencies.getByFromObjectId(originalPoint.id)
+        .map((dep) => dep.to);
+    for (const lineId of connectedLineIds) {
+        ignoreObjectIds.add(lineId);
+    }
+
+    const dependenciesToPoint = canvasStateStore
+        .getState()
+        .page.dependencies.getByToObjectId(originalPoint.id)
+        .filter(
+            (dep) => dep.type === "pointOnShape" || dep.type === "pointOnLine",
+        );
+
+    return {
+        type: "move-point",
+        onPointerMove: (data) => {
+            const nearestPoint = testHitObjects(
+                canvasStateStore.getState().page,
+                data.newX,
+                data.newY,
+                viewportProvider.getState().scale,
+            );
+
+            const hitEntries = nearestPoint.entries.filter(
+                (item) => !ignoreObjectIds.has(item.object.id),
+            );
+
+            const hitPointEntry = hitEntries.find(
+                (entry) => entry.object.type === "point",
+            );
+            const hitEntry = hitPointEntry ?? hitEntries[0];
+
+            const x =
+                hitEntry?.point.x ??
+                originalPoint.x + (data.newX - data.startX);
+            const y =
+                hitEntry?.point.y ??
+                originalPoint.y + (data.newY - data.startY);
+
+            canvasStateStore.setPage(
+                new Transaction(canvasStateStore.getState().page)
+                    .setPointPosition(originalPoint.id, x, y)
+                    .commit(),
+            );
+        },
+        onPointerUp: (data) => {
+            const transaction = new Transaction(
+                canvasStateStore.getState().page,
+            );
+            transaction.deleteDependencies(
+                dependenciesToPoint.map((dep) => dep.id),
+            );
+
+            const nearestPoint = testHitObjects(
+                canvasStateStore.getState().page,
+                data.newX,
+                data.newY,
+                viewportProvider.getState().scale,
+            );
+
+            const hitEntries = nearestPoint.entries.filter(
+                (item) => !ignoreObjectIds.has(item.object.id),
+            );
+
+            const hitPointEntry = hitEntries.find(
+                (entry) => entry.object.type === "point",
+            );
+            if (hitPointEntry !== undefined) {
+                transaction.mergePoints(
+                    originalPoint.id,
+                    hitPointEntry.object.id,
+                );
+            } else {
+                const hitEntry = hitEntries[0];
+                switch (hitEntry?.object.type) {
+                    case "point": {
+                        assert(false, "unreachable");
+                        break;
+                    }
+                    case "line": {
+                        const width = hitEntry.object.x2 - hitEntry.object.x1;
+                        const height = hitEntry.object.y2 - hitEntry.object.y1;
+
+                        const r =
+                            width > height
+                                ? (hitEntry.point.x - hitEntry.object.x1) /
+                                  width
+                                : (hitEntry.point.y - hitEntry.object.y1) /
+                                  height;
+
+                        transaction.addDependency({
+                            id: randomId(),
+                            type: "pointOnLine",
+                            from: hitEntry.object.id,
+                            to: originalPoint.id,
+                            r: r,
+                        });
+                        break;
+                    }
+                    case "shape": {
+                        const rx =
+                            (hitEntry.point.x - hitEntry.object.x) /
+                            hitEntry.object.width;
+                        const ry =
+                            (hitEntry.point.y - hitEntry.object.y) /
+                            hitEntry.object.height;
+
+                        transaction.addDependency({
+                            id: randomId(),
+                            type: "pointOnShape",
+                            from: hitEntry.object.id,
+                            to: originalPoint.id,
+                            rx,
+                            ry,
+                        });
+                        break;
+                    }
+                }
+            }
+
+            canvasStateStore.setPage(transaction.commit());
+        },
+    };
+}
+
 function createSelectByRangeSessionHandlers(
     canvasStateStore: CanvasStateStore,
 ): PointerEventSessionHandlers {
@@ -993,114 +1153,6 @@ function createSelectByRangeSessionHandlers(
             }
 
             canvasStateStore.setSelectedObjectIds([...selectedObjectIds]);
-        },
-    };
-}
-
-function createMovePointSessionHandlers(
-    originalPoint: PointObject,
-    canvasStateStore: CanvasStateStore,
-    viewportProvider: StateProvider<ViewportStore>,
-): PointerEventSessionHandlers {
-    const ignoreObjectIds = new Set([originalPoint.id]);
-    const connectedLineIds = canvasStateStore
-        .getState()
-        .page.dependencies.getByFromObjectId(originalPoint.id)
-        .map((dep) => dep.to);
-    for (const lineId of connectedLineIds) {
-        ignoreObjectIds.add(lineId);
-    }
-
-    return {
-        type: "move-point",
-        onPointerMove: (data) => {
-            const nearestPoint = testHitObjects(
-                canvasStateStore.getState().page,
-                data.newX,
-                data.newY,
-                viewportProvider.getState().scale,
-            );
-
-            const hitEntry = nearestPoint.entries.find(
-                (item) => !ignoreObjectIds.has(item.object.id),
-            );
-
-            const x =
-                hitEntry?.point.x ??
-                originalPoint.x + (data.newX - data.startX);
-            const y =
-                hitEntry?.point.y ??
-                originalPoint.y + (data.newY - data.startY);
-
-            canvasStateStore.setPage(
-                new Transaction(canvasStateStore.getState().page)
-                    .setPointPosition(originalPoint.id, x, y)
-                    .commit(),
-            );
-        },
-        onPointerUp: (data) => {
-            const transaction = new Transaction(
-                canvasStateStore.getState().page,
-            );
-
-            const nearestPoint = testHitObjects(
-                canvasStateStore.getState().page,
-                data.newX,
-                data.newY,
-                viewportProvider.getState().scale,
-            );
-
-            const hitEntry = nearestPoint.entries.find(
-                (item) => !ignoreObjectIds.has(item.object.id),
-            );
-
-            switch (hitEntry?.object.type) {
-                case "point": {
-                    transaction.mergePoints(
-                        originalPoint.id,
-                        hitEntry.object.id,
-                    );
-                    break;
-                }
-                case "line": {
-                    const width = hitEntry.object.x2 - hitEntry.object.x1;
-                    const height = hitEntry.object.y2 - hitEntry.object.y1;
-
-                    const r =
-                        width > height
-                            ? (hitEntry.point.x - hitEntry.object.x1) / width
-                            : (hitEntry.point.y - hitEntry.object.y1) / height;
-
-                    transaction.addDependency({
-                        id: randomId(),
-                        type: "pointOnLine",
-                        from: hitEntry.object.id,
-                        to: originalPoint.id,
-                        r: r,
-                    });
-                    break;
-                }
-                case "shape": {
-                    const rx =
-                        (hitEntry.point.x - hitEntry.object.x) /
-                        hitEntry.object.width;
-                    const ry =
-                        (hitEntry.point.y - hitEntry.object.y) /
-                        hitEntry.object.height;
-
-                    transaction.addDependency({
-                        id: randomId(),
-                        type: "pointOnShape",
-                        from: hitEntry.object.id,
-                        to: originalPoint.id,
-                        rx,
-                        ry,
-                    });
-                    break;
-                }
-            }
-
-            canvasStateStore.setPage(transaction.commit());
         },
     };
 }

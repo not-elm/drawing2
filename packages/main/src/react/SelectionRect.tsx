@@ -7,6 +7,7 @@ import { useStore } from "./hooks/useStore";
 export function SelectionRect() {
     const state = useCanvasState();
     const controller = useController();
+    const appState = useStore(controller.appStateStore);
     const viewport = useStore(controller.viewportStore);
     const selectionRect = state.getSelectionRect();
     if (selectionRect === null) return null;
@@ -83,7 +84,7 @@ export function SelectionRect() {
                     }
                 })}
             </svg>
-            {isSingleLineMode && state.mode === "select" && (
+            {isSingleLineMode && appState.mode === "select" && (
                 <>
                     <ResizeHandle
                         css={{
@@ -113,7 +114,7 @@ export function SelectionRect() {
                     </ResizeHandle>
                 </>
             )}
-            {!isSingleLineMode && state.mode === "select" && (
+            {!isSingleLineMode && appState.mode === "select" && (
                 <>
                     <ResizeHandle
                         css={{

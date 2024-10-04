@@ -1,11 +1,13 @@
 import { getRectanglePath } from "../geo/path";
 import type { ShapeObject } from "../model/Page";
 import type { PointerEventSessionData } from "../service/GestureRecognizer";
-import { useCanvasState } from "./CanvasStateStoreProvider";
+import { useController } from "./ControllerProvider";
 import { ShapeView } from "./ShapeView";
+import { useStore } from "./hooks/useStore";
 
 export function ShapeToolPreview({ data }: { data: PointerEventSessionData }) {
-    const state = useCanvasState();
+    const controller = useController();
+    const appState = useStore(controller.appStateStore);
 
     const shape: ShapeObject = {
         type: "shape",
@@ -15,10 +17,10 @@ export function ShapeToolPreview({ data }: { data: PointerEventSessionData }) {
         width: Math.abs(data.lastX - data.startX),
         height: Math.abs(data.lastY - data.startY),
         label: "",
-        textAlignX: state.defaultTextAlignX,
-        textAlignY: state.defaultTextAlignY,
-        colorId: state.defaultColorId,
-        fillMode: state.defaultFillMode,
+        textAlignX: appState.defaultTextAlignX,
+        textAlignY: appState.defaultTextAlignY,
+        colorId: appState.defaultColorId,
+        fillMode: appState.defaultFillMode,
         path: getRectanglePath(),
     };
 

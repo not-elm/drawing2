@@ -75,6 +75,9 @@ export class DependencyCollection {
             `Object not found in dependency collection: ${id}`,
         );
         idsForFromObject.delete(id);
+        if (idsForFromObject.size === 0) {
+            this.dependencyIdsByFromObjectId.delete(dependency.from);
+        }
 
         const idsForToObject = this.dependencyIdsByToObjectId.get(
             dependency.to,
@@ -84,6 +87,9 @@ export class DependencyCollection {
             `Object not found in dependency collection: ${id}`,
         );
         idsForToObject.delete(id);
+        if (idsForToObject.size === 0) {
+            this.dependencyIdsByToObjectId.delete(dependency.to);
+        }
     }
 
     deleteByObjectId(objectId: string) {

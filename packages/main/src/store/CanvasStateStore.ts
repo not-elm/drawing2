@@ -10,7 +10,6 @@ import { CanvasState } from "../model/CanvasState";
 import type { ColorId } from "../model/Colors";
 import { DependencyCollection } from "../model/DependencyCollection";
 import type { FillMode } from "../model/FillMode";
-import type { Mode } from "../model/Mode";
 import type { Obj, Page } from "../model/Page";
 import type { TextAlignment } from "../model/TextAlignment";
 import { Transaction } from "../model/Transaction";
@@ -25,12 +24,7 @@ export class CanvasStateStore extends Store<CanvasState> {
                     objectIds: [],
                     dependencies: new DependencyCollection(),
                 },
-                mode: "select",
                 selectedObjectIds: [],
-                defaultColorId: 0,
-                defaultFillMode: "mono",
-                defaultTextAlignX: "center",
-                defaultTextAlignY: "center",
             }),
         );
 
@@ -388,14 +382,6 @@ export class CanvasStateStore extends Store<CanvasState> {
         this.setState(this.state.setPage(page));
     }
 
-    setMode(mode: Mode) {
-        this.setState(this.state.copy({ mode }));
-
-        if (mode !== "select" && mode !== "text") {
-            this.unselectAll();
-        }
-    }
-
     select(id: string) {
         this.setState(this.state.select(id));
     }
@@ -466,6 +452,12 @@ export class CanvasStateStore extends Store<CanvasState> {
     // 			}),
     // 		);
     // 	} catch {}
+    // }
+
+    // setState(state: CanvasState) {
+    //     super.setState(state);
+    //     console.log(state);
+    //     // this.saveToLocalStorage();
     // }
 }
 

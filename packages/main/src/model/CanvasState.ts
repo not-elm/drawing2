@@ -3,21 +3,11 @@ import { getBoundingRectOfPoint } from "../geo/Point";
 import { type Rect, getBoundingRectOfRect, unionRect } from "../geo/Rect";
 import { dataclass } from "../lib/dataclass";
 import { isNotNullish } from "../lib/isNullish";
-import type { ColorId } from "./Colors";
-import type { FillMode } from "./FillMode";
-import type { Mode } from "./Mode";
 import type { Obj, Page } from "./Page";
-import { PropertyPanelState } from "./PropertyPanelState";
-import type { TextAlignment } from "./TextAlignment";
 
 export class CanvasState extends dataclass<{
     readonly page: Page;
-    readonly mode: Mode;
     readonly selectedObjectIds: string[];
-    readonly defaultColorId: ColorId;
-    readonly defaultFillMode: FillMode;
-    readonly defaultTextAlignX: TextAlignment;
-    readonly defaultTextAlignY: TextAlignment;
 }>() {
     setPage(page: Page): CanvasState {
         return this.copy({
@@ -78,67 +68,5 @@ export class CanvasState extends dataclass<{
         return this.selectedObjectIds
             .map((id) => this.page.objects[id])
             .filter(isNotNullish);
-    }
-
-    getPropertyPanelState(): PropertyPanelState {
-        const selectedObjects = this.getSelectedObjects();
-        const selectedShapes = selectedObjects.filter(
-            (obj) => obj.type === "shape",
-        );
-        const selectedLines = selectedObjects.filter(
-            (obj) => obj.type === "line",
-        );
-
-        const alignXs = new Set(
-            selectedShapes.map((shape) => shape.textAlignX),
-        );
-        const alignYs = new Set(
-            selectedShapes.map((shape) => shape.textAlignY),
-        );
-        const colorIds = new Set([
-            ...selectedShapes.map((shape) => shape.colorId),
-            ...selectedLines.map((shape) => shape.colorId),
-        ]);
-        const fillModes = new Set([
-            ...selectedShapes.map((shape) => shape.fillMode),
-        ]);
-
-        return new PropertyPanelState({
-            colorSectionVisible: true,
-            colorId:
-                colorIds.size === 0
-                    ? this.defaultColorId
-                    : colorIds.size === 1
-                      ? [...colorIds][0]
-                      : null,
-            fillModeSectionVisible:
-                selectedShapes.length > 0 || selectedLines.length === 0,
-            fillMode:
-                fillModes.size === 0
-                    ? this.defaultFillMode
-                    : fillModes.size === 1
-                      ? [...fillModes][0]
-                      : null,
-            textAlignSectionVisible:
-                selectedShapes.length > 0 || selectedLines.length === 0,
-            textAlignX:
-                alignXs.size === 0
-                    ? this.defaultTextAlignX
-                    : alignXs.size === 1
-                      ? [...alignXs][0]
-                      : null,
-            textAlignY:
-                alignYs.size === 0
-                    ? this.defaultTextAlignY
-                    : alignYs.size === 1
-                      ? [...alignYs][0]
-                      : null,
-            orderSectionVisible:
-                selectedShapes.length > 0 || selectedLines.length > 0,
-        });
-    }
-
-    isTextEditing(shapeId: string): boolean {
-        return this.mode === "text" && this.selectedObjectIds.includes(shapeId);
     }
 }

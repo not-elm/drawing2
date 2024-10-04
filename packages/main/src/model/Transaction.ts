@@ -48,6 +48,9 @@ interface UpdateObjectPropertyCommand
 interface AddDependencyCommand extends CommandBase<"ADD_DEPENDENCY"> {
     dependency: Dependency;
 }
+interface DeleteDependenciesCommand extends CommandBase<"DELETE_DEPENDENCIES"> {
+    dependencyIds: string[];
+}
 
 type Command =
     | InsertObjectsCommand
@@ -58,7 +61,8 @@ type Command =
     | SetPointPositionCommand
     | MergePointsCommand
     | UpdateObjectPropertyCommand
-    | AddDependencyCommand;
+    | AddDependencyCommand
+    | DeleteDependenciesCommand;
 
 export class Transaction {
     private commands: Command[] = [];
@@ -127,6 +131,11 @@ export class Transaction {
 
     addDependency(dependency: Dependency): this {
         this.commands.push({ type: "ADD_DEPENDENCY", dependency });
+        return this;
+    }
+
+    deleteDependencies(dependencyIds: string[]): this {
+        this.commands.push({ type: "DELETE_DEPENDENCIES", dependencyIds });
         return this;
     }
 
@@ -331,6 +340,12 @@ export class Transaction {
                 case "ADD_DEPENDENCY": {
                     dependencies.add(command.dependency);
                     dirtyObjectIds.push(command.dependency.from);
+                    break;
+                }
+                case "DELETE_DEPENDENCIES": {
+                    for (const id of command.dependencyIds) {
+                        dependencies.deleteById(id);
+                    }
                     break;
                 }
             }

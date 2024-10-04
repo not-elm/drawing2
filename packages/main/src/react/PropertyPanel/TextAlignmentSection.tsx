@@ -1,5 +1,4 @@
 import type { TextAlignment } from "../../model/TextAlignment";
-import { useCanvasState } from "../CanvasStateStoreProvider";
 import { CardSection } from "../Card";
 import { useController } from "../ControllerProvider";
 
@@ -47,8 +46,8 @@ function TextAlignButton({
     alignX,
     alignY,
 }: { alignX: TextAlignment; alignY: TextAlignment }) {
-    const state = useCanvasState().getPropertyPanelState();
-    const handlers = useController();
+    const controller = useController();
+    const state = controller.appStateStore.getPropertyPanelState();
     const selected = state.textAlignX === alignX && state.textAlignY === alignY;
 
     return (
@@ -56,7 +55,7 @@ function TextAlignButton({
             type="button"
             onPointerDown={(ev) => {
                 ev.stopPropagation();
-                handlers.handleTextAlignButtonClick(alignX, alignY);
+                controller.handleTextAlignButtonClick(alignX, alignY);
             }}
             aria-selected={selected}
             css={{

@@ -1,12 +1,13 @@
-import { useCanvasState } from "../CanvasStateStoreProvider";
 import { Card } from "../Card";
+import { useController } from "../ControllerProvider";
 import { ColorSection } from "./ColorSection";
 import { FillModeSection } from "./FillModeSection";
 import { OrderSection } from "./OrderSection";
 import { TextAlignmentSection } from "./TextAlignmentSection";
 
 export function PropertyPanel() {
-    const state = useCanvasState().getPropertyPanelState();
+    const controller = useController();
+    const state = controller.appStateStore.getPropertyPanelState();
 
     return (
         <Card

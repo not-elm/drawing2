@@ -1,5 +1,4 @@
 import { type ColorId, Colors } from "../../model/Colors";
-import { useCanvasState } from "../CanvasStateStoreProvider";
 import { CardSection } from "../Card";
 import { useController } from "../ControllerProvider";
 
@@ -39,15 +38,15 @@ export function ColorSection() {
 }
 
 function ColorButton({ colorId }: { colorId: ColorId }) {
-    const state = useCanvasState().getPropertyPanelState();
-    const handlers = useController();
+    const controller = useController();
+    const state = controller.appStateStore.getPropertyPanelState();
     const selected = state.colorId === colorId;
 
     return (
         <button
             onPointerDown={(ev) => {
                 ev.stopPropagation();
-                handlers.handleColorButtonClick(colorId);
+                controller.handleColorButtonClick(colorId);
             }}
             type="button"
             aria-selected={selected}

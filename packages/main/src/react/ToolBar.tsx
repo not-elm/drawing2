@@ -1,11 +1,11 @@
 import styled from "@emotion/styled";
-import { useCanvasState } from "./CanvasStateStoreProvider";
 import { Card } from "./Card";
 import { useController } from "./ControllerProvider";
+import { useStore } from "./hooks/useStore";
 
 export function ToolBar() {
-    const state = useCanvasState();
-    const handlers = useController();
+    const controller = useController();
+    const appState = useStore(controller.appStateStore);
 
     return (
         <Card
@@ -28,12 +28,12 @@ export function ToolBar() {
             >
                 <li>
                     <Button
-                        aria-checked={state.mode === "select"}
+                        aria-checked={appState.mode === "select"}
                         css={{
                             pointerEvents: "all",
                         }}
                         onPointerDown={() => {
-                            handlers.handleModeChange("select");
+                            controller.handleModeChange("select");
                         }}
                     >
                         Select
@@ -41,12 +41,12 @@ export function ToolBar() {
                 </li>
                 <li>
                     <Button
-                        aria-checked={state.mode === "shape"}
+                        aria-checked={appState.mode === "shape"}
                         css={{
                             pointerEvents: "all",
                         }}
                         onPointerDown={() => {
-                            handlers.handleModeChange("shape");
+                            controller.handleModeChange("shape");
                         }}
                     >
                         Shape
@@ -54,12 +54,12 @@ export function ToolBar() {
                 </li>
                 <li>
                     <Button
-                        aria-checked={state.mode === "line"}
+                        aria-checked={appState.mode === "line"}
                         css={{
                             pointerEvents: "all",
                         }}
                         onPointerDown={() => {
-                            handlers.handleModeChange("line");
+                            controller.handleModeChange("line");
                         }}
                     >
                         Line

@@ -86,7 +86,9 @@ export function Canvas() {
                             <ShapeView
                                 key={object.id}
                                 shape={object}
-                                isLabelEditing={state.isTextEditing(object.id)}
+                                isLabelEditing={controller.appStateStore.isTextEditing(
+                                    object.id,
+                                )}
                             />
                         );
                     }

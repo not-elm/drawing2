@@ -1,10 +1,12 @@
 import type { LineObject } from "../model/Page";
 import type { PointerEventSessionData } from "../service/GestureRecognizer";
-import { useCanvasState } from "./CanvasStateStoreProvider";
+import { useController } from "./ControllerProvider";
 import { LineView } from "./LineView";
+import { useStore } from "./hooks/useStore";
 
 export function LineToolPreview({ data }: { data: PointerEventSessionData }) {
-    const state = useCanvasState();
+    const controller = useController();
+    const appState = useStore(controller.appStateStore);
 
     const line: LineObject = {
         type: "line",
@@ -13,7 +15,7 @@ export function LineToolPreview({ data }: { data: PointerEventSessionData }) {
         y1: data.startY,
         x2: data.lastX,
         y2: data.lastY,
-        colorId: state.defaultColorId,
+        colorId: appState.defaultColorId,
     };
 
     return <LineView line={line} />;

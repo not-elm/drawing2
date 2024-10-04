@@ -1,8 +1,8 @@
 import { ColorPaletteBackground, Colors } from "../../model/Colors";
 import type { FillMode } from "../../model/FillMode";
-import { useCanvasState } from "../CanvasStateStoreProvider";
 import { CardSection } from "../Card";
 import { useController } from "../ControllerProvider";
+import { useStore } from "../hooks/useStore";
 
 export function FillModeSection() {
     return (
@@ -33,18 +33,18 @@ function ColorButton({
     fillMode,
     title,
 }: { fillMode: FillMode; title: string }) {
-    const state = useCanvasState();
-    const propertyPanelState = state.getPropertyPanelState();
-    const handlers = useController();
-    const selected = propertyPanelState.fillMode === fillMode;
+    const controller = useController();
+    const state = controller.appStateStore.getPropertyPanelState();
+    const appState = useStore(controller.appStateStore);
+    const selected = state.fillMode === fillMode;
 
-    const colorId = propertyPanelState.colorId ?? state.defaultColorId;
+    const colorId = state.colorId ?? appState.defaultColorId;
 
     return (
         <button
             onPointerDown={(ev) => {
                 ev.stopPropagation();
-                handlers.handleFillModeButtonClick(fillMode);
+                controller.handleFillModeButtonClick(fillMode);
             }}
             type="button"
             title={title}
