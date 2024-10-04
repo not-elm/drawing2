@@ -17,12 +17,13 @@ import type { TextAlignment } from "../model/TextAlignment";
 import { Transaction } from "../model/Transaction";
 import { AppStateStore } from "../store/AppStateStore";
 import {
-    type CanvasStateStore,
+    CanvasStateStore,
     MouseButton,
     fromCanvasCoordinate,
 } from "../store/CanvasStateStore";
 import { HoverStateStore, testHitObjects } from "../store/HoverStateStore";
 import { PointerStateStore } from "../store/PointerStateStore";
+import { PropertyPanelStateStore } from "../store/PropertyPanelStateStore";
 import { ViewportStore } from "../store/ViewportStore";
 import {
     GestureRecognizer,
@@ -31,20 +32,22 @@ import {
 import { getRestoreViewportService } from "./RestoreViewportService";
 
 export class Controller {
+    readonly canvasStateStore = new CanvasStateStore();
     readonly pointerStore = new PointerStateStore();
     readonly viewportStore = new ViewportStore(getRestoreViewportService());
     readonly gestureRecognizer = new GestureRecognizer(this.viewportStore);
-    readonly appStateStore: AppStateStore;
-    readonly hoverStateStore: HoverStateStore;
+    readonly hoverStateStore = new HoverStateStore(
+        this.canvasStateStore,
+        this.pointerStore,
+        this.viewportStore,
+    );
+    readonly appStateStore = new AppStateStore(this.canvasStateStore);
+    readonly propertyPanelStateStore = new PropertyPanelStateStore(
+        this.canvasStateStore,
+        this.appStateStore,
+    );
 
-    constructor(private readonly store: CanvasStateStore) {
-        this.hoverStateStore = new HoverStateStore(
-            store,
-            this.pointerStore,
-            this.viewportStore,
-        );
-        this.appStateStore = new AppStateStore(store);
-
+    constructor() {
         this.gestureRecognizer.onPointerDown = this.handlePointerDown;
     }
 
@@ -61,10 +64,10 @@ export class Controller {
             case MouseButton.Left: {
                 switch (this.appStateStore.getState().mode) {
                     case "select": {
-                        const selectionRect = this.store
+                        const selectionRect = this.canvasStateStore
                             .getState()
                             .getSelectionRect();
-                        const selectedObjects = this.store
+                        const selectedObjects = this.canvasStateStore
                             .getState()
                             .getSelectedObjects();
 
@@ -84,26 +87,26 @@ export class Controller {
                                         { x, y },
                                     ) < THRESHOLD
                                 ) {
-                                    const originalPointId = this.store
-                                        .getState()
-                                        .page.dependencies.getByToObjectId(
-                                            line.id,
-                                        )
-                                        .find(
-                                            (dependency) =>
-                                                dependency.type ===
-                                                    "lineEndPoint" &&
-                                                dependency.lineEnd === 1,
-                                        )?.from;
+                                    const originalPointId =
+                                        this.canvasStateStore
+                                            .getState()
+                                            .page.dependencies.getByToObjectId(
+                                                line.id,
+                                            )
+                                            .find(
+                                                (dependency) =>
+                                                    dependency.type ===
+                                                        "lineEndPoint" &&
+                                                    dependency.lineEnd === 1,
+                                            )?.from;
                                     assert(
                                         originalPointId !== undefined,
                                         "LineEndPoint 1 is not found",
                                     );
 
                                     const originalPoint =
-                                        this.store.getState().page.objects[
-                                            originalPointId
-                                        ];
+                                        this.canvasStateStore.getState().page
+                                            .objects[originalPointId];
                                     assert(
                                         originalPoint !== undefined,
                                         `Point ${originalPointId} is not found`,
@@ -115,7 +118,7 @@ export class Controller {
                                     startSession(
                                         createMovePointSessionHandlers(
                                             originalPoint,
-                                            this.store,
+                                            this.canvasStateStore,
                                             this.viewportStore,
                                         ),
                                     );
@@ -128,26 +131,26 @@ export class Controller {
                                         { x, y },
                                     ) < THRESHOLD
                                 ) {
-                                    const originalPointId = this.store
-                                        .getState()
-                                        .page.dependencies.getByToObjectId(
-                                            line.id,
-                                        )
-                                        .find(
-                                            (dependency) =>
-                                                dependency.type ===
-                                                    "lineEndPoint" &&
-                                                dependency.lineEnd === 2,
-                                        )?.from;
+                                    const originalPointId =
+                                        this.canvasStateStore
+                                            .getState()
+                                            .page.dependencies.getByToObjectId(
+                                                line.id,
+                                            )
+                                            .find(
+                                                (dependency) =>
+                                                    dependency.type ===
+                                                        "lineEndPoint" &&
+                                                    dependency.lineEnd === 2,
+                                            )?.from;
                                     assert(
                                         originalPointId !== undefined,
                                         "LineEndPoint 2 is not found",
                                     );
 
                                     const originalPoint =
-                                        this.store.getState().page.objects[
-                                            originalPointId
-                                        ];
+                                        this.canvasStateStore.getState().page
+                                            .objects[originalPointId];
                                     assert(
                                         originalPoint !== undefined,
                                         `Point ${originalPointId} is not found`,
@@ -159,7 +162,7 @@ export class Controller {
                                     startSession(
                                         createMovePointSessionHandlers(
                                             originalPoint,
-                                            this.store,
+                                            this.canvasStateStore,
                                             this.viewportStore,
                                         ),
                                     );
@@ -175,7 +178,7 @@ export class Controller {
                                             x,
                                             y,
                                             ev.shiftKey,
-                                            this.store,
+                                            this.canvasStateStore,
                                             this.viewportStore,
                                         ),
                                     );
@@ -209,7 +212,7 @@ export class Controller {
                                             selectedObjects,
                                             bottomRight.x,
                                             bottomRight.y,
-                                            this.store,
+                                            this.canvasStateStore,
                                         ),
                                     );
                                     return;
@@ -225,7 +228,7 @@ export class Controller {
                                             selectedObjects,
                                             bottomLeft.x,
                                             bottomLeft.y,
-                                            this.store,
+                                            this.canvasStateStore,
                                         ),
                                     );
                                     return;
@@ -241,7 +244,7 @@ export class Controller {
                                             selectedObjects,
                                             topRight.x,
                                             topRight.y,
-                                            this.store,
+                                            this.canvasStateStore,
                                         ),
                                     );
                                     return;
@@ -257,7 +260,7 @@ export class Controller {
                                             selectedObjects,
                                             topLeft.x,
                                             topLeft.y,
-                                            this.store,
+                                            this.canvasStateStore,
                                         ),
                                     );
                                     return;
@@ -286,7 +289,7 @@ export class Controller {
                                             createYResizeSessionHandlers(
                                                 selectedObjects,
                                                 bottom.y1,
-                                                this.store,
+                                                this.canvasStateStore,
                                             ),
                                         );
                                         return;
@@ -301,7 +304,7 @@ export class Controller {
                                             createYResizeSessionHandlers(
                                                 selectedObjects,
                                                 top.y1,
-                                                this.store,
+                                                this.canvasStateStore,
                                             ),
                                         );
                                         return;
@@ -330,7 +333,7 @@ export class Controller {
                                             createXResizeSessionHandlers(
                                                 selectedObjects,
                                                 right.x1,
-                                                this.store,
+                                                this.canvasStateStore,
                                             ),
                                         );
                                         return;
@@ -343,7 +346,7 @@ export class Controller {
                                             createXResizeSessionHandlers(
                                                 selectedObjects,
                                                 left.x1,
-                                                this.store,
+                                                this.canvasStateStore,
                                             ),
                                         );
                                         return;
@@ -362,7 +365,7 @@ export class Controller {
                                             x,
                                             y,
                                             ev.shiftKey,
-                                            this.store,
+                                            this.canvasStateStore,
                                             this.viewportStore,
                                         ),
                                     );
@@ -374,7 +377,7 @@ export class Controller {
                         // Object
                         {
                             const hitResult = testHitObjects(
-                                this.store.getState().page,
+                                this.canvasStateStore.getState().page,
                                 x,
                                 y,
                                 this.viewportStore.getState().scale,
@@ -384,7 +387,7 @@ export class Controller {
                                     createMoveObjectSessionHandlers(
                                         hitResult.entries[0].object,
                                         ev.shiftKey,
-                                        this.store,
+                                        this.canvasStateStore,
                                     ),
                                 );
                                 return;
@@ -394,10 +397,12 @@ export class Controller {
                         // Canvas
                         {
                             if (!ev.shiftKey) {
-                                this.store.unselectAll();
+                                this.canvasStateStore.unselectAll();
                             }
                             startSession(
-                                createSelectByRangeSessionHandlers(this.store),
+                                createSelectByRangeSessionHandlers(
+                                    this.canvasStateStore,
+                                ),
                             );
                             return;
                         }
@@ -408,21 +413,21 @@ export class Controller {
                         // Object
                         {
                             const hitResult = testHitObjects(
-                                this.store.getState().page,
+                                this.canvasStateStore.getState().page,
                                 x,
                                 y,
                                 this.viewportStore.getState().scale,
                             );
                             if (hitResult.entries.length > 0) {
-                                this.store.unselectAll();
-                                this.store.select(
+                                this.canvasStateStore.unselectAll();
+                                this.canvasStateStore.select(
                                     hitResult.entries[0].object.id,
                                 );
                                 startSession(
                                     createMoveObjectSessionHandlers(
                                         hitResult.entries[0].object,
                                         ev.shiftKey,
-                                        this.store,
+                                        this.canvasStateStore,
                                     ),
                                 );
                                 return;
@@ -432,10 +437,12 @@ export class Controller {
                         // Canvas
                         {
                             if (!ev.shiftKey) {
-                                this.store.unselectAll();
+                                this.canvasStateStore.unselectAll();
                             }
                             startSession(
-                                createSelectByRangeSessionHandlers(this.store),
+                                createSelectByRangeSessionHandlers(
+                                    this.canvasStateStore,
+                                ),
                             );
                             return;
                         }
@@ -443,7 +450,7 @@ export class Controller {
                     case "line": {
                         startSession(
                             createNewLineSessionHandlers(
-                                this.store,
+                                this.canvasStateStore,
                                 this.viewportStore,
                                 this.appStateStore,
                             ),
@@ -453,7 +460,7 @@ export class Controller {
                     case "shape": {
                         startSession(
                             createNewShapeSessionHandlers(
-                                this.store,
+                                this.canvasStateStore,
                                 this.appStateStore,
                             ),
                         );
@@ -491,8 +498,8 @@ export class Controller {
     ) {
         switch (mouseButton) {
             case MouseButton.Left: {
-                this.store.unselectAll();
-                this.store.select(id);
+                this.canvasStateStore.unselectAll();
+                this.canvasStateStore.select(id);
                 this.appStateStore.setMode("text");
                 return true;
             }
@@ -525,7 +532,7 @@ export class Controller {
                     case "select": {
                         if (modifiers.metaKey || modifiers.ctrlKey) {
                             this.appStateStore.setMode("select");
-                            this.store.selectAll();
+                            this.canvasStateStore.selectAll();
                             return true;
                         }
                     }
@@ -559,9 +566,9 @@ export class Controller {
                     case "select": {
                         if (modifiers.metaKey || modifiers.ctrlKey) {
                             if (modifiers.shiftKey) {
-                                this.store.redo();
+                                this.canvasStateStore.redo();
                             } else {
-                                this.store.undo();
+                                this.canvasStateStore.undo();
                             }
                             return true;
                         }
@@ -573,7 +580,7 @@ export class Controller {
                 switch (this.appStateStore.getState().mode) {
                     case "select": {
                         if (modifiers.metaKey || modifiers.ctrlKey) {
-                            this.store.cut();
+                            this.canvasStateStore.cut();
                         }
                         return true;
                     }
@@ -584,7 +591,7 @@ export class Controller {
                 switch (this.appStateStore.getState().mode) {
                     case "select": {
                         if (modifiers.metaKey || modifiers.ctrlKey) {
-                            this.store.copy();
+                            this.canvasStateStore.copy();
                         }
                         return true;
                     }
@@ -595,7 +602,7 @@ export class Controller {
                 switch (this.appStateStore.getState().mode) {
                     case "select": {
                         if (modifiers.metaKey || modifiers.ctrlKey) {
-                            this.store.paste();
+                            this.canvasStateStore.paste();
                         }
                         return true;
                     }
@@ -605,7 +612,7 @@ export class Controller {
             case "Escape": {
                 switch (this.appStateStore.getState().mode) {
                     case "select": {
-                        this.store.unselectAll();
+                        this.canvasStateStore.unselectAll();
                         return true;
                     }
                     default: {
@@ -618,7 +625,7 @@ export class Controller {
             case "Backspace": {
                 switch (this.appStateStore.getState().mode) {
                     case "select": {
-                        this.store.deleteSelectedObjects();
+                        this.canvasStateStore.deleteSelectedObjects();
                         return true;
                     }
                 }
@@ -634,38 +641,38 @@ export class Controller {
     }
 
     handleLabelChange(id: string, label: string) {
-        this.store.setLabel(id, label);
+        this.canvasStateStore.setLabel(id, label);
     }
 
     handleTextAlignButtonClick(alignX: TextAlignment, alignY: TextAlignment) {
-        this.store.setTextAlign(alignX, alignY);
+        this.canvasStateStore.setTextAlign(alignX, alignY);
         this.appStateStore.setDefaultTextAlign(alignX, alignY);
     }
 
     handleColorButtonClick(colorId: ColorId) {
-        this.store.setColor(colorId);
+        this.canvasStateStore.setColor(colorId);
         this.appStateStore.setDefaultColor(colorId);
     }
 
     handleFillModeButtonClick(fillMode: FillMode) {
-        this.store.setFillMode(fillMode);
+        this.canvasStateStore.setFillMode(fillMode);
         this.appStateStore.setDefaultFillMode(fillMode);
     }
 
     handleBringToFrontButtonClick() {
-        this.store.bringToFront();
+        this.canvasStateStore.bringToFront();
     }
 
     handleBringForwardButtonClick() {
-        this.store.bringForward();
+        this.canvasStateStore.bringForward();
     }
 
     handleSendBackwardButtonClick() {
-        this.store.sendBackward();
+        this.canvasStateStore.sendBackward();
     }
 
     handleSendToBackButtonClick() {
-        this.store.sendToBack();
+        this.canvasStateStore.sendToBack();
     }
 }
 
@@ -928,7 +935,6 @@ function createMoveSelectedObjectsSessionHandlers(
         viewportStore.getState().scale,
     );
     const selectedObjects = canvasStateStore.getState().getSelectedObjects();
-    console.log(selectedObjects);
     return {
         type: "move",
         onPointerMove: (data) => {

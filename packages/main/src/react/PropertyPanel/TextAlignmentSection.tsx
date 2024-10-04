@@ -1,6 +1,7 @@
 import type { TextAlignment } from "../../model/TextAlignment";
 import { CardSection } from "../Card";
 import { useController } from "../ControllerProvider";
+import { useStore } from "../hooks/useStore";
 
 export function TextAlignmentSection() {
     return (
@@ -47,7 +48,7 @@ function TextAlignButton({
     alignY,
 }: { alignX: TextAlignment; alignY: TextAlignment }) {
     const controller = useController();
-    const state = controller.appStateStore.getPropertyPanelState();
+    const state = useStore(controller.propertyPanelStateStore);
     const selected = state.textAlignX === alignX && state.textAlignY === alignY;
 
     return (

@@ -1,19 +1,18 @@
 import styled from "@emotion/styled";
 import type { LineObject } from "../model/Page";
-import { useCanvasState } from "./CanvasStateStoreProvider";
 import { useController } from "./ControllerProvider";
 import { useStore } from "./hooks/useStore";
 
 export function SelectionRect() {
-    const state = useCanvasState();
     const controller = useController();
     const appState = useStore(controller.appStateStore);
     const viewport = useStore(controller.viewportStore);
-    const selectionRect = state.getSelectionRect();
+    const canvasState = useStore(controller.canvasStateStore);
+    const selectionRect = canvasState.getSelectionRect();
     if (selectionRect === null) return null;
 
     const { x, y, width, height } = selectionRect;
-    const objects = state.getSelectedObjects();
+    const objects = canvasState.getSelectedObjects();
     const isSingleLineMode = objects.length === 1 && objects[0].type === "line";
 
     return (

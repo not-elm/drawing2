@@ -11,11 +11,11 @@ export const ShapeView = memo(function ShapeView({
     shape,
     isLabelEditing,
 }: { shape: ShapeObject; isLabelEditing: boolean }) {
-    const handlers = useController();
+    const controller = useController();
 
     const handleDoubleClick: MouseEventHandler = useCallback(
         (ev) => {
-            const handled = handlers.handleShapeDoubleClick(
+            const handled = controller.handleShapeDoubleClick(
                 shape.id,
                 ev.clientX,
                 ev.clientY,
@@ -29,7 +29,7 @@ export const ShapeView = memo(function ShapeView({
                 ev.preventDefault();
             }
         },
-        [shape.id, handlers],
+        [shape.id, controller],
     );
 
     return (
@@ -122,7 +122,7 @@ export const ShapeView = memo(function ShapeView({
                             );
                         }}
                         onChange={(ev) =>
-                            handlers.handleLabelChange(
+                            controller.handleLabelChange(
                                 shape.id,
                                 ev.target.value,
                             )

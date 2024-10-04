@@ -1,8 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { App } from "./react/App";
-import { CanvasStateStoreProvider } from "./react/CanvasStateStoreProvider";
 import { ControllerProvider } from "./react/ControllerProvider";
-import { initializeCanvasStateStore } from "./store/CanvasStateStore";
 
 window.addEventListener("DOMContentLoaded", () => {
     const container = document.getElementById("root");
@@ -13,10 +11,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
     const root = createRoot(container);
     root.render(
-        <CanvasStateStoreProvider initializeStore={initializeCanvasStateStore}>
-            <ControllerProvider>
-                <App />
-            </ControllerProvider>
-        </CanvasStateStoreProvider>,
+        <ControllerProvider>
+            <App />
+        </ControllerProvider>,
     );
 });

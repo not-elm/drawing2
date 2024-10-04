@@ -2,7 +2,7 @@ import { CardSection } from "../Card";
 import { useController } from "../ControllerProvider";
 
 export function OrderSection() {
-    const handlers = useController();
+    const controller = useController();
 
     return (
         <CardSection
@@ -24,7 +24,7 @@ export function OrderSection() {
                 }}
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    handlers.handleBringToFrontButtonClick();
+                    controller.handleBringToFrontButtonClick();
                 }}
             >
                 最前面へ
@@ -36,7 +36,7 @@ export function OrderSection() {
                 }}
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    handlers.handleBringForwardButtonClick();
+                    controller.handleBringForwardButtonClick();
                 }}
             >
                 ひとつ前へ
@@ -48,7 +48,7 @@ export function OrderSection() {
                 }}
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    handlers.handleSendBackwardButtonClick();
+                    controller.handleSendBackwardButtonClick();
                 }}
             >
                 ひとつ後ろへ
@@ -60,7 +60,7 @@ export function OrderSection() {
                 }}
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    handlers.handleSendToBackButtonClick();
+                    controller.handleSendToBackButtonClick();
                 }}
             >
                 最背面へ

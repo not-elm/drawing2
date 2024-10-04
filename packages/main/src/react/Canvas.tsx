@@ -1,5 +1,4 @@
 import { type WheelEventHandler, useCallback, useEffect } from "react";
-import { useCanvasState } from "./CanvasStateStoreProvider";
 import { useController } from "./ControllerProvider";
 import { LineToolPreview } from "./LineToolPreview";
 import { LineView } from "./LineView";
@@ -10,8 +9,8 @@ import { ShapeView } from "./ShapeView";
 import { useStore } from "./hooks/useStore";
 
 export function Canvas() {
-    const state = useCanvasState();
     const controller = useController();
+    const { page } = useStore(controller.canvasStateStore);
     const viewport = useStore(controller.viewportStore);
     const sessions = useStore(controller.gestureRecognizer);
 
@@ -77,8 +76,8 @@ export function Canvas() {
                     transformOrigin: `${viewport.x}px ${viewport.y}px`,
                 }}
             >
-                {state.page.objectIds.map((objectId) => {
-                    const object = state.page.objects[objectId];
+                {page.objectIds.map((objectId) => {
+                    const object = page.objects[objectId];
                     if (object === undefined) return null;
 
                     if (object.type === "shape") {

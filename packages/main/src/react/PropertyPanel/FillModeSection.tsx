@@ -34,7 +34,7 @@ function ColorButton({
     title,
 }: { fillMode: FillMode; title: string }) {
     const controller = useController();
-    const state = controller.appStateStore.getPropertyPanelState();
+    const state = useStore(controller.propertyPanelStateStore);
     const appState = useStore(controller.appStateStore);
     const selected = state.fillMode === fillMode;
 

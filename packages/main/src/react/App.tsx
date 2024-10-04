@@ -5,11 +5,11 @@ import { PropertyPanel } from "./PropertyPanel/PropertyPanel";
 import { ToolBar } from "./ToolBar";
 
 export function App() {
-    const handlers = useController();
+    const controller = useController();
 
     useEffect(() => {
         function handleKeyDown(event: KeyboardEvent) {
-            const isHandled = handlers.handleKeyDown(event.key, {
+            const isHandled = controller.handleKeyDown(event.key, {
                 metaKey: event.metaKey,
                 ctrlKey: event.ctrlKey,
                 shiftKey: event.shiftKey,
@@ -24,7 +24,7 @@ export function App() {
         return () => {
             window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [handlers]);
+    }, [controller]);
 
     return (
         <div

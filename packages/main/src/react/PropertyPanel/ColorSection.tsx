@@ -1,6 +1,7 @@
 import { type ColorId, Colors } from "../../model/Colors";
 import { CardSection } from "../Card";
 import { useController } from "../ControllerProvider";
+import { useStore } from "../hooks/useStore";
 
 export function ColorSection() {
     return (
@@ -39,7 +40,7 @@ export function ColorSection() {
 
 function ColorButton({ colorId }: { colorId: ColorId }) {
     const controller = useController();
-    const state = controller.appStateStore.getPropertyPanelState();
+    const state = useStore(controller.propertyPanelStateStore);
     const selected = state.colorId === colorId;
 
     return (
