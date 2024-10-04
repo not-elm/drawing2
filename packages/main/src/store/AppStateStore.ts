@@ -16,7 +16,7 @@ interface AppState {
 export class AppStateStore extends Store<AppState> {
     constructor(private readonly canvasStateStore: CanvasStateStore) {
         super({
-            mode: "select",
+            mode: { type: "select" },
             defaultColorId: 0,
             defaultFillMode: "none",
             defaultTextAlignX: "center",
@@ -42,12 +42,5 @@ export class AppStateStore extends Store<AppState> {
 
     setMode(mode: Mode) {
         this.setState({ ...this.state, mode });
-    }
-
-    isTextEditing(shapeId: string): boolean {
-        return (
-            this.state.mode === "text" &&
-            this.canvasStateStore.getState().selectedObjectIds.includes(shapeId)
-        );
     }
 }

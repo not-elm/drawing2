@@ -83,7 +83,7 @@ export function SelectionRect() {
                     }
                 })}
             </svg>
-            {isSingleLineMode && appState.mode === "select" && (
+            {isSingleLineMode && appState.mode.type === "select" && (
                 <>
                     <ResizeHandle
                         css={{
@@ -113,7 +113,7 @@ export function SelectionRect() {
                     </ResizeHandle>
                 </>
             )}
-            {!isSingleLineMode && appState.mode === "select" && (
+            {!isSingleLineMode && appState.mode.type === "select" && (
                 <>
                     <ResizeHandle
                         css={{

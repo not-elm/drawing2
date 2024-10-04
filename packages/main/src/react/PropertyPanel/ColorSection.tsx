@@ -47,7 +47,7 @@ function ColorButton({ colorId }: { colorId: ColorId }) {
         <button
             onPointerDown={(ev) => {
                 ev.stopPropagation();
-                controller.handleColorButtonClick(colorId);
+                controller.setColor(colorId);
             }}
             type="button"
             aria-selected={selected}

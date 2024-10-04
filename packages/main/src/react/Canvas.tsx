@@ -13,6 +13,7 @@ export function Canvas() {
     const { page } = useStore(controller.canvasStateStore);
     const viewport = useStore(controller.viewportStore);
     const sessions = useStore(controller.gestureRecognizer);
+    const appState = useStore(controller.appStateStore);
 
     useEffect(() => {
         function handlePointerMove(ev: PointerEvent) {
@@ -85,9 +86,10 @@ export function Canvas() {
                             <ShapeView
                                 key={object.id}
                                 shape={object}
-                                isLabelEditing={controller.appStateStore.isTextEditing(
-                                    object.id,
-                                )}
+                                isLabelEditing={
+                                    appState.mode.type === "text" &&
+                                    appState.mode.objectId === object.id
+                                }
                             />
                         );
                     }

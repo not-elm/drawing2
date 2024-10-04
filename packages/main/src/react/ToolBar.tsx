@@ -28,12 +28,12 @@ export function ToolBar() {
             >
                 <li>
                     <Button
-                        aria-checked={appState.mode === "select"}
+                        aria-checked={appState.mode.type === "select"}
                         css={{
                             pointerEvents: "all",
                         }}
                         onPointerDown={() => {
-                            controller.handleModeChange("select");
+                            controller.setMode({ type: "select" });
                         }}
                     >
                         Select
@@ -41,12 +41,12 @@ export function ToolBar() {
                 </li>
                 <li>
                     <Button
-                        aria-checked={appState.mode === "shape"}
+                        aria-checked={appState.mode.type === "shape"}
                         css={{
                             pointerEvents: "all",
                         }}
                         onPointerDown={() => {
-                            controller.handleModeChange("shape");
+                            controller.setMode({ type: "shape" });
                         }}
                     >
                         Shape
@@ -54,12 +54,12 @@ export function ToolBar() {
                 </li>
                 <li>
                     <Button
-                        aria-checked={appState.mode === "line"}
+                        aria-checked={appState.mode.type === "line"}
                         css={{
                             pointerEvents: "all",
                         }}
                         onPointerDown={() => {
-                            controller.handleModeChange("line");
+                            controller.setMode({ type: "line" });
                         }}
                     >
                         Line

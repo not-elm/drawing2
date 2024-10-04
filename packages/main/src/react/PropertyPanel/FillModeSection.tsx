@@ -44,7 +44,7 @@ function ColorButton({
         <button
             onPointerDown={(ev) => {
                 ev.stopPropagation();
-                controller.handleFillModeButtonClick(fillMode);
+                controller.setFillMode(fillMode);
             }}
             type="button"
             title={title}

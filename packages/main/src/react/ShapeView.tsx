@@ -122,10 +122,7 @@ export const ShapeView = memo(function ShapeView({
                             );
                         }}
                         onChange={(ev) =>
-                            controller.handleLabelChange(
-                                shape.id,
-                                ev.target.value,
-                            )
+                            controller.setLabelText(shape.id, ev.target.value)
                         }
                         onPointerDown={(ev) => ev.stopPropagation()}
                         value={shape.label}

@@ -36,6 +36,10 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
         this.update();
     }
 
+    addListener(callback: (state: PropertyPanelState) => void) {
+        super.addListener(callback);
+    }
+
     private update() {
         const appState = this.appStateStore.getState();
         const canvasState = this.canvasStateStore.getState();

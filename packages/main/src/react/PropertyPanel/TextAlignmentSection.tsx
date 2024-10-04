@@ -56,7 +56,7 @@ function TextAlignButton({
             type="button"
             onPointerDown={(ev) => {
                 ev.stopPropagation();
-                controller.handleTextAlignButtonClick(alignX, alignY);
+                controller.setTextAlign(alignX, alignY);
             }}
             aria-selected={selected}
             css={{
