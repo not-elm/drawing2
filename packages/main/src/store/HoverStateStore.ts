@@ -8,13 +8,8 @@ import type { PointerStateStore } from "./PointerStateStore";
 import type { ViewportStore } from "./ViewportStore";
 
 interface HitTestResult {
-    entries: HitTestResultEntry[];
-
-    // Hit objects ordered by z-index (Large z-index first)
-    orderedByZIndex: HitTestResultEntry[];
-
     // Hit objects ordered by distance (Small distance first)
-    orderedByDistance: HitTestResultEntry[];
+    entries: HitTestResultEntry[];
 }
 
 interface HitTestResultEntry {
@@ -27,14 +22,14 @@ interface HitTestResultEntry {
     zIndex: number;
 }
 
-export function testHitItems(
+export function testHitObjects(
     page: Page,
     x: number,
     y: number,
     scale: number,
     threshold = THRESHOLD,
 ): HitTestResult {
-    const entries: HitTestResultEntry[] = [];
+    const rawEntries: HitTestResultEntry[] = [];
 
     for (const [zIndex, objectId] of page.objectIds.entries()) {
         const object = page.objects[objectId];
@@ -44,7 +39,7 @@ export function testHitItems(
             case "point": {
                 const distance = Math.hypot(object.x - x, object.y - y) * scale;
                 if (distance < threshold) {
-                    entries.push({
+                    rawEntries.push({
                         object,
                         point: object,
                         distance,
@@ -59,7 +54,7 @@ export function testHitItems(
                     object,
                 );
                 if (distance < threshold) {
-                    entries.push({
+                    rawEntries.push({
                         object,
                         point,
                         distance,
@@ -74,7 +69,7 @@ export function testHitItems(
                     object,
                 );
                 if (distance < threshold) {
-                    entries.push({
+                    rawEntries.push({
                         object,
                         point,
                         distance,
@@ -86,21 +81,14 @@ export function testHitItems(
         }
     }
 
-    const orderedByZIndex = entries.toSorted((a, b) => -(a.zIndex - b.zIndex));
-    const orderedByDistance = entries.toSorted(
+    const orderedByZIndex = rawEntries.toSorted(
+        (a, b) => -(a.zIndex - b.zIndex),
+    );
+    const orderedByDistance = orderedByZIndex.toSorted(
         (a, b) => a.distance - b.distance,
     );
 
-    return { entries, orderedByZIndex, orderedByDistance };
-}
-
-interface NearestPoint {
-    x: number;
-    y: number;
-    distance: number;
-    pointId: string | null;
-    lineId: string | null;
-    shapeId: string | null;
+    return { entries: orderedByDistance };
 }
 
 /**
@@ -108,96 +96,8 @@ interface NearestPoint {
  */
 const THRESHOLD = 32;
 
-export function getNearestPoint(
-    page: Page,
-    x: number,
-    y: number,
-    scale: number,
-    ignorePointIds: string[],
-    threshold = THRESHOLD,
-) {
-    const objects = Object.values(page.objects);
-    const points = objects.filter((object) => object.type === "point");
-    const lines = objects.filter((object) => object.type === "line");
-    const shapes = objects.filter((object) => object.type === "shape");
-
-    const ignoreIdSet = new Set();
-    for (const pointId of ignorePointIds) {
-        const point = page.objects[pointId];
-        assert(point !== undefined, `Point not found: ${pointId}`);
-
-        ignoreIdSet.add(point.id);
-        for (const dependency of page.dependencies.getByFromObjectId(pointId)) {
-            if (dependency.type !== "lineEndPoint") continue;
-            const line = page.objects[dependency.to];
-            assert(line !== undefined, `Line not found: ${dependency.to}`);
-            assert(line.type === "line", `Expected line: ${dependency.to}`);
-            ignoreIdSet.add(line.id);
-
-            for (const dependency of page.dependencies.getByFromObjectId(
-                line.id,
-            )) {
-                if (dependency.type !== "lineEndPoint") continue;
-                ignoreIdSet.add(dependency.from);
-            }
-        }
-    }
-
-    let nearestPoint: NearestPoint | null = null;
-    for (const point of points) {
-        if (ignoreIdSet.has(point.id)) continue;
-
-        const distance = Math.hypot(point.x - x, point.y - y) * scale;
-        if (distance < threshold) {
-            if (
-                distance < (nearestPoint?.distance ?? Number.POSITIVE_INFINITY)
-            ) {
-                nearestPoint = {
-                    x: point.x,
-                    y: point.y,
-                    distance,
-                    pointId: point.id,
-                    lineId: null,
-                    shapeId: null,
-                };
-            }
-        }
-    }
-    // Prioritize the point over the line
-    if (nearestPoint !== null) return nearestPoint;
-
-    for (const line of lines) {
-        if (ignoreIdSet.has(line.id)) continue;
-
-        if (line.type === "line") {
-            const { point, distance } = distanceFromPointToLine({ x, y }, line);
-            if (distance < threshold) {
-                if (point.x === line.x1 && point.y === line.y1) continue;
-                if (point.x === line.x2 && point.y === line.y2) continue;
-
-                if (
-                    distance <
-                    (nearestPoint?.distance ?? Number.POSITIVE_INFINITY)
-                ) {
-                    nearestPoint = {
-                        x: point.x,
-                        y: point.y,
-                        distance,
-                        pointId: null,
-                        lineId: line.id,
-                        shapeId: null,
-                    };
-                }
-            }
-        }
-    }
-    if (nearestPoint !== null) return nearestPoint;
-
-    return null;
-}
-
 export class HoverStateStore extends Store<{
-    nearestPoint: NearestPoint | null;
+    hitEntry: HitTestResultEntry | null;
 }> {
     constructor(
         private readonly canvasStateStore: CanvasStateStore,
@@ -205,7 +105,7 @@ export class HoverStateStore extends Store<{
         private readonly viewportStore: ViewportStore,
     ) {
         super({
-            nearestPoint: null,
+            hitEntry: null,
         });
 
         canvasStateStore.addListener(() => this.recompute());
@@ -217,8 +117,7 @@ export class HoverStateStore extends Store<{
         const { scale } = this.viewportStore.getState();
         const { x, y } = this.pointerStateStore.getState();
 
-        const nearestPoint = getNearestPoint(page, x, y, scale, []);
-
-        this.setState({ nearestPoint });
+        const { entries } = testHitObjects(page, x, y, scale);
+        this.setState({ hitEntry: entries[0] ?? null });
     }
 }

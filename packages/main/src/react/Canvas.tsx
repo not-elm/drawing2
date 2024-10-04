@@ -134,7 +134,7 @@ export function Canvas() {
 function PointHighlightLayer() {
     const controller = useController();
     const viewport = useStore(controller.viewportStore);
-    const { nearestPoint } = useStore(controller.hoverStateStore);
+    const { hitEntry } = useStore(controller.hoverStateStore);
 
     return (
         <div
@@ -149,11 +149,11 @@ function PointHighlightLayer() {
                 height={1}
                 css={{ overflow: "visible" }}
             >
-                {nearestPoint !== null && (
+                {hitEntry !== null && (
                     <circle
                         r={8}
-                        cx={(nearestPoint.x - viewport.x) * viewport.scale}
-                        cy={(nearestPoint.y - viewport.y) * viewport.scale}
+                        cx={(hitEntry.point.x - viewport.x) * viewport.scale}
+                        cy={(hitEntry.point.y - viewport.y) * viewport.scale}
                         css={{ fill: "var(--color-selection)", opacity: 0.3 }}
                     />
                 )}
