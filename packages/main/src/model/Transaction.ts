@@ -164,6 +164,14 @@ export class Transaction {
                 }
                 case "DELETE_OBJECTS": {
                     for (const id of command.objectIds) {
+                        const object = objects[id];
+                        if (object.type === "point") {
+                            // Point is not deleted directly. If no longer any lines connected,
+                            // point will be deleted automatically
+                            continue;
+                        }
+                        const deps = dependencies.getByToObjectId(id);
+
                         delete objects[id];
 
                         const index = objectIds.indexOf(id);
@@ -171,8 +179,28 @@ export class Transaction {
                         objectIds.splice(index, 1);
 
                         dependencies.deleteByObjectId(id);
-
                         dirtyObjectIds.push(id);
+
+                        for (const dep of deps) {
+                            if (dep.type !== "lineEndPoint") continue;
+                            const pointId = dep.from;
+                            if (
+                                dependencies.getByFromObjectId(pointId)
+                                    .length === 0
+                            ) {
+                                delete objects[pointId];
+
+                                const index = objectIds.indexOf(pointId);
+                                assert(
+                                    index !== -1,
+                                    `Object not found: ${pointId}`,
+                                );
+                                objectIds.splice(index, 1);
+
+                                dependencies.deleteByObjectId(pointId);
+                            }
+                            dirtyObjectIds.push(dep.from);
+                        }
                     }
                     break;
                 }
@@ -195,25 +223,7 @@ export class Transaction {
                                 break;
                             }
                             case "line": {
-                                objects[id] = {
-                                    ...object,
-                                    x1:
-                                        (object.x1 - command.cx) *
-                                            command.scaleX +
-                                        command.cx,
-                                    y1:
-                                        (object.y1 - command.cy) *
-                                            command.scaleY +
-                                        command.cy,
-                                    x2:
-                                        (object.x2 - command.cx) *
-                                            command.scaleX +
-                                        command.cx,
-                                    y2:
-                                        (object.y2 - command.cy) *
-                                            command.scaleY +
-                                        command.cy,
-                                };
+                                // Skipped since it will be updated by dependencies
                                 break;
                             }
                             case "shape": {
@@ -262,13 +272,7 @@ export class Transaction {
                                 break;
                             }
                             case "line": {
-                                objects[id] = {
-                                    ...object,
-                                    x1: object.x1 + command.dx,
-                                    y1: object.y1 + command.dy,
-                                    x2: object.x2 + command.dx,
-                                    y2: object.y2 + command.dy,
-                                };
+                                // Skipped since it will be updated by dependencies
                                 break;
                             }
                             case "shape": {
