@@ -13,3 +13,12 @@ export function getBoundingRectOfPoint(point: Point): Rect {
         height: 0,
     };
 }
+
+/**
+ * Calculate the distance from a point to a rectangle.
+ * @return The distance from the point to the rectangle,
+ * 		and the nearest point on the rectangle.
+ */
+export function distanceFromPointToPoint(p1: Point, p2: Point): number {
+    return Math.hypot(p1.x - p2.x, p1.y - p2.y);
+}

@@ -1,33 +1,19 @@
 import { getRectanglePath } from "../geo/path";
-import { assert } from "../lib/assert";
-import { randomId } from "../lib/randomId";
 import type { ShapeObject } from "../model/Page";
+import type { PointerEventSessionData } from "../service/GestureRecognizer";
 import { useCanvasState } from "./CanvasStateStoreProvider";
 import { ShapeView } from "./ShapeView";
 
-export function ShapeToolPreview() {
+export function ShapeToolPreview({ data }: { data: PointerEventSessionData }) {
     const state = useCanvasState();
-    assert(
-        state.mode === "shape",
-        "ShapeToolPreview should be rendered in rect mode",
-    );
-    assert(
-        state.dragging,
-        "ShapeToolPreview should be rendered while dragging",
-    );
 
-    const width = Math.abs(state.dragCurrentX - state.dragStartX);
-    const height = Math.abs(state.dragCurrentY - state.dragStartY);
-    const x = Math.min(state.dragStartX, state.dragCurrentX);
-    const y = Math.min(state.dragStartY, state.dragCurrentY);
-
-    const rect: ShapeObject = {
+    const shape: ShapeObject = {
         type: "shape",
-        id: randomId(),
-        x,
-        y,
-        width,
-        height,
+        id: "shape-tool-preview",
+        x: Math.min(data.startX, data.lastX),
+        y: Math.min(data.startY, data.lastY),
+        width: Math.abs(data.lastX - data.startX),
+        height: Math.abs(data.lastY - data.startY),
         label: "",
         textAlignX: state.defaultTextAlignX,
         textAlignY: state.defaultTextAlignY,
@@ -36,5 +22,5 @@ export function ShapeToolPreview() {
         path: getRectanglePath(),
     };
 
-    return <ShapeView shape={rect} isLabelEditing={false} />;
+    return <ShapeView shape={shape} isLabelEditing={false} />;
 }

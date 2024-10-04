@@ -1,25 +1,32 @@
-import { useCanvasState } from "./CanvasStateStoreProvider";
-import { useController } from "./ControllerProvider";
-import { useStore } from "./hooks/useStore";
+import type { PointerEventSessionData } from "../service/GestureRecognizer";
 
-export function SelectorRect() {
-    const controller = useController();
-    const viewport = useStore(controller.viewportStore);
-    const state = useCanvasState();
-
-    const selectorRect = state.getSelectorRect();
-    if (selectorRect === null) return null;
+export function SelectorRect({ data }: { data: PointerEventSessionData }) {
+    const x = Math.min(data.startX, data.lastX);
+    const y = Math.min(data.startY, data.lastY);
+    const width = Math.abs(data.startX - data.lastX);
+    const height = Math.abs(data.startY - data.lastY);
 
     return (
-        <div
+        <svg
+            viewBox={`0 0 ${width} ${height}`}
+            width={width}
+            height={height}
             css={{
+                overflow: "visible",
                 position: "absolute",
-                left: (selectorRect.x - viewport.x) * viewport.scale,
-                top: (selectorRect.y - viewport.y) * viewport.scale,
-                width: selectorRect.width * viewport.scale,
-                height: selectorRect.height * viewport.scale,
-                background: "rgba(40, 40 ,40, 0.1)",
+                left: x,
+                top: y,
             }}
-        />
+        >
+            <rect
+                x={0}
+                y={0}
+                width={width}
+                height={height}
+                css={{
+                    fill: "rgba(40, 40 ,40, 0.1)",
+                }}
+            />
+        </svg>
     );
 }

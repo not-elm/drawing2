@@ -4,26 +4,19 @@ import {
     isRectOverlapWithPoint,
     isRectOverlapWithRect,
 } from "../geo/Rect";
-import { getRectanglePath } from "../geo/path";
-import { type StateProvider, Store } from "../lib/Store";
+import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
-import { isNotNullish } from "../lib/isNullish";
-import { randomId } from "../lib/randomId";
 import { CanvasState } from "../model/CanvasState";
 import type { ColorId } from "../model/Colors";
 import { DependencyCollection } from "../model/DependencyCollection";
 import type { FillMode } from "../model/FillMode";
 import type { Mode } from "../model/Mode";
-import type { LineObject, Obj, PointObject, ShapeObject } from "../model/Page";
+import type { Obj, Page } from "../model/Page";
 import type { TextAlignment } from "../model/TextAlignment";
 import { Transaction } from "../model/Transaction";
 import type { Viewport } from "../model/Viewport";
-import { getNearestPoint } from "./HoverStateStore";
-import type { ViewportStore } from "./ViewportStore";
 
 export class CanvasStateStore extends Store<CanvasState> {
-    private viewportProvider: StateProvider<ViewportStore> | null = null;
-
     constructor() {
         super(
             new CanvasState({
@@ -34,12 +27,6 @@ export class CanvasStateStore extends Store<CanvasState> {
                 },
                 mode: "select",
                 selectedObjectIds: [],
-                dragType: { type: "none" },
-                dragging: false,
-                dragStartX: 0,
-                dragStartY: 0,
-                dragCurrentX: 0,
-                dragCurrentY: 0,
                 defaultColorId: 0,
                 defaultFillMode: "mono",
                 defaultTextAlignX: "center",
@@ -52,10 +39,6 @@ export class CanvasStateStore extends Store<CanvasState> {
         // setInterval(() => {
         // 	this.saveToLocalStorage();
         // }, 1000);
-    }
-
-    setViewportProvider(provider: StateProvider<ViewportStore>) {
-        this.viewportProvider = provider;
     }
 
     addObjects(...objects: Obj[]) {
@@ -131,16 +114,6 @@ export class CanvasStateStore extends Store<CanvasState> {
                         scaleX,
                         scaleY,
                     )
-                    .commit(),
-            ),
-        );
-    }
-
-    mergePoints(fromId: string, toId: string) {
-        this.setState(
-            this.state.setPage(
-                new Transaction(this.state.page)
-                    .mergePoints(fromId, toId)
                     .commit(),
             ),
         );
@@ -411,11 +384,11 @@ export class CanvasStateStore extends Store<CanvasState> {
         return null;
     }
 
-    setMode(mode: Mode) {
-        if (this.state.dragging) {
-            this.endDrag();
-        }
+    setPage(page: Page) {
+        this.setState(this.state.setPage(page));
+    }
 
+    setMode(mode: Mode) {
         this.setState(this.state.copy({ mode }));
 
         if (mode !== "select" && mode !== "text") {
@@ -447,7 +420,7 @@ export class CanvasStateStore extends Store<CanvasState> {
         }
     }
 
-    private setSelectedObjectIds(ids: string[]) {
+    setSelectedObjectIds(ids: string[]) {
         this.setState(this.state.setSelectedObjectIds(ids));
     }
 
@@ -473,443 +446,6 @@ export class CanvasStateStore extends Store<CanvasState> {
         // this.setSelectedObjectIds(objects.map((obj) => obj.id));
     }
 
-    startDrag(startCanvasX: number, startCanvasY: number, type: DragType) {
-        assert(
-            !this.getState().dragging,
-            "Cannot start dragging while dragging",
-        );
-
-        const [startX, startY] = fromCanvasCoordinate(
-            startCanvasX,
-            startCanvasY,
-            this.viewportProvider?.getState() ?? { x: 0, y: 0, scale: 1 },
-        );
-
-        this.setState(
-            this.getState().copy({
-                dragType: type,
-                dragging: true,
-                dragStartX: startX,
-                dragStartY: startY,
-                dragCurrentX: startX,
-                dragCurrentY: startY,
-            }),
-        );
-    }
-
-    updateDrag(currentCanvasX: number, currentCanvasY: number) {
-        assert(this.getState().dragging, "Cannot move drag while not dragging");
-
-        const [currentX, currentY] = fromCanvasCoordinate(
-            currentCanvasX,
-            currentCanvasY,
-            this.viewportProvider?.getState() ?? { x: 0, y: 0, scale: 1 },
-        );
-
-        this.setState(
-            this.getState().copy({
-                dragCurrentX: currentX,
-                dragCurrentY: currentY,
-            }),
-        );
-
-        switch (this.state.mode) {
-            case "select": {
-                switch (this.state.dragType.type) {
-                    case "select": {
-                        const selectionRect = this.state.getSelectorRect();
-                        assert(
-                            selectionRect !== null,
-                            "Cannot select without a selection",
-                        );
-                        const selectedObjectIds =
-                            this.state.dragType.originalSelectedObjectIds.slice();
-
-                        for (const obj of Object.values(
-                            this.state.page.objects,
-                        )) {
-                            switch (obj.type) {
-                                case "shape": {
-                                    if (
-                                        isRectOverlapWithRect(
-                                            selectionRect,
-                                            obj,
-                                        )
-                                    ) {
-                                        selectedObjectIds.push(obj.id);
-                                    }
-                                    break;
-                                }
-                                case "line": {
-                                    if (
-                                        isRectOverlapWithLine(
-                                            selectionRect,
-                                            obj,
-                                        )
-                                    ) {
-                                        selectedObjectIds.push(obj.id);
-                                    }
-                                    break;
-                                }
-                                case "point": {
-                                    if (
-                                        isRectOverlapWithPoint(
-                                            selectionRect,
-                                            obj,
-                                        )
-                                    ) {
-                                        selectedObjectIds.push(obj.id);
-                                    }
-                                    break;
-                                }
-                            }
-                        }
-                        this.setSelectedObjectIds(selectedObjectIds);
-                        break;
-                    }
-                    case "move": {
-                        this.resetAndMoveObjects(
-                            this.state.dragType.originalObjects,
-                            this.state.dragCurrentX - this.state.dragStartX,
-                            this.state.dragCurrentY - this.state.dragStartY,
-                        );
-                        break;
-                    }
-                    case "move-point": {
-                        const { originalPoint } = this.state.dragType;
-                        const nearestPoint = getNearestPoint(
-                            this.state.page,
-                            this.state.dragCurrentX,
-                            this.state.dragCurrentY,
-                            this.viewportProvider?.getState()?.scale ?? 1,
-                            [originalPoint.id],
-                        );
-
-                        const x =
-                            nearestPoint?.x ??
-                            originalPoint.x +
-                                (this.state.dragCurrentX -
-                                    this.state.dragStartX);
-                        const y =
-                            nearestPoint?.y ??
-                            originalPoint.y +
-                                (this.state.dragCurrentY -
-                                    this.state.dragStartY);
-
-                        this.setState(
-                            this.state.setPage(
-                                new Transaction(this.state.page)
-                                    .setPointPosition(originalPoint.id, x, y)
-                                    .commit(),
-                            ),
-                        );
-                        break;
-                    }
-                    case "nwse-resize":
-                    case "nesw-resize": {
-                        this.resetAndScaleObjects(
-                            this.state.dragType.originalObjects,
-                            (this.state.dragCurrentX -
-                                this.state.dragType.originX) /
-                                (this.state.dragStartX -
-                                    this.state.dragType.originX),
-                            (this.state.dragCurrentY -
-                                this.state.dragType.originY) /
-                                (this.state.dragStartY -
-                                    this.state.dragType.originY),
-                            this.state.dragType.originX,
-                            this.state.dragType.originY,
-                        );
-                        break;
-                    }
-                    case "ns-resize": {
-                        this.resetAndScaleObjects(
-                            this.state.dragType.originalObjects,
-                            1,
-                            (this.state.dragCurrentY -
-                                this.state.dragType.originY) /
-                                (this.state.dragStartY -
-                                    this.state.dragType.originY),
-                            0,
-                            this.state.dragType.originY,
-                        );
-                        break;
-                    }
-                    case "ew-resize": {
-                        this.resetAndScaleObjects(
-                            this.state.dragType.originalObjects,
-                            (this.state.dragCurrentX -
-                                this.state.dragType.originX) /
-                                (this.state.dragStartX -
-                                    this.state.dragType.originX),
-                            1,
-                            this.state.dragType.originX,
-                            0,
-                        );
-                        break;
-                    }
-                }
-                break;
-            }
-        }
-    }
-
-    endDrag() {
-        assert(this.state.dragging, "Cannot end drag while not dragging");
-        const dragType = this.state.dragType;
-
-        this.setState(
-            this.state.copy({
-                dragging: false,
-                dragType: { type: "none" },
-            }),
-        );
-
-        switch (this.state.mode) {
-            case "select": {
-                switch (dragType.type) {
-                    case "move-point": {
-                        const { originalPoint } = dragType;
-                        const transaction = new Transaction(this.state.page);
-
-                        const nearestPoint = getNearestPoint(
-                            this.state.page,
-                            this.state.dragCurrentX,
-                            this.state.dragCurrentY,
-                            this.viewportProvider?.getState()?.scale ?? 1,
-                            [originalPoint.id],
-                        );
-
-                        if (isNotNullish(nearestPoint?.pointId)) {
-                            transaction.mergePoints(
-                                originalPoint.id,
-                                nearestPoint.pointId,
-                            );
-                        } else if (isNotNullish(nearestPoint?.lineId)) {
-                            const line =
-                                this.state.page.objects[nearestPoint.lineId];
-                            assert(
-                                line !== undefined,
-                                `Line not found: ${nearestPoint.lineId}`,
-                            );
-                            assert(
-                                line.type === "line",
-                                "Parent is not a line",
-                            );
-
-                            const width = line.x2 - line.x1;
-                            const height = line.y2 - line.y1;
-
-                            const relativePosition =
-                                width > height
-                                    ? (nearestPoint.x - line.x1) / width
-                                    : (nearestPoint.y - line.y1) / height;
-
-                            transaction.addDependency({
-                                id: line.id,
-                                type: "pointOnLine",
-                                from: nearestPoint.lineId,
-                                to: originalPoint.id,
-                                r: relativePosition,
-                            });
-                        }
-
-                        this.setState(this.state.setPage(transaction.commit()));
-                        break;
-                    }
-                }
-                break;
-            }
-            case "shape": {
-                const width = Math.abs(
-                    this.state.dragCurrentX - this.state.dragStartX,
-                );
-                const height = Math.abs(
-                    this.state.dragCurrentY - this.state.dragStartY,
-                );
-                if (width === 0 || height === 0) break;
-
-                const x = Math.min(
-                    this.state.dragStartX,
-                    this.state.dragCurrentX,
-                );
-                const y = Math.min(
-                    this.state.dragStartY,
-                    this.state.dragCurrentY,
-                );
-                const shape: ShapeObject = {
-                    type: "shape",
-                    id: randomId(),
-                    x,
-                    y,
-                    width,
-                    height,
-                    label: "",
-                    textAlignX: this.state.defaultTextAlignX,
-                    textAlignY: this.state.defaultTextAlignY,
-                    colorId: this.state.defaultColorId,
-                    fillMode: this.state.defaultFillMode,
-                    path: getRectanglePath(),
-                };
-                this.addObjects(shape);
-                this.setMode("select");
-                this.select(shape.id);
-                break;
-            }
-            case "line": {
-                assert(dragType.type === "new-line", "Invalid drag type");
-
-                const transaction = new Transaction(this.state.page);
-
-                let p1: PointObject;
-                const nearestPoint1 = getNearestPoint(
-                    this.state.page,
-                    this.state.dragStartX,
-                    this.state.dragStartY,
-                    this.viewportProvider?.getState()?.scale ?? 1,
-                    [],
-                );
-
-                if (isNotNullish(nearestPoint1?.pointId)) {
-                    const _p1 = this.state.page.objects[nearestPoint1.pointId];
-                    assert(
-                        _p1 !== undefined,
-                        `Cannot find the highlighted point(${nearestPoint1.pointId})`,
-                    );
-                    assert(
-                        _p1.type === "point",
-                        `Invalid object type: ${_p1.id} ${_p1.type}`,
-                    );
-                    p1 = _p1;
-                } else if (isNotNullish(nearestPoint1?.lineId)) {
-                    const parentLine =
-                        this.state.page.objects[nearestPoint1.lineId];
-                    assert(
-                        parentLine !== undefined,
-                        `Line not found: ${nearestPoint1.lineId}`,
-                    );
-                    assert(parentLine.type === "line", "Parent is not a line");
-
-                    const width = parentLine.x2 - parentLine.x1;
-                    const height = parentLine.y2 - parentLine.y1;
-                    const relativePosition =
-                        width > height
-                            ? (nearestPoint1.x - parentLine.x1) / width
-                            : (nearestPoint1.y - parentLine.y1) / height;
-                    p1 = {
-                        type: "point",
-                        id: randomId(),
-                        x: nearestPoint1.x,
-                        y: nearestPoint1.y,
-                    };
-                    transaction.insertObjects([p1]).addDependency({
-                        type: "pointOnLine",
-                        id: randomId(),
-                        from: nearestPoint1.lineId,
-                        to: p1.id,
-                        r: relativePosition,
-                    });
-                } else {
-                    p1 = {
-                        type: "point",
-                        id: randomId(),
-                        x: this.state.dragStartX,
-                        y: this.state.dragStartY,
-                    };
-                    transaction.insertObjects([p1]);
-                }
-
-                let p2: PointObject;
-                const nearestPoint2 = getNearestPoint(
-                    this.state.page,
-                    this.state.dragCurrentX,
-                    this.state.dragCurrentY,
-                    this.viewportProvider?.getState()?.scale ?? 1,
-                    [],
-                );
-
-                if (isNotNullish(nearestPoint2?.pointId)) {
-                    const _p2 = this.state.page.objects[nearestPoint2.pointId];
-                    assert(
-                        _p2 !== undefined,
-                        `Cannot find the highlighted point(${nearestPoint2.pointId})`,
-                    );
-                    assert(
-                        _p2.type === "point",
-                        `Invalid object type: ${_p2.id} ${_p2.type}`,
-                    );
-                    p2 = _p2;
-                } else if (isNotNullish(nearestPoint2?.lineId)) {
-                    const parentLine =
-                        this.state.page.objects[nearestPoint2.lineId];
-                    assert(
-                        parentLine !== undefined,
-                        `Line not found: ${nearestPoint2.lineId}`,
-                    );
-                    assert(parentLine.type === "line", "Parent is not a line");
-
-                    const width = parentLine.x2 - parentLine.x1;
-                    const height = parentLine.y2 - parentLine.y1;
-                    const relativePosition =
-                        width > height
-                            ? (nearestPoint2.x - parentLine.x1) / width
-                            : (nearestPoint2.y - parentLine.y1) / height;
-                    p2 = {
-                        type: "point",
-                        id: randomId(),
-                        x: nearestPoint2.x,
-                        y: nearestPoint2.y,
-                    };
-                    transaction.insertObjects([p2]).addDependency({
-                        type: "pointOnLine",
-                        id: randomId(),
-                        from: nearestPoint2.lineId,
-                        to: p2.id,
-                        r: relativePosition,
-                    });
-                } else {
-                    p2 = {
-                        type: "point",
-                        id: randomId(),
-                        x: this.state.dragCurrentX,
-                        y: this.state.dragCurrentY,
-                    };
-                    transaction.insertObjects([p2]);
-                }
-
-                const line: LineObject = {
-                    id: randomId(),
-                    type: "line",
-                    x1: p1.x,
-                    y1: p1.y,
-                    x2: p2.x,
-                    y2: p2.y,
-                    colorId: this.state.defaultColorId,
-                };
-                transaction
-                    .insertObjects([line])
-                    .addDependency({
-                        id: randomId(),
-                        type: "lineEndPoint",
-                        lineEnd: 1,
-                        from: p1.id,
-                        to: line.id,
-                    })
-                    .addDependency({
-                        id: randomId(),
-                        type: "lineEndPoint",
-                        lineEnd: 2,
-                        from: p2.id,
-                        to: line.id,
-                    });
-
-                this.setState(this.state.setPage(transaction.commit()));
-                this.setMode("select");
-                this.select(line.id);
-            }
-        }
-    }
-
     // private saveToLocalStorage() {
     // 	const serializedPage = serializePage(this.state.page);
     //
@@ -933,57 +469,11 @@ export class CanvasStateStore extends Store<CanvasState> {
     // }
 }
 
-export type SelectionRectHandleType =
-    | "center"
-    | "topLeft"
-    | "top"
-    | "topRight"
-    | "right"
-    | "bottomRight"
-    | "bottom"
-    | "bottomLeft"
-    | "left";
-
 export const MouseButton = {
     Left: 0,
     Middle: 1,
     Right: 2,
 };
-
-export type DragType =
-    | { type: "none" }
-    | { type: "new-line" }
-    | { type: "select"; originalSelectedObjectIds: string[] }
-    | {
-          type: "move"; // moving multiple objects
-          originalObjects: Obj[];
-      }
-    | {
-          type: "move-point"; // moving a point in a path
-          originalPoint: PointObject;
-      }
-    | {
-          type: "nwse-resize";
-          originX: number;
-          originY: number;
-          originalObjects: Obj[];
-      }
-    | {
-          type: "nesw-resize";
-          originX: number;
-          originY: number;
-          originalObjects: Obj[];
-      }
-    | {
-          type: "ns-resize";
-          originY: number;
-          originalObjects: Obj[];
-      }
-    | {
-          type: "ew-resize";
-          originX: number;
-          originalObjects: Obj[];
-      };
 
 export function fromCanvasCoordinate(
     canvasX: number,

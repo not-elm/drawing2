@@ -1,9 +1,4 @@
-import {
-    type MouseEventHandler,
-    type PointerEventHandler,
-    memo,
-    useCallback,
-} from "react";
+import { type MouseEventHandler, memo, useCallback } from "react";
 import {
     ColorPaletteBackground,
     ColorPaletteBackgroundMonoColor,
@@ -17,25 +12,6 @@ export const ShapeView = memo(function ShapeView({
     isLabelEditing,
 }: { shape: ShapeObject; isLabelEditing: boolean }) {
     const handlers = useController();
-
-    const handleMouseDown: PointerEventHandler = useCallback(
-        (ev) => {
-            const handled = handlers.handleShapeMouseDown(
-                shape.id,
-                ev.clientX,
-                ev.clientY,
-                ev.button,
-                {
-                    shiftKey: ev.shiftKey,
-                },
-            );
-            if (handled) {
-                ev.stopPropagation();
-                ev.preventDefault();
-            }
-        },
-        [shape.id, handlers],
-    );
 
     const handleDoubleClick: MouseEventHandler = useCallback(
         (ev) => {
@@ -86,7 +62,6 @@ export const ShapeView = memo(function ShapeView({
                         }[shape.fillMode],
                     }}
                     strokeWidth={5}
-                    onPointerDown={handleMouseDown}
                     onDoubleClick={handleDoubleClick}
                 />
             </svg>

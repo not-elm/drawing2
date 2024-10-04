@@ -8,7 +8,8 @@
         "rules": {
             "complexity": {
                 "noBannedTypes": "off",
-                "noStaticOnlyClass": "off"
+                "noStaticOnlyClass": "off",
+                "noUselessLoneBlockStatements": "off"
             },
             "a11y": {
                 "noSvgWithoutTitle": "off",

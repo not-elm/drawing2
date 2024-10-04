@@ -157,7 +157,7 @@ export class Transaction {
                     for (const id of command.objectIds) {
                         delete objects[id];
 
-                        const index = this.page.objectIds.indexOf(id);
+                        const index = objectIds.indexOf(id);
                         assert(index !== -1, `Object not found: ${id}`);
                         objectIds.splice(index, 1);
 

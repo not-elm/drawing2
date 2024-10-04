@@ -1,4 +1,8 @@
-import { type Line, isLineOverlapWithLine } from "./Line";
+import {
+    type Line,
+    distanceFromPointToLine,
+    isLineOverlapWithLine,
+} from "./Line";
 import type { Point } from "./Point";
 
 export interface Rect {
@@ -63,6 +67,36 @@ export function unionRect(rect1: Rect, rect2: Rect): Rect {
     const width = Math.max(rect1.x + rect1.width, rect2.x + rect2.width) - x;
     const height = Math.max(rect1.y + rect1.height, rect2.y + rect2.height) - y;
     return { x, y, width, height };
+}
+
+/**
+ * Calculate the distance from a point to a rectangle.
+ * @return The distance from the point to the rectangle,
+ * 		and the nearest point on the rectangle.
+ */
+export function distanceFromPointToRect(
+    point: Point,
+    rect: Rect,
+): {
+    distance: number;
+    point: Point;
+} {
+    if (isRectOverlapWithPoint(rect, point)) {
+        return { distance: 0, point };
+    }
+
+    const { x: x1, y: y1 } = rect;
+    const x2 = x1 + rect.width;
+    const y2 = y1 + rect.height;
+
+    return [
+        { x1: x2, y1, x2, y2 },
+        { x1, y1: y2, x2, y2 },
+        { x1, y1, x2: x1, y2 },
+        { x1, y1, x2, y2: y1 },
+    ]
+        .map((edge) => distanceFromPointToLine(point, edge))
+        .sort((a, b) => a.distance - b.distance)[0];
 }
 
 export function getBoundingRectOfRect(rect: Rect): Rect {

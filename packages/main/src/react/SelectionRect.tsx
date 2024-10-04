@@ -94,17 +94,6 @@ export function SelectionRect() {
                                 ((objects[0] as LineObject).y1 - y) *
                                 viewport.scale,
                             cursor: "grab",
-                            pointerEvents: "all",
-                        }}
-                        onPointerDown={(ev) => {
-                            ev.stopPropagation();
-                            ev.preventDefault();
-                            controller.handleSelectionLineHandleMouseDown(
-                                ev.clientX,
-                                ev.clientY,
-                                ev.button,
-                                1,
-                            );
                         }}
                     >
                         <LineEditHandle />
@@ -118,17 +107,6 @@ export function SelectionRect() {
                                 ((objects[0] as LineObject).y2 - y) *
                                 viewport.scale,
                             cursor: "grab",
-                            pointerEvents: "all",
-                        }}
-                        onPointerDown={(ev) => {
-                            ev.stopPropagation();
-                            ev.preventDefault();
-                            controller.handleSelectionLineHandleMouseDown(
-                                ev.clientX,
-                                ev.clientY,
-                                ev.button,
-                                2,
-                            );
                         }}
                     >
                         <LineEditHandle />
@@ -143,17 +121,6 @@ export function SelectionRect() {
                             left: "0%",
                             width: "100%",
                             cursor: "ns-resize",
-                            pointerEvents: "all",
-                        }}
-                        onPointerDown={(ev) => {
-                            ev.stopPropagation();
-                            ev.preventDefault();
-                            controller.handleSelectionRectHandleMouseDown(
-                                ev.clientX,
-                                ev.clientY,
-                                ev.button,
-                                "top",
-                            );
                         }}
                     />
                     <ResizeHandle
@@ -162,17 +129,6 @@ export function SelectionRect() {
                             left: "100%",
                             height: "100%",
                             cursor: "ew-resize",
-                            pointerEvents: "all",
-                        }}
-                        onPointerDown={(ev) => {
-                            ev.stopPropagation();
-                            ev.preventDefault();
-                            controller.handleSelectionRectHandleMouseDown(
-                                ev.clientX,
-                                ev.clientY,
-                                ev.button,
-                                "right",
-                            );
                         }}
                     />
                     <ResizeHandle
@@ -181,17 +137,6 @@ export function SelectionRect() {
                             left: "0%",
                             width: "100%",
                             cursor: "ns-resize",
-                            pointerEvents: "all",
-                        }}
-                        onPointerDown={(ev) => {
-                            ev.stopPropagation();
-                            ev.preventDefault();
-                            controller.handleSelectionRectHandleMouseDown(
-                                ev.clientX,
-                                ev.clientY,
-                                ev.button,
-                                "bottom",
-                            );
                         }}
                     />
                     <ResizeHandle
@@ -200,17 +145,6 @@ export function SelectionRect() {
                             left: "0%",
                             height: "100%",
                             cursor: "ew-resize",
-                            pointerEvents: "all",
-                        }}
-                        onPointerDown={(ev) => {
-                            ev.stopPropagation();
-                            ev.preventDefault();
-                            controller.handleSelectionRectHandleMouseDown(
-                                ev.clientX,
-                                ev.clientY,
-                                ev.button,
-                                "left",
-                            );
                         }}
                     />
 
@@ -219,17 +153,6 @@ export function SelectionRect() {
                             top: "0%",
                             left: "0%",
                             cursor: "nwse-resize",
-                            pointerEvents: "all",
-                        }}
-                        onPointerDown={(ev) => {
-                            ev.stopPropagation();
-                            ev.preventDefault();
-                            controller.handleSelectionRectHandleMouseDown(
-                                ev.clientX,
-                                ev.clientY,
-                                ev.button,
-                                "topLeft",
-                            );
                         }}
                     >
                         <CornerResizeHandle />
@@ -239,17 +162,6 @@ export function SelectionRect() {
                             top: "0%",
                             left: "100%",
                             cursor: "nesw-resize",
-                            pointerEvents: "all",
-                        }}
-                        onPointerDown={(ev) => {
-                            ev.stopPropagation();
-                            ev.preventDefault();
-                            controller.handleSelectionRectHandleMouseDown(
-                                ev.clientX,
-                                ev.clientY,
-                                ev.button,
-                                "topRight",
-                            );
                         }}
                     >
                         <CornerResizeHandle />
@@ -259,17 +171,6 @@ export function SelectionRect() {
                             top: "100%",
                             left: "100%",
                             cursor: "nwse-resize",
-                            pointerEvents: "all",
-                        }}
-                        onPointerDown={(ev) => {
-                            ev.stopPropagation();
-                            ev.preventDefault();
-                            controller.handleSelectionRectHandleMouseDown(
-                                ev.clientX,
-                                ev.clientY,
-                                ev.button,
-                                "bottomRight",
-                            );
                         }}
                     >
                         <CornerResizeHandle />
@@ -279,17 +180,6 @@ export function SelectionRect() {
                             top: "100%",
                             left: "0%",
                             cursor: "nesw-resize",
-                            pointerEvents: "all",
-                        }}
-                        onPointerDown={(ev) => {
-                            ev.stopPropagation();
-                            ev.preventDefault();
-                            controller.handleSelectionRectHandleMouseDown(
-                                ev.clientX,
-                                ev.clientY,
-                                ev.button,
-                                "bottomLeft",
-                            );
                         }}
                     >
                         <CornerResizeHandle />

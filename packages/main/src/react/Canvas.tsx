@@ -1,36 +1,28 @@
-import {
-    type PointerEventHandler,
-    type WheelEventHandler,
-    useCallback,
-    useEffect,
-    useReducer,
-} from "react";
+import { type WheelEventHandler, useCallback, useEffect } from "react";
 import { useCanvasState } from "./CanvasStateStoreProvider";
 import { useController } from "./ControllerProvider";
+import { LineToolPreview } from "./LineToolPreview";
 import { LineView } from "./LineView";
 import { SelectionRect } from "./SelectionRect";
 import { SelectorRect } from "./SelectorRect";
+import { ShapeToolPreview } from "./ShapeToolPreview";
 import { ShapeView } from "./ShapeView";
-import { ToolPreview } from "./ToolPreview";
 import { useStore } from "./hooks/useStore";
 
 export function Canvas() {
-    const [logs, addLog] = useReducer(
-        (logs: string[], log: string) => [...logs, log].slice(-5),
-        [],
-    );
     const state = useCanvasState();
     const controller = useController();
     const viewport = useStore(controller.viewportStore);
+    const sessions = useStore(controller.gestureRecognizer);
 
     useEffect(() => {
         function handlePointerMove(ev: PointerEvent) {
             ev.stopPropagation();
-            controller.handleCanvasMouseMove(ev.clientX, ev.clientY);
+            controller.handleCanvasMouseMove(ev.clientX, ev.clientY, ev);
         }
         function handlePointerUp(ev: PointerEvent) {
             ev.stopPropagation();
-            controller.handleCanvasMouseUp();
+            controller.handleCanvasMouseUp(ev);
         }
         window.addEventListener("pointermove", handlePointerMove);
         window.addEventListener("pointerup", handlePointerUp);
@@ -59,21 +51,6 @@ export function Canvas() {
         [controller, viewport.scale],
     );
 
-    const handleCanvasPointerDown: PointerEventHandler = useCallback(
-        (ev) => {
-            ev.stopPropagation();
-            controller.handleCanvasMouseDown(
-                ev.clientX,
-                ev.clientY,
-                ev.button,
-                {
-                    shiftKey: ev.shiftKey,
-                },
-            );
-        },
-        [controller],
-    );
-
     const scale = viewport.scale;
 
     return (
@@ -83,9 +60,15 @@ export function Canvas() {
                 inset: 0,
                 overflow: "clip",
                 pointerEvents: "all",
+                ">*": {
+                    pointerEvents: "none",
+                },
             }}
             onWheel={handleWheel}
-            onPointerDown={handleCanvasPointerDown}
+            onPointerDown={(ev) => {
+                ev.stopPropagation();
+                controller.handleCanvasMouseDown(ev.nativeEvent);
+            }}
         >
             <div
                 css={{
@@ -114,10 +97,34 @@ export function Canvas() {
 
                     return null;
                 })}
-                <ToolPreview />
+                {Object.values(sessions).map(
+                    ({ pointerId, handlers, data }) => {
+                        switch (handlers.type) {
+                            case "selector":
+                                return (
+                                    <SelectorRect key={pointerId} data={data} />
+                                );
+                            case "new-shape":
+                                return (
+                                    <ShapeToolPreview
+                                        key={pointerId}
+                                        data={data}
+                                    />
+                                );
+                            case "new-line":
+                                return (
+                                    <LineToolPreview
+                                        key={pointerId}
+                                        data={data}
+                                    />
+                                );
+                            default:
+                                return null;
+                        }
+                    },
+                )}
             </div>
 
-            <SelectorRect />
             <SelectionRect />
             <PointHighlightLayer />
         </div>

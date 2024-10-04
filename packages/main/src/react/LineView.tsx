@@ -27,42 +27,13 @@ export const LineView = memo(function LineView({ line }: { line: LineObject }) {
             }}
         >
             <line
-                css={{
-                    stroke: Colors[line.colorId],
-                }}
+                css={{ stroke: Colors[line.colorId] }}
                 x1={canvasX1 - left}
                 y1={canvasY1 - top}
                 x2={canvasX2 - left}
                 y2={canvasY2 - top}
                 strokeWidth={5}
                 strokeLinecap="round"
-            />
-            <line
-                x1={canvasX1 - left}
-                y1={canvasY1 - top}
-                x2={canvasX2 - left}
-                y2={canvasY2 - top}
-                strokeWidth={15}
-                strokeLinecap="round"
-                css={{
-                    pointerEvents: "all",
-                }}
-                onPointerDown={(ev) => {
-                    const handled = handlers.handleShapeMouseDown(
-                        line.id,
-                        ev.clientX,
-                        ev.clientY,
-                        ev.button,
-                        {
-                            shiftKey: ev.shiftKey,
-                        },
-                    );
-
-                    if (handled) {
-                        ev.stopPropagation();
-                        ev.preventDefault();
-                    }
-                }}
             />
         </svg>
     );

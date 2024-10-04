@@ -3,7 +3,6 @@ import { getBoundingRectOfPoint } from "../geo/Point";
 import { type Rect, getBoundingRectOfRect, unionRect } from "../geo/Rect";
 import { dataclass } from "../lib/dataclass";
 import { isNotNullish } from "../lib/isNullish";
-import type { DragType } from "../store/CanvasStateStore";
 import type { ColorId } from "./Colors";
 import type { FillMode } from "./FillMode";
 import type { Mode } from "./Mode";
@@ -15,12 +14,6 @@ export class CanvasState extends dataclass<{
     readonly page: Page;
     readonly mode: Mode;
     readonly selectedObjectIds: string[];
-    readonly dragType: DragType;
-    readonly dragging: boolean;
-    readonly dragStartX: number;
-    readonly dragStartY: number;
-    readonly dragCurrentX: number;
-    readonly dragCurrentY: number;
     readonly defaultColorId: ColorId;
     readonly defaultFillMode: FillMode;
     readonly defaultTextAlignX: TextAlignment;
@@ -59,17 +52,6 @@ export class CanvasState extends dataclass<{
                 (id) => id in this.page.objects,
             ),
         });
-    }
-
-    getSelectorRect(): Rect | null {
-        if (this.dragType.type !== "select") return null;
-
-        return {
-            x: Math.min(this.dragStartX, this.dragCurrentX),
-            y: Math.min(this.dragStartY, this.dragCurrentY),
-            width: Math.abs(this.dragCurrentX - this.dragStartX),
-            height: Math.abs(this.dragCurrentY - this.dragStartY),
-        };
     }
 
     getSelectionRect(): Rect | null {

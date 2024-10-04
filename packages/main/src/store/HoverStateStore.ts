@@ -1,10 +1,98 @@
 import { distanceFromPointToLine } from "../geo/Line";
+import { distanceFromPointToRect } from "../geo/Rect";
 import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
-import type { Page } from "../model/Page";
+import type { Obj, Page } from "../model/Page";
 import type { CanvasStateStore } from "./CanvasStateStore";
 import type { PointerStateStore } from "./PointerStateStore";
 import type { ViewportStore } from "./ViewportStore";
+
+interface HitTestResult {
+    entries: HitTestResultEntry[];
+
+    // Hit objects ordered by z-index (Large z-index first)
+    orderedByZIndex: HitTestResultEntry[];
+
+    // Hit objects ordered by distance (Small distance first)
+    orderedByDistance: HitTestResultEntry[];
+}
+
+interface HitTestResultEntry {
+    object: Obj;
+    /**
+     * Hit point on the object. If margin is 0, this should be exactly same as the input point.
+     */
+    point: { x: number; y: number };
+    distance: number;
+    zIndex: number;
+}
+
+export function testHitItems(
+    page: Page,
+    x: number,
+    y: number,
+    scale: number,
+    threshold = THRESHOLD,
+): HitTestResult {
+    const entries: HitTestResultEntry[] = [];
+
+    for (const [zIndex, objectId] of page.objectIds.entries()) {
+        const object = page.objects[objectId];
+        assert(object !== undefined, `Object not found: ${objectId}`);
+
+        switch (object.type) {
+            case "point": {
+                const distance = Math.hypot(object.x - x, object.y - y) * scale;
+                if (distance < threshold) {
+                    entries.push({
+                        object,
+                        point: object,
+                        distance,
+                        zIndex,
+                    });
+                }
+                break;
+            }
+            case "line": {
+                const { point, distance } = distanceFromPointToLine(
+                    { x, y },
+                    object,
+                );
+                if (distance < threshold) {
+                    entries.push({
+                        object,
+                        point,
+                        distance,
+                        zIndex,
+                    });
+                }
+                break;
+            }
+            case "shape": {
+                const { point, distance } = distanceFromPointToRect(
+                    { x, y },
+                    object,
+                );
+                if (distance < threshold) {
+                    entries.push({
+                        object,
+                        point,
+                        distance,
+                        zIndex,
+                    });
+                }
+                break;
+            }
+        }
+    }
+
+    const orderedByZIndex = entries.toSorted((a, b) => -(a.zIndex - b.zIndex));
+    const orderedByDistance = entries.toSorted(
+        (a, b) => a.distance - b.distance,
+    );
+
+    return { entries, orderedByZIndex, orderedByDistance };
+}
 
 interface NearestPoint {
     x: number;
@@ -18,7 +106,7 @@ interface NearestPoint {
 /**
  * The distance threshold for highlighting a point in canvas coordinate (px).
  */
-const THRESHOLD = 16;
+const THRESHOLD = 32;
 
 export function getNearestPoint(
     page: Page,
