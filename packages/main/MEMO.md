@@ -3,8 +3,8 @@
     - [ ] win+chromeでCtrl+スクロールが効かない
     - [ ] win+chromeでShift+スクロールが効かない
     - [ ] 点を複製した際にバグる
+
 - 機能
-    - [ ] クリップボード
     - [ ] 数式 MathJax
     - [ ] テキストノード
     - [ ] 線にラベルを表示する
@@ -44,6 +44,8 @@
     - コア計算部分のWasm(rust)への置き換え
 
 - 完了
+    - [x] Undo/Redoの復活
+    - [x] クリップボード
     - [x] Serialize/Deserialize
     - [x] 矢印
     - [x] 点を依存先から切り離した際にDependencyを消す

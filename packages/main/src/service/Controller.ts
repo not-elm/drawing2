@@ -34,6 +34,7 @@ import {
     GestureRecognizer,
     type PointerEventSessionHandlers,
 } from "./GestureRecognizer";
+import { HistoryManager } from "./HistoryManager";
 import { getRestoreViewportService } from "./RestoreViewportService";
 
 export class Controller {
@@ -51,6 +52,7 @@ export class Controller {
         this.canvasStateStore,
         this.appStateStore,
     );
+    readonly historyManager = new HistoryManager(this.canvasStateStore);
 
     constructor() {
         this.gestureRecognizer.onPointerDown = this.handlePointerDown;
@@ -122,6 +124,7 @@ export class Controller {
                                             originalPoint,
                                             this.canvasStateStore,
                                             this.viewportStore,
+                                            this.historyManager,
                                         ),
                                     );
                                     return;
@@ -163,6 +166,7 @@ export class Controller {
                                             originalPoint,
                                             this.canvasStateStore,
                                             this.viewportStore,
+                                            this.historyManager,
                                         ),
                                     );
                                     return;
@@ -179,6 +183,7 @@ export class Controller {
                                             ev.shiftKey,
                                             this.canvasStateStore,
                                             this.viewportStore,
+                                            this.historyManager,
                                         ),
                                     );
                                 }
@@ -213,6 +218,7 @@ export class Controller {
                                             bottomRight.x,
                                             bottomRight.y,
                                             this.canvasStateStore,
+                                            this.historyManager,
                                         ),
                                     );
                                     return;
@@ -230,6 +236,7 @@ export class Controller {
                                             bottomLeft.x,
                                             bottomLeft.y,
                                             this.canvasStateStore,
+                                            this.historyManager,
                                         ),
                                     );
                                     return;
@@ -247,6 +254,7 @@ export class Controller {
                                             topRight.x,
                                             topRight.y,
                                             this.canvasStateStore,
+                                            this.historyManager,
                                         ),
                                     );
                                     return;
@@ -264,6 +272,7 @@ export class Controller {
                                             topLeft.x,
                                             topLeft.y,
                                             this.canvasStateStore,
+                                            this.historyManager,
                                         ),
                                     );
                                     return;
@@ -294,6 +303,7 @@ export class Controller {
                                                     .selectedBlockIds,
                                                 bottom.y1,
                                                 this.canvasStateStore,
+                                                this.historyManager,
                                             ),
                                         );
                                         return;
@@ -310,6 +320,7 @@ export class Controller {
                                                     .selectedBlockIds,
                                                 top.y1,
                                                 this.canvasStateStore,
+                                                this.historyManager,
                                             ),
                                         );
                                         return;
@@ -340,6 +351,7 @@ export class Controller {
                                                     .selectedBlockIds,
                                                 right.x1,
                                                 this.canvasStateStore,
+                                                this.historyManager,
                                             ),
                                         );
                                         return;
@@ -354,6 +366,7 @@ export class Controller {
                                                     .selectedBlockIds,
                                                 left.x1,
                                                 this.canvasStateStore,
+                                                this.historyManager,
                                             ),
                                         );
                                         return;
@@ -374,6 +387,7 @@ export class Controller {
                                             ev.shiftKey,
                                             this.canvasStateStore,
                                             this.viewportStore,
+                                            this.historyManager,
                                         ),
                                     );
                                     return;
@@ -395,6 +409,7 @@ export class Controller {
                                         hitResult.blocks[0].target.id,
                                         ev.shiftKey,
                                         this.canvasStateStore,
+                                        this.historyManager,
                                     ),
                                 );
                                 return;
@@ -435,6 +450,7 @@ export class Controller {
                                         hitResult.blocks[0].target.id,
                                         ev.shiftKey,
                                         this.canvasStateStore,
+                                        this.historyManager,
                                     ),
                                 );
                                 return;
@@ -573,9 +589,9 @@ export class Controller {
                     case "select": {
                         if (modifiers.metaKey || modifiers.ctrlKey) {
                             if (modifiers.shiftKey) {
-                                this.canvasStateStore.redo();
+                                this.historyManager.redo();
                             } else {
-                                this.canvasStateStore.undo();
+                                this.historyManager.undo();
                             }
                             return true;
                         }
@@ -964,6 +980,7 @@ function createMoveSelectedBlocksSessionHandlers(
     shiftKey: boolean,
     canvasStateStore: CanvasStateStore,
     viewportStore: ViewportStore,
+    historyManager: HistoryManager,
 ): PointerEventSessionHandlers {
     const hitResult = testHitEntities(
         canvasStateStore.getState().page,
@@ -971,6 +988,8 @@ function createMoveSelectedBlocksSessionHandlers(
         y,
         viewportStore.getState().scale,
     );
+    historyManager.pause();
+
     return {
         type: "move",
         onPointerMove: (data) => {
@@ -979,6 +998,9 @@ function createMoveSelectedBlocksSessionHandlers(
                 data.newX - data.lastX,
                 data.newY - data.lastY,
             );
+        },
+        onPointerUp: () => {
+            historyManager.resume();
         },
         onClick: () => {
             if (hitResult.blocks.length > 0) {
@@ -991,6 +1013,7 @@ function createMoveSelectedBlocksSessionHandlers(
                     canvasStateStore.select(hitResult.blocks[0].target.id);
                 }
             }
+            historyManager.resume();
         },
     };
 }
@@ -999,11 +1022,13 @@ function createMoveBlockSessionHandlers(
     blockId: string,
     shiftKey: boolean,
     canvasStateStore: CanvasStateStore,
+    historyManager: HistoryManager,
 ): PointerEventSessionHandlers {
     if (!shiftKey) {
         canvasStateStore.unselectAll();
     }
     canvasStateStore.select(blockId);
+    historyManager.pause();
 
     return {
         type: "move",
@@ -1014,6 +1039,9 @@ function createMoveBlockSessionHandlers(
                 data.newY - data.lastY,
             );
         },
+        onPointerUp: () => {
+            historyManager.resume();
+        },
     };
 }
 
@@ -1021,6 +1049,7 @@ function createMovePointSessionHandlers(
     originalPoint: PointEntity,
     canvasStateStore: CanvasStateStore,
     viewportProvider: StateProvider<ViewportStore>,
+    historyManager: HistoryManager,
 ): PointerEventSessionHandlers {
     const ignoreEntityIds = new Set([originalPoint.id]);
     const connectedLineIds = canvasStateStore
@@ -1037,6 +1066,7 @@ function createMovePointSessionHandlers(
         .filter(
             (dep) => dep.type === "pointOnShape" || dep.type === "pointOnLine",
         );
+    historyManager.pause();
 
     return {
         type: "move-point",
@@ -1148,6 +1178,7 @@ function createMovePointSessionHandlers(
             }
 
             canvasStateStore.setPage(transaction.commit());
+            historyManager.resume();
         },
     };
 }
@@ -1198,7 +1229,10 @@ function createXYResizeSessionHandlers(
     originX: number,
     originY: number,
     canvasStateStore: CanvasStateStore,
+    historyManager: HistoryManager,
 ): PointerEventSessionHandlers {
+    historyManager.pause();
+
     return {
         type: "resize",
         onPointerMove: (data) => {
@@ -1209,6 +1243,9 @@ function createXYResizeSessionHandlers(
                 originX,
                 originY,
             );
+        },
+        onPointerUp: () => {
+            historyManager.resume();
         },
     };
 }
@@ -1217,7 +1254,10 @@ function createXResizeSessionHandlers(
     blockIds: string[],
     originX: number,
     canvasStateStore: CanvasStateStore,
+    historyManager: HistoryManager,
 ): PointerEventSessionHandlers {
+    historyManager.pause();
+
     return {
         type: "resize",
         onPointerMove: (data) => {
@@ -1229,6 +1269,9 @@ function createXResizeSessionHandlers(
                 0,
             );
         },
+        onPointerUp: () => {
+            historyManager.resume();
+        },
     };
 }
 
@@ -1236,7 +1279,10 @@ function createYResizeSessionHandlers(
     blockIds: string[],
     originY: number,
     canvasStateStore: CanvasStateStore,
+    historyManager: HistoryManager,
 ): PointerEventSessionHandlers {
+    historyManager.pause();
+
     return {
         type: "resize",
         onPointerMove: (data) => {
@@ -1247,6 +1293,9 @@ function createYResizeSessionHandlers(
                 0,
                 originY,
             );
+        },
+        onPointerUp: () => {
+            historyManager.resume();
         },
     };
 }

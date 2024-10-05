@@ -155,48 +155,7 @@ export class Transaction {
         };
 
         for (const command of this.commands) {
-            switch (command.type) {
-                case "INSERT_BLOCKS": {
-                    insertBlocks(command, draft);
-                    break;
-                }
-                case "INSERT_POINTS": {
-                    insertPoints(command, draft);
-                    break;
-                }
-                case "DELETE_BLOCKS": {
-                    deleteBlocks(command, draft);
-                    break;
-                }
-                case "SCALE_BLOCKS": {
-                    scaleBlocks(command, draft);
-                    break;
-                }
-                case "MOVE_BLOCKS": {
-                    moveBlocks(command, draft);
-                    break;
-                }
-                case "SET_POINT_POSITION": {
-                    setPointPosition(command, draft);
-                    break;
-                }
-                case "MERGE_POINTS": {
-                    mergePoints(command, draft);
-                    break;
-                }
-                case "UPDATE_BLOCK_PROPERTY": {
-                    updateShapeProperty(command, draft);
-                    break;
-                }
-                case "ADD_DEPENDENCIES": {
-                    addDependencies(command, draft);
-                    break;
-                }
-                case "DELETE_DEPENDENCIES": {
-                    deleteDependencies(command, draft);
-                    break;
-                }
-            }
+            const diff = processCommand(command, draft);
         }
 
         for (const dependency of draft.dependencies.collectDependencies(
@@ -233,6 +192,41 @@ interface PageDraft {
     blockIds: string[];
     dependencies: DependencyCollection;
     dirtyEntityIds: string[];
+}
+
+function processCommand(command: Command, draft: PageDraft) {
+    switch (command.type) {
+        case "INSERT_BLOCKS": {
+            return insertBlocks(command, draft);
+        }
+        case "INSERT_POINTS": {
+            return insertPoints(command, draft);
+        }
+        case "DELETE_BLOCKS": {
+            return deleteBlocks(command, draft);
+        }
+        case "SCALE_BLOCKS": {
+            return scaleBlocks(command, draft);
+        }
+        case "MOVE_BLOCKS": {
+            return moveBlocks(command, draft);
+        }
+        case "SET_POINT_POSITION": {
+            return setPointPosition(command, draft);
+        }
+        case "MERGE_POINTS": {
+            return mergePoints(command, draft);
+        }
+        case "UPDATE_BLOCK_PROPERTY": {
+            return updateShapeProperty(command, draft);
+        }
+        case "ADD_DEPENDENCIES": {
+            return addDependencies(command, draft);
+        }
+        case "DELETE_DEPENDENCIES": {
+            return deleteDependencies(command, draft);
+        }
+    }
 }
 
 function insertBlocks(command: InsertBlocksCommand, draft: PageDraft) {
