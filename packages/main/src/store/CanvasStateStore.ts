@@ -15,6 +15,7 @@ import {
 import type { TextAlignment } from "../model/TextAlignment";
 import { Transaction } from "../model/Transaction";
 import type { Viewport } from "../model/Viewport";
+import { ClipboardService } from "../service/ClipboardService";
 
 export class CanvasStateStore extends Store<CanvasState> {
     constructor() {
@@ -405,11 +406,9 @@ export class CanvasStateStore extends Store<CanvasState> {
     }
 
     copy() {
-        // if (this.state.selectedObjectIds.length === 0) return;
-        //
-        // const objects = this.state.getSelectedObjects();
-        //
-        // ClipboardService.copy(objects);
+        if (this.state.selectedBlockIds.length === 0) return;
+
+        ClipboardService.copy(this.state.page, this.state.selectedBlockIds);
     }
 
     async cut() {
@@ -418,12 +417,23 @@ export class CanvasStateStore extends Store<CanvasState> {
     }
 
     async paste(): Promise<void> {
-        // const { objects, points } = await ClipboardService.paste();
-        //
-        // this.addPoints(...points);
-        // this.addObjects(...objects);
-        //
-        // this.setSelectedObjectIds(objects.map((obj) => obj.id));
+        const { blocks, points, dependencies } = await ClipboardService.paste();
+
+        this.setState(
+            this.state
+                .setPage(
+                    new Transaction(this.state.page)
+                        .insertBlocks(blocks)
+                        .insertPoints(points)
+                        .addDependencies(dependencies)
+                        .commit(),
+                )
+                .setSelectedBlockIds(blocks.map((block) => block.id)),
+        );
+
+        // Copy pasted blocks so that next paste operation will
+        // create a new copy of blocks in different position
+        this.copy();
     }
 
     private saveToLocalStorage() {

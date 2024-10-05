@@ -15,7 +15,7 @@ export function serializePage(page: Page): SerializedPage {
         blocks: page.blockIds.map((blockId) =>
             serializeBlock(page.blocks[blockId]),
         ),
-        points: Object.values(page.points),
+        points: Object.values(page.points).map(serializePoint),
         dependencies: page.dependencies.serialize(),
     };
 }
@@ -33,8 +33,8 @@ export function deserializePage(page: SerializedPage): Page {
     };
 }
 
-type SerializedBlock = SerializedLineBlock | SerializedShapeBlock;
-function serializeBlock(block: Block): SerializedBlock {
+export type SerializedBlock = SerializedLineBlock | SerializedShapeBlock;
+export function serializeBlock(block: Block): SerializedBlock {
     switch (block.type) {
         case "line":
             return serializeLineBlock(block);
@@ -42,7 +42,7 @@ function serializeBlock(block: Block): SerializedBlock {
             return serializeShapeBlock(block);
     }
 }
-function deserializeBlock(block: SerializedBlock): Block {
+export function deserializeBlock(block: SerializedBlock): Block {
     switch (block.type) {
         case "line":
             return deserializeLineBlock(block);
@@ -148,19 +148,19 @@ function deserializeShapeBlock(shape: SerializedShapeBlock): ShapeBlock {
     };
 }
 
-interface SerializedPointEntity {
+export interface SerializedPointEntity {
     id: string;
     x: number;
     y: number;
 }
-function serializePoint(point: PointEntity): SerializedPointEntity {
+export function serializePoint(point: PointEntity): SerializedPointEntity {
     return {
         id: point.id,
         x: point.x,
         y: point.y,
     };
 }
-function deserializePoint(point: SerializedPointEntity): PointEntity {
+export function deserializePoint(point: SerializedPointEntity): PointEntity {
     return {
         type: "point",
         id: point.id,

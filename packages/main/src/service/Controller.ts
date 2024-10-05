@@ -738,13 +738,15 @@ function createNewLineSessionHandlers(
                             x: hitEntry.point.x,
                             y: hitEntry.point.y,
                         };
-                        transaction.insertPoints([p1]).addDependency({
-                            type: "pointOnLine",
-                            id: randomId(),
-                            from: hitEntry.target.id,
-                            to: p1.id,
-                            r: relativePosition,
-                        });
+                        transaction.insertPoints([p1]).addDependencies([
+                            {
+                                type: "pointOnLine",
+                                id: randomId(),
+                                from: hitEntry.target.id,
+                                to: p1.id,
+                                r: relativePosition,
+                            },
+                        ]);
                         break;
                     }
                     case "shape": {
@@ -760,14 +762,16 @@ function createNewLineSessionHandlers(
                             x: hitEntry.point.x,
                             y: hitEntry.point.y,
                         };
-                        transaction.insertPoints([p1]).addDependency({
-                            type: "pointOnShape",
-                            id: randomId(),
-                            from: hitEntry.target.id,
-                            to: p1.id,
-                            rx,
-                            ry,
-                        });
+                        transaction.insertPoints([p1]).addDependencies([
+                            {
+                                type: "pointOnShape",
+                                id: randomId(),
+                                from: hitEntry.target.id,
+                                to: p1.id,
+                                rx,
+                                ry,
+                            },
+                        ]);
                     }
                 }
             }
@@ -808,13 +812,15 @@ function createNewLineSessionHandlers(
                             x: hitEntry.point.x,
                             y: hitEntry.point.y,
                         };
-                        transaction.insertPoints([p2]).addDependency({
-                            type: "pointOnLine",
-                            id: randomId(),
-                            from: hitEntry.target.id,
-                            to: p2.id,
-                            r: relativePosition,
-                        });
+                        transaction.insertPoints([p2]).addDependencies([
+                            {
+                                type: "pointOnLine",
+                                id: randomId(),
+                                from: hitEntry.target.id,
+                                to: p2.id,
+                                r: relativePosition,
+                            },
+                        ]);
                         break;
                     }
                     case "shape": {
@@ -830,14 +836,16 @@ function createNewLineSessionHandlers(
                             x: hitEntry.point.x,
                             y: hitEntry.point.y,
                         };
-                        transaction.insertPoints([p2]).addDependency({
-                            type: "pointOnShape",
-                            id: randomId(),
-                            from: hitEntry.target.id,
-                            to: p2.id,
-                            rx,
-                            ry,
-                        });
+                        transaction.insertPoints([p2]).addDependencies([
+                            {
+                                type: "pointOnShape",
+                                id: randomId(),
+                                from: hitEntry.target.id,
+                                to: p2.id,
+                                rx,
+                                ry,
+                            },
+                        ]);
                     }
                 }
             }
@@ -853,22 +861,22 @@ function createNewLineSessionHandlers(
                 endType2: appStateStore.getState().defaultLineEndType2,
                 colorId: appStateStore.getState().defaultColorId,
             };
-            transaction
-                .insertBlocks([line])
-                .addDependency({
+            transaction.insertBlocks([line]).addDependencies([
+                {
                     id: randomId(),
                     type: "blockToPoint",
                     pointKey: PointKey.LINE_P1,
                     from: p1.id,
                     to: line.id,
-                })
-                .addDependency({
+                },
+                {
                     id: randomId(),
                     type: "blockToPoint",
                     pointKey: PointKey.LINE_P2,
                     from: p2.id,
                     to: line.id,
-                });
+                },
+            ]);
 
             canvasStateStore.setPage(transaction.commit());
             appStateStore.setMode({ type: "select" });
@@ -926,20 +934,22 @@ function createNewShapeSessionHandlers(
             )
                 .insertBlocks([shape])
                 .insertPoints([p1, p2])
-                .addDependency({
-                    id: randomId(),
-                    type: "blockToPoint",
-                    pointKey: PointKey.SHAPE_P1,
-                    from: p1.id,
-                    to: shape.id,
-                })
-                .addDependency({
-                    id: randomId(),
-                    type: "blockToPoint",
-                    pointKey: PointKey.SHAPE_P2,
-                    from: p2.id,
-                    to: shape.id,
-                });
+                .addDependencies([
+                    {
+                        id: randomId(),
+                        type: "blockToPoint",
+                        pointKey: PointKey.SHAPE_P1,
+                        from: p1.id,
+                        to: shape.id,
+                    },
+                    {
+                        id: randomId(),
+                        type: "blockToPoint",
+                        pointKey: PointKey.SHAPE_P2,
+                        from: p2.id,
+                        to: shape.id,
+                    },
+                ]);
             canvasStateStore.setPage(transaction.commit());
             appStateStore.setMode({ type: "select" });
             canvasStateStore.unselectAll();
@@ -1103,13 +1113,15 @@ function createMovePointSessionHandlers(
                                       hitBlockEntry.target.y1) /
                                   height;
 
-                        transaction.addDependency({
-                            id: randomId(),
-                            type: "pointOnLine",
-                            from: hitBlockEntry.target.id,
-                            to: originalPoint.id,
-                            r: r,
-                        });
+                        transaction.addDependencies([
+                            {
+                                id: randomId(),
+                                type: "pointOnLine",
+                                from: hitBlockEntry.target.id,
+                                to: originalPoint.id,
+                                r: r,
+                            },
+                        ]);
                         break;
                     }
                     case "shape": {
@@ -1120,14 +1132,16 @@ function createMovePointSessionHandlers(
                             (hitBlockEntry.point.y - hitBlockEntry.target.y) /
                             hitBlockEntry.target.height;
 
-                        transaction.addDependency({
-                            id: randomId(),
-                            type: "pointOnShape",
-                            from: hitBlockEntry.target.id,
-                            to: originalPoint.id,
-                            rx,
-                            ry,
-                        });
+                        transaction.addDependencies([
+                            {
+                                id: randomId(),
+                                type: "pointOnShape",
+                                from: hitBlockEntry.target.id,
+                                to: originalPoint.id,
+                                rx,
+                                ry,
+                            },
+                        ]);
                         break;
                     }
                 }

@@ -51,8 +51,8 @@ interface UpdateBlockPropertyCommand
     blockIds: string[];
     updater: (block: Readonly<Block>) => Block;
 }
-interface AddDependencyCommand extends CommandBase<"ADD_DEPENDENCY"> {
-    dependency: Dependency;
+interface AddDependenciesCommand extends CommandBase<"ADD_DEPENDENCIES"> {
+    dependencies: Dependency[];
 }
 interface DeleteDependenciesCommand extends CommandBase<"DELETE_DEPENDENCIES"> {
     dependencyIds: string[];
@@ -67,7 +67,7 @@ type Command =
     | SetPointPositionCommand
     | MergePointsCommand
     | UpdateBlockPropertyCommand
-    | AddDependencyCommand
+    | AddDependenciesCommand
     | DeleteDependenciesCommand;
 
 export class Transaction {
@@ -135,8 +135,8 @@ export class Transaction {
         return this;
     }
 
-    addDependency(dependency: Dependency): this {
-        this.commands.push({ type: "ADD_DEPENDENCY", dependency });
+    addDependencies(dependencies: Dependency[]): this {
+        this.commands.push({ type: "ADD_DEPENDENCIES", dependencies });
         return this;
     }
 
@@ -188,8 +188,8 @@ export class Transaction {
                     updateShapeProperty(command, draft);
                     break;
                 }
-                case "ADD_DEPENDENCY": {
-                    addDependency(command, draft);
+                case "ADD_DEPENDENCIES": {
+                    addDependencies(command, draft);
                     break;
                 }
                 case "DELETE_DEPENDENCIES": {
@@ -354,9 +354,11 @@ function updateShapeProperty(
     }
 }
 
-function addDependency(command: AddDependencyCommand, draft: PageDraft) {
-    draft.dependencies.add(command.dependency);
-    draft.dirtyEntityIds.push(command.dependency.from);
+function addDependencies(command: AddDependenciesCommand, draft: PageDraft) {
+    for (const dependency of command.dependencies) {
+        draft.dependencies.add(dependency);
+        draft.dirtyEntityIds.push(dependency.from);
+    }
 }
 
 function deleteDependencies(
