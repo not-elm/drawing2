@@ -101,11 +101,20 @@ export class CanvasStateStore extends Store<CanvasState> {
             this.state.setPage(
                 new Transaction(this.state.page)
                     .updateProperty([id], (oldBlock) => {
-                        assert(
-                            oldBlock.type === "shape",
-                            `Invalid block type: ${oldBlock.id} ${oldBlock.type}`,
-                        );
-                        return { ...oldBlock, label };
+                        switch (oldBlock.type) {
+                            case "shape": {
+                                return { ...oldBlock, label };
+                            }
+                            case "text": {
+                                return { ...oldBlock, content: label };
+                            }
+                            default: {
+                                assert(
+                                    false,
+                                    `Invalid block type: ${oldBlock.id} ${oldBlock.type}`,
+                                );
+                            }
+                        }
                     })
                     .commit(),
             ),
@@ -123,6 +132,12 @@ export class CanvasStateStore extends Store<CanvasState> {
                                     ...oldBlock,
                                     textAlignX,
                                     textAlignY,
+                                };
+                            }
+                            case "text": {
+                                return {
+                                    ...oldBlock,
+                                    textAlignX,
                                 };
                             }
                             default: {
@@ -473,9 +488,11 @@ export function fromCanvasCoordinate(
 
 export function isOverlapped(obj1: Block, obj2: Block): boolean {
     switch (obj1.type) {
-        case "shape": {
+        case "shape":
+        case "text": {
             switch (obj2.type) {
-                case "shape": {
+                case "shape":
+                case "text": {
                     return isRectOverlapWithRect(obj1, obj2);
                 }
                 case "line": {
@@ -486,7 +503,8 @@ export function isOverlapped(obj1: Block, obj2: Block): boolean {
         }
         case "line": {
             switch (obj2.type) {
-                case "shape": {
+                case "shape":
+                case "text": {
                     return isOverlapped(obj2, obj1);
                 }
                 case "line": {

@@ -47,6 +47,7 @@ export class CanvasState extends dataclass<{
         const rects = this.getSelectedBlocks().map((obj) => {
             switch (obj.type) {
                 case "shape":
+                case "text":
                     return getBoundingRectOfRect(obj);
                 case "line":
                     return getBoundingRectOfLine(obj);

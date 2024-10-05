@@ -451,6 +451,21 @@ function recomputeBlockToPointDependency(
             };
             break;
         }
+        case PointKey.TEXT_P1: {
+            assert(
+                block.type === "text",
+                `Invalid block type: ${block.type} !== text`,
+            );
+
+            draft.blocks[block.id] = {
+                ...block,
+                x: point.x,
+                y: point.y,
+                x1: point.x,
+                y1: point.y,
+            };
+            break;
+        }
     }
 }
 
@@ -479,7 +494,10 @@ function recomputePointOnShapeDependency(
     const { rx, ry } = dependency;
 
     const shape = draft.blocks[dependency.from];
-    assert(shape.type === "shape", `Invalid block type: ${shape.type}`);
+    assert(
+        shape.type === "shape" || shape.type === "text",
+        `Invalid block type: ${shape.type} != (shape or text)`,
+    );
 
     const point = draft.points[dependency.to];
     draft.points[point.id] = {

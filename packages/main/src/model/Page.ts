@@ -2,6 +2,7 @@ import type { ColorId } from "./Colors";
 import type { DependencyCollection } from "./DependencyCollection";
 import type { FillMode } from "./FillMode";
 import type { TextAlignment } from "./TextAlignment";
+import type { TextBlockSizingMode } from "./TextBlockSizingMode";
 
 interface EntityBase<T extends string> {
     type: T;
@@ -36,8 +37,27 @@ export interface ShapeBlock extends EntityBase<"shape"> {
     fillMode: FillMode;
     path: number[][];
 }
+export interface TextBlock extends EntityBase<"text"> {
+    x: number;
+    y: number;
+    // If sizingMode=auto, width and height will be automatically set by application
+    width: number;
 
-export type Block = LineBlock | ShapeBlock;
+    // Cannot be configured, automatically set by application based on the content
+    height: number;
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+
+    sizingMode: TextBlockSizingMode;
+    textAlignX: TextAlignment;
+
+    // TODO: リッチテキストフォーマット対応
+    content: string;
+}
+
+export type Block = LineBlock | ShapeBlock | TextBlock;
 
 export type Entity = Block | PointEntity;
 
@@ -53,4 +73,5 @@ export const PointKey = {
     LINE_P2: "lineP1",
     SHAPE_P1: "shapeP1",
     SHAPE_P2: "shapeP2",
+    TEXT_P1: "textP1",
 };

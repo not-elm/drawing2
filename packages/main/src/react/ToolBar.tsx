@@ -65,6 +65,19 @@ export function ToolBar() {
                         Line
                     </Button>
                 </li>
+                <li>
+                    <Button
+                        aria-checked={appState.mode.type === "new-text"}
+                        css={{
+                            pointerEvents: "all",
+                        }}
+                        onPointerDown={() => {
+                            controller.setMode({ type: "new-text" });
+                        }}
+                    >
+                        Text
+                    </Button>
+                </li>
             </ul>
         </Card>
     );

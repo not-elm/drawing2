@@ -36,7 +36,7 @@ export const ShapeView = memo(function ShapeView({
     );
 });
 
-export const ShapeViewInner = memo(function ShapeViewInner({
+const ShapeViewInner = memo(function ShapeViewInner({
     shapeId,
     width,
     height,
@@ -145,6 +145,8 @@ export const ShapeViewInner = memo(function ShapeViewInner({
                         autoFocus={true}
                         autoComplete="off"
                         css={{
+                            display: "block",
+                            width: "100%",
                             fieldSizing: "content",
                             border: "none",
                             background: "none",
@@ -156,6 +158,7 @@ export const ShapeViewInner = memo(function ShapeViewInner({
                             whiteSpace: "pre-wrap",
                             textAlign: "inherit",
                             pointerEvents: "all",
+                            padding: 0,
                         }}
                         onFocus={(ev) => {
                             ev.target.setSelectionRange(

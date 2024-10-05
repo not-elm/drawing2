@@ -6,6 +6,7 @@ import { SelectionRect } from "./SelectionRect";
 import { SelectorRect } from "./SelectorRect";
 import { ShapeToolPreview } from "./ShapeToolPreview";
 import { ShapeView } from "./ShapeView";
+import { TextView } from "./TextView";
 import { useStore } from "./hooks/useStore";
 
 export function Canvas() {
@@ -81,24 +82,38 @@ export function Canvas() {
                     const block = page.blocks[blockId];
                     if (block === undefined) return null;
 
-                    if (block.type === "shape") {
-                        return (
-                            <ShapeView
-                                key={block.id}
-                                shape={block}
-                                isLabelEditing={
-                                    appState.mode.type === "text" &&
-                                    appState.mode.blockId === block.id
-                                }
-                            />
-                        );
+                    switch (block.type) {
+                        case "shape": {
+                            return (
+                                <ShapeView
+                                    key={block.id}
+                                    shape={block}
+                                    isLabelEditing={
+                                        appState.mode.type === "text" &&
+                                        appState.mode.blockId === block.id
+                                    }
+                                />
+                            );
+                        }
+                        case "line": {
+                            return <LineView key={block.id} line={block} />;
+                        }
+                        case "text": {
+                            return (
+                                <TextView
+                                    key={block.id}
+                                    text={block}
+                                    editing={
+                                        appState.mode.type === "text" &&
+                                        appState.mode.blockId === block.id
+                                    }
+                                />
+                            );
+                        }
+                        default: {
+                            return null;
+                        }
                     }
-
-                    if (block.type === "line") {
-                        return <LineView key={block.id} line={block} />;
-                    }
-
-                    return null;
                 })}
                 {Object.values(sessions).map(
                     ({ pointerId, handlers, data }) => {
@@ -150,7 +165,12 @@ function PointHighlightLayer() {
                 viewBox="0 0 1 1"
                 width={1}
                 height={1}
-                css={{ overflow: "visible" }}
+                css={{
+                    overflow: "visible",
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                }}
             >
                 {hitEntry !== null && (
                     <circle

@@ -61,6 +61,9 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
         const selectedLines = selectedBlocks.filter(
             (obj) => obj.type === "line",
         );
+        const selectedTexts = selectedBlocks.filter(
+            (obj) => obj.type === "text",
+        );
 
         const alignXs = new Set(
             selectedShapes.map((shape) => shape.textAlignX),
@@ -99,7 +102,10 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
                       ? [...fillModes][0]
                       : null,
             textAlignSectionVisible:
-                selectedShapes.length > 0 || appState.mode.type === "shape",
+                selectedShapes.length > 0 ||
+                selectedTexts.length > 0 ||
+                appState.mode.type === "shape" ||
+                appState.mode.type === "new-text",
             textAlignX:
                 alignXs.size === 0
                     ? appState.defaultTextAlignX

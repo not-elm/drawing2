@@ -29,6 +29,7 @@ export class GestureRecognizer extends Store<GestureRecognizerState> {
     handlePointerDown(ev: PointerEvent) {
         let handlers: PointerEventSessionHandlers | null = null;
         this.onPointerDown?.(ev, (_handlers) => (handlers = _handlers));
+        if (handlers === null) return;
 
         const [x, y] = fromCanvasCoordinate(
             ev.clientX,

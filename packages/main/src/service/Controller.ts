@@ -17,6 +17,7 @@ import {
     type PointEntity,
     PointKey,
     type ShapeBlock,
+    type TextBlock,
 } from "../model/Page";
 import type { TextAlignment } from "../model/TextAlignment";
 import { Transaction } from "../model/Transaction";
@@ -85,6 +86,10 @@ export class Controller {
                             const isSingleLineMode =
                                 selectedBlocks.length === 1 &&
                                 selectedBlocks[0].type === "line";
+                            const isSingleTextMode =
+                                selectedBlocks.length === 1 &&
+                                selectedBlocks[0].type === "text";
+
                             if (isSingleLineMode) {
                                 const line = selectedBlocks[0] as LineBlock;
 
@@ -186,6 +191,89 @@ export class Controller {
                                             this.historyManager,
                                         ),
                                     );
+                                }
+                            } else if (isSingleTextMode) {
+                                const topLeft = {
+                                    x: selectionRect.x,
+                                    y: selectionRect.y,
+                                };
+                                const topRight = {
+                                    x: selectionRect.x + selectionRect.width,
+                                    y: selectionRect.y,
+                                };
+                                const bottomLeft = {
+                                    x: selectionRect.x,
+                                    y: selectionRect.y + selectionRect.height,
+                                };
+                                const bottomRight = {
+                                    x: selectionRect.x + selectionRect.width,
+                                    y: selectionRect.y + selectionRect.height,
+                                };
+
+                                // Left, Right
+                                {
+                                    const left: Line = {
+                                        x1: topLeft.x,
+                                        y1: topLeft.y,
+                                        x2: bottomLeft.x,
+                                        y2: bottomLeft.y,
+                                    };
+                                    const right: Line = {
+                                        x1: topRight.x,
+                                        y1: topRight.y,
+                                        x2: bottomRight.x,
+                                        y2: bottomRight.y,
+                                    };
+                                    if (
+                                        distanceFromPointToLine({ x, y }, left)
+                                            .distance < THRESHOLD
+                                    ) {
+                                        startSession(
+                                            createXResizeSessionHandlers(
+                                                this.canvasStateStore.getState()
+                                                    .selectedBlockIds,
+                                                right.x1,
+                                                this.canvasStateStore,
+                                                this.historyManager,
+                                            ),
+                                        );
+                                        return;
+                                    }
+                                    if (
+                                        distanceFromPointToLine({ x, y }, right)
+                                            .distance < THRESHOLD
+                                    ) {
+                                        startSession(
+                                            createXResizeSessionHandlers(
+                                                this.canvasStateStore.getState()
+                                                    .selectedBlockIds,
+                                                left.x1,
+                                                this.canvasStateStore,
+                                                this.historyManager,
+                                            ),
+                                        );
+                                        return;
+                                    }
+                                }
+
+                                // Center
+                                if (
+                                    isRectOverlapWithPoint(selectionRect, {
+                                        x,
+                                        y,
+                                    })
+                                ) {
+                                    startSession(
+                                        createMoveSelectedBlocksSessionHandlers(
+                                            x,
+                                            y,
+                                            ev.shiftKey,
+                                            this.canvasStateStore,
+                                            this.viewportStore,
+                                            this.historyManager,
+                                        ),
+                                    );
+                                    return;
                                 }
                             } else {
                                 const topLeft = {
@@ -489,6 +577,53 @@ export class Controller {
                         );
                         return;
                     }
+                    case "new-text": {
+                        const text: TextBlock = {
+                            id: randomId(),
+                            type: "text",
+                            x,
+                            y,
+                            x1: x,
+                            y1: y,
+                            x2: x,
+                            y2: y,
+                            width: 0,
+                            height: 0,
+                            content: "",
+                            textAlignX:
+                                this.appStateStore.getState().defaultTextAlignX,
+                            sizingMode: "content",
+                        };
+                        const p1: PointEntity = {
+                            type: "point",
+                            id: randomId(),
+                            x,
+                            y,
+                        };
+                        this.canvasStateStore.setPage(
+                            new Transaction(
+                                this.canvasStateStore.getState().page,
+                            )
+                                .insertBlocks([text])
+                                .insertPoints([p1])
+                                .addDependencies([
+                                    {
+                                        id: randomId(),
+                                        type: "blockToPoint",
+                                        pointKey: PointKey.TEXT_P1,
+                                        from: p1.id,
+                                        to: text.id,
+                                    },
+                                ])
+                                .commit(),
+                        );
+                        this.appStateStore.setMode({
+                            type: "text",
+                            blockId: text.id,
+                        });
+                        ev.preventDefault();
+                        return;
+                    }
                 }
             }
         }
@@ -659,6 +794,31 @@ export class Controller {
         return false;
     }
 
+    handleTextBlockSizeChanged(
+        blockId: string,
+        canvasWidth: number,
+        canvasHeight: number,
+    ) {
+        const width = canvasWidth / this.viewportStore.getState().scale;
+        const height = canvasHeight / this.viewportStore.getState().scale;
+
+        this.canvasStateStore.setPage(
+            new Transaction(this.canvasStateStore.getState().page)
+                .updateProperty([blockId], (oldBlock) => {
+                    assert(
+                        oldBlock.type === "text",
+                        `Invalid block type: ${oldBlock.id} ${oldBlock.type} !== text`,
+                    );
+
+                    return {
+                        ...oldBlock,
+                        width,
+                        height,
+                    };
+                })
+                .commit(),
+        );
+    }
     setMode(mode: Mode) {
         this.appStateStore.setMode(mode);
     }
@@ -765,7 +925,8 @@ function createNewLineSessionHandlers(
                         ]);
                         break;
                     }
-                    case "shape": {
+                    case "shape":
+                    case "text": {
                         const rx =
                             (hitEntry.point.x - hitEntry.target.x) /
                             hitEntry.target.width;
@@ -839,7 +1000,8 @@ function createNewLineSessionHandlers(
                         ]);
                         break;
                     }
-                    case "shape": {
+                    case "shape":
+                    case "text": {
                         const rx =
                             (hitEntry.point.x - hitEntry.target.x) /
                             hitEntry.target.width;
@@ -933,6 +1095,21 @@ function createNewShapeSessionHandlers(
                 fillMode: appStateStore.getState().defaultFillMode,
                 path: getRectanglePath(),
             };
+            // const shape: TextBlock = {
+            //     type: "text",
+            //     id: randomId(),
+            //     x,
+            //     y,
+            //     width,
+            //     height,
+            //     x1: x,
+            //     y1: y,
+            //     x2: x + width,
+            //     y2: y + height,
+            //     content: "Hello World",
+            //     textAlignX: appStateStore.getState().defaultTextAlignX,
+            //     sizingMode: "fixed",
+            // };
             const p1: PointEntity = {
                 type: "point",
                 id: randomId(),
@@ -1204,7 +1381,8 @@ function createSelectByRangeSessionHandlers(
                 canvasStateStore.getState().page.blocks,
             )) {
                 switch (block.type) {
-                    case "shape": {
+                    case "shape":
+                    case "text": {
                         if (isRectOverlapWithRect(selectionRect, block)) {
                             selectedBlockIds.add(block.id);
                         }

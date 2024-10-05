@@ -8,7 +8,6 @@ import type {
     LineBlock,
     Page,
     PointEntity,
-    ShapeBlock,
 } from "../model/Page";
 import type { CanvasStateStore } from "./CanvasStateStore";
 import type { PointerStateStore } from "./PointerStateStore";
@@ -81,13 +80,14 @@ export function testHitEntities(
                 }
                 break;
             }
-            case "shape": {
+            case "shape":
+            case "text": {
                 const { point, distance } = distanceFromPointToRect(
                     { x, y },
                     block,
                 );
                 if (distance < threshold) {
-                    const entry: HitTestResultEntry<ShapeBlock> = {
+                    const entry: HitTestResultEntry<Block> = {
                         target: block,
                         point,
                         distance,

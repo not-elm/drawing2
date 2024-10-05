@@ -1,3 +1,5 @@
+import type { PointKey } from "./Page";
+
 interface DependencyBase<T extends string> {
     id: string;
     type: T;
@@ -6,7 +8,7 @@ interface DependencyBase<T extends string> {
 }
 
 export interface BlockToPointDependency extends DependencyBase<"blockToPoint"> {
-    pointKey: string;
+    pointKey: (typeof PointKey)[keyof typeof PointKey];
 }
 
 export interface PointOnLineDependency extends DependencyBase<"pointOnLine"> {

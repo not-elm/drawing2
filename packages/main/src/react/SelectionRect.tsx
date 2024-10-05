@@ -14,6 +14,7 @@ export function SelectionRect() {
     const { x, y, width, height } = selectionRect;
     const blocks = canvasState.getSelectedBlocks();
     const isSingleLineMode = blocks.length === 1 && blocks[0].type === "line";
+    const isSingleTextMode = blocks.length === 1 && blocks[0].type === "text";
 
     return (
         <div
@@ -113,79 +114,82 @@ export function SelectionRect() {
                     </ResizeHandle>
                 </>
             )}
-            {!isSingleLineMode && appState.mode.type === "select" && (
-                <>
-                    <ResizeHandle
-                        css={{
-                            top: "0%",
-                            left: "0%",
-                            width: "100%",
-                            cursor: "ns-resize",
-                        }}
-                    />
-                    <ResizeHandle
-                        css={{
-                            top: "0%",
-                            left: "100%",
-                            height: "100%",
-                            cursor: "ew-resize",
-                        }}
-                    />
-                    <ResizeHandle
-                        css={{
-                            top: "100%",
-                            left: "0%",
-                            width: "100%",
-                            cursor: "ns-resize",
-                        }}
-                    />
-                    <ResizeHandle
-                        css={{
-                            top: "0%",
-                            left: "0%",
-                            height: "100%",
-                            cursor: "ew-resize",
-                        }}
-                    />
+            {isSingleTextMode && appState.mode.type === "select" && null}
+            {!isSingleLineMode &&
+                !isSingleTextMode &&
+                appState.mode.type === "select" && (
+                    <>
+                        <ResizeHandle
+                            css={{
+                                top: "0%",
+                                left: "0%",
+                                width: "100%",
+                                cursor: "ns-resize",
+                            }}
+                        />
+                        <ResizeHandle
+                            css={{
+                                top: "0%",
+                                left: "100%",
+                                height: "100%",
+                                cursor: "ew-resize",
+                            }}
+                        />
+                        <ResizeHandle
+                            css={{
+                                top: "100%",
+                                left: "0%",
+                                width: "100%",
+                                cursor: "ns-resize",
+                            }}
+                        />
+                        <ResizeHandle
+                            css={{
+                                top: "0%",
+                                left: "0%",
+                                height: "100%",
+                                cursor: "ew-resize",
+                            }}
+                        />
 
-                    <ResizeHandle
-                        css={{
-                            top: "0%",
-                            left: "0%",
-                            cursor: "nwse-resize",
-                        }}
-                    >
-                        <CornerResizeHandle />
-                    </ResizeHandle>
-                    <ResizeHandle
-                        css={{
-                            top: "0%",
-                            left: "100%",
-                            cursor: "nesw-resize",
-                        }}
-                    >
-                        <CornerResizeHandle />
-                    </ResizeHandle>
-                    <ResizeHandle
-                        css={{
-                            top: "100%",
-                            left: "100%",
-                            cursor: "nwse-resize",
-                        }}
-                    >
-                        <CornerResizeHandle />
-                    </ResizeHandle>
-                    <ResizeHandle
-                        css={{
-                            top: "100%",
-                            left: "0%",
-                            cursor: "nesw-resize",
-                        }}
-                    >
-                        <CornerResizeHandle />
-                    </ResizeHandle>
-                </>
-            )}
+                        <ResizeHandle
+                            css={{
+                                top: "0%",
+                                left: "0%",
+                                cursor: "nwse-resize",
+                            }}
+                        >
+                            <CornerResizeHandle />
+                        </ResizeHandle>
+                        <ResizeHandle
+                            css={{
+                                top: "0%",
+                                left: "100%",
+                                cursor: "nesw-resize",
+                            }}
+                        >
+                            <CornerResizeHandle />
+                        </ResizeHandle>
+                        <ResizeHandle
+                            css={{
+                                top: "100%",
+                                left: "100%",
+                                cursor: "nwse-resize",
+                            }}
+                        >
+                            <CornerResizeHandle />
+                        </ResizeHandle>
+                        <ResizeHandle
+                            css={{
+                                top: "100%",
+                                left: "0%",
+                                cursor: "nesw-resize",
+                            }}
+                        >
+                            <CornerResizeHandle />
+                        </ResizeHandle>
+                    </>
+                )}
         </div>
     );
 }

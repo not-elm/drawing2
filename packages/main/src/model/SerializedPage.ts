@@ -2,8 +2,16 @@ import type { ColorId } from "./Colors";
 import type { SerializedDependency } from "./Dependency";
 import { DependencyCollection } from "./DependencyCollection";
 import type { FillMode } from "./FillMode";
-import type { Block, LineBlock, Page, PointEntity, ShapeBlock } from "./Page";
+import type {
+    Block,
+    LineBlock,
+    Page,
+    PointEntity,
+    ShapeBlock,
+    TextBlock,
+} from "./Page";
 import type { TextAlignment } from "./TextAlignment";
+import type { TextBlockSizingMode } from "./TextBlockSizingMode";
 
 export interface SerializedPage {
     blocks: SerializedBlock[];
@@ -33,13 +41,18 @@ export function deserializePage(page: SerializedPage): Page {
     };
 }
 
-export type SerializedBlock = SerializedLineBlock | SerializedShapeBlock;
+export type SerializedBlock =
+    | SerializedLineBlock
+    | SerializedShapeBlock
+    | SerializedTextBlock;
 export function serializeBlock(block: Block): SerializedBlock {
     switch (block.type) {
         case "line":
             return serializeLineBlock(block);
         case "shape":
             return serializeShapeBlock(block);
+        case "text":
+            return serializeTextBlock(block);
     }
 }
 export function deserializeBlock(block: SerializedBlock): Block {
@@ -48,6 +61,8 @@ export function deserializeBlock(block: SerializedBlock): Block {
             return deserializeLineBlock(block);
         case "shape":
             return deserializeShapeBlock(block);
+        case "text":
+            return deserializeTextBlock(block);
     }
 }
 
@@ -145,6 +160,56 @@ function deserializeShapeBlock(shape: SerializedShapeBlock): ShapeBlock {
         colorId: shape.colorId,
         fillMode: shape.fillMode,
         path: shape.path,
+    };
+}
+
+interface SerializedTextBlock {
+    id: string;
+    type: "text";
+    x: number;
+    y: number;
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+    width: number;
+    height: number;
+    sizingMode: TextBlockSizingMode;
+    textAlignX: TextAlignment;
+    content: string;
+}
+function serializeTextBlock(text: TextBlock): SerializedTextBlock {
+    return {
+        id: text.id,
+        type: "text",
+        x: text.x,
+        y: text.y,
+        x1: text.x1,
+        y1: text.y1,
+        x2: text.x2,
+        y2: text.y2,
+        width: text.width,
+        height: text.height,
+        sizingMode: text.sizingMode,
+        textAlignX: text.textAlignX,
+        content: text.content,
+    };
+}
+function deserializeTextBlock(text: SerializedTextBlock): TextBlock {
+    return {
+        id: text.id,
+        type: "text",
+        x: text.x,
+        y: text.y,
+        x1: text.x1,
+        y1: text.y1,
+        x2: text.x2,
+        y2: text.y2,
+        width: text.width,
+        height: text.height,
+        sizingMode: text.sizingMode,
+        textAlignX: text.textAlignX,
+        content: text.content,
     };
 }
 
