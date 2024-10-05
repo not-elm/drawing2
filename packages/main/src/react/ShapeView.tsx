@@ -4,13 +4,13 @@ import {
     ColorPaletteBackgroundMonoColor,
     Colors,
 } from "../model/Colors";
-import type { ShapeObject } from "../model/Page";
+import type { ShapeBlock } from "../model/Page";
 import { useController } from "./ControllerProvider";
 
 export const ShapeView = memo(function ShapeView({
     shape,
     isLabelEditing,
-}: { shape: ShapeObject; isLabelEditing: boolean }) {
+}: { shape: ShapeBlock; isLabelEditing: boolean }) {
     const controller = useController();
 
     const handleDoubleClick: MouseEventHandler = useCallback(

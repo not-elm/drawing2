@@ -13,11 +13,10 @@ import type { ColorId } from "../model/Colors";
 import type { FillMode } from "../model/FillMode";
 import type { Mode } from "../model/Mode";
 import {
-    type LineObject,
-    type Obj,
+    type LineBlock,
     type PointEntity,
     PointKey,
-    type ShapeObject,
+    type ShapeBlock,
 } from "../model/Page";
 import type { TextAlignment } from "../model/TextAlignment";
 import { Transaction } from "../model/Transaction";
@@ -27,7 +26,7 @@ import {
     MouseButton,
     fromCanvasCoordinate,
 } from "../store/CanvasStateStore";
-import { HoverStateStore, testHitObjects } from "../store/HoverStateStore";
+import { HoverStateStore, testHitEntities } from "../store/HoverStateStore";
 import { PointerStateStore } from "../store/PointerStateStore";
 import { PropertyPanelStateStore } from "../store/PropertyPanelStateStore";
 import { ViewportStore } from "../store/ViewportStore";
@@ -73,19 +72,19 @@ export class Controller {
                         const selectionRect = this.canvasStateStore
                             .getState()
                             .getSelectionRect();
-                        const selectedObjects = this.canvasStateStore
+                        const selectedBlocks = this.canvasStateStore
                             .getState()
-                            .getSelectedObjects();
+                            .getSelectedBlocks();
 
                         // Selection
                         if (selectionRect !== null) {
                             const THRESHOLD = 32;
 
                             const isSingleLineMode =
-                                selectedObjects.length === 1 &&
-                                selectedObjects[0].type === "line";
+                                selectedBlocks.length === 1 &&
+                                selectedBlocks[0].type === "line";
                             if (isSingleLineMode) {
-                                const line = selectedObjects[0] as LineObject;
+                                const line = selectedBlocks[0] as LineBlock;
 
                                 if (
                                     distanceFromPointToPoint(
@@ -102,7 +101,7 @@ export class Controller {
                                             .find(
                                                 (dependency) =>
                                                     dependency.type ===
-                                                        "objectToPoint" &&
+                                                        "blockToPoint" &&
                                                     dependency.pointKey ===
                                                         PointKey.LINE_P1,
                                             )?.from;
@@ -117,10 +116,6 @@ export class Controller {
                                     assert(
                                         originalPoint !== undefined,
                                         `Point ${originalPointId} is not found`,
-                                    );
-                                    assert(
-                                        originalPoint.type === "point",
-                                        `Object ${originalPointId} is not a point`,
                                     );
                                     startSession(
                                         createMovePointSessionHandlers(
@@ -147,7 +142,7 @@ export class Controller {
                                             .find(
                                                 (dependency) =>
                                                     dependency.type ===
-                                                        "objectToPoint" &&
+                                                        "blockToPoint" &&
                                                     dependency.pointKey ===
                                                         PointKey.LINE_P2,
                                             )?.from;
@@ -162,10 +157,6 @@ export class Controller {
                                     assert(
                                         originalPoint !== undefined,
                                         `Point ${originalPointId} is not found`,
-                                    );
-                                    assert(
-                                        originalPoint.type === "point",
-                                        `Object ${originalPointId} is not a point`,
                                     );
                                     startSession(
                                         createMovePointSessionHandlers(
@@ -182,7 +173,7 @@ export class Controller {
                                         .distance < THRESHOLD
                                 ) {
                                     startSession(
-                                        createMoveSelectedObjectsSessionHandlers(
+                                        createMoveSelectedBlocksSessionHandlers(
                                             x,
                                             y,
                                             ev.shiftKey,
@@ -217,7 +208,8 @@ export class Controller {
                                 ) {
                                     startSession(
                                         createXYResizeSessionHandlers(
-                                            selectedObjects,
+                                            this.canvasStateStore.getState()
+                                                .selectedBlockIds,
                                             bottomRight.x,
                                             bottomRight.y,
                                             this.canvasStateStore,
@@ -233,7 +225,8 @@ export class Controller {
                                 ) {
                                     startSession(
                                         createXYResizeSessionHandlers(
-                                            selectedObjects,
+                                            this.canvasStateStore.getState()
+                                                .selectedBlockIds,
                                             bottomLeft.x,
                                             bottomLeft.y,
                                             this.canvasStateStore,
@@ -249,7 +242,8 @@ export class Controller {
                                 ) {
                                     startSession(
                                         createXYResizeSessionHandlers(
-                                            selectedObjects,
+                                            this.canvasStateStore.getState()
+                                                .selectedBlockIds,
                                             topRight.x,
                                             topRight.y,
                                             this.canvasStateStore,
@@ -265,7 +259,8 @@ export class Controller {
                                 ) {
                                     startSession(
                                         createXYResizeSessionHandlers(
-                                            selectedObjects,
+                                            this.canvasStateStore.getState()
+                                                .selectedBlockIds,
                                             topLeft.x,
                                             topLeft.y,
                                             this.canvasStateStore,
@@ -295,7 +290,8 @@ export class Controller {
                                     ) {
                                         startSession(
                                             createYResizeSessionHandlers(
-                                                selectedObjects,
+                                                this.canvasStateStore.getState()
+                                                    .selectedBlockIds,
                                                 bottom.y1,
                                                 this.canvasStateStore,
                                             ),
@@ -310,7 +306,8 @@ export class Controller {
                                     ) {
                                         startSession(
                                             createYResizeSessionHandlers(
-                                                selectedObjects,
+                                                this.canvasStateStore.getState()
+                                                    .selectedBlockIds,
                                                 top.y1,
                                                 this.canvasStateStore,
                                             ),
@@ -339,7 +336,8 @@ export class Controller {
                                     ) {
                                         startSession(
                                             createXResizeSessionHandlers(
-                                                selectedObjects,
+                                                this.canvasStateStore.getState()
+                                                    .selectedBlockIds,
                                                 right.x1,
                                                 this.canvasStateStore,
                                             ),
@@ -352,7 +350,8 @@ export class Controller {
                                     ) {
                                         startSession(
                                             createXResizeSessionHandlers(
-                                                selectedObjects,
+                                                this.canvasStateStore.getState()
+                                                    .selectedBlockIds,
                                                 left.x1,
                                                 this.canvasStateStore,
                                             ),
@@ -369,7 +368,7 @@ export class Controller {
                                     })
                                 ) {
                                     startSession(
-                                        createMoveSelectedObjectsSessionHandlers(
+                                        createMoveSelectedBlocksSessionHandlers(
                                             x,
                                             y,
                                             ev.shiftKey,
@@ -382,18 +381,18 @@ export class Controller {
                             }
                         }
 
-                        // Object
+                        // Block
                         {
-                            const hitResult = testHitObjects(
+                            const hitResult = testHitEntities(
                                 this.canvasStateStore.getState().page,
                                 x,
                                 y,
                                 this.viewportStore.getState().scale,
                             );
-                            if (hitResult.objects.length > 0) {
+                            if (hitResult.blocks.length > 0) {
                                 startSession(
-                                    createMoveObjectSessionHandlers(
-                                        hitResult.objects[0].target,
+                                    createMoveBlockSessionHandlers(
+                                        hitResult.blocks[0].target.id,
                                         ev.shiftKey,
                                         this.canvasStateStore,
                                     ),
@@ -418,22 +417,22 @@ export class Controller {
                     case "text": {
                         this.appStateStore.setMode({ type: "select" });
 
-                        // Object
+                        // Block
                         {
-                            const hitResult = testHitObjects(
+                            const hitResult = testHitEntities(
                                 this.canvasStateStore.getState().page,
                                 x,
                                 y,
                                 this.viewportStore.getState().scale,
                             );
-                            if (hitResult.objects.length > 0) {
+                            if (hitResult.blocks.length > 0) {
                                 this.canvasStateStore.unselectAll();
                                 this.canvasStateStore.select(
-                                    hitResult.objects[0].target.id,
+                                    hitResult.blocks[0].target.id,
                                 );
                                 startSession(
-                                    createMoveObjectSessionHandlers(
-                                        hitResult.objects[0].target,
+                                    createMoveBlockSessionHandlers(
+                                        hitResult.blocks[0].target.id,
                                         ev.shiftKey,
                                         this.canvasStateStore,
                                     ),
@@ -508,7 +507,7 @@ export class Controller {
             case MouseButton.Left: {
                 this.canvasStateStore.unselectAll();
                 this.canvasStateStore.select(id);
-                this.appStateStore.setMode({ type: "text", objectId: id });
+                this.appStateStore.setMode({ type: "text", blockId: id });
                 return true;
             }
         }
@@ -633,7 +632,7 @@ export class Controller {
             case "Backspace": {
                 switch (this.appStateStore.getState().mode.type) {
                     case "select": {
-                        this.canvasStateStore.deleteSelectedObjects();
+                        this.canvasStateStore.deleteSelectedBlocks();
                         return true;
                     }
                 }
@@ -667,19 +666,19 @@ export class Controller {
         this.appStateStore.setDefaultFillMode(fillMode);
     }
 
-    bringSelectedObjectsToFront() {
+    bringSelectedBlocksToFront() {
         this.canvasStateStore.bringToFront();
     }
 
-    bringSelectedObjectsForward() {
+    bringSelectedBlocksForward() {
         this.canvasStateStore.bringForward();
     }
 
-    sendSelectedObjectsBackward() {
+    sendSelectedBlocksBackward() {
         this.canvasStateStore.sendBackward();
     }
 
-    sendSelectedObjectsToBack() {
+    sendSelectedBlocksToBack() {
         this.canvasStateStore.sendToBack();
     }
 }
@@ -699,7 +698,7 @@ function createNewLineSessionHandlers(
             );
 
             let p1: PointEntity;
-            const hitTestResult1 = testHitObjects(
+            const hitTestResult1 = testHitEntities(
                 page,
                 data.startX,
                 data.startY,
@@ -717,7 +716,7 @@ function createNewLineSessionHandlers(
             } else if (hitTestResult1.points.length > 0) {
                 p1 = hitTestResult1.points[0].target;
             } else {
-                const hitEntry = hitTestResult1.objects[0];
+                const hitEntry = hitTestResult1.blocks[0];
                 switch (hitEntry.target.type) {
                     case "line": {
                         const width = hitEntry.target.x2 - hitEntry.target.x1;
@@ -769,7 +768,7 @@ function createNewLineSessionHandlers(
             }
 
             let p2: PointEntity;
-            const hitTestResult2 = testHitObjects(
+            const hitTestResult2 = testHitEntities(
                 page,
                 data.newX,
                 data.newY,
@@ -787,7 +786,7 @@ function createNewLineSessionHandlers(
             } else if (hitTestResult2.points.length > 0) {
                 p2 = hitTestResult2.points[0].target;
             } else {
-                const hitEntry = hitTestResult2.objects[0];
+                const hitEntry = hitTestResult2.blocks[0];
                 switch (hitEntry.target.type) {
                     case "line": {
                         const width = hitEntry.target.x2 - hitEntry.target.x1;
@@ -838,7 +837,7 @@ function createNewLineSessionHandlers(
                 }
             }
 
-            const line: LineObject = {
+            const line: LineBlock = {
                 id: randomId(),
                 type: "line",
                 x1: p1.x,
@@ -848,17 +847,17 @@ function createNewLineSessionHandlers(
                 colorId: appStateStore.getState().defaultColorId,
             };
             transaction
-                .insertObjects([line])
+                .insertBlocks([line])
                 .addDependency({
                     id: randomId(),
-                    type: "objectToPoint",
+                    type: "blockToPoint",
                     pointKey: PointKey.LINE_P1,
                     from: p1.id,
                     to: line.id,
                 })
                 .addDependency({
                     id: randomId(),
-                    type: "objectToPoint",
+                    type: "blockToPoint",
                     pointKey: PointKey.LINE_P2,
                     from: p2.id,
                     to: line.id,
@@ -885,7 +884,7 @@ function createNewShapeSessionHandlers(
 
             const x = Math.min(data.startX, data.newX);
             const y = Math.min(data.startY, data.newY);
-            const shape: ShapeObject = {
+            const shape: ShapeBlock = {
                 type: "shape",
                 id: randomId(),
                 x,
@@ -918,18 +917,18 @@ function createNewShapeSessionHandlers(
             const transaction = new Transaction(
                 canvasStateStore.getState().page,
             )
-                .insertObjects([shape])
+                .insertBlocks([shape])
                 .insertPoints([p1, p2])
                 .addDependency({
                     id: randomId(),
-                    type: "objectToPoint",
+                    type: "blockToPoint",
                     pointKey: PointKey.SHAPE_P1,
                     from: p1.id,
                     to: shape.id,
                 })
                 .addDependency({
                     id: randomId(),
-                    type: "objectToPoint",
+                    type: "blockToPoint",
                     pointKey: PointKey.SHAPE_P2,
                     from: p2.id,
                     to: shape.id,
@@ -942,14 +941,14 @@ function createNewShapeSessionHandlers(
     };
 }
 
-function createMoveSelectedObjectsSessionHandlers(
+function createMoveSelectedBlocksSessionHandlers(
     x: number,
     y: number,
     shiftKey: boolean,
     canvasStateStore: CanvasStateStore,
     viewportStore: ViewportStore,
 ): PointerEventSessionHandlers {
-    const hitResult = testHitObjects(
+    const hitResult = testHitEntities(
         canvasStateStore.getState().page,
         x,
         y,
@@ -958,42 +957,42 @@ function createMoveSelectedObjectsSessionHandlers(
     return {
         type: "move",
         onPointerMove: (data) => {
-            canvasStateStore.resetAndMoveObjects(
-                canvasStateStore.getState().selectedObjectIds,
+            canvasStateStore.moveBlocks(
+                canvasStateStore.getState().selectedBlockIds,
                 data.newX - data.lastX,
                 data.newY - data.lastY,
             );
         },
         onClick: () => {
-            if (hitResult.objects.length > 0) {
+            if (hitResult.blocks.length > 0) {
                 if (shiftKey) {
                     canvasStateStore.toggleSelect(
-                        hitResult.objects[0].target.id,
+                        hitResult.blocks[0].target.id,
                     );
                 } else {
                     canvasStateStore.unselectAll();
-                    canvasStateStore.select(hitResult.objects[0].target.id);
+                    canvasStateStore.select(hitResult.blocks[0].target.id);
                 }
             }
         },
     };
 }
 
-function createMoveObjectSessionHandlers(
-    object: Obj,
+function createMoveBlockSessionHandlers(
+    blockId: string,
     shiftKey: boolean,
     canvasStateStore: CanvasStateStore,
 ): PointerEventSessionHandlers {
     if (!shiftKey) {
         canvasStateStore.unselectAll();
     }
-    canvasStateStore.select(object.id);
+    canvasStateStore.select(blockId);
 
     return {
         type: "move",
         onPointerMove: (data) => {
-            canvasStateStore.resetAndMoveObjects(
-                canvasStateStore.getState().selectedObjectIds,
+            canvasStateStore.moveBlocks(
+                canvasStateStore.getState().selectedBlockIds,
                 data.newX - data.lastX,
                 data.newY - data.lastY,
             );
@@ -1006,13 +1005,13 @@ function createMovePointSessionHandlers(
     canvasStateStore: CanvasStateStore,
     viewportProvider: StateProvider<ViewportStore>,
 ): PointerEventSessionHandlers {
-    const ignoreObjectIds = new Set([originalPoint.id]);
+    const ignoreEntityIds = new Set([originalPoint.id]);
     const connectedLineIds = canvasStateStore
         .getState()
         .page.dependencies.getByFromEntityId(originalPoint.id)
         .map((dep) => dep.to);
     for (const lineId of connectedLineIds) {
-        ignoreObjectIds.add(lineId);
+        ignoreEntityIds.add(lineId);
     }
 
     const dependenciesToPoint = canvasStateStore
@@ -1025,7 +1024,7 @@ function createMovePointSessionHandlers(
     return {
         type: "move-point",
         onPointerMove: (data) => {
-            const hitTestResult = testHitObjects(
+            const hitTestResult = testHitEntities(
                 canvasStateStore.getState().page,
                 data.newX,
                 data.newY,
@@ -1033,12 +1032,12 @@ function createMovePointSessionHandlers(
             );
 
             const hitPointEntry = hitTestResult.points.filter(
-                (item) => !ignoreObjectIds.has(item.target.id),
+                (item) => !ignoreEntityIds.has(item.target.id),
             )[0];
-            const hitObjectEntry = hitTestResult.objects.filter(
-                (item) => !ignoreObjectIds.has(item.target.id),
+            const hitBlockEntry = hitTestResult.blocks.filter(
+                (item) => !ignoreEntityIds.has(item.target.id),
             )[0];
-            const hitEntry = hitPointEntry ?? hitObjectEntry;
+            const hitEntry = hitPointEntry ?? hitBlockEntry;
 
             const x =
                 hitEntry?.point.x ??
@@ -1061,7 +1060,7 @@ function createMovePointSessionHandlers(
                 dependenciesToPoint.map((dep) => dep.id),
             );
 
-            const hitTestResult = testHitObjects(
+            const hitTestResult = testHitEntities(
                 canvasStateStore.getState().page,
                 data.newX,
                 data.newY,
@@ -1069,10 +1068,10 @@ function createMovePointSessionHandlers(
             );
 
             const hitPointEntry = hitTestResult.points.filter(
-                (item) => !ignoreObjectIds.has(item.target.id),
+                (item) => !ignoreEntityIds.has(item.target.id),
             )[0];
-            const hitObjectEntry = hitTestResult.objects.filter(
-                (item) => !ignoreObjectIds.has(item.target.id),
+            const hitBlockEntry = hitTestResult.blocks.filter(
+                (item) => !ignoreEntityIds.has(item.target.id),
             )[0];
 
             if (hitPointEntry !== undefined) {
@@ -1081,26 +1080,26 @@ function createMovePointSessionHandlers(
                     hitPointEntry.target.id,
                 );
             } else {
-                switch (hitObjectEntry?.target.type) {
+                switch (hitBlockEntry?.target.type) {
                     case "line": {
                         const width =
-                            hitObjectEntry.target.x2 - hitObjectEntry.target.x1;
+                            hitBlockEntry.target.x2 - hitBlockEntry.target.x1;
                         const height =
-                            hitObjectEntry.target.y2 - hitObjectEntry.target.y1;
+                            hitBlockEntry.target.y2 - hitBlockEntry.target.y1;
 
                         const r =
                             width > height
-                                ? (hitObjectEntry.point.x -
-                                      hitObjectEntry.target.x1) /
+                                ? (hitBlockEntry.point.x -
+                                      hitBlockEntry.target.x1) /
                                   width
-                                : (hitObjectEntry.point.y -
-                                      hitObjectEntry.target.y1) /
+                                : (hitBlockEntry.point.y -
+                                      hitBlockEntry.target.y1) /
                                   height;
 
                         transaction.addDependency({
                             id: randomId(),
                             type: "pointOnLine",
-                            from: hitObjectEntry.target.id,
+                            from: hitBlockEntry.target.id,
                             to: originalPoint.id,
                             r: r,
                         });
@@ -1108,16 +1107,16 @@ function createMovePointSessionHandlers(
                     }
                     case "shape": {
                         const rx =
-                            (hitObjectEntry.point.x - hitObjectEntry.target.x) /
-                            hitObjectEntry.target.width;
+                            (hitBlockEntry.point.x - hitBlockEntry.target.x) /
+                            hitBlockEntry.target.width;
                         const ry =
-                            (hitObjectEntry.point.y - hitObjectEntry.target.y) /
-                            hitObjectEntry.target.height;
+                            (hitBlockEntry.point.y - hitBlockEntry.target.y) /
+                            hitBlockEntry.target.height;
 
                         transaction.addDependency({
                             id: randomId(),
                             type: "pointOnShape",
-                            from: hitObjectEntry.target.id,
+                            from: hitBlockEntry.target.id,
                             to: originalPoint.id,
                             rx,
                             ry,
@@ -1135,8 +1134,8 @@ function createMovePointSessionHandlers(
 function createSelectByRangeSessionHandlers(
     canvasStateStore: CanvasStateStore,
 ): PointerEventSessionHandlers {
-    const originalSelectedObjectIds =
-        canvasStateStore.getState().selectedObjectIds;
+    const originalSelectedBlockIds =
+        canvasStateStore.getState().selectedBlockIds;
 
     return {
         type: "selector",
@@ -1147,34 +1146,34 @@ function createSelectByRangeSessionHandlers(
                 width: Math.abs(data.newX - data.startX),
                 height: Math.abs(data.newY - data.startY),
             };
-            const selectedObjectIds = new Set(originalSelectedObjectIds);
+            const selectedBlockIds = new Set(originalSelectedBlockIds);
 
-            for (const obj of Object.values(
-                canvasStateStore.getState().page.objects,
+            for (const block of Object.values(
+                canvasStateStore.getState().page.blocks,
             )) {
-                switch (obj.type) {
+                switch (block.type) {
                     case "shape": {
-                        if (isRectOverlapWithRect(selectionRect, obj)) {
-                            selectedObjectIds.add(obj.id);
+                        if (isRectOverlapWithRect(selectionRect, block)) {
+                            selectedBlockIds.add(block.id);
                         }
                         break;
                     }
                     case "line": {
-                        if (isRectOverlapWithLine(selectionRect, obj)) {
-                            selectedObjectIds.add(obj.id);
+                        if (isRectOverlapWithLine(selectionRect, block)) {
+                            selectedBlockIds.add(block.id);
                         }
                         break;
                     }
                 }
             }
 
-            canvasStateStore.setSelectedObjectIds([...selectedObjectIds]);
+            canvasStateStore.setSelectedBlockIds([...selectedBlockIds]);
         },
     };
 }
 
 function createXYResizeSessionHandlers(
-    originalObjects: Obj[],
+    blockIds: string[],
     originX: number,
     originY: number,
     canvasStateStore: CanvasStateStore,
@@ -1182,8 +1181,8 @@ function createXYResizeSessionHandlers(
     return {
         type: "resize",
         onPointerMove: (data) => {
-            canvasStateStore.resetAndScaleObjects(
-                originalObjects.map((object) => object.id),
+            canvasStateStore.scaleBlocks(
+                blockIds,
                 (data.newX - originX) / (data.lastX - originX),
                 (data.newY - originY) / (data.lastY - originY),
                 originX,
@@ -1194,15 +1193,15 @@ function createXYResizeSessionHandlers(
 }
 
 function createXResizeSessionHandlers(
-    originalObjects: Obj[],
+    blockIds: string[],
     originX: number,
     canvasStateStore: CanvasStateStore,
 ): PointerEventSessionHandlers {
     return {
         type: "resize",
         onPointerMove: (data) => {
-            canvasStateStore.resetAndScaleObjects(
-                originalObjects.map((object) => object.id),
+            canvasStateStore.scaleBlocks(
+                blockIds,
                 (data.newX - originX) / (data.lastX - originX),
                 1,
                 originX,
@@ -1213,15 +1212,15 @@ function createXResizeSessionHandlers(
 }
 
 function createYResizeSessionHandlers(
-    originalObjects: Obj[],
+    blockIds: string[],
     originY: number,
     canvasStateStore: CanvasStateStore,
 ): PointerEventSessionHandlers {
     return {
         type: "resize",
         onPointerMove: (data) => {
-            canvasStateStore.resetAndScaleObjects(
-                originalObjects.map((object) => object.id),
+            canvasStateStore.scaleBlocks(
+                blockIds,
                 1,
                 (data.newY - originY) / (data.lastY - originY),
                 0,

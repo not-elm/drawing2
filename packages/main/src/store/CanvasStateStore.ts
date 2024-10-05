@@ -6,7 +6,7 @@ import { CanvasState } from "../model/CanvasState";
 import type { ColorId } from "../model/Colors";
 import { DependencyCollection } from "../model/DependencyCollection";
 import type { FillMode } from "../model/FillMode";
-import type { Obj, Page } from "../model/Page";
+import type { Block, Page } from "../model/Page";
 import type { TextAlignment } from "../model/TextAlignment";
 import { Transaction } from "../model/Transaction";
 import type { Viewport } from "../model/Viewport";
@@ -16,12 +16,12 @@ export class CanvasStateStore extends Store<CanvasState> {
         super(
             new CanvasState({
                 page: {
-                    objects: {},
+                    blocks: {},
                     points: {},
-                    objectIds: [],
+                    blockIds: [],
                     dependencies: new DependencyCollection(),
                 },
-                selectedObjectIds: [],
+                selectedBlockIds: [],
             }),
         );
 
@@ -32,37 +32,29 @@ export class CanvasStateStore extends Store<CanvasState> {
         // }, 1000);
     }
 
-    addObjects(...objects: Obj[]) {
+    deleteBlock(blockIds: string[]) {
         this.setState(
             this.state.setPage(
                 new Transaction(this.state.page)
-                    .insertObjects(objects)
+                    .deleteBlocks(blockIds)
                     .commit(),
             ),
         );
     }
 
-    deleteObject(ids: string[]) {
-        this.setState(
-            this.state.setPage(
-                new Transaction(this.state.page).deleteObjects(ids).commit(),
-            ),
-        );
-    }
-
-    deleteSelectedObjects() {
-        this.deleteObject(this.state.selectedObjectIds);
+    deleteSelectedBlocks() {
+        this.deleteBlock(this.state.selectedBlockIds);
     }
 
     updateZIndex(currentIndex: number, newIndex: number) {
-        const newObjectIds = this.state.page.objectIds.slice();
-        const [id] = newObjectIds.splice(currentIndex, 1);
-        newObjectIds.splice(newIndex, 0, id);
+        const newBlockIds = this.state.page.blockIds.slice();
+        const [id] = newBlockIds.splice(currentIndex, 1);
+        newBlockIds.splice(newIndex, 0, id);
 
         this.setState(
             this.state.setPage({
                 ...this.state.page,
-                objectIds: newObjectIds,
+                blockIds: newBlockIds,
             }),
         );
     }
@@ -72,18 +64,18 @@ export class CanvasStateStore extends Store<CanvasState> {
 
     redo() {}
 
-    resetAndMoveObjects(objectIds: string[], deltaX: number, deltaY: number) {
+    moveBlocks(blockIds: string[], deltaX: number, deltaY: number) {
         this.setState(
             this.state.setPage(
                 new Transaction(this.state.page)
-                    .moveObjects(objectIds, deltaX, deltaY)
+                    .moveBlocks(blockIds, deltaX, deltaY)
                     .commit(),
             ),
         );
     }
 
-    resetAndScaleObjects(
-        objectIds: string[],
+    scaleBlocks(
+        blockIds: string[],
         scaleX: number,
         scaleY: number,
         originX: number,
@@ -92,7 +84,7 @@ export class CanvasStateStore extends Store<CanvasState> {
         this.setState(
             this.state.setPage(
                 new Transaction(this.state.page)
-                    .scaleObjects(objectIds, originX, originY, scaleX, scaleY)
+                    .scaleBlocks(blockIds, originX, originY, scaleX, scaleY)
                     .commit(),
             ),
         );
@@ -102,12 +94,12 @@ export class CanvasStateStore extends Store<CanvasState> {
         this.setState(
             this.state.setPage(
                 new Transaction(this.state.page)
-                    .updateProperty([id], (oldObject) => {
+                    .updateProperty([id], (oldBlock) => {
                         assert(
-                            oldObject.type === "shape",
-                            `Invalid object type: ${oldObject.id} ${oldObject.type}`,
+                            oldBlock.type === "shape",
+                            `Invalid block type: ${oldBlock.id} ${oldBlock.type}`,
                         );
-                        return { ...oldObject, label };
+                        return { ...oldBlock, label };
                     })
                     .commit(),
             ),
@@ -118,23 +110,20 @@ export class CanvasStateStore extends Store<CanvasState> {
         this.setState(
             this.state.setPage(
                 new Transaction(this.state.page)
-                    .updateProperty(
-                        this.state.selectedObjectIds,
-                        (oldObject) => {
-                            switch (oldObject.type) {
-                                case "shape": {
-                                    return {
-                                        ...oldObject,
-                                        textAlignX,
-                                        textAlignY,
-                                    };
-                                }
-                                default: {
-                                    return oldObject;
-                                }
+                    .updateProperty(this.state.selectedBlockIds, (oldBlock) => {
+                        switch (oldBlock.type) {
+                            case "shape": {
+                                return {
+                                    ...oldBlock,
+                                    textAlignX,
+                                    textAlignY,
+                                };
                             }
-                        },
-                    )
+                            default: {
+                                return oldBlock;
+                            }
+                        }
+                    })
                     .commit(),
             ),
         );
@@ -144,20 +133,17 @@ export class CanvasStateStore extends Store<CanvasState> {
         this.setState(
             this.state.setPage(
                 new Transaction(this.state.page)
-                    .updateProperty(
-                        this.state.selectedObjectIds,
-                        (oldObject) => {
-                            switch (oldObject.type) {
-                                case "shape":
-                                case "line": {
-                                    return { ...oldObject, colorId };
-                                }
-                                default: {
-                                    return oldObject;
-                                }
+                    .updateProperty(this.state.selectedBlockIds, (oldBlock) => {
+                        switch (oldBlock.type) {
+                            case "shape":
+                            case "line": {
+                                return { ...oldBlock, colorId };
                             }
-                        },
-                    )
+                            default: {
+                                return oldBlock;
+                            }
+                        }
+                    })
                     .commit(),
             ),
         );
@@ -167,34 +153,31 @@ export class CanvasStateStore extends Store<CanvasState> {
         this.setState(
             this.state.setPage(
                 new Transaction(this.state.page)
-                    .updateProperty(
-                        this.state.selectedObjectIds,
-                        (oldObject) => {
-                            switch (oldObject.type) {
-                                case "shape": {
-                                    return { ...oldObject, fillMode };
-                                }
-                                default: {
-                                    return oldObject;
-                                }
+                    .updateProperty(this.state.selectedBlockIds, (oldBlock) => {
+                        switch (oldBlock.type) {
+                            case "shape": {
+                                return { ...oldBlock, fillMode };
                             }
-                        },
-                    )
+                            default: {
+                                return oldBlock;
+                            }
+                        }
+                    })
                     .commit(),
             ),
         );
     }
 
     bringToFront() {
-        this.bringForwardOf(this.state.page.objectIds.length - 1);
+        this.bringForwardOf(this.state.page.blockIds.length - 1);
     }
 
     bringForward() {
-        const selectedIdSet = new Set(this.state.selectedObjectIds);
+        const selectedIdSet = new Set(this.state.selectedBlockIds);
 
         let mostBackwardResult = null;
         for (const selectedId of selectedIdSet) {
-            const result = this.findForwardOverlappedObject(
+            const result = this.findForwardOverlappedBlock(
                 selectedId,
                 selectedIdSet,
             );
@@ -208,7 +191,7 @@ export class CanvasStateStore extends Store<CanvasState> {
             }
         }
         if (mostBackwardResult === null) {
-            // selected objects are already at the front
+            // selected blocks are already at the front
             return;
         }
 
@@ -220,11 +203,11 @@ export class CanvasStateStore extends Store<CanvasState> {
     }
 
     sendBackward() {
-        const selectedIdSet = new Set(this.state.selectedObjectIds);
+        const selectedIdSet = new Set(this.state.selectedBlockIds);
 
         let mostForwardResult = null;
         for (const selectedId of selectedIdSet) {
-            const result = this.findBackwardOverlappedObject(
+            const result = this.findBackwardOverlappedBlock(
                 selectedId,
                 selectedIdSet,
             );
@@ -238,7 +221,7 @@ export class CanvasStateStore extends Store<CanvasState> {
             }
         }
         if (mostForwardResult === null) {
-            // selected objects are already at the front
+            // selected blocks are already at the front
             return;
         }
 
@@ -246,82 +229,82 @@ export class CanvasStateStore extends Store<CanvasState> {
     }
 
     /**
-     * Update the z-index of the selected objects to bring them
-     * forward of the target object
-     * @param targetObjectZIndex
+     * Update the z-index of the selected blocks to bring them
+     * forward of the target block
+     * @param targetBlockZIndex
      */
-    private bringForwardOf(targetObjectZIndex: number) {
-        const selectedIdSet = new Set(this.state.selectedObjectIds);
+    private bringForwardOf(targetBlockZIndex: number) {
+        const selectedIdSet = new Set(this.state.selectedBlockIds);
 
-        // Current z-index of selected objects
+        // Current z-index of selected blocks
         const currentIndices = [];
-        for (let i = 0; i < this.state.page.objectIds.length; i++) {
-            if (selectedIdSet.has(this.state.page.objectIds[i])) {
+        for (let i = 0; i < this.state.page.blockIds.length; i++) {
+            if (selectedIdSet.has(this.state.page.blockIds[i])) {
                 currentIndices.push(i);
             }
         }
 
         for (const currentIndex of currentIndices.toReversed()) {
-            if (currentIndex >= targetObjectZIndex) continue;
+            if (currentIndex >= targetBlockZIndex) continue;
 
-            this.updateZIndex(currentIndex, targetObjectZIndex);
-            targetObjectZIndex -= 1;
+            this.updateZIndex(currentIndex, targetBlockZIndex);
+            targetBlockZIndex -= 1;
         }
     }
 
     /**
-     * Update the z-index of the selected objects to send them
-     * backward of the target object
-     * @param targetObjectZIndex
+     * Update the z-index of the selected blocks to send them
+     * backward of the target block
+     * @param targetBlockZIndex
      */
-    private sendBackwardOf(targetObjectZIndex: number) {
-        const selectedIdSet = new Set(this.state.selectedObjectIds);
+    private sendBackwardOf(targetBlockZIndex: number) {
+        const selectedIdSet = new Set(this.state.selectedBlockIds);
 
-        // Current z-index of selected objects
+        // Current z-index of selected blocks
         const currentIndices = [];
-        for (let i = 0; i < this.state.page.objectIds.length; i++) {
-            if (selectedIdSet.has(this.state.page.objectIds[i])) {
+        for (let i = 0; i < this.state.page.blockIds.length; i++) {
+            if (selectedIdSet.has(this.state.page.blockIds[i])) {
                 currentIndices.push(i);
             }
         }
 
         for (const currentIndex of currentIndices) {
-            if (currentIndex <= targetObjectZIndex) continue;
+            if (currentIndex <= targetBlockZIndex) continue;
 
-            this.updateZIndex(currentIndex, targetObjectZIndex);
-            targetObjectZIndex += 1;
+            this.updateZIndex(currentIndex, targetBlockZIndex);
+            targetBlockZIndex += 1;
         }
     }
 
     /**
-     * Find the overlapped object with the given object from the objects
-     * located in front of it, and return the most-backward object.
+     * Find the overlapped block with the given block from the blocks
+     * located in front of it, and return the most-backward block.
      */
-    private findForwardOverlappedObject(
-        objectId: string,
-        ignoreObjectIds: Set<string>,
-    ): { objectId: string; globalIndex: number } | null {
+    private findForwardOverlappedBlock(
+        blockId: string,
+        ignoreBlockIds: Set<string>,
+    ): { blockId: string; globalIndex: number } | null {
         let globalIndex = 0;
-        for (; globalIndex < this.state.page.objectIds.length; globalIndex++) {
-            if (this.state.page.objectIds[globalIndex] === objectId) break;
+        for (; globalIndex < this.state.page.blockIds.length; globalIndex++) {
+            if (this.state.page.blockIds[globalIndex] === blockId) break;
         }
 
-        const refObject = this.state.page.objects[objectId];
-        assert(refObject !== undefined, "Cannot find the reference object");
+        const refBlock = this.state.page.blocks[blockId];
+        assert(refBlock !== undefined, "Cannot find the reference block");
         globalIndex++;
 
-        for (; globalIndex < this.state.page.objectIds.length; globalIndex++) {
-            const objectId = this.state.page.objectIds[globalIndex];
-            if (ignoreObjectIds.has(objectId)) {
+        for (; globalIndex < this.state.page.blockIds.length; globalIndex++) {
+            const blockId = this.state.page.blockIds[globalIndex];
+            if (ignoreBlockIds.has(blockId)) {
                 continue;
             }
 
-            const otherObject = this.state.page.objects[objectId];
+            const otherBlock = this.state.page.blocks[blockId];
 
-            if (otherObject === undefined) continue;
+            if (otherBlock === undefined) continue;
 
-            if (isOverlapped(refObject, otherObject)) {
-                return { objectId, globalIndex };
+            if (isOverlapped(refBlock, otherBlock)) {
+                return { blockId: blockId, globalIndex };
             }
         }
 
@@ -329,34 +312,34 @@ export class CanvasStateStore extends Store<CanvasState> {
     }
 
     /**
-     * Find the overlapped object with the given object from the objects
-     * located behind of it, and return the most-forward object.
+     * Find the overlapped block with the given block from the blocks
+     * located behind of it, and return the most-forward block.
      */
-    private findBackwardOverlappedObject(
-        objectId: string,
-        ignoreObjectIds: Set<string>,
-    ): { objectId: string; globalIndex: number } | null {
-        let globalIndex = this.state.page.objectIds.length - 1;
+    private findBackwardOverlappedBlock(
+        blockId: string,
+        ignoreBlockIds: Set<string>,
+    ): { blockId: string; globalIndex: number } | null {
+        let globalIndex = this.state.page.blockIds.length - 1;
         for (; globalIndex >= 0; globalIndex--) {
-            if (this.state.page.objectIds[globalIndex] === objectId) break;
+            if (this.state.page.blockIds[globalIndex] === blockId) break;
         }
 
-        const refObject = this.state.page.objects[objectId];
-        assert(refObject !== undefined, "Cannot find the reference object");
+        const refBlock = this.state.page.blocks[blockId];
+        assert(refBlock !== undefined, "Cannot find the reference block");
         globalIndex--;
 
         for (; globalIndex >= 0; globalIndex--) {
-            const objectId = this.state.page.objectIds[globalIndex];
-            if (ignoreObjectIds.has(objectId)) {
+            const blockId = this.state.page.blockIds[globalIndex];
+            if (ignoreBlockIds.has(blockId)) {
                 continue;
             }
 
-            const otherObject = this.state.page.objects[objectId];
+            const otherBlock = this.state.page.blocks[blockId];
 
-            if (otherObject === undefined) continue;
+            if (otherBlock === undefined) continue;
 
-            if (isOverlapped(refObject, otherObject)) {
-                return { objectId, globalIndex };
+            if (isOverlapped(refBlock, otherBlock)) {
+                return { blockId: blockId, globalIndex };
             }
         }
 
@@ -383,15 +366,15 @@ export class CanvasStateStore extends Store<CanvasState> {
     }
 
     toggleSelect(id: string) {
-        if (this.state.selectedObjectIds.includes(id)) {
+        if (this.state.selectedBlockIds.includes(id)) {
             this.unselect(id);
         } else {
             this.select(id);
         }
     }
 
-    setSelectedObjectIds(ids: string[]) {
-        this.setState(this.state.setSelectedObjectIds(ids));
+    setSelectedBlockIds(ids: string[]) {
+        this.setState(this.state.setSelectedBlockIds(ids));
     }
 
     copy() {
@@ -404,7 +387,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 
     async cut() {
         this.copy();
-        this.deleteSelectedObjects();
+        this.deleteSelectedBlocks();
     }
 
     async paste(): Promise<void> {
@@ -462,7 +445,7 @@ export function fromCanvasCoordinate(
     ];
 }
 
-export function isOverlapped(obj1: Obj, obj2: Obj): boolean {
+export function isOverlapped(obj1: Block, obj2: Block): boolean {
     switch (obj1.type) {
         case "shape": {
             switch (obj2.type) {

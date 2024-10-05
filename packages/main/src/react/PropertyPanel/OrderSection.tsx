@@ -24,7 +24,7 @@ export function OrderSection() {
                 }}
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.bringSelectedObjectsToFront();
+                    controller.bringSelectedBlocksToFront();
                 }}
             >
                 最前面へ
@@ -36,7 +36,7 @@ export function OrderSection() {
                 }}
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.bringSelectedObjectsForward();
+                    controller.bringSelectedBlocksForward();
                 }}
             >
                 ひとつ前へ
@@ -48,7 +48,7 @@ export function OrderSection() {
                 }}
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.sendSelectedObjectsBackward();
+                    controller.sendSelectedBlocksBackward();
                 }}
             >
                 ひとつ後ろへ
@@ -60,7 +60,7 @@ export function OrderSection() {
                 }}
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.sendSelectedObjectsToBack();
+                    controller.sendSelectedBlocksToBack();
                 }}
             >
                 最背面へ

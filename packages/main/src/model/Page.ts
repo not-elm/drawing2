@@ -3,22 +3,22 @@ import type { DependencyCollection } from "./DependencyCollection";
 import type { FillMode } from "./FillMode";
 import type { TextAlignment } from "./TextAlignment";
 
-interface ObjectBase<T extends string> {
+interface EntityBase<T extends string> {
     type: T;
     id: string;
 }
-export interface PointEntity extends ObjectBase<"point"> {
+export interface PointEntity extends EntityBase<"point"> {
     x: number;
     y: number;
 }
-export interface LineObject extends ObjectBase<"line"> {
+export interface LineBlock extends EntityBase<"line"> {
     x1: number;
     y1: number;
     x2: number;
     y2: number;
     colorId: ColorId;
 }
-export interface ShapeObject extends ObjectBase<"shape"> {
+export interface ShapeBlock extends EntityBase<"shape"> {
     x: number;
     y: number;
     x1: number;
@@ -35,14 +35,14 @@ export interface ShapeObject extends ObjectBase<"shape"> {
     path: number[][];
 }
 
-export type Obj = LineObject | ShapeObject;
+export type Block = LineBlock | ShapeBlock;
 
-export type Entity = Obj | PointEntity;
+export type Entity = Block | PointEntity;
 
 export interface Page {
-    objects: Record<string, Obj>;
+    blocks: Record<string, Block>;
     points: Record<string, PointEntity>;
-    objectIds: string[];
+    blockIds: string[];
     dependencies: DependencyCollection;
 }
 

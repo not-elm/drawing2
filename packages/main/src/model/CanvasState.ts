@@ -2,49 +2,49 @@ import { getBoundingRectOfLine } from "../geo/Line";
 import { type Rect, getBoundingRectOfRect, unionRect } from "../geo/Rect";
 import { dataclass } from "../lib/dataclass";
 import { isNotNullish } from "../lib/isNullish";
-import type { Obj, Page } from "./Page";
+import type { Block, Page } from "./Page";
 
 export class CanvasState extends dataclass<{
     readonly page: Page;
-    readonly selectedObjectIds: string[];
+    readonly selectedBlockIds: string[];
 }>() {
     setPage(page: Page): CanvasState {
         return this.copy({
             page,
-            selectedObjectIds: this.selectedObjectIds.filter(
-                (id) => id in page.objects,
+            selectedBlockIds: this.selectedBlockIds.filter(
+                (id) => id in page.blocks,
             ),
         });
     }
 
     select(id: string): CanvasState {
-        return this.setSelectedObjectIds([...this.selectedObjectIds, id]);
+        return this.setSelectedBlockIds([...this.selectedBlockIds, id]);
     }
 
     selectAll(): CanvasState {
-        return this.setSelectedObjectIds(this.page.objectIds);
+        return this.setSelectedBlockIds(this.page.blockIds);
     }
 
     unselect(id: string): CanvasState {
-        return this.setSelectedObjectIds(
-            this.selectedObjectIds.filter((i) => i !== id),
+        return this.setSelectedBlockIds(
+            this.selectedBlockIds.filter((i) => i !== id),
         );
     }
 
     unselectAll(): CanvasState {
-        return this.setSelectedObjectIds([]);
+        return this.setSelectedBlockIds([]);
     }
 
-    setSelectedObjectIds(selectedObjectIds: string[]): CanvasState {
+    setSelectedBlockIds(selectedBlockIds: string[]): CanvasState {
         return this.copy({
-            selectedObjectIds: selectedObjectIds.filter(
-                (id) => id in this.page.objects,
+            selectedBlockIds: selectedBlockIds.filter(
+                (id) => id in this.page.blocks,
             ),
         });
     }
 
     getSelectionRect(): Rect | null {
-        const rects = this.getSelectedObjects().map((obj) => {
+        const rects = this.getSelectedBlocks().map((obj) => {
             switch (obj.type) {
                 case "shape":
                     return getBoundingRectOfRect(obj);
@@ -61,9 +61,9 @@ export class CanvasState extends dataclass<{
         return rect;
     }
 
-    getSelectedObjects(): Obj[] {
-        return this.selectedObjectIds
-            .map((id) => this.page.objects[id])
+    getSelectedBlocks(): Block[] {
+        return this.selectedBlockIds
+            .map((id) => this.page.blocks[id])
             .filter(isNotNullish);
     }
 }

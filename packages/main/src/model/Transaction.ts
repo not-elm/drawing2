@@ -1,35 +1,35 @@
 import { assert } from "../lib/assert";
 import { randomId } from "../lib/randomId";
 import type {
+    BlockToPointDependency,
     Dependency,
-    ObjectToPointDependency,
     PointOnLineDependency,
     PointOnShapeDependency,
 } from "./Dependency";
 import type { DependencyCollection } from "./DependencyCollection";
-import { type Obj, type Page, type PointEntity, PointKey } from "./Page";
+import { type Block, type Page, type PointEntity, PointKey } from "./Page";
 
 interface CommandBase<T extends string> {
     type: T;
 }
-interface InsertObjectsCommand extends CommandBase<"INSERT_OBJECTS"> {
-    objects: Obj[];
+interface InsertBlocksCommand extends CommandBase<"INSERT_BLOCKS"> {
+    blocks: Block[];
 }
 interface InsertPointsCommand extends CommandBase<"INSERT_POINTS"> {
     points: PointEntity[];
 }
-interface DeleteObjectsCommand extends CommandBase<"DELETE_OBJECTS"> {
-    objectIds: string[];
+interface DeleteBlocksCommand extends CommandBase<"DELETE_BLOCKS"> {
+    blockIds: string[];
 }
-interface ScaleObjectsCommand extends CommandBase<"SCALE_OBJECTS"> {
-    objectIds: string[];
+interface ScaleBlocksCommand extends CommandBase<"SCALE_BLOCKS"> {
+    blockIds: string[];
     cx: number;
     cy: number;
     scaleX: number;
     scaleY: number;
 }
-interface MoveObjectsCommand extends CommandBase<"MOVE_OBJECTS"> {
-    objectIds: string[];
+interface MoveBlocksCommand extends CommandBase<"MOVE_BLOCKS"> {
+    blockIds: string[];
     dx: number;
     dy: number;
 }
@@ -46,10 +46,10 @@ interface MergePointsCommand extends CommandBase<"MERGE_POINTS"> {
     from: string;
     to: string;
 }
-interface UpdateObjectPropertyCommand
-    extends CommandBase<"UPDATE_SHAPE_PROPERTY"> {
-    objectIds: string[];
-    updater: (object: Readonly<Obj>) => Obj;
+interface UpdateBlockPropertyCommand
+    extends CommandBase<"UPDATE_BLOCK_PROPERTY"> {
+    blockIds: string[];
+    updater: (block: Readonly<Block>) => Block;
 }
 interface AddDependencyCommand extends CommandBase<"ADD_DEPENDENCY"> {
     dependency: Dependency;
@@ -59,14 +59,14 @@ interface DeleteDependenciesCommand extends CommandBase<"DELETE_DEPENDENCIES"> {
 }
 
 type Command =
-    | InsertObjectsCommand
+    | InsertBlocksCommand
     | InsertPointsCommand
-    | DeleteObjectsCommand
-    | ScaleObjectsCommand
-    | MoveObjectsCommand
+    | DeleteBlocksCommand
+    | ScaleBlocksCommand
+    | MoveBlocksCommand
     | SetPointPositionCommand
     | MergePointsCommand
-    | UpdateObjectPropertyCommand
+    | UpdateBlockPropertyCommand
     | AddDependencyCommand
     | DeleteDependenciesCommand;
 
@@ -75,8 +75,8 @@ export class Transaction {
 
     constructor(private readonly page: Page) {}
 
-    insertObjects(objects: Obj[]): this {
-        this.commands.push({ type: "INSERT_OBJECTS", objects });
+    insertBlocks(blocks: Block[]): this {
+        this.commands.push({ type: "INSERT_BLOCKS", blocks });
         return this;
     }
 
@@ -85,21 +85,21 @@ export class Transaction {
         return this;
     }
 
-    deleteObjects(objectIds: string[]): this {
-        this.commands.push({ type: "DELETE_OBJECTS", objectIds });
+    deleteBlocks(blockIds: string[]): this {
+        this.commands.push({ type: "DELETE_BLOCKS", blockIds });
         return this;
     }
 
-    scaleObjects(
-        objectIds: string[],
+    scaleBlocks(
+        blockIds: string[],
         cx: number,
         cy: number,
         scaleX: number,
         scaleY: number,
     ): this {
         this.commands.push({
-            type: "SCALE_OBJECTS",
-            objectIds,
+            type: "SCALE_BLOCKS",
+            blockIds,
             cx,
             cy,
             scaleX,
@@ -108,8 +108,8 @@ export class Transaction {
         return this;
     }
 
-    moveObjects(objectIds: string[], dx: number, dy: number): this {
-        this.commands.push({ type: "MOVE_OBJECTS", objectIds, dx, dy });
+    moveBlocks(blockIds: string[], dx: number, dy: number): this {
+        this.commands.push({ type: "MOVE_BLOCKS", blockIds, dx, dy });
         return this;
     }
 
@@ -124,12 +124,12 @@ export class Transaction {
     }
 
     updateProperty(
-        objectIds: string[],
-        updater: (object: Readonly<Obj>) => Obj,
+        blockIds: string[],
+        updater: (block: Readonly<Block>) => Block,
     ): this {
         this.commands.push({
-            type: "UPDATE_SHAPE_PROPERTY",
-            objectIds,
+            type: "UPDATE_BLOCK_PROPERTY",
+            blockIds,
             updater,
         });
         return this;
@@ -146,40 +146,34 @@ export class Transaction {
     }
 
     commit(): Page {
-        const objects: Record<string, Obj> = { ...this.page.objects };
-        const points: Record<string, PointEntity> = { ...this.page.points };
-        const objectIds = [...this.page.objectIds];
-        const dependencies = this.page.dependencies;
-        const dirtyEntityIds: string[] = [];
-
         const draft: PageDraft = {
-            objects,
-            points,
-            objectIds,
-            dependencies,
-            dirtyEntityIds,
+            blocks: { ...this.page.blocks },
+            points: { ...this.page.points },
+            blockIds: [...this.page.blockIds],
+            dependencies: this.page.dependencies,
+            dirtyEntityIds: [],
         };
 
         for (const command of this.commands) {
             switch (command.type) {
-                case "INSERT_OBJECTS": {
-                    insertObjects(command, draft);
+                case "INSERT_BLOCKS": {
+                    insertBlocks(command, draft);
                     break;
                 }
                 case "INSERT_POINTS": {
                     insertPoints(command, draft);
                     break;
                 }
-                case "DELETE_OBJECTS": {
-                    deleteObjects(command, draft);
+                case "DELETE_BLOCKS": {
+                    deleteBlocks(command, draft);
                     break;
                 }
-                case "SCALE_OBJECTS": {
-                    scaleObjects(command, draft);
+                case "SCALE_BLOCKS": {
+                    scaleBlocks(command, draft);
                     break;
                 }
-                case "MOVE_OBJECTS": {
-                    moveObjects(command, draft);
+                case "MOVE_BLOCKS": {
+                    moveBlocks(command, draft);
                     break;
                 }
                 case "SET_POINT_POSITION": {
@@ -190,7 +184,7 @@ export class Transaction {
                     mergePoints(command, draft);
                     break;
                 }
-                case "UPDATE_SHAPE_PROPERTY": {
+                case "UPDATE_BLOCK_PROPERTY": {
                     updateShapeProperty(command, draft);
                     break;
                 }
@@ -205,12 +199,12 @@ export class Transaction {
             }
         }
 
-        for (const dependency of dependencies.collectDependencies(
-            dirtyEntityIds,
+        for (const dependency of draft.dependencies.collectDependencies(
+            draft.dirtyEntityIds,
         )) {
             switch (dependency.type) {
-                case "objectToPoint": {
-                    recomputeObjectToPointDependency(dependency, draft);
+                case "blockToPoint": {
+                    recomputeBlockToPointDependency(dependency, draft);
                     break;
                 }
                 case "pointOnLine": {
@@ -224,23 +218,28 @@ export class Transaction {
             }
         }
 
-        return { objects, points, objectIds, dependencies };
+        return {
+            blocks: draft.blocks,
+            points: draft.points,
+            blockIds: draft.blockIds,
+            dependencies: draft.dependencies,
+        };
     }
 }
 
 interface PageDraft {
-    objects: Record<string, Obj>;
+    blocks: Record<string, Block>;
     points: Record<string, PointEntity>;
-    objectIds: string[];
+    blockIds: string[];
     dependencies: DependencyCollection;
     dirtyEntityIds: string[];
 }
 
-function insertObjects(command: InsertObjectsCommand, draft: PageDraft) {
-    for (const object of command.objects) {
-        draft.objects[object.id] = object;
-        draft.objectIds.push(object.id);
-        draft.dirtyEntityIds.push(object.id);
+function insertBlocks(command: InsertBlocksCommand, draft: PageDraft) {
+    for (const block of command.blocks) {
+        draft.blocks[block.id] = block;
+        draft.blockIds.push(block.id);
+        draft.dirtyEntityIds.push(block.id);
     }
 }
 
@@ -251,21 +250,21 @@ function insertPoints(command: InsertPointsCommand, draft: PageDraft) {
     }
 }
 
-function deleteObjects(command: DeleteObjectsCommand, draft: PageDraft) {
-    for (const objectId of command.objectIds) {
-        const deps = draft.dependencies.getByToEntityId(objectId);
+function deleteBlocks(command: DeleteBlocksCommand, draft: PageDraft) {
+    for (const blockId of command.blockIds) {
+        const deps = draft.dependencies.getByToEntityId(blockId);
 
-        delete draft.objects[objectId];
+        delete draft.blocks[blockId];
 
-        const index = draft.objectIds.indexOf(objectId);
-        assert(index !== -1, `Object not found: ${objectId}`);
-        draft.objectIds.splice(index, 1);
+        const index = draft.blockIds.indexOf(blockId);
+        assert(index !== -1, `Block not found: ${blockId}`);
+        draft.blockIds.splice(index, 1);
 
-        draft.dependencies.deleteByEntityId(objectId);
+        draft.dependencies.deleteByEntityId(blockId);
 
         // Clean up points with no more dependencies
         for (const dep of deps) {
-            if (dep.type !== "objectToPoint") continue;
+            if (dep.type !== "blockToPoint") continue;
             const pointId = dep.from;
             if (draft.dependencies.getByFromEntityId(pointId).length === 0) {
                 deletePoint(pointId, draft);
@@ -279,12 +278,12 @@ function deletePoint(pointId: string, draft: PageDraft) {
     draft.dependencies.deleteByEntityId(pointId);
 }
 
-function scaleObjects(command: ScaleObjectsCommand, draft: PageDraft) {
+function scaleBlocks(command: ScaleBlocksCommand, draft: PageDraft) {
     const pointIds = new Set<string>();
-    for (const objectId of command.objectIds) {
+    for (const blockId of command.blockIds) {
         for (const dep of draft.dependencies
-            .getByToEntityId(objectId)
-            .filter((dep) => dep.type === "objectToPoint")) {
+            .getByToEntityId(blockId)
+            .filter((dep) => dep.type === "blockToPoint")) {
             pointIds.add(dep.from);
         }
     }
@@ -299,12 +298,12 @@ function scaleObjects(command: ScaleObjectsCommand, draft: PageDraft) {
     }
 }
 
-function moveObjects(command: MoveObjectsCommand, draft: PageDraft) {
+function moveBlocks(command: MoveBlocksCommand, draft: PageDraft) {
     const pointIds = new Set<string>();
-    for (const objectId of command.objectIds) {
+    for (const blockId of command.blockIds) {
         for (const dep of draft.dependencies
-            .getByToEntityId(objectId)
-            .filter((dep) => dep.type === "objectToPoint")) {
+            .getByToEntityId(blockId)
+            .filter((dep) => dep.type === "blockToPoint")) {
             pointIds.add(dep.from);
         }
     }
@@ -346,11 +345,11 @@ function mergePoints(command: MergePointsCommand, draft: PageDraft) {
 }
 
 function updateShapeProperty(
-    command: UpdateObjectPropertyCommand,
+    command: UpdateBlockPropertyCommand,
     draft: PageDraft,
 ) {
-    for (const id of command.objectIds) {
-        draft.objects[id] = command.updater(draft.objects[id]);
+    for (const id of command.blockIds) {
+        draft.blocks[id] = command.updater(draft.blocks[id]);
         draft.dirtyEntityIds.push(id);
     }
 }
@@ -369,20 +368,20 @@ function deleteDependencies(
     }
 }
 
-function recomputeObjectToPointDependency(
-    dependency: ObjectToPointDependency,
+function recomputeBlockToPointDependency(
+    dependency: BlockToPointDependency,
     draft: PageDraft,
 ) {
     const point = draft.points[dependency.from];
-    const object = draft.objects[dependency.to];
+    const block = draft.blocks[dependency.to];
     switch (dependency.pointKey) {
         case PointKey.LINE_P1: {
             assert(
-                object.type === "line",
-                `Invalid object type: ${object.type} !== line`,
+                block.type === "line",
+                `Invalid block type: ${block.type} !== line`,
             );
-            draft.objects[object.id] = {
-                ...object,
+            draft.blocks[block.id] = {
+                ...block,
                 x1: point.x,
                 y1: point.y,
             };
@@ -390,11 +389,11 @@ function recomputeObjectToPointDependency(
         }
         case PointKey.LINE_P2: {
             assert(
-                object.type === "line",
-                `Invalid object type: ${object.type} !== line`,
+                block.type === "line",
+                `Invalid block type: ${block.type} !== line`,
             );
-            draft.objects[object.id] = {
-                ...object,
+            draft.blocks[block.id] = {
+                ...block,
                 x2: point.x,
                 y2: point.y,
             };
@@ -402,21 +401,21 @@ function recomputeObjectToPointDependency(
         }
         case PointKey.SHAPE_P1: {
             assert(
-                object.type === "shape",
-                `Invalid object type: ${object.type} !== shape`,
+                block.type === "shape",
+                `Invalid block type: ${block.type} !== shape`,
             );
 
             const x1 = point.x;
-            const x2 = object.x2;
+            const x2 = block.x2;
             const y1 = point.y;
-            const y2 = object.y2;
+            const y2 = block.y2;
             const x = Math.min(x1, x2);
             const y = Math.min(y1, y2);
             const width = Math.abs(x1 - x2);
             const height = Math.abs(y1 - y2);
 
-            draft.objects[object.id] = {
-                ...object,
+            draft.blocks[block.id] = {
+                ...block,
                 x,
                 y,
                 width,
@@ -430,21 +429,21 @@ function recomputeObjectToPointDependency(
         }
         case PointKey.SHAPE_P2: {
             assert(
-                object.type === "shape",
-                `Invalid object type: ${object.type} !== shape`,
+                block.type === "shape",
+                `Invalid block type: ${block.type} !== shape`,
             );
 
-            const x1 = object.x1;
+            const x1 = block.x1;
             const x2 = point.x;
-            const y1 = object.y1;
+            const y1 = block.y1;
             const y2 = point.y;
             const x = Math.min(x1, x2);
             const y = Math.min(y1, y2);
             const width = Math.abs(x1 - x2);
             const height = Math.abs(y1 - y2);
 
-            draft.objects[object.id] = {
-                ...object,
+            draft.blocks[block.id] = {
+                ...block,
                 x,
                 y,
                 width,
@@ -465,8 +464,8 @@ function recomputePointOnLineDependency(
 ) {
     const r = dependency.r;
 
-    const line = draft.objects[dependency.from];
-    assert(line.type === "line", `Invalid object type: ${line.type}`);
+    const line = draft.blocks[dependency.from];
+    assert(line.type === "line", `Invalid block type: ${line.type}`);
 
     const point = draft.points[dependency.to];
 
@@ -483,8 +482,8 @@ function recomputePointOnShapeDependency(
 ) {
     const { rx, ry } = dependency;
 
-    const shape = draft.objects[dependency.from];
-    assert(shape.type === "shape", `Invalid object type: ${shape.type}`);
+    const shape = draft.blocks[dependency.from];
+    assert(shape.type === "shape", `Invalid block type: ${shape.type}`);
 
     const point = draft.points[dependency.to];
     draft.points[point.id] = {

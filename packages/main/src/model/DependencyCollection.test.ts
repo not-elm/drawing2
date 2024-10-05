@@ -81,7 +81,7 @@ test("circular dependency", () => {
     expect(() => collection.add(depCtoA)).toThrowError();
 });
 
-test("remove by objectId", () => {
+test("remove by blockId", () => {
     const collection = new DependencyCollection();
 
     collection.add(depBtoC);

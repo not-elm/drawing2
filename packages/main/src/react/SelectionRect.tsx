@@ -1,5 +1,5 @@
 import styled from "@emotion/styled";
-import type { LineObject } from "../model/Page";
+import type { LineBlock } from "../model/Page";
 import { useController } from "./ControllerProvider";
 import { useStore } from "./hooks/useStore";
 
@@ -12,8 +12,8 @@ export function SelectionRect() {
     if (selectionRect === null) return null;
 
     const { x, y, width, height } = selectionRect;
-    const objects = canvasState.getSelectedObjects();
-    const isSingleLineMode = objects.length === 1 && objects[0].type === "line";
+    const blocks = canvasState.getSelectedBlocks();
+    const isSingleLineMode = blocks.length === 1 && blocks[0].type === "line";
 
     return (
         <div
@@ -48,7 +48,7 @@ export function SelectionRect() {
                         strokeWidth={3}
                     />
                 )}
-                {objects.map((obj) => {
+                {blocks.map((obj) => {
                     if (obj.type === "shape") {
                         return (
                             <rect
@@ -88,10 +88,10 @@ export function SelectionRect() {
                     <ResizeHandle
                         css={{
                             left:
-                                ((objects[0] as LineObject).x1 - x) *
+                                ((blocks[0] as LineBlock).x1 - x) *
                                 viewport.scale,
                             top:
-                                ((objects[0] as LineObject).y1 - y) *
+                                ((blocks[0] as LineBlock).y1 - y) *
                                 viewport.scale,
                             cursor: "grab",
                         }}
@@ -101,10 +101,10 @@ export function SelectionRect() {
                     <ResizeHandle
                         css={{
                             left:
-                                ((objects[0] as LineObject).x2 - x) *
+                                ((blocks[0] as LineBlock).x2 - x) *
                                 viewport.scale,
                             top:
-                                ((objects[0] as LineObject).y2 - y) *
+                                ((blocks[0] as LineBlock).y2 - y) *
                                 viewport.scale,
                             cursor: "grab",
                         }}

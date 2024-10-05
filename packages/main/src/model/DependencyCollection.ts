@@ -3,11 +3,11 @@ import type { Dependency } from "./Dependency";
 
 export class DependencyCollection {
     private readonly dependencyById = new Map<string, Dependency>();
-    private readonly dependencyIdsByFromObjectId = new Map<
+    private readonly dependencyIdsByFromEntityId = new Map<
         string,
         Set<string>
     >();
-    private readonly dependencyIdsByToObjectId = new Map<string, Set<string>>();
+    private readonly dependencyIdsByToEntityId = new Map<string, Set<string>>();
 
     add(dependency: Dependency) {
         if (this.isReachable(dependency.to, dependency.from)) {
@@ -18,9 +18,9 @@ export class DependencyCollection {
 
         this.dependencyById.set(dependency.id, dependency);
 
-        const fromIds = this.dependencyIdsByFromObjectId.get(dependency.from);
+        const fromIds = this.dependencyIdsByFromEntityId.get(dependency.from);
         if (fromIds === undefined) {
-            this.dependencyIdsByFromObjectId.set(
+            this.dependencyIdsByFromEntityId.set(
                 dependency.from,
                 new Set([dependency.id]),
             );
@@ -28,9 +28,9 @@ export class DependencyCollection {
             fromIds.add(dependency.id);
         }
 
-        const toIds = this.dependencyIdsByToObjectId.get(dependency.to);
+        const toIds = this.dependencyIdsByToEntityId.get(dependency.to);
         if (toIds === undefined) {
-            this.dependencyIdsByToObjectId.set(
+            this.dependencyIdsByToEntityId.set(
                 dependency.to,
                 new Set([dependency.id]),
             );
@@ -40,7 +40,7 @@ export class DependencyCollection {
     }
 
     getByFromEntityId(entityId: string): Dependency[] {
-        const dependencyIds = this.dependencyIdsByFromObjectId.get(entityId);
+        const dependencyIds = this.dependencyIdsByFromEntityId.get(entityId);
         if (dependencyIds === undefined) return [];
 
         return Array.from(dependencyIds).map((id) => {
@@ -51,7 +51,7 @@ export class DependencyCollection {
     }
 
     getByToEntityId(entityId: string): Dependency[] {
-        const dependencyIds = this.dependencyIdsByToObjectId.get(entityId);
+        const dependencyIds = this.dependencyIdsByToEntityId.get(entityId);
         if (dependencyIds === undefined) return [];
 
         return Array.from(dependencyIds).map((id) => {
@@ -67,35 +67,35 @@ export class DependencyCollection {
 
         this.dependencyById.delete(id);
 
-        const idsForFromObject = this.dependencyIdsByFromObjectId.get(
+        const idsForFromEntity = this.dependencyIdsByFromEntityId.get(
             dependency.from,
         );
         assert(
-            idsForFromObject !== undefined,
-            `Object not found in dependency collection: ${id}`,
+            idsForFromEntity !== undefined,
+            `Entity not found in dependency collection: ${id}`,
         );
-        idsForFromObject.delete(id);
-        if (idsForFromObject.size === 0) {
-            this.dependencyIdsByFromObjectId.delete(dependency.from);
+        idsForFromEntity.delete(id);
+        if (idsForFromEntity.size === 0) {
+            this.dependencyIdsByFromEntityId.delete(dependency.from);
         }
 
-        const idsForToObject = this.dependencyIdsByToObjectId.get(
+        const idsForToEntity = this.dependencyIdsByToEntityId.get(
             dependency.to,
         );
         assert(
-            idsForToObject !== undefined,
-            `Object not found in dependency collection: ${id}`,
+            idsForToEntity !== undefined,
+            `Entity not found in dependency collection: ${id}`,
         );
-        idsForToObject.delete(id);
-        if (idsForToObject.size === 0) {
-            this.dependencyIdsByToObjectId.delete(dependency.to);
+        idsForToEntity.delete(id);
+        if (idsForToEntity.size === 0) {
+            this.dependencyIdsByToEntityId.delete(dependency.to);
         }
     }
 
-    deleteByEntityId(objectId: string) {
+    deleteByEntityId(entityId: string) {
         const ids = [
-            ...(this.dependencyIdsByFromObjectId.get(objectId) ?? []),
-            ...(this.dependencyIdsByToObjectId.get(objectId) ?? []),
+            ...(this.dependencyIdsByFromEntityId.get(entityId) ?? []),
+            ...(this.dependencyIdsByToEntityId.get(entityId) ?? []),
         ];
 
         for (const id of ids) {
@@ -104,34 +104,34 @@ export class DependencyCollection {
     }
 
     /**
-     * Collects all dependencies of the given objects and descendants.
+     * Collects all dependencies of the given entities and descendants.
      * The returned dependencies are ordered such that if A depends on B, then B comes before A.
-     * @param sourceObjectIds
+     * @param sourceEntityIds
      */
-    collectDependencies(sourceObjectIds: string[]): Dependency[] {
-        const objectIds: string[] = [];
+    collectDependencies(sourceEntityIds: string[]): Dependency[] {
+        const entityIds: string[] = [];
         const visited = new Set<string>();
 
-        const visit = (objectId: string) => {
-            if (visited.has(objectId)) return;
-            visited.add(objectId);
+        const visit = (entityId: string) => {
+            if (visited.has(entityId)) return;
+            visited.add(entityId);
 
             const outGoingDependencyIds =
-                this.dependencyIdsByFromObjectId.get(objectId) ?? [];
+                this.dependencyIdsByFromEntityId.get(entityId) ?? [];
             for (const dependencyId of outGoingDependencyIds) {
                 visit(this.dependencyById.get(dependencyId)?.to ?? "");
             }
-            objectIds.unshift(objectId);
+            entityIds.unshift(entityId);
         };
 
-        for (const objectId of sourceObjectIds) {
-            visit(objectId);
+        for (const entityId of sourceEntityIds) {
+            visit(entityId);
         }
 
         const dependencies: Dependency[] = [];
-        for (const objectId of objectIds) {
+        for (const entityId of entityIds) {
             const dependencyIds =
-                this.dependencyIdsByFromObjectId.get(objectId);
+                this.dependencyIdsByFromEntityId.get(entityId);
             if (dependencyIds === undefined) continue;
 
             for (const dependencyId of dependencyIds) {
@@ -157,7 +157,7 @@ export class DependencyCollection {
             if (visited.has(current)) continue;
             visited.add(current);
 
-            const dependencyIds = this.dependencyIdsByFromObjectId.get(current);
+            const dependencyIds = this.dependencyIdsByFromEntityId.get(current);
             if (dependencyIds === undefined) continue;
 
             for (const dependencyId of dependencyIds) {

@@ -1,4 +1,4 @@
-import type { LineObject } from "../model/Page";
+import type { LineBlock } from "../model/Page";
 import type { PointerEventSessionData } from "../service/GestureRecognizer";
 import { useController } from "./ControllerProvider";
 import { LineView } from "./LineView";
@@ -8,7 +8,7 @@ export function LineToolPreview({ data }: { data: PointerEventSessionData }) {
     const controller = useController();
     const appState = useStore(controller.appStateStore);
 
-    const line: LineObject = {
+    const line: LineBlock = {
         type: "line",
         id: "line-tool-preview",
         x1: data.startX,

@@ -77,25 +77,25 @@ export function Canvas() {
                     transformOrigin: `${viewport.x}px ${viewport.y}px`,
                 }}
             >
-                {page.objectIds.map((objectId) => {
-                    const object = page.objects[objectId];
-                    if (object === undefined) return null;
+                {page.blockIds.map((blockId) => {
+                    const block = page.blocks[blockId];
+                    if (block === undefined) return null;
 
-                    if (object.type === "shape") {
+                    if (block.type === "shape") {
                         return (
                             <ShapeView
-                                key={object.id}
-                                shape={object}
+                                key={block.id}
+                                shape={block}
                                 isLabelEditing={
                                     appState.mode.type === "text" &&
-                                    appState.mode.objectId === object.id
+                                    appState.mode.blockId === block.id
                                 }
                             />
                         );
                     }
 
-                    if (object.type === "line") {
-                        return <LineView key={object.id} line={object} />;
+                    if (block.type === "line") {
+                        return <LineView key={block.id} line={block} />;
                     }
 
                     return null;

@@ -1,5 +1,5 @@
 import { getRectanglePath } from "../geo/path";
-import type { ShapeObject } from "../model/Page";
+import type { ShapeBlock } from "../model/Page";
 import type { PointerEventSessionData } from "../service/GestureRecognizer";
 import { useController } from "./ControllerProvider";
 import { ShapeView } from "./ShapeView";
@@ -14,7 +14,7 @@ export function ShapeToolPreview({ data }: { data: PointerEventSessionData }) {
     const x2 = data.lastX;
     const y2 = data.lastY;
 
-    const shape: ShapeObject = {
+    const shape: ShapeBlock = {
         type: "shape",
         id: "shape-tool-preview",
         x: Math.min(x1, x2),

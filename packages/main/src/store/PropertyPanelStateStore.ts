@@ -44,11 +44,11 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
         const appState = this.appStateStore.getState();
         const canvasState = this.canvasStateStore.getState();
 
-        const selectedObjects = canvasState.getSelectedObjects();
-        const selectedShapes = selectedObjects.filter(
+        const selectedBlocks = canvasState.getSelectedBlocks();
+        const selectedShapes = selectedBlocks.filter(
             (obj) => obj.type === "shape",
         );
-        const selectedLines = selectedObjects.filter(
+        const selectedLines = selectedBlocks.filter(
             (obj) => obj.type === "line",
         );
 

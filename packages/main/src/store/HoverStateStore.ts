@@ -3,35 +3,36 @@ import { distanceFromPointToRect } from "../geo/Rect";
 import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
 import type {
+    Block,
     Entity,
-    LineObject,
-    Obj,
+    LineBlock,
     Page,
     PointEntity,
-    ShapeObject,
+    ShapeBlock,
 } from "../model/Page";
 import type { CanvasStateStore } from "./CanvasStateStore";
 import type { PointerStateStore } from "./PointerStateStore";
 import type { ViewportStore } from "./ViewportStore";
 
 interface HitTestResult {
-    // Hit objects ordered by distance (Small distance first)
+    // Hit entities ordered by distance (Small distance first)
     entities: HitTestResultEntry<Entity>[];
-    objects: HitTestResultEntry<Obj>[];
+    blocks: HitTestResultEntry<Block>[];
     points: HitTestResultEntry<PointEntity>[];
 }
 
 interface HitTestResultEntry<T> {
     target: T;
     /**
-     * Hit point on the object. If margin is 0, this should be exactly same as the input point.
+     * Hit point on the target entity. If margin is 0,
+     * this should be exactly same as the input point.
      */
     point: { x: number; y: number };
     distance: number;
     zIndex: number;
 }
 
-export function testHitObjects(
+export function testHitEntities(
     page: Page,
     x: number,
     y: number,
@@ -39,7 +40,7 @@ export function testHitObjects(
     threshold = THRESHOLD,
 ): HitTestResult {
     const entities: HitTestResultEntry<Entity>[] = [];
-    const objects: HitTestResultEntry<Obj>[] = [];
+    const blocks: HitTestResultEntry<Block>[] = [];
     const points: HitTestResultEntry<PointEntity>[] = [];
 
     // TODO: PointのzIndex値を正しく計算する
@@ -58,24 +59,24 @@ export function testHitObjects(
             entities.push(entry);
         }
     }
-    for (const [zIndex, objectId] of page.objectIds.entries()) {
-        const object = page.objects[objectId];
-        assert(object !== undefined, `Object not found: ${objectId}`);
+    for (const [zIndex, blockId] of page.blockIds.entries()) {
+        const block = page.blocks[blockId];
+        assert(block !== undefined, `Block not found: ${blockId}`);
 
-        switch (object.type) {
+        switch (block.type) {
             case "line": {
                 const { point, distance } = distanceFromPointToLine(
                     { x, y },
-                    object,
+                    block,
                 );
                 if (distance < threshold) {
-                    const entry: HitTestResultEntry<LineObject> = {
-                        target: object,
+                    const entry: HitTestResultEntry<LineBlock> = {
+                        target: block,
                         point,
                         distance,
                         zIndex: zIndex + zIndexForPoint,
                     };
-                    objects.push(entry);
+                    blocks.push(entry);
                     entities.push(entry);
                 }
                 break;
@@ -83,16 +84,16 @@ export function testHitObjects(
             case "shape": {
                 const { point, distance } = distanceFromPointToRect(
                     { x, y },
-                    object,
+                    block,
                 );
                 if (distance < threshold) {
-                    const entry: HitTestResultEntry<ShapeObject> = {
-                        target: object,
+                    const entry: HitTestResultEntry<ShapeBlock> = {
+                        target: block,
                         point,
                         distance,
                         zIndex: zIndex + zIndexForPoint,
                     };
-                    objects.push(entry);
+                    blocks.push(entry);
                     entities.push(entry);
                 }
                 break;
@@ -100,7 +101,7 @@ export function testHitObjects(
         }
     }
 
-    objects
+    blocks
         .sort((a, b) => -(a.zIndex - b.zIndex))
         .sort((a, b) => a.distance - b.distance);
     entities
@@ -112,7 +113,7 @@ export function testHitObjects(
 
     return {
         entities,
-        objects,
+        blocks: blocks,
         points,
     };
 }
@@ -143,7 +144,7 @@ export class HoverStateStore extends Store<{
         const { scale } = this.viewportStore.getState();
         const { x, y } = this.pointerStateStore.getState();
 
-        const { entities } = testHitObjects(page, x, y, scale);
+        const { entities } = testHitEntities(page, x, y, scale);
         this.setState({ hitEntry: entities[0] ?? null });
     }
 }
