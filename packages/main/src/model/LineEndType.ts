@@ -1,0 +1,1 @@
+type LineEndType = "none" | "arrow";

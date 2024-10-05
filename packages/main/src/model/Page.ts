@@ -14,8 +14,10 @@ export interface PointEntity extends EntityBase<"point"> {
 export interface LineBlock extends EntityBase<"line"> {
     x1: number;
     y1: number;
+    endType1: LineEndType;
     x2: number;
     y2: number;
+    endType2: LineEndType;
     colorId: ColorId;
 }
 export interface ShapeBlock extends EntityBase<"shape"> {

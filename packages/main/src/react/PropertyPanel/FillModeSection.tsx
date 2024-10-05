@@ -3,6 +3,7 @@ import type { FillMode } from "../../model/FillMode";
 import { CardSection } from "../Card";
 import { useController } from "../ControllerProvider";
 import { useStore } from "../hooks/useStore";
+import { PropertyPanelButton } from "./PropertyPanelButton";
 
 export function FillModeSection() {
     return (
@@ -41,30 +42,14 @@ function ColorButton({
     const colorId = state.colorId ?? appState.defaultColorId;
 
     return (
-        <button
+        <PropertyPanelButton
             onPointerDown={(ev) => {
                 ev.stopPropagation();
                 controller.setFillMode(fillMode);
             }}
-            type="button"
             title={title}
             aria-selected={selected}
             css={{
-                position: "relative",
-                border: "none",
-                background: "none",
-                width: "32px",
-                height: "32px",
-                borderRadius: 8,
-                transition: "background 0.2s",
-                cursor: "pointer",
-                pointerEvents: "all",
-
-                "&:hover": {
-                    transition: "background 0.1s",
-                    background: "#f2f2f2",
-                },
-
                 "&::after": {
                     content: '""',
                     position: "absolute",
@@ -77,10 +62,6 @@ function ColorButton({
                         mono: { background: "#fff" },
                         color: { background: ColorPaletteBackground[colorId] },
                     }[fillMode],
-                },
-
-                "&[aria-selected='true']": {
-                    background: "#f2f2f2",
                 },
             }}
         />

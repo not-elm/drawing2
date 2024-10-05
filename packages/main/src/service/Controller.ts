@@ -46,7 +46,7 @@ export class Controller {
         this.pointerStore,
         this.viewportStore,
     );
-    readonly appStateStore = new AppStateStore(this.canvasStateStore);
+    readonly appStateStore = new AppStateStore();
     readonly propertyPanelStateStore = new PropertyPanelStateStore(
         this.canvasStateStore,
         this.appStateStore,
@@ -666,6 +666,11 @@ export class Controller {
         this.appStateStore.setDefaultFillMode(fillMode);
     }
 
+    setLineEndType(lineEnd: 1 | 2, endType: LineEndType) {
+        this.canvasStateStore.setLineEndType(lineEnd, endType);
+        this.appStateStore.setDefaultLineEnd(lineEnd, endType);
+    }
+
     bringSelectedBlocksToFront() {
         this.canvasStateStore.bringToFront();
     }
@@ -842,8 +847,10 @@ function createNewLineSessionHandlers(
                 type: "line",
                 x1: p1.x,
                 y1: p1.y,
+                endType1: appStateStore.getState().defaultLineEndType1,
                 x2: p2.x,
                 y2: p2.y,
+                endType2: appStateStore.getState().defaultLineEndType2,
                 colorId: appStateStore.getState().defaultColorId,
             };
             transaction

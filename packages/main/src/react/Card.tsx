@@ -7,10 +7,4 @@ export const Card = styled.div({
     padding: "4px 4px",
     borderRadius: "12px",
 });
-export const CardSection = styled.div({
-    "& + &": {
-        borderTop: "1px solid #f0f0f0",
-        marginTop: "8px",
-        paddingTop: "8px",
-    },
-});
+export const CardSection = styled.div({});

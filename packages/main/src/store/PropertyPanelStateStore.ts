@@ -7,12 +7,19 @@ import type { CanvasStateStore } from "./CanvasStateStore";
 interface PropertyPanelState {
     readonly colorSectionVisible: boolean;
     readonly colorId: number | null;
+
     readonly fillModeSectionVisible: boolean;
     readonly fillMode: FillMode | null;
+
     readonly textAlignSectionVisible: boolean;
     readonly textAlignX: TextAlignment | null;
     readonly textAlignY: TextAlignment | null;
+
     readonly orderSectionVisible: boolean;
+
+    readonly lineEndTypeSectionVisible: boolean;
+    readonly lineEndType1: LineEndType | null;
+    readonly lineEndType2: LineEndType | null;
 }
 
 export class PropertyPanelStateStore extends Store<PropertyPanelState> {
@@ -29,6 +36,9 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
             textAlignX: null,
             textAlignY: null,
             orderSectionVisible: true,
+            lineEndTypeSectionVisible: true,
+            lineEndType1: null,
+            lineEndType2: null,
         });
 
         this.canvasStateStore.addListener(() => this.update());
@@ -65,6 +75,12 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
         const fillModes = new Set([
             ...selectedShapes.map((shape) => shape.fillMode),
         ]);
+        const lineEndType1Set = new Set(
+            selectedLines.map((line) => line.endType1),
+        );
+        const lineEndType2Set = new Set(
+            selectedLines.map((line) => line.endType2),
+        );
 
         this.setState({
             colorSectionVisible: true,
@@ -75,7 +91,7 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
                       ? [...colorIds][0]
                       : null,
             fillModeSectionVisible:
-                selectedShapes.length > 0 || selectedLines.length === 0,
+                selectedShapes.length > 0 || appState.mode.type === "shape",
             fillMode:
                 fillModes.size === 0
                     ? appState.defaultFillMode
@@ -83,7 +99,7 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
                       ? [...fillModes][0]
                       : null,
             textAlignSectionVisible:
-                selectedShapes.length > 0 || selectedLines.length === 0,
+                selectedShapes.length > 0 || appState.mode.type === "shape",
             textAlignX:
                 alignXs.size === 0
                     ? appState.defaultTextAlignX
@@ -98,6 +114,20 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
                       : null,
             orderSectionVisible:
                 selectedShapes.length > 0 || selectedLines.length > 0,
+            lineEndTypeSectionVisible:
+                selectedLines.length > 0 || appState.mode.type === "line",
+            lineEndType1:
+                lineEndType1Set.size === 0
+                    ? appState.defaultLineEndType1
+                    : lineEndType1Set.size === 1
+                      ? [...lineEndType1Set][0]
+                      : null,
+            lineEndType2:
+                lineEndType2Set.size === 0
+                    ? appState.defaultLineEndType2
+                    : lineEndType2Set.size === 1
+                      ? [...lineEndType2Set][0]
+                      : null,
         });
     }
 }

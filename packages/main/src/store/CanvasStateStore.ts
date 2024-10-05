@@ -168,6 +168,28 @@ export class CanvasStateStore extends Store<CanvasState> {
         );
     }
 
+    setLineEndType(lineEnd: 1 | 2, lineEndType: LineEndType) {
+        this.setState(
+            this.state.setPage(
+                new Transaction(this.state.page)
+                    .updateProperty(this.state.selectedBlockIds, (oldBlock) => {
+                        switch (oldBlock.type) {
+                            case "line": {
+                                return {
+                                    ...oldBlock,
+                                    [`endType${lineEnd}`]: lineEndType,
+                                };
+                            }
+                            default: {
+                                return oldBlock;
+                            }
+                        }
+                    })
+                    .commit(),
+            ),
+        );
+    }
+
     bringToFront() {
         this.bringForwardOf(this.state.page.blockIds.length - 1);
     }

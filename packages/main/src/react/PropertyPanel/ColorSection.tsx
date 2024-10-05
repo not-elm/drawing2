@@ -2,6 +2,7 @@ import { type ColorId, Colors } from "../../model/Colors";
 import { CardSection } from "../Card";
 import { useController } from "../ControllerProvider";
 import { useStore } from "../hooks/useStore";
+import { PropertyPanelButton } from "./PropertyPanelButton";
 
 export function ColorSection() {
     return (
@@ -44,39 +45,19 @@ function ColorButton({ colorId }: { colorId: ColorId }) {
     const selected = state.colorId === colorId;
 
     return (
-        <button
+        <PropertyPanelButton
             onPointerDown={(ev) => {
                 ev.stopPropagation();
                 controller.setColor(colorId);
             }}
-            type="button"
             aria-selected={selected}
             css={{
-                position: "relative",
-                border: "none",
-                background: "none",
-                width: "32px",
-                height: "32px",
-                borderRadius: 8,
-                transition: "background 0.2s",
-                cursor: "pointer",
-                pointerEvents: "all",
-
-                "&:hover": {
-                    transition: "background 0.1s",
-                    background: "#f2f2f2",
-                },
-
                 "&::after": {
                     content: '""',
                     position: "absolute",
                     inset: "8px",
                     borderRadius: "50%",
                     background: Colors[colorId],
-                },
-
-                "&[aria-selected='true']": {
-                    background: "#f2f2f2",
                 },
             }}
         />

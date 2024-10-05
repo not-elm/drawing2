@@ -3,7 +3,6 @@ import type { ColorId } from "../model/Colors";
 import type { FillMode } from "../model/FillMode";
 import type { Mode } from "../model/Mode";
 import type { TextAlignment } from "../model/TextAlignment";
-import type { CanvasStateStore } from "./CanvasStateStore";
 
 interface AppState {
     readonly mode: Mode;
@@ -11,16 +10,20 @@ interface AppState {
     readonly defaultFillMode: FillMode;
     readonly defaultTextAlignX: TextAlignment;
     readonly defaultTextAlignY: TextAlignment;
+    readonly defaultLineEndType1: LineEndType;
+    readonly defaultLineEndType2: LineEndType;
 }
 
 export class AppStateStore extends Store<AppState> {
-    constructor(private readonly canvasStateStore: CanvasStateStore) {
+    constructor() {
         super({
             mode: { type: "select" },
             defaultColorId: 0,
             defaultFillMode: "none",
             defaultTextAlignX: "center",
             defaultTextAlignY: "center",
+            defaultLineEndType1: "none",
+            defaultLineEndType2: "none",
         });
     }
 
@@ -38,6 +41,13 @@ export class AppStateStore extends Store<AppState> {
 
     setDefaultFillMode(fillMode: FillMode) {
         this.setState({ ...this.state, defaultFillMode: fillMode });
+    }
+
+    setDefaultLineEnd(lineEnd: 1 | 2, lineEndType: LineEndType) {
+        this.setState({
+            ...this.state,
+            [`defaultLineEndType${lineEnd}`]: lineEndType,
+        });
     }
 
     setMode(mode: Mode) {
