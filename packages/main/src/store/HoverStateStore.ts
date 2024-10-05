@@ -7,7 +7,7 @@ import type {
     LineObject,
     Obj,
     Page,
-    PointObject,
+    PointEntity,
     ShapeObject,
 } from "../model/Page";
 import type { CanvasStateStore } from "./CanvasStateStore";
@@ -18,7 +18,7 @@ interface HitTestResult {
     // Hit objects ordered by distance (Small distance first)
     entities: HitTestResultEntry<Entity>[];
     objects: HitTestResultEntry<Obj>[];
-    points: HitTestResultEntry<PointObject>[];
+    points: HitTestResultEntry<PointEntity>[];
 }
 
 interface HitTestResultEntry<T> {
@@ -40,7 +40,7 @@ export function testHitObjects(
 ): HitTestResult {
     const entities: HitTestResultEntry<Entity>[] = [];
     const objects: HitTestResultEntry<Obj>[] = [];
-    const points: HitTestResultEntry<PointObject>[] = [];
+    const points: HitTestResultEntry<PointEntity>[] = [];
 
     // TODO: PointのzIndex値を正しく計算する
     let zIndexForPoint = 0;
@@ -48,7 +48,7 @@ export function testHitObjects(
         zIndexForPoint++;
         const distance = Math.hypot(point.x - x, point.y - y) * scale;
         if (distance < threshold) {
-            const entry: HitTestResultEntry<PointObject> = {
+            const entry: HitTestResultEntry<PointEntity> = {
                 target: point,
                 point: point,
                 distance,

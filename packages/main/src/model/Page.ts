@@ -7,7 +7,7 @@ interface ObjectBase<T extends string> {
     type: T;
     id: string;
 }
-export interface PointObject extends ObjectBase<"point"> {
+export interface PointEntity extends ObjectBase<"point"> {
     x: number;
     y: number;
 }
@@ -37,11 +37,11 @@ export interface ShapeObject extends ObjectBase<"shape"> {
 
 export type Obj = LineObject | ShapeObject;
 
-export type Entity = Obj | PointObject;
+export type Entity = Obj | PointEntity;
 
 export interface Page {
     objects: Record<string, Obj>;
-    points: Record<string, PointObject>;
+    points: Record<string, PointEntity>;
     objectIds: string[];
     dependencies: DependencyCollection;
 }

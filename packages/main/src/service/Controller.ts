@@ -15,8 +15,8 @@ import type { Mode } from "../model/Mode";
 import {
     type LineObject,
     type Obj,
+    type PointEntity,
     PointKey,
-    type PointObject,
     type ShapeObject,
 } from "../model/Page";
 import type { TextAlignment } from "../model/TextAlignment";
@@ -698,7 +698,7 @@ function createNewLineSessionHandlers(
                 canvasStateStore.getState().page,
             );
 
-            let p1: PointObject;
+            let p1: PointEntity;
             const hitTestResult1 = testHitObjects(
                 page,
                 data.startX,
@@ -768,7 +768,7 @@ function createNewLineSessionHandlers(
                 }
             }
 
-            let p2: PointObject;
+            let p2: PointEntity;
             const hitTestResult2 = testHitObjects(
                 page,
                 data.newX,
@@ -903,13 +903,13 @@ function createNewShapeSessionHandlers(
                 fillMode: appStateStore.getState().defaultFillMode,
                 path: getRectanglePath(),
             };
-            const p1: PointObject = {
+            const p1: PointEntity = {
                 type: "point",
                 id: randomId(),
                 x,
                 y,
             };
-            const p2: PointObject = {
+            const p2: PointEntity = {
                 type: "point",
                 id: randomId(),
                 x: x + width,
@@ -1002,7 +1002,7 @@ function createMoveObjectSessionHandlers(
 }
 
 function createMovePointSessionHandlers(
-    originalPoint: PointObject,
+    originalPoint: PointEntity,
     canvasStateStore: CanvasStateStore,
     viewportProvider: StateProvider<ViewportStore>,
 ): PointerEventSessionHandlers {

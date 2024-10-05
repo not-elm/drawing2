@@ -7,7 +7,7 @@ import type {
     PointOnShapeDependency,
 } from "./Dependency";
 import type { DependencyCollection } from "./DependencyCollection";
-import { type Obj, type Page, PointKey, type PointObject } from "./Page";
+import { type Obj, type Page, type PointEntity, PointKey } from "./Page";
 
 interface CommandBase<T extends string> {
     type: T;
@@ -16,7 +16,7 @@ interface InsertObjectsCommand extends CommandBase<"INSERT_OBJECTS"> {
     objects: Obj[];
 }
 interface InsertPointsCommand extends CommandBase<"INSERT_POINTS"> {
-    points: PointObject[];
+    points: PointEntity[];
 }
 interface DeleteObjectsCommand extends CommandBase<"DELETE_OBJECTS"> {
     objectIds: string[];
@@ -80,7 +80,7 @@ export class Transaction {
         return this;
     }
 
-    insertPoints(points: PointObject[]): this {
+    insertPoints(points: PointEntity[]): this {
         this.commands.push({ type: "INSERT_POINTS", points });
         return this;
     }
@@ -147,7 +147,7 @@ export class Transaction {
 
     commit(): Page {
         const objects: Record<string, Obj> = { ...this.page.objects };
-        const points: Record<string, PointObject> = { ...this.page.points };
+        const points: Record<string, PointEntity> = { ...this.page.points };
         const objectIds = [...this.page.objectIds];
         const dependencies = this.page.dependencies;
         const dirtyEntityIds: string[] = [];
@@ -230,7 +230,7 @@ export class Transaction {
 
 interface PageDraft {
     objects: Record<string, Obj>;
-    points: Record<string, PointObject>;
+    points: Record<string, PointEntity>;
     objectIds: string[];
     dependencies: DependencyCollection;
     dirtyEntityIds: string[];
