@@ -12,7 +12,13 @@ import { randomId } from "../lib/randomId";
 import type { ColorId } from "../model/Colors";
 import type { FillMode } from "../model/FillMode";
 import type { Mode } from "../model/Mode";
-import type { LineObject, Obj, PointObject, ShapeObject } from "../model/Page";
+import {
+    type LineObject,
+    type Obj,
+    PointKey,
+    type PointObject,
+    type ShapeObject,
+} from "../model/Page";
 import type { TextAlignment } from "../model/TextAlignment";
 import { Transaction } from "../model/Transaction";
 import { AppStateStore } from "../store/AppStateStore";
@@ -96,8 +102,9 @@ export class Controller {
                                             .find(
                                                 (dependency) =>
                                                     dependency.type ===
-                                                        "lineEndPoint" &&
-                                                    dependency.lineEnd === 1,
+                                                        "shapeToPoint" &&
+                                                    dependency.key ===
+                                                        PointKey.LINE_P1,
                                             )?.from;
                                     assert(
                                         originalPointId !== undefined,
@@ -140,8 +147,9 @@ export class Controller {
                                             .find(
                                                 (dependency) =>
                                                     dependency.type ===
-                                                        "lineEndPoint" &&
-                                                    dependency.lineEnd === 2,
+                                                        "shapeToPoint" &&
+                                                    dependency.key ===
+                                                        PointKey.LINE_P2,
                                             )?.from;
                                     assert(
                                         originalPointId !== undefined,
@@ -865,15 +873,15 @@ function createNewLineSessionHandlers(
                 .insertObjects([line])
                 .addDependency({
                     id: randomId(),
-                    type: "lineEndPoint",
-                    lineEnd: 1,
+                    type: "shapeToPoint",
+                    key: PointKey.LINE_P1,
                     from: p1.id,
                     to: line.id,
                 })
                 .addDependency({
                     id: randomId(),
-                    type: "lineEndPoint",
-                    lineEnd: 2,
+                    type: "shapeToPoint",
+                    key: PointKey.LINE_P2,
                     from: p2.id,
                     to: line.id,
                 });
@@ -906,6 +914,10 @@ function createNewShapeSessionHandlers(
                 y,
                 width,
                 height,
+                x1: x,
+                y1: y,
+                x2: x + width,
+                y2: y + height,
                 label: "",
                 textAlignX: appStateStore.getState().defaultTextAlignX,
                 textAlignY: appStateStore.getState().defaultTextAlignY,
@@ -913,7 +925,37 @@ function createNewShapeSessionHandlers(
                 fillMode: appStateStore.getState().defaultFillMode,
                 path: getRectanglePath(),
             };
-            canvasStateStore.addObjects(shape);
+            const p1: PointObject = {
+                type: "point",
+                id: randomId(),
+                x,
+                y,
+            };
+            const p2: PointObject = {
+                type: "point",
+                id: randomId(),
+                x: x + width,
+                y: y + height,
+            };
+            const transaction = new Transaction(
+                canvasStateStore.getState().page,
+            )
+                .insertObjects([shape, p1, p2])
+                .addDependency({
+                    id: randomId(),
+                    type: "shapeToPoint",
+                    key: PointKey.SHAPE_P1,
+                    from: p1.id,
+                    to: shape.id,
+                })
+                .addDependency({
+                    id: randomId(),
+                    type: "shapeToPoint",
+                    key: PointKey.SHAPE_P2,
+                    from: p2.id,
+                    to: shape.id,
+                });
+            canvasStateStore.setPage(transaction.commit());
             appStateStore.setMode({ type: "select" });
             canvasStateStore.unselectAll();
             canvasStateStore.select(shape.id);
@@ -934,14 +976,13 @@ function createMoveSelectedObjectsSessionHandlers(
         y,
         viewportStore.getState().scale,
     );
-    const selectedObjects = canvasStateStore.getState().getSelectedObjects();
     return {
         type: "move",
         onPointerMove: (data) => {
             canvasStateStore.resetAndMoveObjects(
-                selectedObjects,
-                data.newX - data.startX,
-                data.newY - data.startY,
+                canvasStateStore.getState().selectedObjectIds,
+                data.newX - data.lastX,
+                data.newY - data.lastY,
             );
         },
         onClick: () => {
@@ -969,15 +1010,13 @@ function createMoveObjectSessionHandlers(
     }
     canvasStateStore.select(object.id);
 
-    const selectedObjects = canvasStateStore.getState().getSelectedObjects();
-
     return {
         type: "move",
         onPointerMove: (data) => {
             canvasStateStore.resetAndMoveObjects(
-                selectedObjects,
-                data.newX - data.startX,
-                data.newY - data.startY,
+                canvasStateStore.getState().selectedObjectIds,
+                data.newX - data.lastX,
+                data.newY - data.lastY,
             );
         },
     };
@@ -1173,9 +1212,9 @@ function createXYResizeSessionHandlers(
         type: "resize",
         onPointerMove: (data) => {
             canvasStateStore.resetAndScaleObjects(
-                originalObjects,
-                (data.newX - originX) / (data.startX - originX),
-                (data.newY - originY) / (data.startY - originY),
+                originalObjects.map((object) => object.id),
+                (data.newX - originX) / (data.lastX - originX),
+                (data.newY - originY) / (data.lastY - originY),
                 originX,
                 originY,
             );
@@ -1192,8 +1231,8 @@ function createXResizeSessionHandlers(
         type: "resize",
         onPointerMove: (data) => {
             canvasStateStore.resetAndScaleObjects(
-                originalObjects,
-                (data.newX - originX) / (data.startX - originX),
+                originalObjects.map((object) => object.id),
+                (data.newX - originX) / (data.lastX - originX),
                 1,
                 originX,
                 0,
@@ -1211,9 +1250,9 @@ function createYResizeSessionHandlers(
         type: "resize",
         onPointerMove: (data) => {
             canvasStateStore.resetAndScaleObjects(
-                originalObjects,
+                originalObjects.map((object) => object.id),
                 1,
-                (data.newY - originY) / (data.startY - originY),
+                (data.newY - originY) / (data.lastY - originY),
                 0,
                 originY,
             );

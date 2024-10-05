@@ -21,6 +21,10 @@ export interface LineObject extends ObjectBase<"line"> {
 export interface ShapeObject extends ObjectBase<"shape"> {
     x: number;
     y: number;
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
     width: number;
     height: number;
     label: string;
@@ -38,3 +42,10 @@ export interface Page {
     objectIds: string[];
     dependencies: DependencyCollection;
 }
+
+export const PointKey = {
+    LINE_P1: "lineP2",
+    LINE_P2: "lineP1",
+    SHAPE_P1: "shapeP1",
+    SHAPE_P2: "shapeP2",
+};

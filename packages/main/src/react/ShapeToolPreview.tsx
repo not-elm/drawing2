@@ -9,13 +9,22 @@ export function ShapeToolPreview({ data }: { data: PointerEventSessionData }) {
     const controller = useController();
     const appState = useStore(controller.appStateStore);
 
+    const x1 = data.startX;
+    const y1 = data.startY;
+    const x2 = data.lastX;
+    const y2 = data.lastY;
+
     const shape: ShapeObject = {
         type: "shape",
         id: "shape-tool-preview",
-        x: Math.min(data.startX, data.lastX),
-        y: Math.min(data.startY, data.lastY),
-        width: Math.abs(data.lastX - data.startX),
-        height: Math.abs(data.lastY - data.startY),
+        x: Math.min(x1, x2),
+        y: Math.min(y1, y2),
+        width: Math.abs(x2 - x1),
+        height: Math.abs(y2 - y1),
+        x1,
+        y1,
+        x2,
+        y2,
         label: "",
         textAlignX: appState.defaultTextAlignX,
         textAlignY: appState.defaultTextAlignY,

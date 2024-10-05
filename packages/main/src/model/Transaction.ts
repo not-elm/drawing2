@@ -1,7 +1,7 @@
 import { assert } from "../lib/assert";
 import { randomId } from "../lib/randomId";
 import type { Dependency } from "./Dependency";
-import type { Obj, Page } from "./Page";
+import { type Obj, type Page, PointKey } from "./Page";
 
 interface CommandBase<T extends string> {
     type: T;
@@ -182,7 +182,7 @@ export class Transaction {
                         dirtyObjectIds.push(id);
 
                         for (const dep of deps) {
-                            if (dep.type !== "lineEndPoint") continue;
+                            if (dep.type !== "shapeToPoint") continue;
                             const pointId = dep.from;
                             if (
                                 dependencies.getByFromObjectId(pointId)
@@ -205,85 +205,53 @@ export class Transaction {
                     break;
                 }
                 case "SCALE_OBJECTS": {
+                    const pointIds = new Set<string>();
                     for (const id of command.objectIds) {
-                        const object = objects[id];
-                        switch (object.type) {
-                            case "point": {
-                                objects[id] = {
-                                    ...object,
-                                    x:
-                                        (object.x - command.cx) *
-                                            command.scaleX +
-                                        command.cx,
-                                    y:
-                                        (object.y - command.cy) *
-                                            command.scaleY +
-                                        command.cy,
-                                };
-                                break;
-                            }
-                            case "line": {
-                                // Skipped since it will be updated by dependencies
-                                break;
-                            }
-                            case "shape": {
-                                let newX =
-                                    (object.x - command.cx) * command.scaleX +
-                                    command.cx;
-                                let newY =
-                                    (object.y - command.cy) * command.scaleY +
-                                    command.cy;
-                                let newWidth = object.width * command.scaleX;
-                                let newHeight = object.height * command.scaleY;
-
-                                if (newWidth < 0) {
-                                    newX += newWidth;
-                                    newWidth = -newWidth;
-                                }
-                                if (newHeight < 0) {
-                                    newY += newHeight;
-                                    newHeight = -newHeight;
-                                }
-
-                                objects[id] = {
-                                    ...object,
-                                    x: newX,
-                                    y: newY,
-                                    width: newWidth,
-                                    height: newHeight,
-                                };
-                                break;
-                            }
+                        for (const dep of dependencies
+                            .getByToObjectId(id)
+                            .filter((dep) => dep.type === "shapeToPoint")) {
+                            pointIds.add(dep.from);
                         }
+                    }
+                    for (const id of pointIds) {
+                        const point = objects[id];
+                        assert(
+                            point.type === "point",
+                            `Invalid object type: ${point.type} !== point`,
+                        );
+                        objects[id] = {
+                            ...point,
+                            x:
+                                (point.x - command.cx) * command.scaleX +
+                                command.cx,
+                            y:
+                                (point.y - command.cy) * command.scaleY +
+                                command.cy,
+                        };
                         dirtyObjectIds.push(id);
                     }
                     break;
                 }
                 case "MOVE_OBJECTS": {
+                    const pointIds = new Set<string>();
                     for (const id of command.objectIds) {
-                        const object = objects[id];
-                        switch (object.type) {
-                            case "point": {
-                                objects[id] = {
-                                    ...object,
-                                    x: object.x + command.dx,
-                                    y: object.y + command.dy,
-                                };
-                                break;
-                            }
-                            case "line": {
-                                // Skipped since it will be updated by dependencies
-                                break;
-                            }
-                            case "shape": {
-                                objects[id] = {
-                                    ...object,
-                                    x: object.x + command.dx,
-                                    y: object.y + command.dy,
-                                };
-                                break;
-                            }
+                        for (const dep of dependencies
+                            .getByToObjectId(id)
+                            .filter((dep) => dep.type === "shapeToPoint")) {
+                            pointIds.add(dep.from);
                         }
+                    }
+                    for (const id of pointIds) {
+                        const point = objects[id];
+                        assert(
+                            point.type === "point",
+                            `Invalid object type: ${point.type} !== point`,
+                        );
+                        objects[id] = {
+                            ...point,
+                            x: point.x + command.dx,
+                            y: point.y + command.dy,
+                        };
                         dirtyObjectIds.push(id);
                     }
                     break;
@@ -359,31 +327,95 @@ export class Transaction {
             dirtyObjectIds,
         )) {
             switch (dependency.type) {
-                case "lineEndPoint": {
+                case "shapeToPoint": {
                     const point = objects[dependency.from];
                     assert(
                         point.type === "point",
                         `Invalid object type: ${point.type}`,
                     );
 
-                    const line = objects[dependency.to];
-                    assert(
-                        line.type === "line",
-                        `Invalid object type: ${line.type}`,
-                    );
+                    const object = objects[dependency.to];
+                    switch (dependency.key) {
+                        case PointKey.LINE_P1: {
+                            assert(
+                                object.type === "line",
+                                `Invalid object type: ${object.type} !== line`,
+                            );
+                            objects[object.id] = {
+                                ...object,
+                                x1: point.x,
+                                y1: point.y,
+                            };
+                            break;
+                        }
+                        case PointKey.LINE_P2: {
+                            assert(
+                                object.type === "line",
+                                `Invalid object type: ${object.type} !== line`,
+                            );
+                            objects[object.id] = {
+                                ...object,
+                                x2: point.x,
+                                y2: point.y,
+                            };
+                            break;
+                        }
+                        case PointKey.SHAPE_P1: {
+                            assert(
+                                object.type === "shape",
+                                `Invalid object type: ${object.type} !== shape`,
+                            );
 
-                    if (dependency.lineEnd === 1) {
-                        objects[line.id] = {
-                            ...line,
-                            x1: point.x,
-                            y1: point.y,
-                        };
-                    } else {
-                        objects[line.id] = {
-                            ...line,
-                            x2: point.x,
-                            y2: point.y,
-                        };
+                            const x1 = point.x;
+                            const x2 = object.x2;
+                            const y1 = point.y;
+                            const y2 = object.y2;
+                            const x = Math.min(x1, x2);
+                            const y = Math.min(y1, y2);
+                            const width = Math.abs(x1 - x2);
+                            const height = Math.abs(y1 - y2);
+
+                            objects[object.id] = {
+                                ...object,
+                                x,
+                                y,
+                                width,
+                                height,
+                                x1,
+                                x2,
+                                y1,
+                                y2,
+                            };
+                            break;
+                        }
+                        case PointKey.SHAPE_P2: {
+                            assert(
+                                object.type === "shape",
+                                `Invalid object type: ${object.type} !== shape`,
+                            );
+
+                            const x1 = object.x1;
+                            const x2 = point.x;
+                            const y1 = object.y1;
+                            const y2 = point.y;
+                            const x = Math.min(x1, x2);
+                            const y = Math.min(y1, y2);
+                            const width = Math.abs(x1 - x2);
+                            const height = Math.abs(y1 - y2);
+
+                            objects[object.id] = {
+                                ...object,
+                                x,
+                                y,
+                                width,
+                                height,
+                                x1,
+                                x2,
+                                y1,
+                                y2,
+                            };
+                            break;
+                        }
                     }
                     break;
                 }

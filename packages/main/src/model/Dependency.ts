@@ -5,8 +5,8 @@ interface DependencyBase<T extends string> {
     to: string;
 }
 
-export interface LineEndPointDependency extends DependencyBase<"lineEndPoint"> {
-    lineEnd: 1 | 2;
+export interface ShapeToPointDependency extends DependencyBase<"shapeToPoint"> {
+    key: string;
 }
 
 export interface PointOnLineDependency extends DependencyBase<"pointOnLine"> {
@@ -26,6 +26,6 @@ export interface PointOnShapeDependency extends DependencyBase<"pointOnShape"> {
 }
 
 export type Dependency =
-    | LineEndPointDependency
+    | ShapeToPointDependency
     | PointOnLineDependency
     | PointOnShapeDependency;

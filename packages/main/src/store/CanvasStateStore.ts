@@ -75,23 +75,18 @@ export class CanvasStateStore extends Store<CanvasState> {
 
     redo() {}
 
-    resetAndMoveObjects(objects: Obj[], deltaX: number, deltaY: number) {
+    resetAndMoveObjects(objectIds: string[], deltaX: number, deltaY: number) {
         this.setState(
             this.state.setPage(
                 new Transaction(this.state.page)
-                    .replaceObjects(objects)
-                    .moveObjects(
-                        objects.map((obj) => obj.id),
-                        deltaX,
-                        deltaY,
-                    )
+                    .moveObjects(objectIds, deltaX, deltaY)
                     .commit(),
             ),
         );
     }
 
     resetAndScaleObjects(
-        objects: Obj[],
+        objectIds: string[],
         scaleX: number,
         scaleY: number,
         originX: number,
@@ -100,14 +95,7 @@ export class CanvasStateStore extends Store<CanvasState> {
         this.setState(
             this.state.setPage(
                 new Transaction(this.state.page)
-                    .replaceObjects(objects)
-                    .scaleObjects(
-                        objects.map((obj) => obj.id),
-                        originX,
-                        originY,
-                        scaleX,
-                        scaleY,
-                    )
+                    .scaleObjects(objectIds, originX, originY, scaleX, scaleY)
                     .commit(),
             ),
         );
