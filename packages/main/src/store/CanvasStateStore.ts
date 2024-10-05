@@ -7,6 +7,11 @@ import type { ColorId } from "../model/Colors";
 import { DependencyCollection } from "../model/DependencyCollection";
 import type { FillMode } from "../model/FillMode";
 import type { Block, Page } from "../model/Page";
+import {
+    type SerializedPage,
+    deserializePage,
+    serializePage,
+} from "../model/SerializedPage";
 import type { TextAlignment } from "../model/TextAlignment";
 import { Transaction } from "../model/Transaction";
 import type { Viewport } from "../model/Viewport";
@@ -25,11 +30,11 @@ export class CanvasStateStore extends Store<CanvasState> {
             }),
         );
 
-        // this.loadFromLocalStorage();
-        //
-        // setInterval(() => {
-        // 	this.saveToLocalStorage();
-        // }, 1000);
+        this.loadFromLocalStorage();
+
+        setInterval(() => {
+            this.saveToLocalStorage();
+        }, 1000);
     }
 
     deleteBlock(blockIds: string[]) {
@@ -421,33 +426,22 @@ export class CanvasStateStore extends Store<CanvasState> {
         // this.setSelectedObjectIds(objects.map((obj) => obj.id));
     }
 
-    // private saveToLocalStorage() {
-    // 	const serializedPage = serializePage(this.state.page);
-    //
-    // 	localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(serializedPage));
-    // }
-    //
-    // private loadFromLocalStorage() {
-    // 	try {
-    // 		const data = localStorage.getItem(LOCAL_STORAGE_KEY);
-    // 		if (data === null) return;
-    //
-    // 		const serializedPage: SerializedPage = JSON.parse(data);
-    // 		const page = deserializePage(serializedPage);
-    //
-    // 		this.setState(
-    // 			this.state.setPage(page).copy({
-    // 				selectedObjectIds: [],
-    // 			}),
-    // 		);
-    // 	} catch {}
-    // }
+    private saveToLocalStorage() {
+        const serializedPage = serializePage(this.state.page);
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(serializedPage));
+    }
 
-    // setState(state: CanvasState) {
-    //     super.setState(state);
-    //     console.log(state);
-    //     // this.saveToLocalStorage();
-    // }
+    private loadFromLocalStorage() {
+        try {
+            const data = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (data === null) return;
+
+            const serializedPage: SerializedPage = JSON.parse(data);
+            const page = deserializePage(serializedPage);
+
+            this.setState(this.state.setPage(page).unselectAll());
+        } catch {}
+    }
 }
 
 export const MouseButton = {

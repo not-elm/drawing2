@@ -1,174 +1,170 @@
-// import { isNotNullish } from "../lib/isNullish";
-// import type { ColorId } from "./Colors";
-// import { DependencyCollection } from "./DependencyCollection";
-// import type { FillMode } from "./FillMode";
-// import type { LineObject, Obj, Page, PointObject, ShapeObject } from "./Page";
-// import type { TextAlignment } from "./TextAlignment";
-//
-// export interface SerializedPage {
-//     objects: SerializedObj[];
-// }
-//
-// export interface SerializedShapeObject {
-//     type: "shape";
-//     id: string;
-//     x: number;
-//     y: number;
-//     width: number;
-//     height: number;
-//     label: string;
-//     textAlignX: TextAlignment;
-//     textAlignY: TextAlignment;
-//     colorId: ColorId;
-//     fillMode: FillMode;
-//     path: number[][];
-// }
-// export interface SerializedLineObject {
-//     type: "line";
-//     id: string;
-//     x1: number;
-//     y1: number;
-//     x2: number;
-//     y2: number;
-//     colorId: ColorId;
-// }
-// export interface SerializedPointObject {
-//     type: "point";
-//     id: string;
-//     x: number;
-//     y: number;
-// }
-// export type SerializedObj =
-//     | SerializedShapeObject
-//     | SerializedLineObject
-//     | SerializedPointObject;
-//
-// function serializeObject(obj: Obj): SerializedObj {
-//     switch (obj.type) {
-//         case "shape":
-//             return serializeShapeObject(obj);
-//         case "line":
-//             return serializeLineObject(obj);
-//         case "point":
-//             return serializePointObject(obj);
-//     }
-// }
-//
-// function serializeShapeObject(obj: ShapeObject): SerializedShapeObject {
-//     return {
-//         type: "shape",
-//         id: obj.id,
-//         x: obj.x,
-//         y: obj.y,
-//         width: obj.width,
-//         height: obj.height,
-//         label: obj.label,
-//         textAlignX: obj.textAlignX,
-//         textAlignY: obj.textAlignY,
-//         colorId: obj.colorId,
-//         fillMode: obj.fillMode,
-//         path: obj.path,
-//     };
-// }
-//
-// function serializeLineObject(obj: LineObject): SerializedLineObject {
-//     return {
-//         type: "line",
-//         id: obj.id,
-//         x1: obj.x1,
-//         y1: obj.y1,
-//         x2: obj.x2,
-//         y2: obj.y2,
-//         colorId: obj.colorId,
-//     };
-// }
-//
-// function serializePointObject(obj: PointObject): SerializedPointObject {
-//     return {
-//         type: "point",
-//         id: obj.id,
-//         x: obj.x,
-//         y: obj.y,
-//     };
-// }
-//
-// export function serializePage(page: Page): SerializedPage {
-//     return {
-//         objects: page.objectIds
-//             .map((id) => page.objects[id])
-//             .filter(isNotNullish)
-//             .map(serializeObject),
-//         // TODO: Dependency
-//     };
-// }
-//
-// export function deserializePage(serializedPage: SerializedPage): Page {
-//     const objects: Record<string, Obj> = {};
-//     for (const serializedObj of serializedPage.objects) {
-//         const obj = deserializeObject(serializedObj);
-//         objects[obj.id] = obj;
-//     }
-//
-//     const objectIds = serializedPage.objects.map((object) => object.id);
-//
-//     return {
-//         objects,
-//         objectIds,
-//         dependencies: new DependencyCollection(),
-//     };
-// }
-//
-// function deserializeObject(serializedObj: SerializedObj): Obj {
-//     switch (serializedObj.type) {
-//         case "shape":
-//             return deserializeShapeObject(serializedObj);
-//         case "line":
-//             return deserializeLineObject(serializedObj);
-//         case "point":
-//             return deserializePointObject(serializedObj);
-//     }
-// }
-//
-// function deserializeShapeObject(
-//     serializedObj: SerializedShapeObject,
-// ): ShapeObject {
-//     return {
-//         type: "shape",
-//         id: serializedObj.id,
-//         x: serializedObj.x,
-//         y: serializedObj.y,
-//         width: serializedObj.width,
-//         height: serializedObj.height,
-//         label: serializedObj.label,
-//         textAlignX: serializedObj.textAlignX,
-//         textAlignY: serializedObj.textAlignY,
-//         colorId: serializedObj.colorId,
-//         fillMode: serializedObj.fillMode,
-//         path: serializedObj.path,
-//     };
-// }
-//
-// function deserializeLineObject(
-//     serializedObj: SerializedLineObject,
-// ): LineObject {
-//     return {
-//         type: "line",
-//         id: serializedObj.id,
-//         x1: serializedObj.x1,
-//         y1: serializedObj.y1,
-//         x2: serializedObj.x2,
-//         y2: serializedObj.y2,
-//         colorId: serializedObj.colorId,
-//     };
-// }
-//
-// function deserializePointObject(
-//     serializedObj: SerializedPointObject,
-// ): PointObject {
-//     return {
-//         type: "point",
-//         id: serializedObj.id,
-//         x: serializedObj.x,
-//         y: serializedObj.y,
-//     };
-// }
+import type { ColorId } from "./Colors";
+import type { SerializedDependency } from "./Dependency";
+import { DependencyCollection } from "./DependencyCollection";
+import type { FillMode } from "./FillMode";
+import type { Block, LineBlock, Page, PointEntity, ShapeBlock } from "./Page";
+import type { TextAlignment } from "./TextAlignment";
+
+export interface SerializedPage {
+    blocks: SerializedBlock[];
+    points: SerializedPointEntity[];
+    dependencies: SerializedDependency[];
+}
+export function serializePage(page: Page): SerializedPage {
+    return {
+        blocks: page.blockIds.map((blockId) =>
+            serializeBlock(page.blocks[blockId]),
+        ),
+        points: Object.values(page.points),
+        dependencies: page.dependencies.serialize(),
+    };
+}
+export function deserializePage(page: SerializedPage): Page {
+    const blocks = page.blocks.map(deserializeBlock);
+    const points = Object.fromEntries(
+        page.points.map((point) => [point.id, deserializePoint(point)]),
+    );
+    const dependencies = DependencyCollection.deserialize(page.dependencies);
+    return {
+        blocks: Object.fromEntries(blocks.map((block) => [block.id, block])),
+        blockIds: blocks.map((block) => block.id),
+        points,
+        dependencies,
+    };
+}
+
+type SerializedBlock = SerializedLineBlock | SerializedShapeBlock;
+function serializeBlock(block: Block): SerializedBlock {
+    switch (block.type) {
+        case "line":
+            return serializeLineBlock(block);
+        case "shape":
+            return serializeShapeBlock(block);
+    }
+}
+function deserializeBlock(block: SerializedBlock): Block {
+    switch (block.type) {
+        case "line":
+            return deserializeLineBlock(block);
+        case "shape":
+            return deserializeShapeBlock(block);
+    }
+}
+
+interface SerializedLineBlock {
+    id: string;
+    type: "line";
+    x1: number;
+    y1: number;
+    endType1: LineEndType;
+    x2: number;
+    y2: number;
+    endType2: LineEndType;
+    colorId: ColorId;
+}
+function serializeLineBlock(line: LineBlock): SerializedLineBlock {
+    return {
+        id: line.id,
+        type: "line",
+        x1: line.x1,
+        y1: line.y1,
+        endType1: line.endType1,
+        x2: line.x2,
+        y2: line.y2,
+        endType2: line.endType2,
+        colorId: line.colorId,
+    };
+}
+function deserializeLineBlock(line: SerializedLineBlock): LineBlock {
+    return {
+        id: line.id,
+        type: "line",
+        x1: line.x1,
+        y1: line.y1,
+        endType1: line.endType1,
+        x2: line.x2,
+        y2: line.y2,
+        endType2: line.endType2,
+        colorId: line.colorId,
+    };
+}
+
+interface SerializedShapeBlock {
+    id: string;
+    type: "shape";
+    x: number;
+    y: number;
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+    width: number;
+    height: number;
+    label: string;
+    textAlignX: TextAlignment;
+    textAlignY: TextAlignment;
+    colorId: ColorId;
+    fillMode: FillMode;
+    path: number[][];
+}
+function serializeShapeBlock(shape: ShapeBlock): SerializedShapeBlock {
+    return {
+        id: shape.id,
+        type: "shape",
+        x: shape.x,
+        y: shape.y,
+        x1: shape.x1,
+        y1: shape.y1,
+        x2: shape.x2,
+        y2: shape.y2,
+        width: shape.width,
+        height: shape.height,
+        label: shape.label,
+        textAlignX: shape.textAlignX,
+        textAlignY: shape.textAlignY,
+        colorId: shape.colorId,
+        fillMode: shape.fillMode,
+        path: shape.path,
+    };
+}
+function deserializeShapeBlock(shape: SerializedShapeBlock): ShapeBlock {
+    return {
+        id: shape.id,
+        type: "shape",
+        x: shape.x,
+        y: shape.y,
+        x1: shape.x1,
+        y1: shape.y1,
+        x2: shape.x2,
+        y2: shape.y2,
+        width: shape.width,
+        height: shape.height,
+        label: shape.label,
+        textAlignX: shape.textAlignX,
+        textAlignY: shape.textAlignY,
+        colorId: shape.colorId,
+        fillMode: shape.fillMode,
+        path: shape.path,
+    };
+}
+
+interface SerializedPointEntity {
+    id: string;
+    x: number;
+    y: number;
+}
+function serializePoint(point: PointEntity): SerializedPointEntity {
+    return {
+        id: point.id,
+        x: point.x,
+        y: point.y,
+    };
+}
+function deserializePoint(point: SerializedPointEntity): PointEntity {
+    return {
+        type: "point",
+        id: point.id,
+        x: point.x,
+        y: point.y,
+    };
+}

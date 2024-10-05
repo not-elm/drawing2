@@ -1,5 +1,10 @@
 import { assert } from "../lib/assert";
-import type { Dependency } from "./Dependency";
+import {
+    type Dependency,
+    type SerializedDependency,
+    deserializeDependency,
+    serializeDependency,
+} from "./Dependency";
 
 export class DependencyCollection {
     private readonly dependencyById = new Map<string, Dependency>();
@@ -145,6 +150,22 @@ export class DependencyCollection {
         }
 
         return dependencies;
+    }
+
+    serialize(): SerializedDependency[] {
+        return Array.from(this.dependencyById.values()).map((dependency) =>
+            serializeDependency(dependency),
+        );
+    }
+
+    static deserialize(
+        dependencies: SerializedDependency[],
+    ): DependencyCollection {
+        const collection = new DependencyCollection();
+        for (const dependency of dependencies) {
+            collection.add(deserializeDependency(dependency));
+        }
+        return collection;
     }
 
     private isReachable(from: string, to: string): boolean {
