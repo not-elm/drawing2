@@ -1,9 +1,5 @@
-import { isLineOverlapWithLine, isLineOverlapWithPoint } from "../geo/Line";
-import {
-    isRectOverlapWithLine,
-    isRectOverlapWithPoint,
-    isRectOverlapWithRect,
-} from "../geo/Rect";
+import { isLineOverlapWithLine } from "../geo/Line";
+import { isRectOverlapWithLine, isRectOverlapWithRect } from "../geo/Rect";
 import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
 import { CanvasState } from "../model/CanvasState";
@@ -21,6 +17,7 @@ export class CanvasStateStore extends Store<CanvasState> {
             new CanvasState({
                 page: {
                     objects: {},
+                    points: {},
                     objectIds: [],
                     dependencies: new DependencyCollection(),
                 },
@@ -215,7 +212,7 @@ export class CanvasStateStore extends Store<CanvasState> {
             return;
         }
 
-        this.bringForwardOf(mostBackwardResult.globalIndex + 1);
+        this.bringForwardOf(mostBackwardResult.globalIndex);
     }
 
     sendToBack() {
@@ -365,7 +362,6 @@ export class CanvasStateStore extends Store<CanvasState> {
 
         return null;
     }
-
     setPage(page: Page) {
         this.setState(this.state.setPage(page));
     }
@@ -476,9 +472,6 @@ export function isOverlapped(obj1: Obj, obj2: Obj): boolean {
                 case "line": {
                     return isRectOverlapWithLine(obj1, obj2);
                 }
-                case "point": {
-                    return isRectOverlapWithPoint(obj1, obj2);
-                }
             }
             break;
         }
@@ -489,21 +482,6 @@ export function isOverlapped(obj1: Obj, obj2: Obj): boolean {
                 }
                 case "line": {
                     return isLineOverlapWithLine(obj1, obj2);
-                }
-                case "point": {
-                    return isLineOverlapWithPoint(obj1, obj2);
-                }
-            }
-            break;
-        }
-        case "point": {
-            switch (obj2.type) {
-                case "shape":
-                case "line": {
-                    return isOverlapped(obj2, obj1);
-                }
-                case "point": {
-                    return obj1.x === obj2.x && obj1.y === obj2.y;
                 }
             }
             break;

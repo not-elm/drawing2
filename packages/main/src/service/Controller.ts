@@ -96,14 +96,14 @@ export class Controller {
                                     const originalPointId =
                                         this.canvasStateStore
                                             .getState()
-                                            .page.dependencies.getByToObjectId(
+                                            .page.dependencies.getByToEntityId(
                                                 line.id,
                                             )
                                             .find(
                                                 (dependency) =>
                                                     dependency.type ===
-                                                        "shapeToPoint" &&
-                                                    dependency.key ===
+                                                        "objectToPoint" &&
+                                                    dependency.pointKey ===
                                                         PointKey.LINE_P1,
                                             )?.from;
                                     assert(
@@ -113,7 +113,7 @@ export class Controller {
 
                                     const originalPoint =
                                         this.canvasStateStore.getState().page
-                                            .objects[originalPointId];
+                                            .points[originalPointId];
                                     assert(
                                         originalPoint !== undefined,
                                         `Point ${originalPointId} is not found`,
@@ -141,14 +141,14 @@ export class Controller {
                                     const originalPointId =
                                         this.canvasStateStore
                                             .getState()
-                                            .page.dependencies.getByToObjectId(
+                                            .page.dependencies.getByToEntityId(
                                                 line.id,
                                             )
                                             .find(
                                                 (dependency) =>
                                                     dependency.type ===
-                                                        "shapeToPoint" &&
-                                                    dependency.key ===
+                                                        "objectToPoint" &&
+                                                    dependency.pointKey ===
                                                         PointKey.LINE_P2,
                                             )?.from;
                                     assert(
@@ -158,7 +158,7 @@ export class Controller {
 
                                     const originalPoint =
                                         this.canvasStateStore.getState().page
-                                            .objects[originalPointId];
+                                            .points[originalPointId];
                                     assert(
                                         originalPoint !== undefined,
                                         `Point ${originalPointId} is not found`,
@@ -390,10 +390,10 @@ export class Controller {
                                 y,
                                 this.viewportStore.getState().scale,
                             );
-                            if (hitResult.entries.length > 0) {
+                            if (hitResult.objects.length > 0) {
                                 startSession(
                                     createMoveObjectSessionHandlers(
-                                        hitResult.entries[0].object,
+                                        hitResult.objects[0].target,
                                         ev.shiftKey,
                                         this.canvasStateStore,
                                     ),
@@ -426,14 +426,14 @@ export class Controller {
                                 y,
                                 this.viewportStore.getState().scale,
                             );
-                            if (hitResult.entries.length > 0) {
+                            if (hitResult.objects.length > 0) {
                                 this.canvasStateStore.unselectAll();
                                 this.canvasStateStore.select(
-                                    hitResult.entries[0].object.id,
+                                    hitResult.objects[0].target.id,
                                 );
                                 startSession(
                                     createMoveObjectSessionHandlers(
-                                        hitResult.entries[0].object,
+                                        hitResult.objects[0].target,
                                         ev.shiftKey,
                                         this.canvasStateStore,
                                     ),
@@ -699,163 +699,141 @@ function createNewLineSessionHandlers(
             );
 
             let p1: PointObject;
-            const nearestPoint1 = testHitObjects(
+            const hitTestResult1 = testHitObjects(
                 page,
                 data.startX,
                 data.startY,
                 scale,
             );
 
-            if (nearestPoint1.entries.length === 0) {
+            if (hitTestResult1.entities.length === 0) {
                 p1 = {
                     type: "point",
                     id: randomId(),
                     x: data.startX,
                     y: data.startY,
                 };
-                transaction.insertObjects([p1]);
+                transaction.insertPoints([p1]);
+            } else if (hitTestResult1.points.length > 0) {
+                p1 = hitTestResult1.points[0].target;
             } else {
-                const hitPointEntry = nearestPoint1.entries.find(
-                    (entry) => entry.object.type === "point",
-                );
-                if (hitPointEntry) {
-                    p1 = hitPointEntry.object as PointObject;
-                } else {
-                    const hitEntry = nearestPoint1.entries[0];
-                    switch (hitEntry.object.type) {
-                        case "point": {
-                            assert(false, "unreachable");
-                            break;
-                        }
-                        case "line": {
-                            const width =
-                                hitEntry.object.x2 - hitEntry.object.x1;
-                            const height =
-                                hitEntry.object.y2 - hitEntry.object.y1;
-                            const relativePosition =
-                                width > height
-                                    ? (hitEntry.point.x - hitEntry.object.x1) /
-                                      width
-                                    : (hitEntry.point.y - hitEntry.object.y1) /
-                                      height;
-                            p1 = {
-                                type: "point",
-                                id: randomId(),
-                                x: hitEntry.point.x,
-                                y: hitEntry.point.y,
-                            };
-                            transaction.insertObjects([p1]).addDependency({
-                                type: "pointOnLine",
-                                id: randomId(),
-                                from: hitEntry.object.id,
-                                to: p1.id,
-                                r: relativePosition,
-                            });
-                            break;
-                        }
-                        case "shape": {
-                            const rx =
-                                (hitEntry.point.x - hitEntry.object.x) /
-                                hitEntry.object.width;
-                            const ry =
-                                (hitEntry.point.y - hitEntry.object.y) /
-                                hitEntry.object.height;
-                            p1 = {
-                                type: "point",
-                                id: randomId(),
-                                x: hitEntry.point.x,
-                                y: hitEntry.point.y,
-                            };
-                            transaction.insertObjects([p1]).addDependency({
-                                type: "pointOnShape",
-                                id: randomId(),
-                                from: hitEntry.object.id,
-                                to: p1.id,
-                                rx,
-                                ry,
-                            });
-                        }
+                const hitEntry = hitTestResult1.objects[0];
+                switch (hitEntry.target.type) {
+                    case "line": {
+                        const width = hitEntry.target.x2 - hitEntry.target.x1;
+                        const height = hitEntry.target.y2 - hitEntry.target.y1;
+                        const relativePosition =
+                            width > height
+                                ? (hitEntry.point.x - hitEntry.target.x1) /
+                                  width
+                                : (hitEntry.point.y - hitEntry.target.y1) /
+                                  height;
+                        p1 = {
+                            type: "point",
+                            id: randomId(),
+                            x: hitEntry.point.x,
+                            y: hitEntry.point.y,
+                        };
+                        transaction.insertPoints([p1]).addDependency({
+                            type: "pointOnLine",
+                            id: randomId(),
+                            from: hitEntry.target.id,
+                            to: p1.id,
+                            r: relativePosition,
+                        });
+                        break;
+                    }
+                    case "shape": {
+                        const rx =
+                            (hitEntry.point.x - hitEntry.target.x) /
+                            hitEntry.target.width;
+                        const ry =
+                            (hitEntry.point.y - hitEntry.target.y) /
+                            hitEntry.target.height;
+                        p1 = {
+                            type: "point",
+                            id: randomId(),
+                            x: hitEntry.point.x,
+                            y: hitEntry.point.y,
+                        };
+                        transaction.insertPoints([p1]).addDependency({
+                            type: "pointOnShape",
+                            id: randomId(),
+                            from: hitEntry.target.id,
+                            to: p1.id,
+                            rx,
+                            ry,
+                        });
                     }
                 }
             }
 
             let p2: PointObject;
-            const nearestPoint2 = testHitObjects(
+            const hitTestResult2 = testHitObjects(
                 page,
                 data.newX,
                 data.newY,
                 scale,
             );
 
-            if (nearestPoint2.entries.length === 0) {
+            if (hitTestResult2.entities.length === 0) {
                 p2 = {
                     type: "point",
                     id: randomId(),
                     x: data.newX,
                     y: data.newY,
                 };
-                transaction.insertObjects([p2]);
+                transaction.insertPoints([p2]);
+            } else if (hitTestResult2.points.length > 0) {
+                p2 = hitTestResult2.points[0].target;
             } else {
-                const hitPointEntry = nearestPoint2.entries.find(
-                    (entry) => entry.object.type === "point",
-                );
-                if (hitPointEntry) {
-                    p2 = hitPointEntry.object as PointObject;
-                } else {
-                    const hitEntry = nearestPoint2.entries[0];
-                    switch (hitEntry.object.type) {
-                        case "point": {
-                            assert(false, "unreachable");
-                            break;
-                        }
-                        case "line": {
-                            const width =
-                                hitEntry.object.x2 - hitEntry.object.x1;
-                            const height =
-                                hitEntry.object.y2 - hitEntry.object.y1;
-                            const relativePosition =
-                                width > height
-                                    ? (hitEntry.point.x - hitEntry.object.x1) /
-                                      width
-                                    : (hitEntry.point.y - hitEntry.object.y1) /
-                                      height;
-                            p2 = {
-                                type: "point",
-                                id: randomId(),
-                                x: hitEntry.point.x,
-                                y: hitEntry.point.y,
-                            };
-                            transaction.insertObjects([p2]).addDependency({
-                                type: "pointOnLine",
-                                id: randomId(),
-                                from: hitEntry.object.id,
-                                to: p2.id,
-                                r: relativePosition,
-                            });
-                            break;
-                        }
-                        case "shape": {
-                            const rx =
-                                (hitEntry.point.x - hitEntry.object.x) /
-                                hitEntry.object.width;
-                            const ry =
-                                (hitEntry.point.y - hitEntry.object.y) /
-                                hitEntry.object.height;
-                            p2 = {
-                                type: "point",
-                                id: randomId(),
-                                x: hitEntry.point.x,
-                                y: hitEntry.point.y,
-                            };
-                            transaction.insertObjects([p2]).addDependency({
-                                type: "pointOnShape",
-                                id: randomId(),
-                                from: hitEntry.object.id,
-                                to: p2.id,
-                                rx,
-                                ry,
-                            });
-                        }
+                const hitEntry = hitTestResult2.objects[0];
+                switch (hitEntry.target.type) {
+                    case "line": {
+                        const width = hitEntry.target.x2 - hitEntry.target.x1;
+                        const height = hitEntry.target.y2 - hitEntry.target.y1;
+                        const relativePosition =
+                            width > height
+                                ? (hitEntry.point.x - hitEntry.target.x1) /
+                                  width
+                                : (hitEntry.point.y - hitEntry.target.y1) /
+                                  height;
+                        p2 = {
+                            type: "point",
+                            id: randomId(),
+                            x: hitEntry.point.x,
+                            y: hitEntry.point.y,
+                        };
+                        transaction.insertPoints([p2]).addDependency({
+                            type: "pointOnLine",
+                            id: randomId(),
+                            from: hitEntry.target.id,
+                            to: p2.id,
+                            r: relativePosition,
+                        });
+                        break;
+                    }
+                    case "shape": {
+                        const rx =
+                            (hitEntry.point.x - hitEntry.target.x) /
+                            hitEntry.target.width;
+                        const ry =
+                            (hitEntry.point.y - hitEntry.target.y) /
+                            hitEntry.target.height;
+                        p2 = {
+                            type: "point",
+                            id: randomId(),
+                            x: hitEntry.point.x,
+                            y: hitEntry.point.y,
+                        };
+                        transaction.insertPoints([p2]).addDependency({
+                            type: "pointOnShape",
+                            id: randomId(),
+                            from: hitEntry.target.id,
+                            to: p2.id,
+                            rx,
+                            ry,
+                        });
                     }
                 }
             }
@@ -873,15 +851,15 @@ function createNewLineSessionHandlers(
                 .insertObjects([line])
                 .addDependency({
                     id: randomId(),
-                    type: "shapeToPoint",
-                    key: PointKey.LINE_P1,
+                    type: "objectToPoint",
+                    pointKey: PointKey.LINE_P1,
                     from: p1.id,
                     to: line.id,
                 })
                 .addDependency({
                     id: randomId(),
-                    type: "shapeToPoint",
-                    key: PointKey.LINE_P2,
+                    type: "objectToPoint",
+                    pointKey: PointKey.LINE_P2,
                     from: p2.id,
                     to: line.id,
                 });
@@ -940,18 +918,19 @@ function createNewShapeSessionHandlers(
             const transaction = new Transaction(
                 canvasStateStore.getState().page,
             )
-                .insertObjects([shape, p1, p2])
+                .insertObjects([shape])
+                .insertPoints([p1, p2])
                 .addDependency({
                     id: randomId(),
-                    type: "shapeToPoint",
-                    key: PointKey.SHAPE_P1,
+                    type: "objectToPoint",
+                    pointKey: PointKey.SHAPE_P1,
                     from: p1.id,
                     to: shape.id,
                 })
                 .addDependency({
                     id: randomId(),
-                    type: "shapeToPoint",
-                    key: PointKey.SHAPE_P2,
+                    type: "objectToPoint",
+                    pointKey: PointKey.SHAPE_P2,
                     from: p2.id,
                     to: shape.id,
                 });
@@ -986,14 +965,14 @@ function createMoveSelectedObjectsSessionHandlers(
             );
         },
         onClick: () => {
-            if (hitResult.entries.length > 0) {
+            if (hitResult.objects.length > 0) {
                 if (shiftKey) {
                     canvasStateStore.toggleSelect(
-                        hitResult.entries[0].object.id,
+                        hitResult.objects[0].target.id,
                     );
                 } else {
                     canvasStateStore.unselectAll();
-                    canvasStateStore.select(hitResult.entries[0].object.id);
+                    canvasStateStore.select(hitResult.objects[0].target.id);
                 }
             }
         },
@@ -1030,7 +1009,7 @@ function createMovePointSessionHandlers(
     const ignoreObjectIds = new Set([originalPoint.id]);
     const connectedLineIds = canvasStateStore
         .getState()
-        .page.dependencies.getByFromObjectId(originalPoint.id)
+        .page.dependencies.getByFromEntityId(originalPoint.id)
         .map((dep) => dep.to);
     for (const lineId of connectedLineIds) {
         ignoreObjectIds.add(lineId);
@@ -1038,7 +1017,7 @@ function createMovePointSessionHandlers(
 
     const dependenciesToPoint = canvasStateStore
         .getState()
-        .page.dependencies.getByToObjectId(originalPoint.id)
+        .page.dependencies.getByToEntityId(originalPoint.id)
         .filter(
             (dep) => dep.type === "pointOnShape" || dep.type === "pointOnLine",
         );
@@ -1046,21 +1025,20 @@ function createMovePointSessionHandlers(
     return {
         type: "move-point",
         onPointerMove: (data) => {
-            const nearestPoint = testHitObjects(
+            const hitTestResult = testHitObjects(
                 canvasStateStore.getState().page,
                 data.newX,
                 data.newY,
                 viewportProvider.getState().scale,
             );
 
-            const hitEntries = nearestPoint.entries.filter(
-                (item) => !ignoreObjectIds.has(item.object.id),
-            );
-
-            const hitPointEntry = hitEntries.find(
-                (entry) => entry.object.type === "point",
-            );
-            const hitEntry = hitPointEntry ?? hitEntries[0];
+            const hitPointEntry = hitTestResult.points.filter(
+                (item) => !ignoreObjectIds.has(item.target.id),
+            )[0];
+            const hitObjectEntry = hitTestResult.objects.filter(
+                (item) => !ignoreObjectIds.has(item.target.id),
+            )[0];
+            const hitEntry = hitPointEntry ?? hitObjectEntry;
 
             const x =
                 hitEntry?.point.x ??
@@ -1083,47 +1061,46 @@ function createMovePointSessionHandlers(
                 dependenciesToPoint.map((dep) => dep.id),
             );
 
-            const nearestPoint = testHitObjects(
+            const hitTestResult = testHitObjects(
                 canvasStateStore.getState().page,
                 data.newX,
                 data.newY,
                 viewportProvider.getState().scale,
             );
 
-            const hitEntries = nearestPoint.entries.filter(
-                (item) => !ignoreObjectIds.has(item.object.id),
-            );
+            const hitPointEntry = hitTestResult.points.filter(
+                (item) => !ignoreObjectIds.has(item.target.id),
+            )[0];
+            const hitObjectEntry = hitTestResult.objects.filter(
+                (item) => !ignoreObjectIds.has(item.target.id),
+            )[0];
 
-            const hitPointEntry = hitEntries.find(
-                (entry) => entry.object.type === "point",
-            );
             if (hitPointEntry !== undefined) {
                 transaction.mergePoints(
                     originalPoint.id,
-                    hitPointEntry.object.id,
+                    hitPointEntry.target.id,
                 );
             } else {
-                const hitEntry = hitEntries[0];
-                switch (hitEntry?.object.type) {
-                    case "point": {
-                        assert(false, "unreachable");
-                        break;
-                    }
+                switch (hitObjectEntry?.target.type) {
                     case "line": {
-                        const width = hitEntry.object.x2 - hitEntry.object.x1;
-                        const height = hitEntry.object.y2 - hitEntry.object.y1;
+                        const width =
+                            hitObjectEntry.target.x2 - hitObjectEntry.target.x1;
+                        const height =
+                            hitObjectEntry.target.y2 - hitObjectEntry.target.y1;
 
                         const r =
                             width > height
-                                ? (hitEntry.point.x - hitEntry.object.x1) /
+                                ? (hitObjectEntry.point.x -
+                                      hitObjectEntry.target.x1) /
                                   width
-                                : (hitEntry.point.y - hitEntry.object.y1) /
+                                : (hitObjectEntry.point.y -
+                                      hitObjectEntry.target.y1) /
                                   height;
 
                         transaction.addDependency({
                             id: randomId(),
                             type: "pointOnLine",
-                            from: hitEntry.object.id,
+                            from: hitObjectEntry.target.id,
                             to: originalPoint.id,
                             r: r,
                         });
@@ -1131,16 +1108,16 @@ function createMovePointSessionHandlers(
                     }
                     case "shape": {
                         const rx =
-                            (hitEntry.point.x - hitEntry.object.x) /
-                            hitEntry.object.width;
+                            (hitObjectEntry.point.x - hitObjectEntry.target.x) /
+                            hitObjectEntry.target.width;
                         const ry =
-                            (hitEntry.point.y - hitEntry.object.y) /
-                            hitEntry.object.height;
+                            (hitObjectEntry.point.y - hitObjectEntry.target.y) /
+                            hitObjectEntry.target.height;
 
                         transaction.addDependency({
                             id: randomId(),
                             type: "pointOnShape",
-                            from: hitEntry.object.id,
+                            from: hitObjectEntry.target.id,
                             to: originalPoint.id,
                             rx,
                             ry,
@@ -1184,12 +1161,6 @@ function createSelectByRangeSessionHandlers(
                     }
                     case "line": {
                         if (isRectOverlapWithLine(selectionRect, obj)) {
-                            selectedObjectIds.add(obj.id);
-                        }
-                        break;
-                    }
-                    case "point": {
-                        if (isRectOverlapWithPoint(selectionRect, obj)) {
                             selectedObjectIds.add(obj.id);
                         }
                         break;

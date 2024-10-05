@@ -35,10 +35,13 @@ export interface ShapeObject extends ObjectBase<"shape"> {
     path: number[][];
 }
 
-export type Obj = PointObject | LineObject | ShapeObject;
+export type Obj = LineObject | ShapeObject;
+
+export type Entity = Obj | PointObject;
 
 export interface Page {
     objects: Record<string, Obj>;
+    points: Record<string, PointObject>;
     objectIds: string[];
     dependencies: DependencyCollection;
 }

@@ -1,5 +1,4 @@
 import { getBoundingRectOfLine } from "../geo/Line";
-import { getBoundingRectOfPoint } from "../geo/Point";
 import { type Rect, getBoundingRectOfRect, unionRect } from "../geo/Rect";
 import { dataclass } from "../lib/dataclass";
 import { isNotNullish } from "../lib/isNullish";
@@ -51,8 +50,6 @@ export class CanvasState extends dataclass<{
                     return getBoundingRectOfRect(obj);
                 case "line":
                     return getBoundingRectOfLine(obj);
-                case "point":
-                    return getBoundingRectOfPoint(obj);
             }
         });
         let rect = rects.shift();

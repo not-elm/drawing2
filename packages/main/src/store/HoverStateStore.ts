@@ -2,18 +2,27 @@ import { distanceFromPointToLine } from "../geo/Line";
 import { distanceFromPointToRect } from "../geo/Rect";
 import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
-import type { Obj, Page } from "../model/Page";
+import type {
+    Entity,
+    LineObject,
+    Obj,
+    Page,
+    PointObject,
+    ShapeObject,
+} from "../model/Page";
 import type { CanvasStateStore } from "./CanvasStateStore";
 import type { PointerStateStore } from "./PointerStateStore";
 import type { ViewportStore } from "./ViewportStore";
 
 interface HitTestResult {
     // Hit objects ordered by distance (Small distance first)
-    entries: HitTestResultEntry[];
+    entities: HitTestResultEntry<Entity>[];
+    objects: HitTestResultEntry<Obj>[];
+    points: HitTestResultEntry<PointObject>[];
 }
 
-interface HitTestResultEntry {
-    object: Obj;
+interface HitTestResultEntry<T> {
+    target: T;
     /**
      * Hit point on the object. If margin is 0, this should be exactly same as the input point.
      */
@@ -29,37 +38,45 @@ export function testHitObjects(
     scale: number,
     threshold = THRESHOLD,
 ): HitTestResult {
-    const rawEntries: HitTestResultEntry[] = [];
+    const entities: HitTestResultEntry<Entity>[] = [];
+    const objects: HitTestResultEntry<Obj>[] = [];
+    const points: HitTestResultEntry<PointObject>[] = [];
 
+    // TODO: PointのzIndex値を正しく計算する
+    let zIndexForPoint = 0;
+    for (const point of Object.values(page.points)) {
+        zIndexForPoint++;
+        const distance = Math.hypot(point.x - x, point.y - y) * scale;
+        if (distance < threshold) {
+            const entry: HitTestResultEntry<PointObject> = {
+                target: point,
+                point: point,
+                distance,
+                zIndex: zIndexForPoint,
+            };
+            points.push(entry);
+            entities.push(entry);
+        }
+    }
     for (const [zIndex, objectId] of page.objectIds.entries()) {
         const object = page.objects[objectId];
         assert(object !== undefined, `Object not found: ${objectId}`);
 
         switch (object.type) {
-            case "point": {
-                const distance = Math.hypot(object.x - x, object.y - y) * scale;
-                if (distance < threshold) {
-                    rawEntries.push({
-                        object,
-                        point: object,
-                        distance,
-                        zIndex,
-                    });
-                }
-                break;
-            }
             case "line": {
                 const { point, distance } = distanceFromPointToLine(
                     { x, y },
                     object,
                 );
                 if (distance < threshold) {
-                    rawEntries.push({
-                        object,
+                    const entry: HitTestResultEntry<LineObject> = {
+                        target: object,
                         point,
                         distance,
-                        zIndex,
-                    });
+                        zIndex: zIndex + zIndexForPoint,
+                    };
+                    objects.push(entry);
+                    entities.push(entry);
                 }
                 break;
             }
@@ -69,26 +86,35 @@ export function testHitObjects(
                     object,
                 );
                 if (distance < threshold) {
-                    rawEntries.push({
-                        object,
+                    const entry: HitTestResultEntry<ShapeObject> = {
+                        target: object,
                         point,
                         distance,
-                        zIndex,
-                    });
+                        zIndex: zIndex + zIndexForPoint,
+                    };
+                    objects.push(entry);
+                    entities.push(entry);
                 }
                 break;
             }
         }
     }
 
-    const orderedByZIndex = rawEntries.toSorted(
-        (a, b) => -(a.zIndex - b.zIndex),
-    );
-    const orderedByDistance = orderedByZIndex.toSorted(
-        (a, b) => a.distance - b.distance,
-    );
+    objects
+        .sort((a, b) => -(a.zIndex - b.zIndex))
+        .sort((a, b) => a.distance - b.distance);
+    entities
+        .sort((a, b) => -(a.zIndex - b.zIndex))
+        .sort((a, b) => a.distance - b.distance);
+    points
+        .sort((a, b) => -(a.zIndex - b.zIndex))
+        .sort((a, b) => a.distance - b.distance);
 
-    return { entries: orderedByDistance };
+    return {
+        entities,
+        objects,
+        points,
+    };
 }
 
 /**
@@ -97,7 +123,7 @@ export function testHitObjects(
 const THRESHOLD = 32;
 
 export class HoverStateStore extends Store<{
-    hitEntry: HitTestResultEntry | null;
+    hitEntry: HitTestResultEntry<Entity> | null;
 }> {
     constructor(
         private readonly canvasStateStore: CanvasStateStore,
@@ -117,7 +143,7 @@ export class HoverStateStore extends Store<{
         const { scale } = this.viewportStore.getState();
         const { x, y } = this.pointerStateStore.getState();
 
-        const { entries } = testHitObjects(page, x, y, scale);
-        this.setState({ hitEntry: entries[0] ?? null });
+        const { entities } = testHitObjects(page, x, y, scale);
+        this.setState({ hitEntry: entities[0] ?? null });
     }
 }

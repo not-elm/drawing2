@@ -86,7 +86,7 @@ test("remove by objectId", () => {
 
     collection.add(depBtoC);
     collection.add(depAtoB);
-    collection.deleteByObjectId("b");
+    collection.deleteByEntityId("b");
 
     expect(collection.collectDependencies(["a"])).toEqual([]);
     expect(collection.collectDependencies(["c"])).toEqual([]);

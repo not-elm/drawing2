@@ -39,8 +39,8 @@ export class DependencyCollection {
         }
     }
 
-    getByFromObjectId(objectId: string): Dependency[] {
-        const dependencyIds = this.dependencyIdsByFromObjectId.get(objectId);
+    getByFromEntityId(entityId: string): Dependency[] {
+        const dependencyIds = this.dependencyIdsByFromObjectId.get(entityId);
         if (dependencyIds === undefined) return [];
 
         return Array.from(dependencyIds).map((id) => {
@@ -50,8 +50,8 @@ export class DependencyCollection {
         });
     }
 
-    getByToObjectId(objectId: string): Dependency[] {
-        const dependencyIds = this.dependencyIdsByToObjectId.get(objectId);
+    getByToEntityId(entityId: string): Dependency[] {
+        const dependencyIds = this.dependencyIdsByToObjectId.get(entityId);
         if (dependencyIds === undefined) return [];
 
         return Array.from(dependencyIds).map((id) => {
@@ -92,7 +92,7 @@ export class DependencyCollection {
         }
     }
 
-    deleteByObjectId(objectId: string) {
+    deleteByEntityId(objectId: string) {
         const ids = [
             ...(this.dependencyIdsByFromObjectId.get(objectId) ?? []),
             ...(this.dependencyIdsByToObjectId.get(objectId) ?? []),
