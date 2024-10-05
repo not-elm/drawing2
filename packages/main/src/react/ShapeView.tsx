@@ -1,22 +1,70 @@
+import { MathJax } from "better-react-mathjax";
 import { type MouseEventHandler, memo, useCallback } from "react";
 import {
+    type ColorId,
     ColorPaletteBackground,
     ColorPaletteBackgroundMonoColor,
     Colors,
 } from "../model/Colors";
+import type { FillMode } from "../model/FillMode";
 import type { ShapeBlock } from "../model/Page";
+import type { TextAlignment } from "../model/TextAlignment";
 import { useController } from "./ControllerProvider";
 
 export const ShapeView = memo(function ShapeView({
     shape,
     isLabelEditing,
 }: { shape: ShapeBlock; isLabelEditing: boolean }) {
+    return (
+        <div
+            style={{ transform: `translate(${shape.x}px, ${shape.y}px)` }}
+            css={{ position: "absolute" }}
+        >
+            <ShapeViewInner
+                isLabelEditing={isLabelEditing}
+                shapeId={shape.id}
+                width={shape.width}
+                height={shape.height}
+                path={shape.path}
+                colorId={shape.colorId}
+                fillMode={shape.fillMode}
+                textAlignX={shape.textAlignX}
+                textAlignY={shape.textAlignY}
+                shapeLabel={shape.label}
+            />
+        </div>
+    );
+});
+
+export const ShapeViewInner = memo(function ShapeViewInner({
+    shapeId,
+    width,
+    height,
+    path,
+    colorId,
+    fillMode,
+    textAlignX,
+    textAlignY,
+    shapeLabel,
+    isLabelEditing,
+}: {
+    shapeId: string;
+    width: number;
+    height: number;
+    path: number[][];
+    colorId: ColorId;
+    fillMode: FillMode;
+    textAlignX: TextAlignment;
+    textAlignY: TextAlignment;
+    shapeLabel: string;
+    isLabelEditing: boolean;
+}) {
     const controller = useController();
 
     const handleDoubleClick: MouseEventHandler = useCallback(
         (ev) => {
             const handled = controller.handleShapeDoubleClick(
-                shape.id,
+                shapeId,
                 ev.clientX,
                 ev.clientY,
                 ev.button,
@@ -29,37 +77,31 @@ export const ShapeView = memo(function ShapeView({
                 ev.preventDefault();
             }
         },
-        [shape.id, controller],
+        [shapeId, controller],
     );
 
     return (
-        <div
-            style={{ transform: `translate(${shape.x}px, ${shape.y}px)` }}
-            css={{ position: "absolute" }}
-        >
+        <>
             <svg
-                viewBox={`0 0 ${shape.width} ${shape.height}`}
-                width={shape.width}
-                height={shape.height}
+                viewBox={`0 0 ${width} ${height}`}
+                width={width}
+                height={height}
                 css={{ overflow: "visible" }}
             >
                 <path
-                    d={`M${shape.path
-                        .map(
-                            ([x, y]) =>
-                                `${x * shape.width},${y * shape.height}`,
-                        )
+                    d={`M${path
+                        .map(([x, y]) => `${x * width},${y * height}`)
                         .join("L")}Z`}
                     css={{
-                        stroke: Colors[shape.colorId],
+                        stroke: Colors[colorId],
                         pointerEvents: "all",
                         ...{
                             none: { fill: "none" },
                             mono: { fill: ColorPaletteBackgroundMonoColor },
                             color: {
-                                fill: ColorPaletteBackground[shape.colorId],
+                                fill: ColorPaletteBackground[colorId],
                             },
-                        }[shape.fillMode],
+                        }[fillMode],
                     }}
                     strokeWidth={5}
                     onDoubleClick={handleDoubleClick}
@@ -85,7 +127,7 @@ export const ShapeView = memo(function ShapeView({
                             left: "100%",
                             textAlign: "end" as const,
                         },
-                    }[shape.textAlignX],
+                    }[textAlignX],
                     ...{
                         "start-outside": { bottom: "100%" },
                         start: { top: 0 },
@@ -95,7 +137,7 @@ export const ShapeView = memo(function ShapeView({
                         },
                         end: { bottom: 0 },
                         "end-outside": { top: "100%" },
-                    }[shape.textAlignY],
+                    }[textAlignY],
                 }}
             >
                 {isLabelEditing ? (
@@ -122,22 +164,24 @@ export const ShapeView = memo(function ShapeView({
                             );
                         }}
                         onChange={(ev) =>
-                            controller.setLabelText(shape.id, ev.target.value)
+                            controller.setLabelText(shapeId, ev.target.value)
                         }
                         onPointerDown={(ev) => ev.stopPropagation()}
-                        value={shape.label}
+                        value={shapeLabel}
                     />
                 ) : (
-                    <span
-                        css={{
-                            whiteSpace: "pre-wrap",
-                        }}
-                    >
-                        {addPostFix(shape.label)}
-                    </span>
+                    <MathJax>
+                        <span
+                            css={{
+                                whiteSpace: "pre-wrap",
+                            }}
+                        >
+                            {addPostFix(shapeLabel)}
+                        </span>
+                    </MathJax>
                 )}
             </div>
-        </div>
+        </>
     );
 });
 

@@ -1,7 +1,7 @@
 import type { CanvasState } from "../model/CanvasState";
 import type { CanvasStateStore } from "../store/CanvasStateStore";
 
-const MAX_HISTORY_LENGTH = 100;
+const MAX_HISTORY_LENGTH = 0;
 
 export class HistoryManager {
     private readonly undoStack: CanvasState[] = [];
