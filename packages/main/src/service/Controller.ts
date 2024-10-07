@@ -525,7 +525,7 @@ export class Controller {
                         }
                     }
                     case "text": {
-                        this.appStateStore.setMode({ type: "select" });
+                        this.setMode({ type: "select" });
 
                         // Block
                         {
@@ -568,6 +568,7 @@ export class Controller {
                     case "line": {
                         startSession(
                             createNewLineSessionHandlers(
+                                this,
                                 this.canvasStateStore,
                                 this.viewportStore,
                                 this.appStateStore,
@@ -578,6 +579,7 @@ export class Controller {
                     case "shape": {
                         startSession(
                             createNewShapeSessionHandlers(
+                                this,
                                 this.canvasStateStore,
                                 this.appStateStore,
                             ),
@@ -638,7 +640,7 @@ export class Controller {
                                 ])
                                 .commit(),
                         );
-                        this.appStateStore.setMode({
+                        this.setMode({
                             type: "text",
                             blockId: text.id,
                         });
@@ -679,7 +681,7 @@ export class Controller {
             case MouseButton.Left: {
                 this.canvasStateStore.unselectAll();
                 this.canvasStateStore.select(id);
-                this.appStateStore.setMode({ type: "text", blockId: id });
+                this.setMode({ type: "text", blockId: id });
                 return true;
             }
         }
@@ -710,7 +712,7 @@ export class Controller {
                     case "shape":
                     case "select": {
                         if (modifiers.metaKey || modifiers.ctrlKey) {
-                            this.appStateStore.setMode({ type: "select" });
+                            this.setMode({ type: "select" });
                             this.canvasStateStore.selectAll();
                             return true;
                         }
@@ -722,7 +724,7 @@ export class Controller {
                 switch (this.appStateStore.getState().mode.type) {
                     case "line":
                     case "select": {
-                        this.appStateStore.setMode({ type: "shape" });
+                        this.setMode({ type: "shape" });
                         return true;
                     }
                 }
@@ -732,7 +734,7 @@ export class Controller {
                 switch (this.appStateStore.getState().mode.type) {
                     case "shape":
                     case "select": {
-                        this.appStateStore.setMode({ type: "line" });
+                        this.setMode({ type: "line" });
                         return true;
                     }
                 }
@@ -795,7 +797,7 @@ export class Controller {
                         return true;
                     }
                     default: {
-                        this.appStateStore.setMode({ type: "select" });
+                        this.setMode({ type: "select" });
                         return true;
                     }
                 }
@@ -877,6 +879,26 @@ export class Controller {
     }
 
     setMode(mode: Mode) {
+        const oldMode = this.appStateStore.getState().mode;
+        switch (oldMode.type) {
+            case "text": {
+                const blockId = oldMode.blockId;
+                const block =
+                    this.canvasStateStore.getState().page.blocks[blockId];
+                assert(block !== undefined, `Block ${blockId} is not found`);
+                assert(block.type === "text", `Block ${blockId} is not text`);
+
+                if (block.content === "") {
+                    this.canvasStateStore.setPage(
+                        new Transaction(this.canvasStateStore.getState().page)
+                            .deleteBlocks([blockId])
+                            .commit(),
+                    );
+                }
+                break;
+            }
+        }
+
         this.appStateStore.setMode(mode);
     }
 
@@ -932,6 +954,7 @@ export class Controller {
 }
 
 function createNewLineSessionHandlers(
+    controller: Controller,
     canvasStateStore: CanvasStateStore,
     viewportProvider: StateProvider<ViewportStore>,
     appStateStore: AppStateStore,
@@ -1124,7 +1147,7 @@ function createNewLineSessionHandlers(
             ]);
 
             canvasStateStore.setPage(transaction.commit());
-            appStateStore.setMode({ type: "select" });
+            controller.setMode({ type: "select" });
             canvasStateStore.unselectAll();
             canvasStateStore.select(line.id);
         },
@@ -1132,6 +1155,7 @@ function createNewLineSessionHandlers(
 }
 
 function createNewShapeSessionHandlers(
+    controller: Controller,
     canvasStateStore: CanvasStateStore,
     appStateStore: AppStateStore,
 ): PointerEventSessionHandlers {
@@ -1211,7 +1235,7 @@ function createNewShapeSessionHandlers(
                     },
                 ]);
             canvasStateStore.setPage(transaction.commit());
-            appStateStore.setMode({ type: "select" });
+            controller.setMode({ type: "select" });
             canvasStateStore.unselectAll();
             canvasStateStore.select(shape.id);
         },
