@@ -1,8 +1,8 @@
-import { type Line, distanceFromPointToLine } from "../geo/Line";
+import { distanceFromPointToLine } from "../geo/Line";
 import { distanceFromPointToPoint } from "../geo/Point";
 import {
+    type Rect,
     isRectOverlapWithLine,
-    isRectOverlapWithPoint,
     isRectOverlapWithRect,
 } from "../geo/Rect";
 import { getRectanglePath } from "../geo/path";
@@ -13,6 +13,7 @@ import type { ColorId } from "../model/Colors";
 import type { FillMode } from "../model/FillMode";
 import type { Mode } from "../model/Mode";
 import {
+    type Block,
     type LineBlock,
     type PointEntity,
     PointKey,
@@ -69,583 +70,376 @@ export class Controller {
             ev.clientY,
             this.viewportStore.getState(),
         );
+        const object = this.getObjectFromPoint(x, y);
+
         switch (ev.button) {
             case MouseButton.Left: {
-                switch (this.appStateStore.getState().mode.type) {
-                    case "select": {
-                        const selectionRect = this.canvasStateStore
-                            .getState()
-                            .getSelectionRect();
-                        const selectedBlocks = this.canvasStateStore
-                            .getState()
-                            .getSelectedBlocks();
-
-                        // Selection
-                        if (selectionRect !== null) {
-                            const THRESHOLD = 32;
-
-                            const isSingleLineMode =
-                                selectedBlocks.length === 1 &&
-                                selectedBlocks[0].type === "line";
-                            const isSingleTextMode =
-                                selectedBlocks.length === 1 &&
-                                selectedBlocks[0].type === "text";
-
-                            if (isSingleLineMode) {
-                                const line = selectedBlocks[0] as LineBlock;
-
-                                if (
-                                    distanceFromPointToPoint(
-                                        { x: line.x1, y: line.y1 },
-                                        { x, y },
-                                    ) < THRESHOLD
-                                ) {
-                                    const originalPointId =
-                                        this.canvasStateStore
-                                            .getState()
-                                            .page.dependencies.getByToEntityId(
-                                                line.id,
-                                            )
-                                            .find(
-                                                (dependency) =>
-                                                    dependency.type ===
-                                                        "blockToPoint" &&
-                                                    dependency.pointKey ===
-                                                        PointKey.LINE_P1,
-                                            )?.from;
-                                    assert(
-                                        originalPointId !== undefined,
-                                        "LineEndPoint 1 is not found",
-                                    );
-
-                                    const originalPoint =
-                                        this.canvasStateStore.getState().page
-                                            .points[originalPointId];
-                                    assert(
-                                        originalPoint !== undefined,
-                                        `Point ${originalPointId} is not found`,
-                                    );
-                                    startSession(
-                                        createMovePointSessionHandlers(
-                                            originalPoint,
-                                            this.canvasStateStore,
-                                            this.viewportStore,
-                                            this.historyManager,
-                                        ),
-                                    );
-                                    return;
-                                }
-
-                                if (
-                                    distanceFromPointToPoint(
-                                        { x: line.x2, y: line.y2 },
-                                        { x, y },
-                                    ) < THRESHOLD
-                                ) {
-                                    const originalPointId =
-                                        this.canvasStateStore
-                                            .getState()
-                                            .page.dependencies.getByToEntityId(
-                                                line.id,
-                                            )
-                                            .find(
-                                                (dependency) =>
-                                                    dependency.type ===
-                                                        "blockToPoint" &&
-                                                    dependency.pointKey ===
-                                                        PointKey.LINE_P2,
-                                            )?.from;
-                                    assert(
-                                        originalPointId !== undefined,
-                                        "LineEndPoint 2 is not found",
-                                    );
-
-                                    const originalPoint =
-                                        this.canvasStateStore.getState().page
-                                            .points[originalPointId];
-                                    assert(
-                                        originalPoint !== undefined,
-                                        `Point ${originalPointId} is not found`,
-                                    );
-                                    startSession(
-                                        createMovePointSessionHandlers(
-                                            originalPoint,
-                                            this.canvasStateStore,
-                                            this.viewportStore,
-                                            this.historyManager,
-                                        ),
-                                    );
-                                    return;
-                                }
-
-                                if (
-                                    distanceFromPointToLine({ x, y }, line)
-                                        .distance < THRESHOLD
-                                ) {
-                                    startSession(
-                                        createMoveSelectedBlocksSessionHandlers(
-                                            x,
-                                            y,
-                                            ev.shiftKey,
-                                            this.canvasStateStore,
-                                            this.viewportStore,
-                                            this.historyManager,
-                                        ),
-                                    );
-                                }
-                            } else if (isSingleTextMode) {
-                                const topLeft = {
-                                    x: selectionRect.x,
-                                    y: selectionRect.y,
-                                };
-                                const topRight = {
-                                    x: selectionRect.x + selectionRect.width,
-                                    y: selectionRect.y,
-                                };
-                                const bottomLeft = {
-                                    x: selectionRect.x,
-                                    y: selectionRect.y + selectionRect.height,
-                                };
-                                const bottomRight = {
-                                    x: selectionRect.x + selectionRect.width,
-                                    y: selectionRect.y + selectionRect.height,
-                                };
-
-                                // Left, Right
-                                {
-                                    const left: Line = {
-                                        x1: topLeft.x,
-                                        y1: topLeft.y,
-                                        x2: bottomLeft.x,
-                                        y2: bottomLeft.y,
-                                    };
-                                    const right: Line = {
-                                        x1: topRight.x,
-                                        y1: topRight.y,
-                                        x2: bottomRight.x,
-                                        y2: bottomRight.y,
-                                    };
-                                    if (
-                                        distanceFromPointToLine({ x, y }, left)
-                                            .distance < THRESHOLD
-                                    ) {
-                                        this.canvasStateStore.setTextBlockSizingMode(
-                                            "fixed",
-                                        );
-                                        startSession(
-                                            createXResizeSessionHandlers(
-                                                this.canvasStateStore.getState()
-                                                    .selectedBlockIds,
-                                                right.x1,
-                                                this.canvasStateStore,
-                                                this.historyManager,
-                                            ),
-                                        );
-                                        return;
-                                    }
-                                    if (
-                                        distanceFromPointToLine({ x, y }, right)
-                                            .distance < THRESHOLD
-                                    ) {
-                                        this.canvasStateStore.setTextBlockSizingMode(
-                                            "fixed",
-                                        );
-                                        startSession(
-                                            createXResizeSessionHandlers(
-                                                this.canvasStateStore.getState()
-                                                    .selectedBlockIds,
-                                                left.x1,
-                                                this.canvasStateStore,
-                                                this.historyManager,
-                                            ),
-                                        );
-                                        return;
-                                    }
-                                }
-
-                                // Center
-                                if (
-                                    isRectOverlapWithPoint(selectionRect, {
-                                        x,
-                                        y,
-                                    })
-                                ) {
-                                    startSession(
-                                        createMoveSelectedBlocksSessionHandlers(
-                                            x,
-                                            y,
-                                            ev.shiftKey,
-                                            this.canvasStateStore,
-                                            this.viewportStore,
-                                            this.historyManager,
-                                        ),
-                                    );
-                                    return;
-                                }
-                            } else {
-                                const topLeft = {
-                                    x: selectionRect.x,
-                                    y: selectionRect.y,
-                                };
-                                const topRight = {
-                                    x: selectionRect.x + selectionRect.width,
-                                    y: selectionRect.y,
-                                };
-                                const bottomLeft = {
-                                    x: selectionRect.x,
-                                    y: selectionRect.y + selectionRect.height,
-                                };
-                                const bottomRight = {
-                                    x: selectionRect.x + selectionRect.width,
-                                    y: selectionRect.y + selectionRect.height,
-                                };
-
-                                if (
-                                    distanceFromPointToPoint(topLeft, {
-                                        x,
-                                        y,
-                                    }) < THRESHOLD
-                                ) {
-                                    startSession(
-                                        createXYResizeSessionHandlers(
-                                            this.canvasStateStore.getState()
-                                                .selectedBlockIds,
-                                            bottomRight.x,
-                                            bottomRight.y,
-                                            this.canvasStateStore,
-                                            this.historyManager,
-                                        ),
-                                    );
-                                    return;
-                                }
-                                if (
-                                    distanceFromPointToPoint(topRight, {
-                                        x,
-                                        y,
-                                    }) < THRESHOLD
-                                ) {
-                                    startSession(
-                                        createXYResizeSessionHandlers(
-                                            this.canvasStateStore.getState()
-                                                .selectedBlockIds,
-                                            bottomLeft.x,
-                                            bottomLeft.y,
-                                            this.canvasStateStore,
-                                            this.historyManager,
-                                        ),
-                                    );
-                                    return;
-                                }
-                                if (
-                                    distanceFromPointToPoint(bottomLeft, {
-                                        x,
-                                        y,
-                                    }) < THRESHOLD
-                                ) {
-                                    startSession(
-                                        createXYResizeSessionHandlers(
-                                            this.canvasStateStore.getState()
-                                                .selectedBlockIds,
-                                            topRight.x,
-                                            topRight.y,
-                                            this.canvasStateStore,
-                                            this.historyManager,
-                                        ),
-                                    );
-                                    return;
-                                }
-                                if (
-                                    distanceFromPointToPoint(bottomRight, {
-                                        x,
-                                        y,
-                                    }) < THRESHOLD
-                                ) {
-                                    startSession(
-                                        createXYResizeSessionHandlers(
-                                            this.canvasStateStore.getState()
-                                                .selectedBlockIds,
-                                            topLeft.x,
-                                            topLeft.y,
-                                            this.canvasStateStore,
-                                            this.historyManager,
-                                        ),
-                                    );
-                                    return;
-                                }
-
-                                // Top, Bottom
-                                {
-                                    const top: Line = {
-                                        x1: topLeft.x,
-                                        y1: topLeft.y,
-                                        x2: topRight.x,
-                                        y2: topRight.y,
-                                    };
-                                    const bottom: Line = {
-                                        x1: bottomLeft.x,
-                                        y1: bottomLeft.y,
-                                        x2: bottomRight.x,
-                                        y2: bottomRight.y,
-                                    };
-
-                                    if (
-                                        distanceFromPointToLine({ x, y }, top)
-                                            .distance < THRESHOLD
-                                    ) {
-                                        startSession(
-                                            createYResizeSessionHandlers(
-                                                this.canvasStateStore.getState()
-                                                    .selectedBlockIds,
-                                                bottom.y1,
-                                                this.canvasStateStore,
-                                                this.historyManager,
-                                            ),
-                                        );
-                                        return;
-                                    }
-                                    if (
-                                        distanceFromPointToLine(
-                                            { x, y },
-                                            bottom,
-                                        ).distance < THRESHOLD
-                                    ) {
-                                        startSession(
-                                            createYResizeSessionHandlers(
-                                                this.canvasStateStore.getState()
-                                                    .selectedBlockIds,
-                                                top.y1,
-                                                this.canvasStateStore,
-                                                this.historyManager,
-                                            ),
-                                        );
-                                        return;
-                                    }
-                                }
-
-                                // Left, Right
-                                {
-                                    const left: Line = {
-                                        x1: topLeft.x,
-                                        y1: topLeft.y,
-                                        x2: bottomLeft.x,
-                                        y2: bottomLeft.y,
-                                    };
-                                    const right: Line = {
-                                        x1: topRight.x,
-                                        y1: topRight.y,
-                                        x2: bottomRight.x,
-                                        y2: bottomRight.y,
-                                    };
-                                    if (
-                                        distanceFromPointToLine({ x, y }, left)
-                                            .distance < THRESHOLD
-                                    ) {
-                                        startSession(
-                                            createXResizeSessionHandlers(
-                                                this.canvasStateStore.getState()
-                                                    .selectedBlockIds,
-                                                right.x1,
-                                                this.canvasStateStore,
-                                                this.historyManager,
-                                            ),
-                                        );
-                                        return;
-                                    }
-                                    if (
-                                        distanceFromPointToLine({ x, y }, right)
-                                            .distance < THRESHOLD
-                                    ) {
-                                        startSession(
-                                            createXResizeSessionHandlers(
-                                                this.canvasStateStore.getState()
-                                                    .selectedBlockIds,
-                                                left.x1,
-                                                this.canvasStateStore,
-                                                this.historyManager,
-                                            ),
-                                        );
-                                        return;
-                                    }
-                                }
-
-                                // Center
-                                if (
-                                    isRectOverlapWithPoint(selectionRect, {
-                                        x,
-                                        y,
-                                    })
-                                ) {
-                                    startSession(
-                                        createMoveSelectedBlocksSessionHandlers(
-                                            x,
-                                            y,
-                                            ev.shiftKey,
-                                            this.canvasStateStore,
-                                            this.viewportStore,
-                                            this.historyManager,
-                                        ),
-                                    );
-                                    return;
-                                }
-                            }
-                        }
-
-                        // Block
-                        {
-                            const hitResult = testHitEntities(
-                                this.canvasStateStore.getState().page,
-                                x,
-                                y,
-                                this.viewportStore.getState().scale,
-                            );
-                            if (hitResult.blocks.length > 0) {
-                                startSession(
-                                    createMoveBlockSessionHandlers(
-                                        hitResult.blocks[0].target.id,
-                                        ev.shiftKey,
-                                        this.canvasStateStore,
-                                        this.historyManager,
-                                    ),
-                                );
-                                return;
-                            }
-                        }
-
-                        // Canvas
-                        {
-                            if (!ev.shiftKey) {
-                                this.canvasStateStore.unselectAll();
-                            }
-                            startSession(
-                                createSelectByRangeSessionHandlers(
-                                    this.canvasStateStore,
-                                ),
-                            );
-                            return;
-                        }
-                    }
-                    case "text": {
-                        this.setMode({ type: "select" });
-
-                        // Block
-                        {
-                            const hitResult = testHitEntities(
-                                this.canvasStateStore.getState().page,
-                                x,
-                                y,
-                                this.viewportStore.getState().scale,
-                            );
-                            if (hitResult.blocks.length > 0) {
-                                this.canvasStateStore.unselectAll();
-                                this.canvasStateStore.select(
-                                    hitResult.blocks[0].target.id,
-                                );
-                                startSession(
-                                    createMoveBlockSessionHandlers(
-                                        hitResult.blocks[0].target.id,
-                                        ev.shiftKey,
-                                        this.canvasStateStore,
-                                        this.historyManager,
-                                    ),
-                                );
-                                return;
-                            }
-                        }
-
-                        // Canvas
-                        {
-                            if (!ev.shiftKey) {
-                                this.canvasStateStore.unselectAll();
-                            }
-                            startSession(
-                                createSelectByRangeSessionHandlers(
-                                    this.canvasStateStore,
-                                ),
-                            );
-                            return;
-                        }
-                    }
-                    case "line": {
+                switch (object.type) {
+                    case "SelectionRect.TopLeftHandle": {
                         startSession(
-                            createNewLineSessionHandlers(
-                                this,
+                            createXYResizeSessionHandlers(
+                                this.canvasStateStore.getState()
+                                    .selectedBlockIds,
+                                object.selectionRect.x +
+                                    object.selectionRect.width,
+                                object.selectionRect.y +
+                                    object.selectionRect.height,
+                                this.canvasStateStore,
+                                this.historyManager,
+                            ),
+                        );
+                        return;
+                    }
+                    case "SelectionRect.LeftHandle": {
+                        startSession(
+                            createXResizeSessionHandlers(
+                                this.canvasStateStore.getState()
+                                    .selectedBlockIds,
+                                object.selectionRect.x +
+                                    object.selectionRect.width,
+                                this.canvasStateStore,
+                                this.historyManager,
+                            ),
+                        );
+                        return;
+                    }
+                    case "SelectionRect.BottomLeftHandle": {
+                        startSession(
+                            createXYResizeSessionHandlers(
+                                this.canvasStateStore.getState()
+                                    .selectedBlockIds,
+                                object.selectionRect.x +
+                                    object.selectionRect.width,
+                                object.selectionRect.y,
+                                this.canvasStateStore,
+                                this.historyManager,
+                            ),
+                        );
+                        return;
+                    }
+                    case "SelectionRect.TopHandle": {
+                        startSession(
+                            createYResizeSessionHandlers(
+                                this.canvasStateStore.getState()
+                                    .selectedBlockIds,
+                                object.selectionRect.y +
+                                    object.selectionRect.height,
+                                this.canvasStateStore,
+                                this.historyManager,
+                            ),
+                        );
+                        return;
+                    }
+                    case "SelectionRect.CenterHandle": {
+                        startSession(
+                            createMoveSelectedBlocksSessionHandlers(
+                                x,
+                                y,
+                                ev.shiftKey,
                                 this.canvasStateStore,
                                 this.viewportStore,
-                                this.appStateStore,
+                                this.historyManager,
                             ),
                         );
                         return;
                     }
-                    case "shape": {
+                    case "SelectionRect.BottomHandle": {
                         startSession(
-                            createNewShapeSessionHandlers(
-                                this,
+                            createYResizeSessionHandlers(
+                                this.canvasStateStore.getState()
+                                    .selectedBlockIds,
+                                object.selectionRect.y,
                                 this.canvasStateStore,
-                                this.appStateStore,
+                                this.historyManager,
                             ),
                         );
                         return;
                     }
-                    case "new-text": {
-                        const text: TextBlock = {
-                            id: randomId(),
-                            type: "text",
-                            x,
-                            y,
-                            x1: x,
-                            y1: y,
-                            x2: x,
-                            y2: y,
-                            width: 0,
-                            height: 0,
-                            content: "",
-                            textAlignment:
-                                this.appStateStore.getState()
-                                    .defaultTextBlockTextAlignment,
-                            sizingMode: "content",
-                        };
-                        const p1: PointEntity = {
-                            type: "point",
-                            id: randomId(),
-                            x,
-                            y,
-                        };
-                        const p2: PointEntity = {
-                            type: "point",
-                            id: randomId(),
-                            x,
-                            y,
-                        };
-                        this.canvasStateStore.setPage(
-                            new Transaction(
-                                this.canvasStateStore.getState().page,
-                            )
-                                .insertBlocks([text])
-                                .insertPoints([p1, p2])
-                                .addDependencies([
-                                    {
-                                        id: randomId(),
-                                        type: "blockToPoint",
-                                        pointKey: PointKey.TEXT_P1,
-                                        from: p1.id,
-                                        to: text.id,
-                                    },
-                                    {
-                                        id: randomId(),
-                                        type: "blockToPoint",
-                                        pointKey: PointKey.TEXT_P2,
-                                        from: p2.id,
-                                        to: text.id,
-                                    },
-                                ])
-                                .commit(),
+                    case "SelectionRect.TopRightHandle": {
+                        startSession(
+                            createXYResizeSessionHandlers(
+                                this.canvasStateStore.getState()
+                                    .selectedBlockIds,
+                                object.selectionRect.x,
+                                object.selectionRect.y +
+                                    object.selectionRect.height,
+                                this.canvasStateStore,
+                                this.historyManager,
+                            ),
                         );
-                        this.setMode({
-                            type: "text",
-                            blockId: text.id,
-                        });
-                        ev.preventDefault();
                         return;
+                    }
+                    case "SelectionRect.RightHandle": {
+                        startSession(
+                            createXResizeSessionHandlers(
+                                this.canvasStateStore.getState()
+                                    .selectedBlockIds,
+                                x,
+                                this.canvasStateStore,
+                                this.historyManager,
+                            ),
+                        );
+                        return;
+                    }
+                    case "SelectionRect.BottomRightHandle": {
+                        startSession(
+                            createXYResizeSessionHandlers(
+                                this.canvasStateStore.getState()
+                                    .selectedBlockIds,
+                                object.selectionRect.x,
+                                object.selectionRect.y,
+                                this.canvasStateStore,
+                                this.historyManager,
+                            ),
+                        );
+                        return;
+                    }
+                    case "SelectionLine.P1": {
+                        const originalPointId = this.canvasStateStore
+                            .getState()
+                            .page.dependencies.getByToEntityId(object.line.id)
+                            .find(
+                                (dependency) =>
+                                    dependency.type === "blockToPoint" &&
+                                    dependency.pointKey === PointKey.LINE_P1,
+                            )?.from;
+                        assert(
+                            originalPointId !== undefined,
+                            "LineEndPoint 1 is not found",
+                        );
+
+                        const originalPoint =
+                            this.canvasStateStore.getState().page.points[
+                                originalPointId
+                            ];
+                        assert(
+                            originalPoint !== undefined,
+                            `Point ${originalPointId} is not found`,
+                        );
+
+                        startSession(
+                            createMovePointSessionHandlers(
+                                originalPoint,
+                                this.canvasStateStore,
+                                this.viewportStore,
+                                this.historyManager,
+                            ),
+                        );
+                        return;
+                    }
+                    case "SelectionLine.P2": {
+                        const originalPointId = this.canvasStateStore
+                            .getState()
+                            .page.dependencies.getByToEntityId(object.line.id)
+                            .find(
+                                (dependency) =>
+                                    dependency.type === "blockToPoint" &&
+                                    dependency.pointKey === PointKey.LINE_P2,
+                            )?.from;
+                        assert(
+                            originalPointId !== undefined,
+                            "LineEndPoint 1 is not found",
+                        );
+
+                        const originalPoint =
+                            this.canvasStateStore.getState().page.points[
+                                originalPointId
+                            ];
+                        assert(
+                            originalPoint !== undefined,
+                            `Point ${originalPointId} is not found`,
+                        );
+
+                        startSession(
+                            createMovePointSessionHandlers(
+                                originalPoint,
+                                this.canvasStateStore,
+                                this.viewportStore,
+                                this.historyManager,
+                            ),
+                        );
+                        return;
+                    }
+                    case "SelectionLine.Center": {
+                        startSession(
+                            createMoveSelectedBlocksSessionHandlers(
+                                x,
+                                y,
+                                ev.shiftKey,
+                                this.canvasStateStore,
+                                this.viewportStore,
+                                this.historyManager,
+                            ),
+                        );
+                        return;
+                    }
+                    case "SelectionText.Left": {
+                        this.canvasStateStore.setTextBlockSizingMode("fixed");
+                        startSession(
+                            createXResizeSessionHandlers(
+                                [object.text.id],
+                                object.text.x + object.text.width,
+                                this.canvasStateStore,
+                                this.historyManager,
+                            ),
+                        );
+                        return;
+                    }
+                    case "SelectionText.Center": {
+                        startSession(
+                            createMoveSelectedBlocksSessionHandlers(
+                                x,
+                                y,
+                                ev.shiftKey,
+                                this.canvasStateStore,
+                                this.viewportStore,
+                                this.historyManager,
+                            ),
+                        );
+                        return;
+                    }
+                    case "SelectionText.Right": {
+                        this.canvasStateStore.setTextBlockSizingMode("fixed");
+                        startSession(
+                            createXResizeSessionHandlers(
+                                [object.text.id],
+                                object.text.x,
+                                this.canvasStateStore,
+                                this.historyManager,
+                            ),
+                        );
+                        return;
+                    }
+                    case "Block": {
+                        switch (this.appStateStore.getState().mode.type) {
+                            case "text": {
+                                this.setMode({ type: "select" });
+                                this.canvasStateStore.unselectAll();
+                                this.canvasStateStore.select(object.block.id);
+                                break;
+                            }
+                        }
+                        startSession(
+                            createMoveBlockSessionHandlers(
+                                object.block.id,
+                                ev.shiftKey,
+                                this.canvasStateStore,
+                                this.historyManager,
+                            ),
+                        );
+                        return;
+                    }
+                    case "Canvas": {
+                        switch (this.appStateStore.getState().mode.type) {
+                            case "select": {
+                                if (!ev.shiftKey) {
+                                    this.canvasStateStore.unselectAll();
+                                }
+                                startSession(
+                                    createSelectByRangeSessionHandlers(
+                                        this.canvasStateStore,
+                                    ),
+                                );
+                                return;
+                            }
+                            case "shape": {
+                                startSession(
+                                    createNewShapeSessionHandlers(
+                                        this,
+                                        this.canvasStateStore,
+                                        this.appStateStore,
+                                    ),
+                                );
+                                return;
+                            }
+                            case "line": {
+                                startSession(
+                                    createNewLineSessionHandlers(
+                                        this,
+                                        this.canvasStateStore,
+                                        this.viewportStore,
+                                        this.appStateStore,
+                                    ),
+                                );
+                                return;
+                            }
+                            case "text": {
+                                if (!ev.shiftKey) {
+                                    this.canvasStateStore.unselectAll();
+                                }
+                                this.setMode({ type: "select" });
+                                startSession(
+                                    createSelectByRangeSessionHandlers(
+                                        this.canvasStateStore,
+                                    ),
+                                );
+                                return;
+                            }
+                            case "new-text": {
+                                const text: TextBlock = {
+                                    id: randomId(),
+                                    type: "text",
+                                    x,
+                                    y,
+                                    x1: x,
+                                    y1: y,
+                                    x2: x,
+                                    y2: y,
+                                    width: 0,
+                                    height: 0,
+                                    content: "",
+                                    textAlignment:
+                                        this.appStateStore.getState()
+                                            .defaultTextBlockTextAlignment,
+                                    sizingMode: "content",
+                                };
+                                const p1: PointEntity = {
+                                    type: "point",
+                                    id: randomId(),
+                                    x,
+                                    y,
+                                };
+                                const p2: PointEntity = {
+                                    type: "point",
+                                    id: randomId(),
+                                    x,
+                                    y,
+                                };
+                                this.canvasStateStore.setPage(
+                                    new Transaction(
+                                        this.canvasStateStore.getState().page,
+                                    )
+                                        .insertBlocks([text])
+                                        .insertPoints([p1, p2])
+                                        .addDependencies([
+                                            {
+                                                id: randomId(),
+                                                type: "blockToPoint",
+                                                pointKey: PointKey.TEXT_P1,
+                                                from: p1.id,
+                                                to: text.id,
+                                            },
+                                            {
+                                                id: randomId(),
+                                                type: "blockToPoint",
+                                                pointKey: PointKey.TEXT_P2,
+                                                from: p2.id,
+                                                to: text.id,
+                                            },
+                                        ])
+                                        .commit(),
+                                );
+                                this.setMode({
+                                    type: "text",
+                                    blockId: text.id,
+                                });
+
+                                // To leave focus at the new text block
+                                ev.preventDefault();
+                                return;
+                            }
+                        }
+                        break;
                     }
                 }
             }
@@ -710,6 +504,7 @@ export class Controller {
                 switch (this.appStateStore.getState().mode.type) {
                     case "line":
                     case "shape":
+                    case "new-text":
                     case "select": {
                         if (modifiers.metaKey || modifiers.ctrlKey) {
                             this.setMode({ type: "select" });
@@ -723,8 +518,20 @@ export class Controller {
             case "r": {
                 switch (this.appStateStore.getState().mode.type) {
                     case "line":
+                    case "new-text":
                     case "select": {
                         this.setMode({ type: "shape" });
+                        return true;
+                    }
+                }
+                break;
+            }
+            case "t": {
+                switch (this.appStateStore.getState().mode.type) {
+                    case "shape":
+                    case "line":
+                    case "select": {
+                        this.setMode({ type: "new-text" });
                         return true;
                     }
                 }
@@ -950,6 +757,288 @@ export class Controller {
 
     sendSelectedBlocksToBack() {
         this.canvasStateStore.sendToBack();
+    }
+
+    private getSelectionType(): SelectionType {
+        const selectedBlocks = this.canvasStateStore
+            .getState()
+            .getSelectedBlocks();
+
+        if (selectedBlocks.length === 0) return "none";
+
+        if (selectedBlocks.length === 1 && selectedBlocks[0].type === "line") {
+            return "line";
+        }
+
+        if (selectedBlocks.length === 1 && selectedBlocks[0].type === "text") {
+            return "text";
+        }
+
+        return "rect";
+    }
+
+    private getObjectFromPoint(x: number, y: number): GetObjectFromPointResult {
+        const THRESHOLD = 32;
+
+        switch (this.appStateStore.getState().mode.type) {
+            case "select": {
+                const selectionType = this.getSelectionType();
+
+                if (selectionType === "line") {
+                    const line = this.canvasStateStore
+                        .getState()
+                        .getSelectedBlocks()[0];
+                    assert(line.type === "line", "Selected block is not line");
+
+                    if (
+                        distanceFromPointToPoint(
+                            { x: line.x1, y: line.y1 },
+                            { x, y },
+                        ) < THRESHOLD
+                    ) {
+                        return { type: "SelectionLine.P1", line };
+                    }
+
+                    if (
+                        distanceFromPointToPoint(
+                            { x: line.x2, y: line.y2 },
+                            { x, y },
+                        ) < THRESHOLD
+                    ) {
+                        return { type: "SelectionLine.P2", line };
+                    }
+
+                    if (
+                        distanceFromPointToLine({ x, y }, line).distance <
+                        THRESHOLD
+                    ) {
+                        {
+                            return { type: "SelectionLine.Center", line };
+                        }
+                    }
+                }
+
+                if (selectionType === "text") {
+                    const text = this.canvasStateStore
+                        .getState()
+                        .getSelectedBlocks()[0];
+                    assert(text.type === "text", "Selected block is not line");
+
+                    const hitAreaX = testHitWithRange(
+                        x,
+                        text.x,
+                        text.x + text.width,
+                        32,
+                    );
+                    if (text.y - THRESHOLD < y && y < text.y + THRESHOLD) {
+                        switch (hitAreaX) {
+                            case "start": {
+                                return { type: "SelectionText.Left", text };
+                            }
+                            case "middle": {
+                                return { type: "SelectionText.Center", text };
+                            }
+                            case "end": {
+                                return { type: "SelectionText.Right", text };
+                            }
+                        }
+                    }
+                }
+
+                if (selectionType === "rect") {
+                    const selectionRect = this.canvasStateStore
+                        .getState()
+                        .getSelectionRect();
+                    assert(
+                        selectionRect !== null,
+                        "SelectionRect must not be null",
+                    );
+                    const hitAreaX = testHitWithRange(
+                        x,
+                        selectionRect.x,
+                        selectionRect.x + selectionRect.width,
+                        THRESHOLD,
+                    );
+                    const hitAreaY = testHitWithRange(
+                        y,
+                        selectionRect.y,
+                        selectionRect.y + selectionRect.height,
+                        THRESHOLD,
+                    );
+
+                    switch (hitAreaX) {
+                        case "start": {
+                            switch (hitAreaY) {
+                                case "start": {
+                                    return {
+                                        type: "SelectionRect.TopLeftHandle",
+                                        selectionRect,
+                                    };
+                                }
+                                case "middle": {
+                                    return {
+                                        type: "SelectionRect.LeftHandle",
+                                        selectionRect,
+                                    };
+                                }
+                                case "end": {
+                                    return {
+                                        type: "SelectionRect.BottomLeftHandle",
+                                        selectionRect,
+                                    };
+                                }
+                            }
+                            break;
+                        }
+                        case "middle": {
+                            switch (hitAreaY) {
+                                case "start": {
+                                    return {
+                                        type: "SelectionRect.TopHandle",
+                                        selectionRect,
+                                    };
+                                }
+                                case "middle": {
+                                    return {
+                                        type: "SelectionRect.CenterHandle",
+                                        selectionRect,
+                                    };
+                                }
+                                case "end": {
+                                    return {
+                                        type: "SelectionRect.BottomHandle",
+                                        selectionRect,
+                                    };
+                                }
+                            }
+                            break;
+                        }
+                        case "end": {
+                            switch (hitAreaY) {
+                                case "start": {
+                                    return {
+                                        type: "SelectionRect.TopRightHandle",
+                                        selectionRect,
+                                    };
+                                }
+                                case "middle": {
+                                    return {
+                                        type: "SelectionRect.RightHandle",
+                                        selectionRect,
+                                    };
+                                }
+                                case "end": {
+                                    return {
+                                        type: "SelectionRect.BottomRightHandle",
+                                        selectionRect,
+                                    };
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                {
+                    const hitResult = testHitEntities(
+                        this.canvasStateStore.getState().page,
+                        x,
+                        y,
+                        this.viewportStore.getState().scale,
+                    );
+                    if (hitResult.blocks.length > 0) {
+                        return {
+                            type: "Block",
+                            block: hitResult.blocks[0].target,
+                        };
+                    }
+                }
+
+                break;
+            }
+            case "text": {
+                // Block
+                {
+                    const hitResult = testHitEntities(
+                        this.canvasStateStore.getState().page,
+                        x,
+                        y,
+                        this.viewportStore.getState().scale,
+                    );
+                    if (hitResult.blocks.length > 0) {
+                        return {
+                            type: "Block",
+                            block: hitResult.blocks[0].target,
+                        };
+                    }
+                }
+
+                break;
+            }
+            case "line":
+            case "shape":
+            case "new-text": {
+                break;
+            }
+        }
+
+        return { type: "Canvas" };
+    }
+}
+
+type SelectionType = "line" | "rect" | "text" | "none";
+
+type GetObjectFromPointResult =
+    | { type: "SelectionRect.TopLeftHandle"; selectionRect: Rect }
+    | { type: "SelectionRect.TopHandle"; selectionRect: Rect }
+    | { type: "SelectionRect.TopRightHandle"; selectionRect: Rect }
+    | { type: "SelectionRect.LeftHandle"; selectionRect: Rect }
+    | { type: "SelectionRect.CenterHandle"; selectionRect: Rect }
+    | { type: "SelectionRect.RightHandle"; selectionRect: Rect }
+    | { type: "SelectionRect.BottomLeftHandle"; selectionRect: Rect }
+    | { type: "SelectionRect.BottomHandle"; selectionRect: Rect }
+    | { type: "SelectionRect.BottomRightHandle"; selectionRect: Rect }
+    | { type: "SelectionLine.P1"; line: LineBlock }
+    | { type: "SelectionLine.Center"; line: LineBlock }
+    | { type: "SelectionLine.P2"; line: LineBlock }
+    | { type: "SelectionText.Left"; text: TextBlock }
+    | { type: "SelectionText.Center"; text: TextBlock }
+    | { type: "SelectionText.Right"; text: TextBlock }
+    | { type: "Block"; block: Block }
+    | { type: "Canvas" };
+
+/**
+ * Test if a given value is inside of a range.
+ *
+ *
+ */
+function testHitWithRange(
+    value: number,
+    start: number,
+    end: number,
+    threshold: number,
+): "start" | "middle" | "end" | "none" {
+    const outerStart = start - threshold;
+    const innerStart =
+        end - start < threshold * 4
+            ? (start * 3 + end * 1) / 4
+            : start + threshold;
+    const innerEnd =
+        end - start < threshold * 4
+            ? (start * 1 + end * 3) / 4
+            : end - threshold;
+    const outerEnd = end + threshold;
+
+    if (value < outerStart) {
+        return "none";
+    } else if (value < innerStart) {
+        return "start";
+    } else if (value < innerEnd) {
+        return "middle";
+    } else if (value < outerEnd) {
+        return "end";
+    } else {
+        return "none";
     }
 }
 
