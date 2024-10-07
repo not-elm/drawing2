@@ -597,8 +597,9 @@ export class Controller {
                             width: 0,
                             height: 0,
                             content: "",
-                            textAlignX:
-                                this.appStateStore.getState().defaultTextAlignX,
+                            textAlignment:
+                                this.appStateStore.getState()
+                                    .defaultTextBlockTextAlignment,
                             sizingMode: "content",
                         };
                         const p1: PointEntity = {
@@ -903,9 +904,14 @@ export class Controller {
         this.appStateStore.setDefaultLineEnd(lineEnd, endType);
     }
 
+    setTextBlockTextAlignment(alignment: TextAlignment) {
+        this.canvasStateStore.setTextBlockTextAlignment(alignment);
+        this.appStateStore.setDefaultTextBlockTextAlignment(alignment);
+    }
+
     setTextBlockSizingMode(sizingMode: TextBlockSizingMode) {
         this.canvasStateStore.setTextBlockSizingMode(sizingMode);
-        this.appStateStore.setDefaultBlockTextSizingMode(sizingMode);
+        this.appStateStore.setDefaultTextBlockSizingMode(sizingMode);
     }
 
     bringSelectedBlocksToFront() {

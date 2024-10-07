@@ -7,6 +7,7 @@ import { LineEndTypeSection } from "./LineEndTypeSection";
 import { OrderSection } from "./OrderSection";
 import { SizingModeSection } from "./SizingModeSection";
 import { TextAlignmentSection } from "./TextAlignmentSection";
+import { TextBlockTextAlignmentSection } from "./TextBlockTextAlignmentSection";
 
 export function PropertyPanel() {
     const controller = useController();
@@ -27,6 +28,9 @@ export function PropertyPanel() {
             {state.colorSectionVisible && <ColorSection />}
             {state.fillModeSectionVisible && <FillModeSection />}
             {state.textAlignSectionVisible && <TextAlignmentSection />}
+            {state.textBlockTextAlignmentSectionVisible && (
+                <TextBlockTextAlignmentSection />
+            )}
             {state.orderSectionVisible && <OrderSection />}
             {state.lineEndTypeSectionVisible && <LineEndTypeSection />}
             {state.textBlockSizingModeSectionVisible && <SizingModeSection />}

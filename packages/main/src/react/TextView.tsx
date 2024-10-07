@@ -25,7 +25,7 @@ export const TextView = memo(function ShapeView({
                 shapeId={text.id}
                 width={text.width}
                 sizingMode={text.sizingMode}
-                textAlignX={text.textAlignX}
+                textAlignment={text.textAlignment}
                 content={text.content}
             />
         </div>
@@ -36,14 +36,14 @@ const TextViewInner = memo(function ShapeViewInner({
     shapeId,
     width,
     sizingMode,
-    textAlignX,
+    textAlignment,
     editing,
     content,
 }: {
     shapeId: string;
     width: number;
     sizingMode: "content" | "fixed";
-    textAlignX: TextAlignment;
+    textAlignment: TextAlignment;
     editing: boolean;
     content: string;
 }) {
@@ -83,7 +83,7 @@ const TextViewInner = memo(function ShapeViewInner({
             canvasWidth,
             canvasHeight,
         );
-    }, [containerRef, content, width, sizingMode, textAlignX]);
+    }, [containerRef, content, width, sizingMode, textAlignment]);
 
     return (
         <div
@@ -98,7 +98,7 @@ const TextViewInner = memo(function ShapeViewInner({
                     center: { textAlign: "center" as const },
                     end: { textAlign: "end" as const },
                     "end-outside": { textAlign: "end" as const },
-                }[textAlignX],
+                }[textAlignment],
                 ...({
                     content: {
                         whiteSpace: "pre",

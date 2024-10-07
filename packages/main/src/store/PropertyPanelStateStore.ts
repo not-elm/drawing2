@@ -22,6 +22,9 @@ interface PropertyPanelState {
     readonly lineEndType1: LineEndType | null;
     readonly lineEndType2: LineEndType | null;
 
+    readonly textBlockTextAlignmentSectionVisible: boolean;
+    readonly textBlockTextAlignment: TextAlignment | null;
+
     readonly textBlockSizingModeSectionVisible: boolean;
     readonly textBlockSizingMode: TextBlockSizingMode | null;
 }
@@ -43,6 +46,8 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
             lineEndTypeSectionVisible: true,
             lineEndType1: null,
             lineEndType2: null,
+            textBlockTextAlignmentSectionVisible: true,
+            textBlockTextAlignment: null,
             textBlockSizingModeSectionVisible: true,
             textBlockSizingMode: null,
         });
@@ -90,6 +95,9 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
         const lineEndType2Set = new Set(
             selectedLines.map((line) => line.endType2),
         );
+        const textBlockTextAlignments = new Set(
+            selectedTexts.map((text) => text.textAlignment),
+        );
         const textBlockSizingModes = new Set(
             selectedTexts.map((text) => text.sizingMode),
         );
@@ -111,10 +119,7 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
                       ? [...fillModes][0]
                       : null,
             textAlignSectionVisible:
-                selectedShapes.length > 0 ||
-                selectedTexts.length > 0 ||
-                appState.mode.type === "shape" ||
-                appState.mode.type === "new-text",
+                selectedShapes.length > 0 || appState.mode.type === "shape",
             textAlignX:
                 alignXs.size === 0
                     ? appState.defaultTextAlignX
@@ -142,6 +147,16 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
                     ? appState.defaultLineEndType2
                     : lineEndType2Set.size === 1
                       ? [...lineEndType2Set][0]
+                      : null,
+            textBlockTextAlignmentSectionVisible:
+                (selectedShapes.length === 0 && selectedTexts.length > 0) ||
+                appState.mode.type === "new-text" ||
+                appState.mode.type === "text",
+            textBlockTextAlignment:
+                textBlockTextAlignments.size === 0
+                    ? appState.defaultTextBlockTextAlignment
+                    : textBlockTextAlignments.size === 1
+                      ? [...textBlockTextAlignments][0]
                       : null,
             textBlockSizingModeSectionVisible:
                 selectedTexts.length > 0 ||

@@ -175,7 +175,7 @@ interface SerializedTextBlock {
     width: number;
     height: number;
     sizingMode: TextBlockSizingMode;
-    textAlignX: TextAlignment;
+    textAlignment: TextAlignment;
     content: string;
 }
 function serializeTextBlock(text: TextBlock): SerializedTextBlock {
@@ -191,7 +191,7 @@ function serializeTextBlock(text: TextBlock): SerializedTextBlock {
         width: text.width,
         height: text.height,
         sizingMode: text.sizingMode,
-        textAlignX: text.textAlignX,
+        textAlignment: text.textAlignment,
         content: text.content,
     };
 }
@@ -208,7 +208,7 @@ function deserializeTextBlock(text: SerializedTextBlock): TextBlock {
         width: text.width,
         height: text.height,
         sizingMode: text.sizingMode,
-        textAlignX: text.textAlignX,
+        textAlignment: text.textAlignment,
         content: text.content,
     };
 }

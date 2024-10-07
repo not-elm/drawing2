@@ -51,7 +51,7 @@ export interface TextBlock extends EntityBase<"text"> {
     y2: number;
 
     sizingMode: TextBlockSizingMode;
-    textAlignX: TextAlignment;
+    textAlignment: TextAlignment;
 
     // TODO: リッチテキストフォーマット対応
     content: string;

@@ -13,6 +13,7 @@ interface AppState {
     readonly defaultTextAlignY: TextAlignment;
     readonly defaultLineEndType1: LineEndType;
     readonly defaultLineEndType2: LineEndType;
+    readonly defaultTextBlockTextAlignment: TextAlignment;
     readonly defaultTextBlockSizingMode: TextBlockSizingMode;
 }
 
@@ -26,6 +27,7 @@ export class AppStateStore extends Store<AppState> {
             defaultTextAlignY: "center",
             defaultLineEndType1: "none",
             defaultLineEndType2: "none",
+            defaultTextBlockTextAlignment: "start",
             defaultTextBlockSizingMode: "content",
         });
     }
@@ -53,7 +55,14 @@ export class AppStateStore extends Store<AppState> {
         });
     }
 
-    setDefaultBlockTextSizingMode(sizingMode: TextBlockSizingMode) {
+    setDefaultTextBlockTextAlignment(alignment: TextAlignment) {
+        this.setState({
+            ...this.state,
+            defaultTextBlockTextAlignment: alignment,
+        });
+    }
+
+    setDefaultTextBlockSizingMode(sizingMode: TextBlockSizingMode) {
         this.setState({
             ...this.state,
             defaultTextBlockSizingMode: sizingMode,

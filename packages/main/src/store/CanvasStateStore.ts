@@ -138,7 +138,7 @@ export class CanvasStateStore extends Store<CanvasState> {
                             case "text": {
                                 return {
                                     ...oldBlock,
-                                    textAlignX,
+                                    textAlignment: textAlignX,
                                 };
                             }
                             default: {
@@ -200,6 +200,28 @@ export class CanvasStateStore extends Store<CanvasState> {
                                 return {
                                     ...oldBlock,
                                     [`endType${lineEnd}`]: lineEndType,
+                                };
+                            }
+                            default: {
+                                return oldBlock;
+                            }
+                        }
+                    })
+                    .commit(),
+            ),
+        );
+    }
+
+    setTextBlockTextAlignment(alignment: TextAlignment) {
+        this.setState(
+            this.state.setPage(
+                new Transaction(this.state.page)
+                    .updateProperty(this.state.selectedBlockIds, (oldBlock) => {
+                        switch (oldBlock.type) {
+                            case "text": {
+                                return {
+                                    ...oldBlock,
+                                    textAlignment: alignment,
                                 };
                             }
                             default: {
