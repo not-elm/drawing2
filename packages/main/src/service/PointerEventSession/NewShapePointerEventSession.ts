@@ -1,3 +1,4 @@
+import { adjustAngle } from "../../geo/adjustAngle";
 import { getRectanglePath } from "../../geo/path";
 import type { StateProvider } from "../../lib/Store";
 import { randomId } from "../../lib/randomId";
@@ -37,13 +38,16 @@ export function createNewShapePointerEventSession(
         currentY: y,
         onPointerMove(data) {
             if (data.shiftKey) {
-                const dx = Math.abs(data.newX - data.startX);
-                const dy = Math.abs(data.newY - data.startY);
-                const d = Math.max(dx, dy);
-                this.currentX =
-                    data.startX + (data.newX > data.startX ? d : -d);
-                this.currentY =
-                    data.startY + (data.newY > data.startY ? d : -d);
+                const [x, y] = adjustAngle(
+                    data.startX,
+                    data.startY,
+                    data.newX,
+                    data.newY,
+                    Math.PI / 4,
+                    Math.PI / 2,
+                );
+                this.currentX = x;
+                this.currentY = y;
             } else {
                 this.currentX = data.newX;
                 this.currentY = data.newY;
@@ -74,27 +78,7 @@ export function createNewShapePointerEventSession(
                 fillMode: appStateStore.getState().defaultFillMode,
                 path: getRectanglePath(),
             };
-            // const shape: TextBlock = {
-            //     type: "text",
-            //     id: randomId(),
-            //     x,
-            //     y,
-            //     width,
-            //     height,
-            //     x1: x,
-            //     y1: y,
-            //     x2: x + width,
-            //     y2: y + height,
-            //     content: "Hello World",
-            //     textAlignX: appStateStore.getState().defaultTextAlignX,
-            //     sizingMode: "fixed",
-            // };
-            const p1: PointEntity = {
-                type: "point",
-                id: randomId(),
-                x,
-                y,
-            };
+            const p1: PointEntity = { type: "point", id: randomId(), x, y };
             const p2: PointEntity = {
                 type: "point",
                 id: randomId(),

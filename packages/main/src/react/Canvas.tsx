@@ -70,6 +70,10 @@ export function Canvas() {
                 ev.stopPropagation();
                 controller.handleCanvasMouseDown(ev.nativeEvent);
             }}
+            onDoubleClick={(ev) => {
+                ev.stopPropagation();
+                controller.handleCanvasDoubleClick(ev.nativeEvent);
+            }}
         >
             <div
                 css={{

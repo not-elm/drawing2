@@ -36,10 +36,8 @@ import { createMovePointPointerEventSession } from "./PointerEventSession/MovePo
 import { createNewLinePointerEventSession } from "./PointerEventSession/NewLinePointerEventSession";
 import { createNewShapePointerEventSession } from "./PointerEventSession/NewShapePointerEventSession";
 import type { PointerEventSession } from "./PointerEventSession/PointerEventSession";
+import { createResizePointerEventSession } from "./PointerEventSession/ResizePointerEventSession";
 import { createSelectByRangePointerEventSession } from "./PointerEventSession/SelectByRangePointerEventSessionHandlers";
-import { createXResizePointerEventSession } from "./PointerEventSession/XResizePointerEventSession";
-import { createXYResizePointerEventSession } from "./PointerEventSession/XYResizePointerEventSession";
-import { createYResizePointerEventSession } from "./PointerEventSession/YResizePointerEventSession";
 import { getRestoreViewportService } from "./RestoreViewportService";
 
 export class Controller {
@@ -79,13 +77,16 @@ export class Controller {
                 switch (object.type) {
                     case "SelectionRect.TopLeftHandle": {
                         startSession(
-                            createXYResizePointerEventSession(
+                            createResizePointerEventSession(
                                 this.canvasStateStore.getState()
                                     .selectedBlockIds,
                                 object.selectionRect.x +
                                     object.selectionRect.width,
                                 object.selectionRect.y +
                                     object.selectionRect.height,
+                                x,
+                                y,
+                                "XY",
                                 this.canvasStateStore,
                                 this.historyManager,
                             ),
@@ -94,11 +95,16 @@ export class Controller {
                     }
                     case "SelectionRect.LeftHandle": {
                         startSession(
-                            createXResizePointerEventSession(
+                            createResizePointerEventSession(
                                 this.canvasStateStore.getState()
                                     .selectedBlockIds,
                                 object.selectionRect.x +
                                     object.selectionRect.width,
+                                object.selectionRect.y +
+                                    object.selectionRect.height,
+                                x,
+                                y,
+                                "X",
                                 this.canvasStateStore,
                                 this.historyManager,
                             ),
@@ -107,12 +113,15 @@ export class Controller {
                     }
                     case "SelectionRect.BottomLeftHandle": {
                         startSession(
-                            createXYResizePointerEventSession(
+                            createResizePointerEventSession(
                                 this.canvasStateStore.getState()
                                     .selectedBlockIds,
                                 object.selectionRect.x +
                                     object.selectionRect.width,
                                 object.selectionRect.y,
+                                x,
+                                y,
+                                "XY",
                                 this.canvasStateStore,
                                 this.historyManager,
                             ),
@@ -121,11 +130,16 @@ export class Controller {
                     }
                     case "SelectionRect.TopHandle": {
                         startSession(
-                            createYResizePointerEventSession(
+                            createResizePointerEventSession(
                                 this.canvasStateStore.getState()
                                     .selectedBlockIds,
+                                object.selectionRect.x +
+                                    object.selectionRect.width,
                                 object.selectionRect.y +
                                     object.selectionRect.height,
+                                x,
+                                y,
+                                "Y",
                                 this.canvasStateStore,
                                 this.historyManager,
                             ),
@@ -147,10 +161,15 @@ export class Controller {
                     }
                     case "SelectionRect.BottomHandle": {
                         startSession(
-                            createYResizePointerEventSession(
+                            createResizePointerEventSession(
                                 this.canvasStateStore.getState()
                                     .selectedBlockIds,
+                                object.selectionRect.x +
+                                    object.selectionRect.width,
                                 object.selectionRect.y,
+                                x,
+                                y,
+                                "Y",
                                 this.canvasStateStore,
                                 this.historyManager,
                             ),
@@ -159,12 +178,15 @@ export class Controller {
                     }
                     case "SelectionRect.TopRightHandle": {
                         startSession(
-                            createXYResizePointerEventSession(
+                            createResizePointerEventSession(
                                 this.canvasStateStore.getState()
                                     .selectedBlockIds,
                                 object.selectionRect.x,
                                 object.selectionRect.y +
                                     object.selectionRect.height,
+                                x,
+                                y,
+                                "XY",
                                 this.canvasStateStore,
                                 this.historyManager,
                             ),
@@ -173,10 +195,15 @@ export class Controller {
                     }
                     case "SelectionRect.RightHandle": {
                         startSession(
-                            createXResizePointerEventSession(
+                            createResizePointerEventSession(
                                 this.canvasStateStore.getState()
                                     .selectedBlockIds,
+                                object.selectionRect.x,
+                                object.selectionRect.y +
+                                    object.selectionRect.height,
                                 x,
+                                y,
+                                "X",
                                 this.canvasStateStore,
                                 this.historyManager,
                             ),
@@ -185,11 +212,14 @@ export class Controller {
                     }
                     case "SelectionRect.BottomRightHandle": {
                         startSession(
-                            createXYResizePointerEventSession(
+                            createResizePointerEventSession(
                                 this.canvasStateStore.getState()
                                     .selectedBlockIds,
                                 object.selectionRect.x,
                                 object.selectionRect.y,
+                                x,
+                                y,
+                                "XY",
                                 this.canvasStateStore,
                                 this.historyManager,
                             ),
@@ -278,9 +308,14 @@ export class Controller {
                     case "SelectionText.Left": {
                         this.canvasStateStore.setTextBlockSizingMode("fixed");
                         startSession(
-                            createXResizePointerEventSession(
-                                [object.text.id],
+                            createResizePointerEventSession(
+                                this.canvasStateStore.getState()
+                                    .selectedBlockIds,
                                 object.text.x + object.text.width,
+                                object.text.y,
+                                x,
+                                y,
+                                "X",
                                 this.canvasStateStore,
                                 this.historyManager,
                             ),
@@ -303,9 +338,14 @@ export class Controller {
                     case "SelectionText.Right": {
                         this.canvasStateStore.setTextBlockSizingMode("fixed");
                         startSession(
-                            createXResizePointerEventSession(
-                                [object.text.id],
+                            createResizePointerEventSession(
+                                this.canvasStateStore.getState()
+                                    .selectedBlockIds,
                                 object.text.x,
+                                object.text.y,
+                                x,
+                                y,
+                                "X",
                                 this.canvasStateStore,
                                 this.historyManager,
                             ),
@@ -467,6 +507,73 @@ export class Controller {
 
     handleCanvasMouseUp(ev: PointerEvent) {
         this.gestureRecognizer.handlePointerUp(ev);
+    }
+
+    handleCanvasDoubleClick(ev: MouseEvent) {
+        const [x, y] = fromCanvasCoordinate(
+            ev.clientX,
+            ev.clientY,
+            this.viewportStore.getState(),
+        );
+
+        const text: TextBlock = {
+            id: randomId(),
+            type: "text",
+            x,
+            y,
+            x1: x,
+            y1: y,
+            x2: x,
+            y2: y,
+            width: 0,
+            height: 0,
+            content: "",
+            textAlignment:
+                this.appStateStore.getState().defaultTextBlockTextAlignment,
+            sizingMode: "content",
+        };
+        const p1: PointEntity = {
+            type: "point",
+            id: randomId(),
+            x,
+            y,
+        };
+        const p2: PointEntity = {
+            type: "point",
+            id: randomId(),
+            x,
+            y,
+        };
+        this.canvasStateStore.setPage(
+            new Transaction(this.canvasStateStore.getState().page)
+                .insertBlocks([text])
+                .insertPoints([p1, p2])
+                .addDependencies([
+                    {
+                        id: randomId(),
+                        type: "blockToPoint",
+                        pointKey: PointKey.TEXT_P1,
+                        from: p1.id,
+                        to: text.id,
+                    },
+                    {
+                        id: randomId(),
+                        type: "blockToPoint",
+                        pointKey: PointKey.TEXT_P2,
+                        from: p2.id,
+                        to: text.id,
+                    },
+                ])
+                .commit(),
+        );
+        this.setMode({
+            type: "text",
+            blockId: text.id,
+        });
+
+        // To leave focus at the new text block
+        ev.preventDefault();
+        return;
     }
 
     handleShapeDoubleClick(
@@ -704,9 +811,7 @@ export class Controller {
                 const block =
                     this.canvasStateStore.getState().page.blocks[blockId];
                 assert(block !== undefined, `Block ${blockId} is not found`);
-                assert(block.type === "text", `Block ${blockId} is not text`);
-
-                if (block.content === "") {
+                if (block.type === "text" && block.content === "") {
                     this.canvasStateStore.setPage(
                         new Transaction(this.canvasStateStore.getState().page)
                             .deleteBlocks([blockId])

@@ -1,3 +1,4 @@
+import { adjustAngle } from "../../geo/adjustAngle";
 import type { StateProvider } from "../../lib/Store";
 import { randomId } from "../../lib/randomId";
 import { type LineBlock, type PointEntity, PointKey } from "../../model/Page";
@@ -37,27 +38,14 @@ export function createNewLinePointerEventSession(
         currentY: y,
         onPointerMove(data) {
             if (data.shiftKey) {
-                const r = Math.atan2(
-                    data.newY - data.startY,
-                    data.newX - data.startX,
+                const [x, y] = adjustAngle(
+                    data.startX,
+                    data.startY,
+                    data.newX,
+                    data.newY,
+                    0,
+                    Math.PI / 12,
                 );
-                const rFixed =
-                    Math.floor((r + Math.PI / 24) / (Math.PI / 12)) *
-                    (Math.PI / 12);
-                const ix = Math.cos(rFixed);
-                const iy = Math.sin(rFixed);
-
-                const x =
-                    ((data.newX - data.startX) * ix +
-                        (data.newY - data.startY) * iy) *
-                        ix +
-                    data.startX;
-                const y =
-                    ((data.newX - data.startX) * ix +
-                        (data.newY - data.startY) * iy) *
-                        iy +
-                    data.startY;
-
                 this.currentX = x;
                 this.currentY = y;
             } else {
