@@ -1,12 +1,6 @@
 import { distanceFromPointToLine } from "../geo/Line";
 import { distanceFromPointToPoint } from "../geo/Point";
-import {
-    type Rect,
-    isRectOverlapWithLine,
-    isRectOverlapWithRect,
-} from "../geo/Rect";
-import { getRectanglePath } from "../geo/path";
-import type { StateProvider } from "../lib/Store";
+import type { Rect } from "../geo/Rect";
 import { assert } from "../lib/assert";
 import { randomId } from "../lib/randomId";
 import type { ColorId } from "../model/Colors";
@@ -17,7 +11,6 @@ import {
     type LineBlock,
     type PointEntity,
     PointKey,
-    type ShapeBlock,
     type TextBlock,
 } from "../model/Page";
 import type { TextAlignment } from "../model/TextAlignment";
@@ -33,11 +26,20 @@ import { HoverStateStore, testHitEntities } from "../store/HoverStateStore";
 import { PointerStateStore } from "../store/PointerStateStore";
 import { PropertyPanelStateStore } from "../store/PropertyPanelStateStore";
 import { ViewportStore } from "../store/ViewportStore";
-import {
-    GestureRecognizer,
-    type PointerEventSessionHandlers,
-} from "./GestureRecognizer";
+import { GestureRecognizer } from "./GestureRecognizer";
 import { HistoryManager } from "./HistoryManager";
+import {
+    createMoveBlockPointerEventSession,
+    createMoveSelectedBlocksPointerEventSession,
+} from "./PointerEventSession/MoveBlockPointerEventSession";
+import { createMovePointPointerEventSession } from "./PointerEventSession/MovePointPointerEventSession";
+import { createNewLinePointerEventSession } from "./PointerEventSession/NewLinePointerEventSession";
+import { createNewShapePointerEventSession } from "./PointerEventSession/NewShapePointerEventSession";
+import type { PointerEventSession } from "./PointerEventSession/PointerEventSession";
+import { createSelectByRangePointerEventSession } from "./PointerEventSession/SelectByRangePointerEventSessionHandlers";
+import { createXResizePointerEventSession } from "./PointerEventSession/XResizePointerEventSession";
+import { createXYResizePointerEventSession } from "./PointerEventSession/XYResizePointerEventSession";
+import { createYResizePointerEventSession } from "./PointerEventSession/YResizePointerEventSession";
 import { getRestoreViewportService } from "./RestoreViewportService";
 
 export class Controller {
@@ -63,7 +65,7 @@ export class Controller {
 
     private readonly handlePointerDown = (
         ev: PointerEvent,
-        startSession: (handlers: PointerEventSessionHandlers) => void,
+        startSession: (handlers: PointerEventSession) => void,
     ) => {
         const [x, y] = fromCanvasCoordinate(
             ev.clientX,
@@ -77,7 +79,7 @@ export class Controller {
                 switch (object.type) {
                     case "SelectionRect.TopLeftHandle": {
                         startSession(
-                            createXYResizeSessionHandlers(
+                            createXYResizePointerEventSession(
                                 this.canvasStateStore.getState()
                                     .selectedBlockIds,
                                 object.selectionRect.x +
@@ -92,7 +94,7 @@ export class Controller {
                     }
                     case "SelectionRect.LeftHandle": {
                         startSession(
-                            createXResizeSessionHandlers(
+                            createXResizePointerEventSession(
                                 this.canvasStateStore.getState()
                                     .selectedBlockIds,
                                 object.selectionRect.x +
@@ -105,7 +107,7 @@ export class Controller {
                     }
                     case "SelectionRect.BottomLeftHandle": {
                         startSession(
-                            createXYResizeSessionHandlers(
+                            createXYResizePointerEventSession(
                                 this.canvasStateStore.getState()
                                     .selectedBlockIds,
                                 object.selectionRect.x +
@@ -119,7 +121,7 @@ export class Controller {
                     }
                     case "SelectionRect.TopHandle": {
                         startSession(
-                            createYResizeSessionHandlers(
+                            createYResizePointerEventSession(
                                 this.canvasStateStore.getState()
                                     .selectedBlockIds,
                                 object.selectionRect.y +
@@ -132,7 +134,7 @@ export class Controller {
                     }
                     case "SelectionRect.CenterHandle": {
                         startSession(
-                            createMoveSelectedBlocksSessionHandlers(
+                            createMoveSelectedBlocksPointerEventSession(
                                 x,
                                 y,
                                 ev.shiftKey,
@@ -145,7 +147,7 @@ export class Controller {
                     }
                     case "SelectionRect.BottomHandle": {
                         startSession(
-                            createYResizeSessionHandlers(
+                            createYResizePointerEventSession(
                                 this.canvasStateStore.getState()
                                     .selectedBlockIds,
                                 object.selectionRect.y,
@@ -157,7 +159,7 @@ export class Controller {
                     }
                     case "SelectionRect.TopRightHandle": {
                         startSession(
-                            createXYResizeSessionHandlers(
+                            createXYResizePointerEventSession(
                                 this.canvasStateStore.getState()
                                     .selectedBlockIds,
                                 object.selectionRect.x,
@@ -171,7 +173,7 @@ export class Controller {
                     }
                     case "SelectionRect.RightHandle": {
                         startSession(
-                            createXResizeSessionHandlers(
+                            createXResizePointerEventSession(
                                 this.canvasStateStore.getState()
                                     .selectedBlockIds,
                                 x,
@@ -183,7 +185,7 @@ export class Controller {
                     }
                     case "SelectionRect.BottomRightHandle": {
                         startSession(
-                            createXYResizeSessionHandlers(
+                            createXYResizePointerEventSession(
                                 this.canvasStateStore.getState()
                                     .selectedBlockIds,
                                 object.selectionRect.x,
@@ -218,7 +220,7 @@ export class Controller {
                         );
 
                         startSession(
-                            createMovePointSessionHandlers(
+                            createMovePointPointerEventSession(
                                 originalPoint,
                                 this.canvasStateStore,
                                 this.viewportStore,
@@ -251,7 +253,7 @@ export class Controller {
                         );
 
                         startSession(
-                            createMovePointSessionHandlers(
+                            createMovePointPointerEventSession(
                                 originalPoint,
                                 this.canvasStateStore,
                                 this.viewportStore,
@@ -262,7 +264,7 @@ export class Controller {
                     }
                     case "SelectionLine.Center": {
                         startSession(
-                            createMoveSelectedBlocksSessionHandlers(
+                            createMoveSelectedBlocksPointerEventSession(
                                 x,
                                 y,
                                 ev.shiftKey,
@@ -276,7 +278,7 @@ export class Controller {
                     case "SelectionText.Left": {
                         this.canvasStateStore.setTextBlockSizingMode("fixed");
                         startSession(
-                            createXResizeSessionHandlers(
+                            createXResizePointerEventSession(
                                 [object.text.id],
                                 object.text.x + object.text.width,
                                 this.canvasStateStore,
@@ -287,7 +289,7 @@ export class Controller {
                     }
                     case "SelectionText.Center": {
                         startSession(
-                            createMoveSelectedBlocksSessionHandlers(
+                            createMoveSelectedBlocksPointerEventSession(
                                 x,
                                 y,
                                 ev.shiftKey,
@@ -301,7 +303,7 @@ export class Controller {
                     case "SelectionText.Right": {
                         this.canvasStateStore.setTextBlockSizingMode("fixed");
                         startSession(
-                            createXResizeSessionHandlers(
+                            createXResizePointerEventSession(
                                 [object.text.id],
                                 object.text.x,
                                 this.canvasStateStore,
@@ -320,7 +322,7 @@ export class Controller {
                             }
                         }
                         startSession(
-                            createMoveBlockSessionHandlers(
+                            createMoveBlockPointerEventSession(
                                 object.block.id,
                                 ev.shiftKey,
                                 this.canvasStateStore,
@@ -336,7 +338,7 @@ export class Controller {
                                     this.canvasStateStore.unselectAll();
                                 }
                                 startSession(
-                                    createSelectByRangeSessionHandlers(
+                                    createSelectByRangePointerEventSession(
                                         this.canvasStateStore,
                                     ),
                                 );
@@ -344,18 +346,21 @@ export class Controller {
                             }
                             case "shape": {
                                 startSession(
-                                    createNewShapeSessionHandlers(
+                                    createNewShapePointerEventSession(
+                                        ev,
                                         this,
                                         this.canvasStateStore,
                                         this.appStateStore,
+                                        this.viewportStore,
                                     ),
                                 );
                                 return;
                             }
                             case "line": {
                                 startSession(
-                                    createNewLineSessionHandlers(
+                                    createNewLinePointerEventSession(
                                         this,
+                                        ev,
                                         this.canvasStateStore,
                                         this.viewportStore,
                                         this.appStateStore,
@@ -369,7 +374,7 @@ export class Controller {
                                 }
                                 this.setMode({ type: "select" });
                                 startSession(
-                                    createSelectByRangeSessionHandlers(
+                                    createSelectByRangePointerEventSession(
                                         this.canvasStateStore,
                                     ),
                                 );
@@ -510,6 +515,10 @@ export class Controller {
                             this.setMode({ type: "select" });
                             this.canvasStateStore.selectAll();
                             return true;
+                        } else {
+                            this.setMode({ type: "line" });
+                            this.appStateStore.setDefaultLineEnd(1, "none");
+                            this.appStateStore.setDefaultLineEnd(2, "arrow");
                         }
                     }
                 }
@@ -542,6 +551,8 @@ export class Controller {
                     case "shape":
                     case "select": {
                         this.setMode({ type: "line" });
+                        this.appStateStore.setDefaultLineEnd(1, "none");
+                        this.appStateStore.setDefaultLineEnd(2, "none");
                         return true;
                     }
                 }
@@ -1040,620 +1051,4 @@ function testHitWithRange(
     } else {
         return "none";
     }
-}
-
-function createNewLineSessionHandlers(
-    controller: Controller,
-    canvasStateStore: CanvasStateStore,
-    viewportProvider: StateProvider<ViewportStore>,
-    appStateStore: AppStateStore,
-): PointerEventSessionHandlers {
-    return {
-        type: "new-line",
-        onPointerUp: (data) => {
-            const page = canvasStateStore.getState().page;
-            const scale = viewportProvider.getState().scale;
-            const transaction = new Transaction(
-                canvasStateStore.getState().page,
-            );
-
-            let p1: PointEntity;
-            const hitTestResult1 = testHitEntities(
-                page,
-                data.startX,
-                data.startY,
-                scale,
-            );
-
-            if (hitTestResult1.entities.length === 0) {
-                p1 = {
-                    type: "point",
-                    id: randomId(),
-                    x: data.startX,
-                    y: data.startY,
-                };
-                transaction.insertPoints([p1]);
-            } else if (hitTestResult1.points.length > 0) {
-                p1 = hitTestResult1.points[0].target;
-            } else {
-                const hitEntry = hitTestResult1.blocks[0];
-                switch (hitEntry.target.type) {
-                    case "line": {
-                        const width = hitEntry.target.x2 - hitEntry.target.x1;
-                        const height = hitEntry.target.y2 - hitEntry.target.y1;
-                        const relativePosition =
-                            width > height
-                                ? (hitEntry.point.x - hitEntry.target.x1) /
-                                  width
-                                : (hitEntry.point.y - hitEntry.target.y1) /
-                                  height;
-                        p1 = {
-                            type: "point",
-                            id: randomId(),
-                            x: hitEntry.point.x,
-                            y: hitEntry.point.y,
-                        };
-                        transaction.insertPoints([p1]).addDependencies([
-                            {
-                                type: "pointOnLine",
-                                id: randomId(),
-                                from: hitEntry.target.id,
-                                to: p1.id,
-                                r: relativePosition,
-                            },
-                        ]);
-                        break;
-                    }
-                    case "shape":
-                    case "text": {
-                        const rx =
-                            (hitEntry.point.x - hitEntry.target.x) /
-                            hitEntry.target.width;
-                        const ry =
-                            (hitEntry.point.y - hitEntry.target.y) /
-                            hitEntry.target.height;
-                        p1 = {
-                            type: "point",
-                            id: randomId(),
-                            x: hitEntry.point.x,
-                            y: hitEntry.point.y,
-                        };
-                        transaction.insertPoints([p1]).addDependencies([
-                            {
-                                type: "pointOnShape",
-                                id: randomId(),
-                                from: hitEntry.target.id,
-                                to: p1.id,
-                                rx,
-                                ry,
-                            },
-                        ]);
-                    }
-                }
-            }
-
-            let p2: PointEntity;
-            const hitTestResult2 = testHitEntities(
-                page,
-                data.newX,
-                data.newY,
-                scale,
-            );
-
-            if (hitTestResult2.entities.length === 0) {
-                p2 = {
-                    type: "point",
-                    id: randomId(),
-                    x: data.newX,
-                    y: data.newY,
-                };
-                transaction.insertPoints([p2]);
-            } else if (hitTestResult2.points.length > 0) {
-                p2 = hitTestResult2.points[0].target;
-            } else {
-                const hitEntry = hitTestResult2.blocks[0];
-                switch (hitEntry.target.type) {
-                    case "line": {
-                        const width = hitEntry.target.x2 - hitEntry.target.x1;
-                        const height = hitEntry.target.y2 - hitEntry.target.y1;
-                        const relativePosition =
-                            width > height
-                                ? (hitEntry.point.x - hitEntry.target.x1) /
-                                  width
-                                : (hitEntry.point.y - hitEntry.target.y1) /
-                                  height;
-                        p2 = {
-                            type: "point",
-                            id: randomId(),
-                            x: hitEntry.point.x,
-                            y: hitEntry.point.y,
-                        };
-                        transaction.insertPoints([p2]).addDependencies([
-                            {
-                                type: "pointOnLine",
-                                id: randomId(),
-                                from: hitEntry.target.id,
-                                to: p2.id,
-                                r: relativePosition,
-                            },
-                        ]);
-                        break;
-                    }
-                    case "shape":
-                    case "text": {
-                        const rx =
-                            (hitEntry.point.x - hitEntry.target.x) /
-                            hitEntry.target.width;
-                        const ry =
-                            (hitEntry.point.y - hitEntry.target.y) /
-                            hitEntry.target.height;
-                        p2 = {
-                            type: "point",
-                            id: randomId(),
-                            x: hitEntry.point.x,
-                            y: hitEntry.point.y,
-                        };
-                        transaction.insertPoints([p2]).addDependencies([
-                            {
-                                type: "pointOnShape",
-                                id: randomId(),
-                                from: hitEntry.target.id,
-                                to: p2.id,
-                                rx,
-                                ry,
-                            },
-                        ]);
-                    }
-                }
-            }
-
-            const line: LineBlock = {
-                id: randomId(),
-                type: "line",
-                x1: p1.x,
-                y1: p1.y,
-                endType1: appStateStore.getState().defaultLineEndType1,
-                x2: p2.x,
-                y2: p2.y,
-                endType2: appStateStore.getState().defaultLineEndType2,
-                colorId: appStateStore.getState().defaultColorId,
-            };
-            transaction.insertBlocks([line]).addDependencies([
-                {
-                    id: randomId(),
-                    type: "blockToPoint",
-                    pointKey: PointKey.LINE_P1,
-                    from: p1.id,
-                    to: line.id,
-                },
-                {
-                    id: randomId(),
-                    type: "blockToPoint",
-                    pointKey: PointKey.LINE_P2,
-                    from: p2.id,
-                    to: line.id,
-                },
-            ]);
-
-            canvasStateStore.setPage(transaction.commit());
-            controller.setMode({ type: "select" });
-            canvasStateStore.unselectAll();
-            canvasStateStore.select(line.id);
-        },
-    };
-}
-
-function createNewShapeSessionHandlers(
-    controller: Controller,
-    canvasStateStore: CanvasStateStore,
-    appStateStore: AppStateStore,
-): PointerEventSessionHandlers {
-    return {
-        type: "new-shape",
-        onPointerUp: (data) => {
-            const width = Math.abs(data.newX - data.startX);
-            const height = Math.abs(data.newY - data.startY);
-            if (width === 0 || height === 0) return;
-
-            const x = Math.min(data.startX, data.newX);
-            const y = Math.min(data.startY, data.newY);
-            const shape: ShapeBlock = {
-                type: "shape",
-                id: randomId(),
-                x,
-                y,
-                width,
-                height,
-                x1: x,
-                y1: y,
-                x2: x + width,
-                y2: y + height,
-                label: "",
-                textAlignX: appStateStore.getState().defaultTextAlignX,
-                textAlignY: appStateStore.getState().defaultTextAlignY,
-                colorId: appStateStore.getState().defaultColorId,
-                fillMode: appStateStore.getState().defaultFillMode,
-                path: getRectanglePath(),
-            };
-            // const shape: TextBlock = {
-            //     type: "text",
-            //     id: randomId(),
-            //     x,
-            //     y,
-            //     width,
-            //     height,
-            //     x1: x,
-            //     y1: y,
-            //     x2: x + width,
-            //     y2: y + height,
-            //     content: "Hello World",
-            //     textAlignX: appStateStore.getState().defaultTextAlignX,
-            //     sizingMode: "fixed",
-            // };
-            const p1: PointEntity = {
-                type: "point",
-                id: randomId(),
-                x,
-                y,
-            };
-            const p2: PointEntity = {
-                type: "point",
-                id: randomId(),
-                x: x + width,
-                y: y + height,
-            };
-            const transaction = new Transaction(
-                canvasStateStore.getState().page,
-            )
-                .insertBlocks([shape])
-                .insertPoints([p1, p2])
-                .addDependencies([
-                    {
-                        id: randomId(),
-                        type: "blockToPoint",
-                        pointKey: PointKey.SHAPE_P1,
-                        from: p1.id,
-                        to: shape.id,
-                    },
-                    {
-                        id: randomId(),
-                        type: "blockToPoint",
-                        pointKey: PointKey.SHAPE_P2,
-                        from: p2.id,
-                        to: shape.id,
-                    },
-                ]);
-            canvasStateStore.setPage(transaction.commit());
-            controller.setMode({ type: "select" });
-            canvasStateStore.unselectAll();
-            canvasStateStore.select(shape.id);
-        },
-    };
-}
-
-function createMoveSelectedBlocksSessionHandlers(
-    x: number,
-    y: number,
-    shiftKey: boolean,
-    canvasStateStore: CanvasStateStore,
-    viewportStore: ViewportStore,
-    historyManager: HistoryManager,
-): PointerEventSessionHandlers {
-    const hitResult = testHitEntities(
-        canvasStateStore.getState().page,
-        x,
-        y,
-        viewportStore.getState().scale,
-    );
-    historyManager.pause();
-
-    return {
-        type: "move",
-        onPointerMove: (data) => {
-            canvasStateStore.moveBlocks(
-                canvasStateStore.getState().selectedBlockIds,
-                data.newX - data.lastX,
-                data.newY - data.lastY,
-            );
-        },
-        onPointerUp: () => {
-            historyManager.resume();
-        },
-        onClick: () => {
-            if (hitResult.blocks.length > 0) {
-                if (shiftKey) {
-                    canvasStateStore.toggleSelect(
-                        hitResult.blocks[0].target.id,
-                    );
-                } else {
-                    canvasStateStore.unselectAll();
-                    canvasStateStore.select(hitResult.blocks[0].target.id);
-                }
-            }
-            historyManager.resume();
-        },
-    };
-}
-
-function createMoveBlockSessionHandlers(
-    blockId: string,
-    shiftKey: boolean,
-    canvasStateStore: CanvasStateStore,
-    historyManager: HistoryManager,
-): PointerEventSessionHandlers {
-    if (!shiftKey) {
-        canvasStateStore.unselectAll();
-    }
-    canvasStateStore.select(blockId);
-    historyManager.pause();
-
-    return {
-        type: "move",
-        onPointerMove: (data) => {
-            canvasStateStore.moveBlocks(
-                canvasStateStore.getState().selectedBlockIds,
-                data.newX - data.lastX,
-                data.newY - data.lastY,
-            );
-        },
-        onPointerUp: () => {
-            historyManager.resume();
-        },
-    };
-}
-
-function createMovePointSessionHandlers(
-    originalPoint: PointEntity,
-    canvasStateStore: CanvasStateStore,
-    viewportProvider: StateProvider<ViewportStore>,
-    historyManager: HistoryManager,
-): PointerEventSessionHandlers {
-    const ignoreEntityIds = new Set([originalPoint.id]);
-    const connectedLineIds = canvasStateStore
-        .getState()
-        .page.dependencies.getByFromEntityId(originalPoint.id)
-        .map((dep) => dep.to);
-    for (const lineId of connectedLineIds) {
-        ignoreEntityIds.add(lineId);
-    }
-
-    const dependenciesToPoint = canvasStateStore
-        .getState()
-        .page.dependencies.getByToEntityId(originalPoint.id)
-        .filter(
-            (dep) => dep.type === "pointOnShape" || dep.type === "pointOnLine",
-        );
-    historyManager.pause();
-
-    return {
-        type: "move-point",
-        onPointerMove: (data) => {
-            const hitTestResult = testHitEntities(
-                canvasStateStore.getState().page,
-                data.newX,
-                data.newY,
-                viewportProvider.getState().scale,
-            );
-
-            const hitPointEntry = hitTestResult.points.filter(
-                (item) => !ignoreEntityIds.has(item.target.id),
-            )[0];
-            const hitBlockEntry = hitTestResult.blocks.filter(
-                (item) => !ignoreEntityIds.has(item.target.id),
-            )[0];
-            const hitEntry = hitPointEntry ?? hitBlockEntry;
-
-            const x =
-                hitEntry?.point.x ??
-                originalPoint.x + (data.newX - data.startX);
-            const y =
-                hitEntry?.point.y ??
-                originalPoint.y + (data.newY - data.startY);
-
-            canvasStateStore.setPage(
-                new Transaction(canvasStateStore.getState().page)
-                    .setPointPosition(originalPoint.id, x, y)
-                    .commit(),
-            );
-        },
-        onPointerUp: (data) => {
-            const transaction = new Transaction(
-                canvasStateStore.getState().page,
-            );
-            transaction.deleteDependencies(
-                dependenciesToPoint.map((dep) => dep.id),
-            );
-
-            const hitTestResult = testHitEntities(
-                canvasStateStore.getState().page,
-                data.newX,
-                data.newY,
-                viewportProvider.getState().scale,
-            );
-
-            const hitPointEntry = hitTestResult.points.filter(
-                (item) => !ignoreEntityIds.has(item.target.id),
-            )[0];
-            const hitBlockEntry = hitTestResult.blocks.filter(
-                (item) => !ignoreEntityIds.has(item.target.id),
-            )[0];
-
-            if (hitPointEntry !== undefined) {
-                transaction.mergePoints(
-                    originalPoint.id,
-                    hitPointEntry.target.id,
-                );
-            } else {
-                switch (hitBlockEntry?.target.type) {
-                    case "line": {
-                        const width =
-                            hitBlockEntry.target.x2 - hitBlockEntry.target.x1;
-                        const height =
-                            hitBlockEntry.target.y2 - hitBlockEntry.target.y1;
-
-                        const r =
-                            width > height
-                                ? (hitBlockEntry.point.x -
-                                      hitBlockEntry.target.x1) /
-                                  width
-                                : (hitBlockEntry.point.y -
-                                      hitBlockEntry.target.y1) /
-                                  height;
-
-                        transaction.addDependencies([
-                            {
-                                id: randomId(),
-                                type: "pointOnLine",
-                                from: hitBlockEntry.target.id,
-                                to: originalPoint.id,
-                                r: r,
-                            },
-                        ]);
-                        break;
-                    }
-                    case "shape": {
-                        const rx =
-                            (hitBlockEntry.point.x - hitBlockEntry.target.x) /
-                            hitBlockEntry.target.width;
-                        const ry =
-                            (hitBlockEntry.point.y - hitBlockEntry.target.y) /
-                            hitBlockEntry.target.height;
-
-                        transaction.addDependencies([
-                            {
-                                id: randomId(),
-                                type: "pointOnShape",
-                                from: hitBlockEntry.target.id,
-                                to: originalPoint.id,
-                                rx,
-                                ry,
-                            },
-                        ]);
-                        break;
-                    }
-                }
-            }
-
-            canvasStateStore.setPage(transaction.commit());
-            historyManager.resume();
-        },
-    };
-}
-
-function createSelectByRangeSessionHandlers(
-    canvasStateStore: CanvasStateStore,
-): PointerEventSessionHandlers {
-    const originalSelectedBlockIds =
-        canvasStateStore.getState().selectedBlockIds;
-
-    return {
-        type: "selector",
-        onPointerMove: (data) => {
-            const selectionRect = {
-                x: Math.min(data.startX, data.newX),
-                y: Math.min(data.startY, data.newY),
-                width: Math.abs(data.newX - data.startX),
-                height: Math.abs(data.newY - data.startY),
-            };
-            const selectedBlockIds = new Set(originalSelectedBlockIds);
-
-            for (const block of Object.values(
-                canvasStateStore.getState().page.blocks,
-            )) {
-                switch (block.type) {
-                    case "shape":
-                    case "text": {
-                        if (isRectOverlapWithRect(selectionRect, block)) {
-                            selectedBlockIds.add(block.id);
-                        }
-                        break;
-                    }
-                    case "line": {
-                        if (isRectOverlapWithLine(selectionRect, block)) {
-                            selectedBlockIds.add(block.id);
-                        }
-                        break;
-                    }
-                }
-            }
-
-            canvasStateStore.setSelectedBlockIds([...selectedBlockIds]);
-        },
-    };
-}
-
-function createXYResizeSessionHandlers(
-    blockIds: string[],
-    originX: number,
-    originY: number,
-    canvasStateStore: CanvasStateStore,
-    historyManager: HistoryManager,
-): PointerEventSessionHandlers {
-    historyManager.pause();
-
-    return {
-        type: "resize",
-        onPointerMove: (data) => {
-            canvasStateStore.scaleBlocks(
-                blockIds,
-                (data.newX - originX) / (data.lastX - originX),
-                (data.newY - originY) / (data.lastY - originY),
-                originX,
-                originY,
-            );
-        },
-        onPointerUp: () => {
-            historyManager.resume();
-        },
-    };
-}
-
-function createXResizeSessionHandlers(
-    blockIds: string[],
-    originX: number,
-    canvasStateStore: CanvasStateStore,
-    historyManager: HistoryManager,
-): PointerEventSessionHandlers {
-    historyManager.pause();
-
-    return {
-        type: "resize",
-        onPointerMove: (data) => {
-            canvasStateStore.scaleBlocks(
-                blockIds,
-                (data.newX - originX) / (data.lastX - originX),
-                1,
-                originX,
-                0,
-            );
-        },
-        onPointerUp: () => {
-            historyManager.resume();
-        },
-    };
-}
-
-function createYResizeSessionHandlers(
-    blockIds: string[],
-    originY: number,
-    canvasStateStore: CanvasStateStore,
-    historyManager: HistoryManager,
-): PointerEventSessionHandlers {
-    historyManager.pause();
-
-    return {
-        type: "resize",
-        onPointerMove: (data) => {
-            canvasStateStore.scaleBlocks(
-                blockIds,
-                1,
-                (data.newY - originY) / (data.lastY - originY),
-                0,
-                originY,
-            );
-        },
-        onPointerUp: () => {
-            historyManager.resume();
-        },
-    };
 }

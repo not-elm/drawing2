@@ -26,7 +26,7 @@ export class AppStateStore extends Store<AppState> {
             defaultTextAlignX: "center",
             defaultTextAlignY: "center",
             defaultLineEndType1: "none",
-            defaultLineEndType2: "none",
+            defaultLineEndType2: "arrow",
             defaultTextBlockTextAlignment: "start",
             defaultTextBlockSizingMode: "content",
         });

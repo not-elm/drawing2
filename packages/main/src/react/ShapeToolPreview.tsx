@@ -1,18 +1,22 @@
 import { getRectanglePath } from "../geo/path";
 import type { ShapeBlock } from "../model/Page";
-import type { PointerEventSessionData } from "../service/GestureRecognizer";
+import type { NewShapePointerEventSession } from "../service/PointerEventSession/NewShapePointerEventSession";
+import type { PointerEventSessionData } from "../service/PointerEventSession/PointerEventSession";
 import { useController } from "./ControllerProvider";
 import { ShapeView } from "./ShapeView";
 import { useStore } from "./hooks/useStore";
 
-export function ShapeToolPreview({ data }: { data: PointerEventSessionData }) {
+export function ShapeToolPreview({
+    data,
+    session,
+}: { data: PointerEventSessionData; session: NewShapePointerEventSession }) {
     const controller = useController();
     const appState = useStore(controller.appStateStore);
 
     const x1 = data.startX;
     const y1 = data.startY;
-    const x2 = data.lastX;
-    const y2 = data.lastY;
+    const x2 = session.currentX;
+    const y2 = session.currentY;
 
     const shape: ShapeBlock = {
         type: "shape",

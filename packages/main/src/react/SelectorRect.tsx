@@ -1,4 +1,4 @@
-import type { PointerEventSessionData } from "../service/GestureRecognizer";
+import type { PointerEventSessionData } from "../service/PointerEventSession/PointerEventSession";
 
 export function SelectorRect({ data }: { data: PointerEventSessionData }) {
     const x = Math.min(data.startX, data.lastX);

@@ -116,8 +116,8 @@ export function Canvas() {
                     }
                 })}
                 {Object.values(sessions).map(
-                    ({ pointerId, handlers, data }) => {
-                        switch (handlers.type) {
+                    ({ pointerId, handlers: session, data }) => {
+                        switch (session.type) {
                             case "selector":
                                 return (
                                     <SelectorRect key={pointerId} data={data} />
@@ -127,6 +127,7 @@ export function Canvas() {
                                     <ShapeToolPreview
                                         key={pointerId}
                                         data={data}
+                                        session={session}
                                     />
                                 );
                             case "new-line":
@@ -134,6 +135,7 @@ export function Canvas() {
                                     <LineToolPreview
                                         key={pointerId}
                                         data={data}
+                                        session={session}
                                     />
                                 );
                             default:

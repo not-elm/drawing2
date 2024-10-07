@@ -45,7 +45,7 @@ function constructPath(line: LineBlock): string {
     const sinR = Math.sin(ARROW_HEAD_ANGLE);
     const dv = Math.hypot(x2 - x1, y2 - y1);
 
-    if (line.endType1 === "arrow") {
+    if (line.endType1 === "arrow" && dv > 0) {
         const vx = ((x2 - x1) * ARROW_HEAD_SIZE) / dv;
         const vy = ((y2 - y1) * ARROW_HEAD_SIZE) / dv;
         const q1x = x1 + vx * cosR - vy * -sinR;
@@ -59,7 +59,7 @@ function constructPath(line: LineBlock): string {
             `L${q2x - left} ${q2y - top}`,
         );
     }
-    if (line.endType2 === "arrow") {
+    if (line.endType2 === "arrow" && dv > 0) {
         const vx = ((x1 - x2) * ARROW_HEAD_SIZE) / dv;
         const vy = ((y1 - y2) * ARROW_HEAD_SIZE) / dv;
         const q1x = x2 + vx * cosR - vy * -sinR;
