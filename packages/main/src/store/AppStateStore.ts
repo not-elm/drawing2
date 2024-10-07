@@ -3,6 +3,7 @@ import type { ColorId } from "../model/Colors";
 import type { FillMode } from "../model/FillMode";
 import type { Mode } from "../model/Mode";
 import type { TextAlignment } from "../model/TextAlignment";
+import type { TextBlockSizingMode } from "../model/TextBlockSizingMode";
 
 interface AppState {
     readonly mode: Mode;
@@ -12,6 +13,7 @@ interface AppState {
     readonly defaultTextAlignY: TextAlignment;
     readonly defaultLineEndType1: LineEndType;
     readonly defaultLineEndType2: LineEndType;
+    readonly defaultTextBlockSizingMode: TextBlockSizingMode;
 }
 
 export class AppStateStore extends Store<AppState> {
@@ -24,6 +26,7 @@ export class AppStateStore extends Store<AppState> {
             defaultTextAlignY: "center",
             defaultLineEndType1: "none",
             defaultLineEndType2: "none",
+            defaultTextBlockSizingMode: "content",
         });
     }
 
@@ -47,6 +50,13 @@ export class AppStateStore extends Store<AppState> {
         this.setState({
             ...this.state,
             [`defaultLineEndType${lineEnd}`]: lineEndType,
+        });
+    }
+
+    setDefaultBlockTextSizingMode(sizingMode: TextBlockSizingMode) {
+        this.setState({
+            ...this.state,
+            defaultTextBlockSizingMode: sizingMode,
         });
     }
 

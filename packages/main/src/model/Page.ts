@@ -74,4 +74,5 @@ export const PointKey = {
     SHAPE_P1: "shapeP1",
     SHAPE_P2: "shapeP2",
     TEXT_P1: "textP1",
+    TEXT_P2: "textP2",
 };

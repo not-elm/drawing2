@@ -20,6 +20,7 @@ import {
     type TextBlock,
 } from "../model/Page";
 import type { TextAlignment } from "../model/TextAlignment";
+import type { TextBlockSizingMode } from "../model/TextBlockSizingMode";
 import { Transaction } from "../model/Transaction";
 import { AppStateStore } from "../store/AppStateStore";
 import {
@@ -228,6 +229,9 @@ export class Controller {
                                         distanceFromPointToLine({ x, y }, left)
                                             .distance < THRESHOLD
                                     ) {
+                                        this.canvasStateStore.setTextBlockSizingMode(
+                                            "fixed",
+                                        );
                                         startSession(
                                             createXResizeSessionHandlers(
                                                 this.canvasStateStore.getState()
@@ -243,6 +247,9 @@ export class Controller {
                                         distanceFromPointToLine({ x, y }, right)
                                             .distance < THRESHOLD
                                     ) {
+                                        this.canvasStateStore.setTextBlockSizingMode(
+                                            "fixed",
+                                        );
                                         startSession(
                                             createXResizeSessionHandlers(
                                                 this.canvasStateStore.getState()
@@ -600,18 +607,31 @@ export class Controller {
                             x,
                             y,
                         };
+                        const p2: PointEntity = {
+                            type: "point",
+                            id: randomId(),
+                            x,
+                            y,
+                        };
                         this.canvasStateStore.setPage(
                             new Transaction(
                                 this.canvasStateStore.getState().page,
                             )
                                 .insertBlocks([text])
-                                .insertPoints([p1])
+                                .insertPoints([p1, p2])
                                 .addDependencies([
                                     {
                                         id: randomId(),
                                         type: "blockToPoint",
                                         pointKey: PointKey.TEXT_P1,
                                         from: p1.id,
+                                        to: text.id,
+                                    },
+                                    {
+                                        id: randomId(),
+                                        type: "blockToPoint",
+                                        pointKey: PointKey.TEXT_P2,
+                                        from: p2.id,
                                         to: text.id,
                                     },
                                 ])
@@ -799,26 +819,62 @@ export class Controller {
         canvasWidth: number,
         canvasHeight: number,
     ) {
+        const block = this.canvasStateStore.getState().page.blocks[blockId];
+        assert(block !== undefined, `Block ${blockId} is not found`);
+        assert(block.type === "text", `Block ${blockId} is not text`);
+
         const width = canvasWidth / this.viewportStore.getState().scale;
         const height = canvasHeight / this.viewportStore.getState().scale;
 
-        this.canvasStateStore.setPage(
-            new Transaction(this.canvasStateStore.getState().page)
-                .updateProperty([blockId], (oldBlock) => {
-                    assert(
-                        oldBlock.type === "text",
-                        `Invalid block type: ${oldBlock.id} ${oldBlock.type} !== text`,
-                    );
+        const dep1 = this.canvasStateStore
+            .getState()
+            .page.dependencies.getByToEntityId(blockId)
+            .find(
+                (dep) =>
+                    dep.type === "blockToPoint" &&
+                    dep.pointKey === PointKey.TEXT_P1,
+            );
+        assert(dep1 !== undefined, `Point ${PointKey.TEXT_P1} is not found`);
 
-                    return {
-                        ...oldBlock,
-                        width,
-                        height,
-                    };
-                })
-                .commit(),
-        );
+        const dep2 = this.canvasStateStore
+            .getState()
+            .page.dependencies.getByToEntityId(blockId)
+            .find(
+                (dep) =>
+                    dep.type === "blockToPoint" &&
+                    dep.pointKey === PointKey.TEXT_P2,
+            );
+        assert(dep2 !== undefined, `Point ${PointKey.TEXT_P2} is not found`);
+
+        switch (block.sizingMode) {
+            case "fixed": {
+                this.canvasStateStore.setPage(
+                    new Transaction(this.canvasStateStore.getState().page)
+                        .setPointPosition(dep1.from, block.x, block.y)
+                        .setPointPosition(
+                            dep2.from,
+                            block.x + block.width,
+                            block.y + height,
+                        )
+                        .commit(),
+                );
+                break;
+            }
+            case "content": {
+                this.canvasStateStore.setPage(
+                    new Transaction(this.canvasStateStore.getState().page)
+                        .setPointPosition(dep1.from, block.x, block.y)
+                        .setPointPosition(
+                            dep2.from,
+                            block.x + width,
+                            block.y + height,
+                        )
+                        .commit(),
+                );
+            }
+        }
     }
+
     setMode(mode: Mode) {
         this.appStateStore.setMode(mode);
     }
@@ -845,6 +901,11 @@ export class Controller {
     setLineEndType(lineEnd: 1 | 2, endType: LineEndType) {
         this.canvasStateStore.setLineEndType(lineEnd, endType);
         this.appStateStore.setDefaultLineEnd(lineEnd, endType);
+    }
+
+    setTextBlockSizingMode(sizingMode: TextBlockSizingMode) {
+        this.canvasStateStore.setTextBlockSizingMode(sizingMode);
+        this.appStateStore.setDefaultBlockTextSizingMode(sizingMode);
     }
 
     bringSelectedBlocksToFront() {

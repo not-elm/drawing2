@@ -13,6 +13,7 @@ import {
     serializePage,
 } from "../model/SerializedPage";
 import type { TextAlignment } from "../model/TextAlignment";
+import type { TextBlockSizingMode } from "../model/TextBlockSizingMode";
 import { Transaction } from "../model/Transaction";
 import type { Viewport } from "../model/Viewport";
 import { ClipboardService } from "../service/ClipboardService";
@@ -199,6 +200,28 @@ export class CanvasStateStore extends Store<CanvasState> {
                                 return {
                                     ...oldBlock,
                                     [`endType${lineEnd}`]: lineEndType,
+                                };
+                            }
+                            default: {
+                                return oldBlock;
+                            }
+                        }
+                    })
+                    .commit(),
+            ),
+        );
+    }
+
+    setTextBlockSizingMode(sizingMode: TextBlockSizingMode) {
+        this.setState(
+            this.state.setPage(
+                new Transaction(this.state.page)
+                    .updateProperty(this.state.selectedBlockIds, (oldBlock) => {
+                        switch (oldBlock.type) {
+                            case "text": {
+                                return {
+                                    ...oldBlock,
+                                    sizingMode,
                                 };
                             }
                             default: {

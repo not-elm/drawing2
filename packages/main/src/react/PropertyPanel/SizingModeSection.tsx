@@ -1,9 +1,11 @@
 import { CardSection } from "../Card";
 import { useController } from "../ControllerProvider";
+import { useStore } from "../hooks/useStore";
 import { PropertyPanelButton } from "./PropertyPanelButton";
 
-export function OrderSection() {
+export function SizingModeSection() {
     const controller = useController();
+    const state = useStore(controller.propertyPanelStateStore);
 
     return (
         <CardSection
@@ -19,36 +21,22 @@ export function OrderSection() {
             }}
         >
             <PropertyPanelButton
+                aria-selected={state.textBlockSizingMode === "content"}
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.bringSelectedBlocksToFront();
+                    controller.setTextBlockSizingMode("content");
                 }}
             >
-                最前面へ
+                内容に合わせて自動調整
             </PropertyPanelButton>
             <PropertyPanelButton
+                aria-selected={state.textBlockSizingMode === "fixed"}
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.bringSelectedBlocksForward();
+                    controller.setTextBlockSizingMode("fixed");
                 }}
             >
-                ひとつ前へ
-            </PropertyPanelButton>
-            <PropertyPanelButton
-                onPointerDown={(ev) => {
-                    ev.stopPropagation();
-                    controller.sendSelectedBlocksBackward();
-                }}
-            >
-                ひとつ後ろへ
-            </PropertyPanelButton>
-            <PropertyPanelButton
-                onPointerDown={(ev) => {
-                    ev.stopPropagation();
-                    controller.sendSelectedBlocksToBack();
-                }}
-            >
-                最背面へ
+                幅を固定
             </PropertyPanelButton>
         </CardSection>
     );

@@ -5,6 +5,7 @@ import { ColorSection } from "./ColorSection";
 import { FillModeSection } from "./FillModeSection";
 import { LineEndTypeSection } from "./LineEndTypeSection";
 import { OrderSection } from "./OrderSection";
+import { SizingModeSection } from "./SizingModeSection";
 import { TextAlignmentSection } from "./TextAlignmentSection";
 
 export function PropertyPanel() {
@@ -28,6 +29,7 @@ export function PropertyPanel() {
             {state.textAlignSectionVisible && <TextAlignmentSection />}
             {state.orderSectionVisible && <OrderSection />}
             {state.lineEndTypeSectionVisible && <LineEndTypeSection />}
+            {state.textBlockSizingModeSectionVisible && <SizingModeSection />}
         </Card>
     );
 }

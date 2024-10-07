@@ -1,3 +1,4 @@
+import type { CSSObject } from "@emotion/styled";
 import { MathJax } from "better-react-mathjax";
 import {
     type MouseEventHandler,
@@ -98,16 +99,17 @@ const TextViewInner = memo(function ShapeViewInner({
                     end: { textAlign: "end" as const },
                     "end-outside": { textAlign: "end" as const },
                 }[textAlignX],
-                ...{
+                ...({
                     content: {
                         whiteSpace: "pre",
                         overflow: "visible",
                     },
                     fixed: {
                         whiteSpace: "pre-wrap",
+                        wordBreak: "break-all",
                         width,
                     },
-                }[sizingMode],
+                }[sizingMode] as CSSObject),
             }}
             onDoubleClick={handleDoubleClick}
         >

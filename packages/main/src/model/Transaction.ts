@@ -459,10 +459,29 @@ function recomputeBlockToPointDependency(
 
             draft.blocks[block.id] = {
                 ...block,
-                x: point.x,
-                y: point.y,
                 x1: point.x,
                 y1: point.y,
+                x: Math.min(block.x2, point.x),
+                y: Math.min(block.y2, point.y),
+                width: Math.abs(block.x2 - point.x),
+                height: Math.abs(block.y2 - point.y),
+            };
+            break;
+        }
+        case PointKey.TEXT_P2: {
+            assert(
+                block.type === "text",
+                `Invalid block type: ${block.type} !== text`,
+            );
+
+            draft.blocks[block.id] = {
+                ...block,
+                x2: point.x,
+                y2: point.y,
+                x: Math.min(block.x1, point.x),
+                y: Math.min(block.y1, point.y),
+                width: Math.abs(block.x1 - point.x),
+                height: Math.abs(block.y1 - point.y),
             };
             break;
         }

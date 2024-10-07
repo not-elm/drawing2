@@ -1,6 +1,7 @@
 import { Store } from "../lib/Store";
 import type { FillMode } from "../model/FillMode";
 import type { TextAlignment } from "../model/TextAlignment";
+import type { TextBlockSizingMode } from "../model/TextBlockSizingMode";
 import type { AppStateStore } from "./AppStateStore";
 import type { CanvasStateStore } from "./CanvasStateStore";
 
@@ -20,6 +21,9 @@ interface PropertyPanelState {
     readonly lineEndTypeSectionVisible: boolean;
     readonly lineEndType1: LineEndType | null;
     readonly lineEndType2: LineEndType | null;
+
+    readonly textBlockSizingModeSectionVisible: boolean;
+    readonly textBlockSizingMode: TextBlockSizingMode | null;
 }
 
 export class PropertyPanelStateStore extends Store<PropertyPanelState> {
@@ -39,6 +43,8 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
             lineEndTypeSectionVisible: true,
             lineEndType1: null,
             lineEndType2: null,
+            textBlockSizingModeSectionVisible: true,
+            textBlockSizingMode: null,
         });
 
         this.canvasStateStore.addListener(() => this.update());
@@ -83,6 +89,9 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
         );
         const lineEndType2Set = new Set(
             selectedLines.map((line) => line.endType2),
+        );
+        const textBlockSizingModes = new Set(
+            selectedTexts.map((text) => text.sizingMode),
         );
 
         this.setState({
@@ -133,6 +142,16 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
                     ? appState.defaultLineEndType2
                     : lineEndType2Set.size === 1
                       ? [...lineEndType2Set][0]
+                      : null,
+            textBlockSizingModeSectionVisible:
+                selectedTexts.length > 0 ||
+                appState.mode.type === "new-text" ||
+                appState.mode.type === "text",
+            textBlockSizingMode:
+                textBlockSizingModes.size === 0
+                    ? appState.defaultTextBlockSizingMode
+                    : textBlockSizingModes.size === 1
+                      ? [...textBlockSizingModes][0]
                       : null,
         });
     }
