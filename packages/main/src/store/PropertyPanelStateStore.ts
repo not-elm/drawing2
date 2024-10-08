@@ -107,9 +107,10 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
         const textBlockSizingModes = new Set(
             selectedTexts.map((text) => text.sizingMode),
         );
-        const strokeStyles = new Set(
-            selectedLines.map((line) => line.strokeStyle),
-        );
+        const strokeStyles = new Set([
+            ...selectedLines.map((line) => line.strokeStyle),
+            ...selectedShapes.map((shape) => shape.strokeStyle),
+        ]);
 
         this.setState({
             colorSectionVisible: true,
@@ -178,7 +179,10 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
                       ? [...textBlockSizingModes][0]
                       : null,
             strokeStyleSectionVisible:
-                selectedLines.length > 0 || appState.mode.type === "line",
+                selectedLines.length > 0 ||
+                appState.mode.type === "line" ||
+                selectedShapes.length > 0 ||
+                appState.mode.type === "shape",
             strokeStyle:
                 strokeStyles.size === 0
                     ? appState.defaultStrokeStyle

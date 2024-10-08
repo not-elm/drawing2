@@ -61,12 +61,17 @@ export function App() {
             <div
                 css={{
                     position: "absolute",
-                    top: 12,
-                    right: 12,
-                    bottom: 12,
+                    top: 0,
+                    right: 0,
+                    bottom: 0,
+                    padding: 12,
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "flex-start",
+                    overflow: "auto",
+                    "&::-webkit-scrollbar": {
+                        display: "none",
+                    },
                 }}
             >
                 <PropertyPanel />

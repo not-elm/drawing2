@@ -34,6 +34,7 @@ export function ShapeToolPreview({
         textAlignY: appState.defaultTextAlignY,
         colorId: appState.defaultColorId,
         fillMode: appState.defaultFillMode,
+        strokeStyle: appState.defaultStrokeStyle,
         path: getRectanglePath(),
     };
 

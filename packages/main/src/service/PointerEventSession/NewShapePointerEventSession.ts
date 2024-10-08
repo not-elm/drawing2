@@ -76,6 +76,7 @@ export function createNewShapePointerEventSession(
                 textAlignY: appStateStore.getState().defaultTextAlignY,
                 colorId: appStateStore.getState().defaultColorId,
                 fillMode: appStateStore.getState().defaultFillMode,
+                strokeStyle: appStateStore.getState().defaultStrokeStyle,
                 path: getRectanglePath(),
             };
             const p1: PointEntity = { type: "point", id: randomId(), x, y };

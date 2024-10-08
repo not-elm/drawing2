@@ -2,7 +2,7 @@ import { memo } from "react";
 import { Colors } from "../model/Colors";
 import type { LineBlock } from "../model/Page";
 
-const STROKE_WIDTH_BASE = 5;
+export const STROKE_WIDTH_BASE = 5;
 
 export const LineView = memo(function LineView({ line }: { line: LineBlock }) {
     const { x1, y1, x2, y2 } = line;

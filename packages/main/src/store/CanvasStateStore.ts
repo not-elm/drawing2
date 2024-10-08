@@ -263,6 +263,7 @@ export class CanvasStateStore extends Store<CanvasState> {
                 new Transaction(this.state.page)
                     .updateProperty(this.state.selectedBlockIds, (oldBlock) => {
                         switch (oldBlock.type) {
+                            case "shape":
                             case "line": {
                                 return {
                                     ...oldBlock,

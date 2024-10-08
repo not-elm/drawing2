@@ -124,6 +124,7 @@ interface SerializedShapeBlock {
     textAlignY: TextAlignment;
     colorId: ColorId;
     fillMode: FillMode;
+    strokeStyle: StrokeStyle;
     path: number[][];
 }
 function serializeShapeBlock(shape: ShapeBlock): SerializedShapeBlock {
@@ -143,6 +144,7 @@ function serializeShapeBlock(shape: ShapeBlock): SerializedShapeBlock {
         textAlignY: shape.textAlignY,
         colorId: shape.colorId,
         fillMode: shape.fillMode,
+        strokeStyle: shape.strokeStyle,
         path: shape.path,
     };
 }
@@ -163,6 +165,7 @@ function deserializeShapeBlock(shape: SerializedShapeBlock): ShapeBlock {
         textAlignY: shape.textAlignY,
         colorId: shape.colorId,
         fillMode: shape.fillMode,
+        strokeStyle: shape.strokeStyle,
         path: shape.path,
     };
 }

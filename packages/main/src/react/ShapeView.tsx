@@ -8,8 +8,10 @@ import {
 } from "../model/Colors";
 import type { FillMode } from "../model/FillMode";
 import type { ShapeBlock } from "../model/Page";
+import type { StrokeStyle } from "../model/StrokeStyle";
 import type { TextAlignment } from "../model/TextAlignment";
 import { useController } from "./ControllerProvider";
+import { STROKE_WIDTH_BASE } from "./LineView";
 
 export const ShapeView = memo(function ShapeView({
     shape,
@@ -31,6 +33,7 @@ export const ShapeView = memo(function ShapeView({
                 textAlignX={shape.textAlignX}
                 textAlignY={shape.textAlignY}
                 shapeLabel={shape.label}
+                strokeStyle={shape.strokeStyle}
             />
         </div>
     );
@@ -47,6 +50,7 @@ const ShapeViewInner = memo(function ShapeViewInner({
     textAlignY,
     shapeLabel,
     isLabelEditing,
+    strokeStyle,
 }: {
     shapeId: string;
     width: number;
@@ -58,6 +62,7 @@ const ShapeViewInner = memo(function ShapeViewInner({
     textAlignY: TextAlignment;
     shapeLabel: string;
     isLabelEditing: boolean;
+    strokeStyle: StrokeStyle;
 }) {
     const controller = useController();
 
@@ -79,6 +84,12 @@ const ShapeViewInner = memo(function ShapeViewInner({
         },
         [shapeId, controller],
     );
+
+    const strokeWidth = {
+        solid: STROKE_WIDTH_BASE,
+        dashed: STROKE_WIDTH_BASE,
+        dotted: STROKE_WIDTH_BASE * 1.4,
+    }[strokeStyle];
 
     return (
         <>
@@ -106,6 +117,17 @@ const ShapeViewInner = memo(function ShapeViewInner({
                         }[fillMode],
                     }}
                     strokeWidth={5}
+                    strokeDasharray={
+                        {
+                            solid: undefined,
+                            dashed: [2 * strokeWidth, strokeWidth + 5].join(
+                                " ",
+                            ),
+                            dotted: [0, strokeWidth * (0.5 + 1.2 + 0.5)].join(
+                                " ",
+                            ),
+                        }[strokeStyle]
+                    }
                     onDoubleClick={handleDoubleClick}
                 />
             </svg>

@@ -37,6 +37,7 @@ export interface ShapeBlock extends EntityBase<"shape"> {
     textAlignY: TextAlignment;
     colorId: ColorId;
     fillMode: FillMode;
+    strokeStyle: StrokeStyle;
     path: number[][];
 }
 export interface TextBlock extends EntityBase<"text"> {
