@@ -28,11 +28,8 @@ import { PropertyPanelStateStore } from "../store/PropertyPanelStateStore";
 import { ViewportStore } from "../store/ViewportStore";
 import { GestureRecognizer } from "./GestureRecognizer";
 import { HistoryManager } from "./HistoryManager";
-import {
-    createMoveBlockPointerEventSession,
-    createMoveSelectedBlocksPointerEventSession,
-} from "./PointerEventSession/MoveBlockPointerEventSession";
 import { createMovePointPointerEventSession } from "./PointerEventSession/MovePointPointerEventSession";
+import { createMovePointerEventSession } from "./PointerEventSession/MovePointerEventSession";
 import { createNewLinePointerEventSession } from "./PointerEventSession/NewLinePointerEventSession";
 import { createNewShapePointerEventSession } from "./PointerEventSession/NewShapePointerEventSession";
 import type { PointerEventSession } from "./PointerEventSession/PointerEventSession";
@@ -148,7 +145,7 @@ export class Controller {
                     }
                     case "SelectionRect.CenterHandle": {
                         startSession(
-                            createMoveSelectedBlocksPointerEventSession(
+                            createMovePointerEventSession(
                                 x,
                                 y,
                                 ev.shiftKey,
@@ -294,7 +291,7 @@ export class Controller {
                     }
                     case "SelectionLine.Center": {
                         startSession(
-                            createMoveSelectedBlocksPointerEventSession(
+                            createMovePointerEventSession(
                                 x,
                                 y,
                                 ev.shiftKey,
@@ -324,7 +321,7 @@ export class Controller {
                     }
                     case "SelectionText.Center": {
                         startSession(
-                            createMoveSelectedBlocksPointerEventSession(
+                            createMovePointerEventSession(
                                 x,
                                 y,
                                 ev.shiftKey,
@@ -362,10 +359,12 @@ export class Controller {
                             }
                         }
                         startSession(
-                            createMoveBlockPointerEventSession(
-                                object.block.id,
+                            createMovePointerEventSession(
+                                x,
+                                y,
                                 ev.shiftKey,
                                 this.canvasStateStore,
+                                this.viewportStore,
                                 this.historyManager,
                             ),
                         );

@@ -11,13 +11,17 @@ export class CanvasState extends dataclass<{
     setPage(page: Page): CanvasState {
         return this.copy({
             page,
-            selectedBlockIds: this.selectedBlockIds.filter(
+            selectedBlockIds: [...this.selectedBlockIds].filter(
                 (id) => id in page.blocks,
             ),
         });
     }
 
     select(id: string): CanvasState {
+        if (this.selectedBlockIds.includes(id)) {
+            return this;
+        }
+
         return this.setSelectedBlockIds([...this.selectedBlockIds, id]);
     }
 
@@ -63,7 +67,7 @@ export class CanvasState extends dataclass<{
     }
 
     getSelectedBlocks(): Block[] {
-        return this.selectedBlockIds
+        return [...this.selectedBlockIds]
             .map((id) => this.page.blocks[id])
             .filter(isNotNullish);
     }

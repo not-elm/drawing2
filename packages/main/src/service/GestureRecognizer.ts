@@ -117,9 +117,11 @@ export class GestureRecognizer extends Store<GestureRecognizerState> {
             newData.endAt - newData.startAt <
             THRESHOLD_CLICK_DURATION_IN_MILLI
         ) {
-            (session.handlers?.onClick ?? session.handlers?.onPointerUp)?.(
-                newData,
-            );
+            if (session.handlers?.onClick) {
+                session.handlers.onClick(newData);
+            } else if (session.handlers?.onPointerUp) {
+                session.handlers.onPointerUp(newData);
+            }
         } else {
             session.handlers?.onPointerUp?.(newData);
         }

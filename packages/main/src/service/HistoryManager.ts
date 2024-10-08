@@ -75,9 +75,9 @@ export class HistoryManager {
         this.processing = true;
         try {
             this.canvasStateStore.setPage(prevState.page);
-            this.canvasStateStore.setSelectedBlockIds(
-                prevState.selectedBlockIds,
-            );
+            this.canvasStateStore.setSelectedBlockIds([
+                ...prevState.selectedBlockIds,
+            ]);
         } finally {
             this.processing = false;
         }
@@ -101,9 +101,9 @@ export class HistoryManager {
         this.processing = true;
         try {
             this.canvasStateStore.setPage(nextPage.page);
-            this.canvasStateStore.setSelectedBlockIds(
-                nextPage.selectedBlockIds,
-            );
+            this.canvasStateStore.setSelectedBlockIds([
+                ...nextPage.selectedBlockIds,
+            ]);
         } finally {
             this.processing = false;
         }

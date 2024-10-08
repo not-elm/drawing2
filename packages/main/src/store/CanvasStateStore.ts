@@ -512,6 +512,10 @@ export class CanvasStateStore extends Store<CanvasState> {
             this.setState(this.state.setPage(page).unselectAll());
         } catch {}
     }
+
+    protected setState(newState: CanvasState) {
+        super.setState(newState);
+    }
 }
 
 export const MouseButton = {

@@ -155,7 +155,7 @@ export class Transaction {
         };
 
         for (const command of this.commands) {
-            const diff = processCommand(command, draft);
+            processCommand(command, draft);
         }
 
         for (const dependency of draft.dependencies.collectDependencies(
