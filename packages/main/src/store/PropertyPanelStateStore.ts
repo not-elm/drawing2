@@ -1,5 +1,6 @@
 import { Store } from "../lib/Store";
 import type { FillMode } from "../model/FillMode";
+import type { StrokeStyle } from "../model/StrokeStyle";
 import type { TextAlignment } from "../model/TextAlignment";
 import type { TextBlockSizingMode } from "../model/TextBlockSizingMode";
 import type { AppStateStore } from "./AppStateStore";
@@ -27,6 +28,9 @@ interface PropertyPanelState {
 
     readonly textBlockSizingModeSectionVisible: boolean;
     readonly textBlockSizingMode: TextBlockSizingMode | null;
+
+    readonly strokeStyleSectionVisible: boolean;
+    readonly strokeStyle: StrokeStyle | null;
 }
 
 export class PropertyPanelStateStore extends Store<PropertyPanelState> {
@@ -50,6 +54,8 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
             textBlockTextAlignment: null,
             textBlockSizingModeSectionVisible: true,
             textBlockSizingMode: null,
+            strokeStyleSectionVisible: true,
+            strokeStyle: null,
         });
 
         this.canvasStateStore.addListener(() => this.update());
@@ -100,6 +106,9 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
         );
         const textBlockSizingModes = new Set(
             selectedTexts.map((text) => text.sizingMode),
+        );
+        const strokeStyles = new Set(
+            selectedLines.map((line) => line.strokeStyle),
         );
 
         this.setState({
@@ -167,6 +176,14 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
                     ? appState.defaultTextBlockSizingMode
                     : textBlockSizingModes.size === 1
                       ? [...textBlockSizingModes][0]
+                      : null,
+            strokeStyleSectionVisible:
+                selectedLines.length > 0 || appState.mode.type === "line",
+            strokeStyle:
+                strokeStyles.size === 0
+                    ? appState.defaultStrokeStyle
+                    : strokeStyles.size === 1
+                      ? [...strokeStyles][0]
                       : null,
         });
     }

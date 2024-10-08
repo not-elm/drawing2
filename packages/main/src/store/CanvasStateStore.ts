@@ -12,6 +12,7 @@ import {
     deserializePage,
     serializePage,
 } from "../model/SerializedPage";
+import type { StrokeStyle } from "../model/StrokeStyle";
 import type { TextAlignment } from "../model/TextAlignment";
 import type { TextBlockSizingMode } from "../model/TextBlockSizingMode";
 import { Transaction } from "../model/Transaction";
@@ -244,6 +245,28 @@ export class CanvasStateStore extends Store<CanvasState> {
                                 return {
                                     ...oldBlock,
                                     sizingMode,
+                                };
+                            }
+                            default: {
+                                return oldBlock;
+                            }
+                        }
+                    })
+                    .commit(),
+            ),
+        );
+    }
+
+    setStrokeStyle(strokeStyle: StrokeStyle) {
+        this.setState(
+            this.state.setPage(
+                new Transaction(this.state.page)
+                    .updateProperty(this.state.selectedBlockIds, (oldBlock) => {
+                        switch (oldBlock.type) {
+                            case "line": {
+                                return {
+                                    ...oldBlock,
+                                    strokeStyle,
                                 };
                             }
                             default: {

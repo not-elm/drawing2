@@ -10,6 +10,7 @@ import type {
     ShapeBlock,
     TextBlock,
 } from "./Page";
+import type { StrokeStyle } from "./StrokeStyle";
 import type { TextAlignment } from "./TextAlignment";
 import type { TextBlockSizingMode } from "./TextBlockSizingMode";
 
@@ -76,6 +77,7 @@ interface SerializedLineBlock {
     y2: number;
     endType2: LineEndType;
     colorId: ColorId;
+    strokeStyle: StrokeStyle;
 }
 function serializeLineBlock(line: LineBlock): SerializedLineBlock {
     return {
@@ -88,6 +90,7 @@ function serializeLineBlock(line: LineBlock): SerializedLineBlock {
         y2: line.y2,
         endType2: line.endType2,
         colorId: line.colorId,
+        strokeStyle: line.strokeStyle,
     };
 }
 function deserializeLineBlock(line: SerializedLineBlock): LineBlock {
@@ -101,6 +104,7 @@ function deserializeLineBlock(line: SerializedLineBlock): LineBlock {
         y2: line.y2,
         endType2: line.endType2,
         colorId: line.colorId,
+        strokeStyle: line.strokeStyle,
     };
 }
 

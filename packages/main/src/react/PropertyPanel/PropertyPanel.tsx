@@ -6,6 +6,7 @@ import { FillModeSection } from "./FillModeSection";
 import { LineEndTypeSection } from "./LineEndTypeSection";
 import { OrderSection } from "./OrderSection";
 import { SizingModeSection } from "./SizingModeSection";
+import { StrokeStyleSection } from "./StrokeStyleSection";
 import { TextAlignmentSection } from "./TextAlignmentSection";
 import { TextBlockTextAlignmentSection } from "./TextBlockTextAlignmentSection";
 
@@ -34,6 +35,7 @@ export function PropertyPanel() {
             {state.orderSectionVisible && <OrderSection />}
             {state.lineEndTypeSectionVisible && <LineEndTypeSection />}
             {state.textBlockSizingModeSectionVisible && <SizingModeSection />}
+            {state.strokeStyleSectionVisible && <StrokeStyleSection />}
         </Card>
     );
 }

@@ -94,6 +94,8 @@ const ShapeViewInner = memo(function ShapeViewInner({
                         .join("L")}Z`}
                     css={{
                         stroke: Colors[colorId],
+                        strokeLinejoin: "round",
+                        strokeLinecap: "round",
                         pointerEvents: "all",
                         ...{
                             none: { fill: "none" },

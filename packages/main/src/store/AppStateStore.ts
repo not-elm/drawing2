@@ -2,6 +2,7 @@ import { Store } from "../lib/Store";
 import type { ColorId } from "../model/Colors";
 import type { FillMode } from "../model/FillMode";
 import type { Mode } from "../model/Mode";
+import type { StrokeStyle } from "../model/StrokeStyle";
 import type { TextAlignment } from "../model/TextAlignment";
 import type { TextBlockSizingMode } from "../model/TextBlockSizingMode";
 
@@ -15,6 +16,7 @@ interface AppState {
     readonly defaultLineEndType2: LineEndType;
     readonly defaultTextBlockTextAlignment: TextAlignment;
     readonly defaultTextBlockSizingMode: TextBlockSizingMode;
+    readonly defaultStrokeStyle: StrokeStyle;
 }
 
 export class AppStateStore extends Store<AppState> {
@@ -29,6 +31,7 @@ export class AppStateStore extends Store<AppState> {
             defaultLineEndType2: "arrow",
             defaultTextBlockTextAlignment: "start",
             defaultTextBlockSizingMode: "content",
+            defaultStrokeStyle: "solid",
         });
     }
 
@@ -66,6 +69,13 @@ export class AppStateStore extends Store<AppState> {
         this.setState({
             ...this.state,
             defaultTextBlockSizingMode: sizingMode,
+        });
+    }
+
+    setDefaultStrokeStyle(strokeStyle: StrokeStyle) {
+        this.setState({
+            ...this.state,
+            defaultStrokeStyle: strokeStyle,
         });
     }
 

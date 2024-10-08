@@ -220,6 +220,7 @@ export function createNewLinePointerEventSession(
                 y2: p2.y,
                 endType2: appStateStore.getState().defaultLineEndType2,
                 colorId: appStateStore.getState().defaultColorId,
+                strokeStyle: appStateStore.getState().defaultStrokeStyle,
             };
             transaction.insertBlocks([line]).addDependencies([
                 {

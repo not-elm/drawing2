@@ -13,6 +13,7 @@ import {
     PointKey,
     type TextBlock,
 } from "../model/Page";
+import type { StrokeStyle } from "../model/StrokeStyle";
 import type { TextAlignment } from "../model/TextAlignment";
 import type { TextBlockSizingMode } from "../model/TextBlockSizingMode";
 import { Transaction } from "../model/Transaction";
@@ -856,6 +857,11 @@ export class Controller {
     setTextBlockSizingMode(sizingMode: TextBlockSizingMode) {
         this.canvasStateStore.setTextBlockSizingMode(sizingMode);
         this.appStateStore.setDefaultTextBlockSizingMode(sizingMode);
+    }
+
+    setStrokeStyle(strokeStyle: StrokeStyle) {
+        this.canvasStateStore.setStrokeStyle(strokeStyle);
+        this.appStateStore.setDefaultStrokeStyle(strokeStyle);
     }
 
     bringSelectedBlocksToFront() {

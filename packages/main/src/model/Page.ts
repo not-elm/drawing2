@@ -1,6 +1,7 @@
 import type { ColorId } from "./Colors";
 import type { DependencyCollection } from "./DependencyCollection";
 import type { FillMode } from "./FillMode";
+import type { StrokeStyle } from "./StrokeStyle";
 import type { TextAlignment } from "./TextAlignment";
 import type { TextBlockSizingMode } from "./TextBlockSizingMode";
 
@@ -20,6 +21,7 @@ export interface LineBlock extends EntityBase<"line"> {
     y2: number;
     endType2: LineEndType;
     colorId: ColorId;
+    strokeStyle: StrokeStyle;
 }
 export interface ShapeBlock extends EntityBase<"shape"> {
     x: number;

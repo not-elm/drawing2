@@ -25,6 +25,7 @@ export function LineToolPreview({
         y2: session.currentY,
         endType2: appState.defaultLineEndType2,
         colorId: appState.defaultColorId,
+        strokeStyle: appState.defaultStrokeStyle,
     };
 
     return <LineView line={line} />;
