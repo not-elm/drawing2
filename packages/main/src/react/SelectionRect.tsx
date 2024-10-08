@@ -16,6 +16,8 @@ export function SelectionRect() {
     const isSingleLineMode = blocks.length === 1 && blocks[0].type === "line";
     const isSingleTextMode = blocks.length === 1 && blocks[0].type === "text";
 
+    if (appState.mode.type === "edit-text") return null;
+
     return (
         <div
             css={{

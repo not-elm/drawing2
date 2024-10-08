@@ -1,15 +1,10 @@
 import type { CSSObject } from "@emotion/styled";
 import { MathJax } from "better-react-mathjax";
-import {
-    type MouseEventHandler,
-    memo,
-    useCallback,
-    useLayoutEffect,
-    useRef,
-} from "react";
+import { type MouseEventHandler, memo, useCallback } from "react";
 import type { TextBlock } from "../model/Page";
 import type { TextAlignment } from "../model/TextAlignment";
 import { useController } from "./ControllerProvider";
+import { useResizeObserver } from "./hooks/useResizeObserver";
 
 export const TextView = memo(function ShapeView({
     text,
@@ -24,6 +19,7 @@ export const TextView = memo(function ShapeView({
                 editing={editing}
                 shapeId={text.id}
                 width={text.width}
+                height={text.height}
                 sizingMode={text.sizingMode}
                 textAlignment={text.textAlignment}
                 content={text.content}
@@ -35,6 +31,7 @@ export const TextView = memo(function ShapeView({
 const TextViewInner = memo(function ShapeViewInner({
     shapeId,
     width,
+    height,
     sizingMode,
     textAlignment,
     editing,
@@ -42,6 +39,7 @@ const TextViewInner = memo(function ShapeViewInner({
 }: {
     shapeId: string;
     width: number;
+    height: number;
     sizingMode: "content" | "fixed";
     textAlignment: TextAlignment;
     editing: boolean;
@@ -68,22 +66,15 @@ const TextViewInner = memo(function ShapeViewInner({
         [shapeId, controller],
     );
 
-    const containerRef = useRef<HTMLDivElement | null>(null);
-
-    // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
-    useLayoutEffect(() => {
-        const container = containerRef.current;
-        if (!container) return;
-
-        const bcr = container.getBoundingClientRect();
-        const canvasWidth = bcr.width;
-        const canvasHeight = bcr.height;
+    const containerRef = useResizeObserver((entry) => {
+        const canvasWidth = entry.contentRect.width;
+        const canvasHeight = entry.contentRect.height;
         controller.handleTextBlockSizeChanged(
             shapeId,
             canvasWidth,
             canvasHeight,
         );
-    }, [containerRef, content, width, sizingMode, textAlignment]);
+    });
 
     return (
         <div

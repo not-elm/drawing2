@@ -121,7 +121,7 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
                       ? [...colorIds][0]
                       : null,
             fillModeSectionVisible:
-                selectedShapes.length > 0 || appState.mode.type === "shape",
+                selectedShapes.length > 0 || appState.mode.type === "new-shape",
             fillMode:
                 fillModes.size === 0
                     ? appState.defaultFillMode
@@ -129,7 +129,7 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
                       ? [...fillModes][0]
                       : null,
             textAlignSectionVisible:
-                selectedShapes.length > 0 || appState.mode.type === "shape",
+                selectedShapes.length > 0 || appState.mode.type === "new-shape",
             textAlignX:
                 alignXs.size === 0
                     ? appState.defaultTextAlignX
@@ -145,7 +145,7 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
             orderSectionVisible:
                 selectedShapes.length > 0 || selectedLines.length > 0,
             lineEndTypeSectionVisible:
-                selectedLines.length > 0 || appState.mode.type === "line",
+                selectedLines.length > 0 || appState.mode.type === "new-line",
             lineEndType1:
                 lineEndType1Set.size === 0
                     ? appState.defaultLineEndType1
@@ -161,7 +161,7 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
             textBlockTextAlignmentSectionVisible:
                 (selectedShapes.length === 0 && selectedTexts.length > 0) ||
                 appState.mode.type === "new-text" ||
-                appState.mode.type === "text",
+                appState.mode.type === "edit-text",
             textBlockTextAlignment:
                 textBlockTextAlignments.size === 0
                     ? appState.defaultTextBlockTextAlignment
@@ -171,7 +171,7 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
             textBlockSizingModeSectionVisible:
                 selectedTexts.length > 0 ||
                 appState.mode.type === "new-text" ||
-                appState.mode.type === "text",
+                appState.mode.type === "edit-text",
             textBlockSizingMode:
                 textBlockSizingModes.size === 0
                     ? appState.defaultTextBlockSizingMode
@@ -180,9 +180,9 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
                       : null,
             strokeStyleSectionVisible:
                 selectedLines.length > 0 ||
-                appState.mode.type === "line" ||
+                appState.mode.type === "new-line" ||
                 selectedShapes.length > 0 ||
-                appState.mode.type === "shape",
+                appState.mode.type === "new-shape",
             strokeStyle:
                 strokeStyles.size === 0
                     ? appState.defaultStrokeStyle

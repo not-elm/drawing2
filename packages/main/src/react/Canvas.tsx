@@ -93,7 +93,7 @@ export function Canvas() {
                                     key={block.id}
                                     shape={block}
                                     isLabelEditing={
-                                        appState.mode.type === "text" &&
+                                        appState.mode.type === "edit-text" &&
                                         appState.mode.blockId === block.id
                                     }
                                 />
@@ -108,7 +108,7 @@ export function Canvas() {
                                     key={block.id}
                                     text={block}
                                     editing={
-                                        appState.mode.type === "text" &&
+                                        appState.mode.type === "edit-text" &&
                                         appState.mode.blockId === block.id
                                     }
                                 />

@@ -352,7 +352,7 @@ export class Controller {
                     }
                     case "Block": {
                         switch (this.appStateStore.getState().mode.type) {
-                            case "text": {
+                            case "edit-text": {
                                 this.setMode({ type: "select" });
                                 this.canvasStateStore.unselectAll();
                                 this.canvasStateStore.select(object.block.id);
@@ -384,7 +384,7 @@ export class Controller {
                                 );
                                 return;
                             }
-                            case "shape": {
+                            case "new-shape": {
                                 startSession(
                                     createNewShapePointerEventSession(
                                         ev,
@@ -396,7 +396,7 @@ export class Controller {
                                 );
                                 return;
                             }
-                            case "line": {
+                            case "new-line": {
                                 startSession(
                                     createNewLinePointerEventSession(
                                         this,
@@ -408,7 +408,7 @@ export class Controller {
                                 );
                                 return;
                             }
-                            case "text": {
+                            case "edit-text": {
                                 if (!ev.shiftKey) {
                                     this.canvasStateStore.unselectAll();
                                 }
@@ -475,7 +475,7 @@ export class Controller {
                                         .commit(),
                                 );
                                 this.setMode({
-                                    type: "text",
+                                    type: "edit-text",
                                     blockId: text.id,
                                 });
 
@@ -567,7 +567,7 @@ export class Controller {
                 .commit(),
         );
         this.setMode({
-            type: "text",
+            type: "edit-text",
             blockId: text.id,
         });
 
@@ -587,7 +587,7 @@ export class Controller {
             case MouseButton.Left: {
                 this.canvasStateStore.unselectAll();
                 this.canvasStateStore.select(id);
-                this.setMode({ type: "text", blockId: id });
+                this.setMode({ type: "edit-text", blockId: id });
                 return true;
             }
         }
@@ -614,8 +614,8 @@ export class Controller {
         switch (key) {
             case "a": {
                 switch (this.appStateStore.getState().mode.type) {
-                    case "line":
-                    case "shape":
+                    case "new-line":
+                    case "new-shape":
                     case "new-text":
                     case "select": {
                         if (modifiers.metaKey || modifiers.ctrlKey) {
@@ -623,7 +623,7 @@ export class Controller {
                             this.canvasStateStore.selectAll();
                             return true;
                         } else {
-                            this.setMode({ type: "line" });
+                            this.setMode({ type: "new-line" });
                             this.appStateStore.setDefaultLineEnd(1, "none");
                             this.appStateStore.setDefaultLineEnd(2, "arrow");
                         }
@@ -633,10 +633,10 @@ export class Controller {
             }
             case "r": {
                 switch (this.appStateStore.getState().mode.type) {
-                    case "line":
+                    case "new-line":
                     case "new-text":
                     case "select": {
-                        this.setMode({ type: "shape" });
+                        this.setMode({ type: "new-shape" });
                         return true;
                     }
                 }
@@ -644,8 +644,8 @@ export class Controller {
             }
             case "t": {
                 switch (this.appStateStore.getState().mode.type) {
-                    case "shape":
-                    case "line":
+                    case "new-shape":
+                    case "new-line":
                     case "select": {
                         this.setMode({ type: "new-text" });
                         return true;
@@ -655,9 +655,9 @@ export class Controller {
             }
             case "l": {
                 switch (this.appStateStore.getState().mode.type) {
-                    case "shape":
+                    case "new-shape":
                     case "select": {
-                        this.setMode({ type: "line" });
+                        this.setMode({ type: "new-line" });
                         this.appStateStore.setDefaultLineEnd(1, "none");
                         this.appStateStore.setDefaultLineEnd(2, "none");
                         return true;
@@ -667,8 +667,8 @@ export class Controller {
             }
             case "z": {
                 switch (this.appStateStore.getState().mode.type) {
-                    case "line":
-                    case "shape":
+                    case "new-line":
+                    case "new-shape":
                     case "select": {
                         if (modifiers.metaKey || modifiers.ctrlKey) {
                             if (modifiers.shiftKey) {
@@ -806,7 +806,7 @@ export class Controller {
     setMode(mode: Mode) {
         const oldMode = this.appStateStore.getState().mode;
         switch (oldMode.type) {
-            case "text": {
+            case "edit-text": {
                 const blockId = oldMode.blockId;
                 const block =
                     this.canvasStateStore.getState().page.blocks[blockId];
@@ -1077,7 +1077,7 @@ export class Controller {
 
                 break;
             }
-            case "text": {
+            case "edit-text": {
                 // Block
                 {
                     const hitResult = testHitEntities(
@@ -1096,8 +1096,8 @@ export class Controller {
 
                 break;
             }
-            case "line":
-            case "shape":
+            case "new-line":
+            case "new-shape":
             case "new-text": {
                 break;
             }
