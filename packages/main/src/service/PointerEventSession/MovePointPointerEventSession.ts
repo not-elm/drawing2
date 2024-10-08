@@ -1,4 +1,6 @@
+import { adjustAngle } from "../../geo/adjustAngle";
 import type { StateProvider } from "../../lib/Store";
+import { assert } from "../../lib/assert";
 import { randomId } from "../../lib/randomId";
 import type { PointEntity } from "../../model/Page";
 import { Transaction } from "../../model/Transaction";
@@ -19,9 +21,9 @@ export function createMovePointPointerEventSession(
     historyManager: HistoryManager,
 ): MovePointPointerEventSession {
     const ignoreEntityIds = new Set([originalPoint.id]);
-    const connectedLineIds = canvasStateStore
-        .getState()
-        .page.dependencies.getByFromEntityId(originalPoint.id)
+    const page = canvasStateStore.getState().page;
+    const connectedLineIds = page.dependencies
+        .getByFromEntityId(originalPoint.id)
         .map((dep) => dep.to);
     for (const lineId of connectedLineIds) {
         ignoreEntityIds.add(lineId);
@@ -33,16 +35,46 @@ export function createMovePointPointerEventSession(
         .filter(
             (dep) => dep.type === "pointOnShape" || dep.type === "pointOnLine",
         );
+
+    let otherPoint: PointEntity | undefined;
+    if (connectedLineIds.length === 1) {
+        const lineId = connectedLineIds[0];
+        const otherPointId = page.dependencies
+            .getByToEntityId(lineId)
+            .filter((dep) => dep.type === "blockToPoint")
+            .map((dep) => dep.from)
+            .find((pointId) => pointId !== originalPoint.id);
+
+        if (otherPointId !== undefined) {
+            otherPoint = page.points[otherPointId];
+            assert(otherPoint !== undefined, `Point ${otherPointId} not found`);
+        }
+    }
     historyManager.pause();
 
     return {
         type: "move-point",
         onPointerMove: (data) => {
+            let x = originalPoint.x + (data.newX - data.startX);
+            let y = originalPoint.y + (data.newY - data.startY);
+
+            if (data.shiftKey && otherPoint !== undefined) {
+                [x, y] = adjustAngle(
+                    otherPoint.x,
+                    otherPoint.y,
+                    x,
+                    y,
+                    0,
+                    Math.PI / 12,
+                );
+            }
+
             const hitTestResult = testHitEntities(
                 canvasStateStore.getState().page,
-                data.newX,
-                data.newY,
+                x,
+                y,
                 viewportProvider.getState().scale,
+                0,
             );
 
             const hitPointEntry = hitTestResult.points.filter(
@@ -53,12 +85,8 @@ export function createMovePointPointerEventSession(
             )[0];
             const hitEntry = hitPointEntry ?? hitBlockEntry;
 
-            const x =
-                hitEntry?.point.x ??
-                originalPoint.x + (data.newX - data.startX);
-            const y =
-                hitEntry?.point.y ??
-                originalPoint.y + (data.newY - data.startY);
+            x = hitEntry?.point.x ?? x;
+            y = hitEntry?.point.y ?? y;
 
             canvasStateStore.setPage(
                 new Transaction(canvasStateStore.getState().page)
@@ -79,6 +107,7 @@ export function createMovePointPointerEventSession(
                 data.newX,
                 data.newY,
                 viewportProvider.getState().scale,
+                0,
             );
 
             const hitPointEntry = hitTestResult.points.filter(

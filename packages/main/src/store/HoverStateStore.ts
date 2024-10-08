@@ -47,7 +47,7 @@ export function testHitEntities(
     for (const point of Object.values(page.points)) {
         zIndexForPoint++;
         const distance = Math.hypot(point.x - x, point.y - y) * scale;
-        if (distance < threshold) {
+        if (distance <= threshold) {
             const entry: HitTestResultEntry<PointEntity> = {
                 target: point,
                 point: point,
@@ -68,7 +68,7 @@ export function testHitEntities(
                     { x, y },
                     block,
                 );
-                if (distance < threshold) {
+                if (distance <= threshold) {
                     const entry: HitTestResultEntry<LineBlock> = {
                         target: block,
                         point,
@@ -86,7 +86,7 @@ export function testHitEntities(
                     { x, y },
                     block,
                 );
-                if (distance < threshold) {
+                if (distance <= threshold) {
                     const entry: HitTestResultEntry<Block> = {
                         target: block,
                         point,
