@@ -1,19 +1,19 @@
 import { type WheelEventHandler, useCallback, useEffect } from "react";
+import { getBlocksInViewport } from "../model/Page";
+import { BrushRect } from "./BrushRect";
 import { useController } from "./ControllerProvider";
-import { LineToolPreview } from "./LineToolPreview";
 import { LineView } from "./LineView";
 import { SelectionRect } from "./SelectionRect";
-import { SelectorRect } from "./SelectorRect";
-import { ShapeToolPreview } from "./ShapeToolPreview";
 import { ShapeView } from "./ShapeView";
+import { SnapGuideLayer } from "./SnapGuideLayer";
 import { TextView } from "./TextView";
+import { useResizeObserver } from "./hooks/useResizeObserver";
 import { useStore } from "./hooks/useStore";
 
 export function Canvas() {
     const controller = useController();
     const { page } = useStore(controller.canvasStateStore);
     const viewport = useStore(controller.viewportStore);
-    const sessions = useStore(controller.gestureRecognizer);
     const appState = useStore(controller.appStateStore);
 
     useEffect(() => {
@@ -21,10 +21,12 @@ export function Canvas() {
             ev.stopPropagation();
             controller.handleCanvasMouseMove(ev.clientX, ev.clientY, ev);
         }
+
         function handlePointerUp(ev: PointerEvent) {
             ev.stopPropagation();
             controller.handleCanvasMouseUp(ev);
         }
+
         window.addEventListener("pointermove", handlePointerMove);
         window.addEventListener("pointerup", handlePointerUp);
 
@@ -53,14 +55,22 @@ export function Canvas() {
     );
 
     const scale = viewport.scale;
+    const resizeObserverRef = useResizeObserver((entry) => {
+        controller.viewportStore.setViewportSize(
+            entry.contentRect.width,
+            entry.contentRect.height,
+        );
+    });
 
     return (
         <div
+            ref={resizeObserverRef}
             css={{
                 position: "fixed",
                 inset: 0,
                 overflow: "clip",
                 pointerEvents: "all",
+                background: "#f9fafc",
                 ">*": {
                     pointerEvents: "none",
                 },
@@ -82,10 +92,7 @@ export function Canvas() {
                     transformOrigin: `${viewport.x}px ${viewport.y}px`,
                 }}
             >
-                {page.blockIds.map((blockId) => {
-                    const block = page.blocks[blockId];
-                    if (block === undefined) return null;
-
+                {getBlocksInViewport(page, viewport).map((block) => {
                     switch (block.type) {
                         case "shape": {
                             return (
@@ -119,74 +126,11 @@ export function Canvas() {
                         }
                     }
                 })}
-                {Object.values(sessions).map(
-                    ({ pointerId, handlers: session, data }) => {
-                        switch (session.type) {
-                            case "selector":
-                                return (
-                                    <SelectorRect key={pointerId} data={data} />
-                                );
-                            case "new-shape":
-                                return (
-                                    <ShapeToolPreview
-                                        key={pointerId}
-                                        data={data}
-                                        session={session}
-                                    />
-                                );
-                            case "new-line":
-                                return (
-                                    <LineToolPreview
-                                        key={pointerId}
-                                        data={data}
-                                        session={session}
-                                    />
-                                );
-                            default:
-                                return null;
-                        }
-                    },
-                )}
+                <BrushRect />
             </div>
 
             <SelectionRect />
-            <PointHighlightLayer />
-        </div>
-    );
-}
-
-function PointHighlightLayer() {
-    const controller = useController();
-    const viewport = useStore(controller.viewportStore);
-    const { hitEntry } = useStore(controller.hoverStateStore);
-
-    return (
-        <div
-            css={{
-                position: "absolute",
-                inset: 0,
-            }}
-        >
-            <svg
-                viewBox="0 0 1 1"
-                width={1}
-                height={1}
-                css={{
-                    overflow: "visible",
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                }}
-            >
-                {hitEntry !== null && (
-                    <circle
-                        r={8}
-                        cx={(hitEntry.point.x - viewport.x) * viewport.scale}
-                        cy={(hitEntry.point.y - viewport.y) * viewport.scale}
-                        css={{ fill: "var(--color-selection)", opacity: 0.3 }}
-                    />
-                )}
-            </svg>
+            <SnapGuideLayer />
         </div>
     );
 }

@@ -1,8 +1,7 @@
-import { getBoundingRectOfLine } from "../geo/Line";
-import { type Rect, getBoundingRectOfRect, unionRect } from "../geo/Rect";
+import { type Rect, unionRectAll } from "../geo/Rect";
 import { dataclass } from "../lib/dataclass";
 import { isNotNullish } from "../lib/isNullish";
-import type { Block, Page } from "./Page";
+import { type Block, type Page, getBoundingRect } from "./Page";
 
 export class CanvasState extends dataclass<{
     readonly page: Page;
@@ -48,22 +47,9 @@ export class CanvasState extends dataclass<{
     }
 
     getSelectionRect(): Rect | null {
-        const rects = this.getSelectedBlocks().map((obj) => {
-            switch (obj.type) {
-                case "shape":
-                case "text":
-                    return getBoundingRectOfRect(obj);
-                case "line":
-                    return getBoundingRectOfLine(obj);
-            }
-        });
-        let rect = rects.shift();
-        if (rect === undefined) return null;
-
-        for (const r of rects) {
-            rect = unionRect(rect, r);
-        }
-        return rect;
+        const rects = this.getSelectedBlocks().map(getBoundingRect);
+        if (rects.length === 0) return null;
+        return unionRectAll(rects);
     }
 
     getSelectedBlocks(): Block[] {

@@ -8,18 +8,14 @@ import type { CanvasStateStore } from "../../store/CanvasStateStore";
 import { testHitEntities } from "../../store/HoverStateStore";
 import type { ViewportStore } from "../../store/ViewportStore";
 import type { HistoryManager } from "../HistoryManager";
-import type { PointerEventSession } from "./PointerEventSession";
+import type { PointerEventHandlers } from "./PointerEventSession";
 
-export interface MovePointPointerEventSession extends PointerEventSession {
-    type: "move-point";
-}
-
-export function createMovePointPointerEventSession(
+export function createMovePointSession(
     originalPoint: PointEntity,
     canvasStateStore: CanvasStateStore,
     viewportProvider: StateProvider<ViewportStore>,
     historyManager: HistoryManager,
-): MovePointPointerEventSession {
+): PointerEventHandlers {
     const ignoreEntityIds = new Set([originalPoint.id]);
     const page = canvasStateStore.getState().page;
     const connectedLineIds = page.dependencies
@@ -53,7 +49,6 @@ export function createMovePointPointerEventSession(
     historyManager.pause();
 
     return {
-        type: "move-point",
         onPointerMove: (data) => {
             let x = originalPoint.x + (data.newX - data.startX);
             let y = originalPoint.y + (data.newY - data.startY);

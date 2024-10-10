@@ -21,6 +21,7 @@
                 "noUselessElse": "off"
             },
             "suspicious": {
+                "noArrayIndexKey": "off",
                 "noAssignInExpressions": "off"
             }
         }

@@ -1,9 +1,16 @@
+import { getBoundingRectOfLine } from "../geo/Line";
+import {
+    type Rect,
+    isRectOverlapWithLine,
+    isRectOverlapWithRect,
+} from "../geo/Rect";
 import type { ColorId } from "./Colors";
 import type { DependencyCollection } from "./DependencyCollection";
 import type { FillMode } from "./FillMode";
 import type { StrokeStyle } from "./StrokeStyle";
 import type { TextAlignment } from "./TextAlignment";
 import type { TextBlockSizingMode } from "./TextBlockSizingMode";
+import type { Viewport } from "./Viewport";
 
 interface EntityBase<T extends string> {
     type: T;
@@ -79,3 +86,27 @@ export const PointKey = {
     TEXT_P1: "textP1",
     TEXT_P2: "textP2",
 };
+
+export function getBlocksInViewport(page: Page, viewport: Viewport): Block[] {
+    return page.blockIds
+        .map((blockId) => page.blocks[blockId])
+        .filter((block) => {
+            switch (block.type) {
+                case "shape":
+                case "text":
+                    return isRectOverlapWithRect(viewport, block);
+                case "line":
+                    return isRectOverlapWithLine(viewport, block);
+            }
+        });
+}
+
+export function getBoundingRect(block: Block): Rect {
+    switch (block.type) {
+        case "shape":
+        case "text":
+            return block;
+        case "line":
+            return getBoundingRectOfLine(block);
+    }
+}

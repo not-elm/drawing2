@@ -11,9 +11,9 @@ import {
 import { testHitEntities } from "../../store/HoverStateStore";
 import type { ViewportStore } from "../../store/ViewportStore";
 import type { Controller } from "../Controller";
-import type { PointerEventSession } from "./PointerEventSession";
+import type { PointerEventHandlers } from "./PointerEventSession";
 
-export interface NewLinePointerEventSession extends PointerEventSession {
+export interface NewLinePointerEventSession extends PointerEventHandlers {
     type: "new-line";
     currentX: number;
     currentY: number;

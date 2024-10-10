@@ -1,3 +1,4 @@
+import { assert } from "../lib/assert";
 import {
     type Line,
     distanceFromPointToLine,
@@ -67,6 +68,15 @@ export function unionRect(rect1: Rect, rect2: Rect): Rect {
     const width = Math.max(rect1.x + rect1.width, rect2.x + rect2.width) - x;
     const height = Math.max(rect1.y + rect1.height, rect2.y + rect2.height) - y;
     return { x, y, width, height };
+}
+
+export function unionRectAll(rects: Rect[]): Rect {
+    assert(rects.length > 0);
+    let rect = rects[0];
+    for (const r of rects) {
+        rect = unionRect(rect, r);
+    }
+    return rect;
 }
 
 /**

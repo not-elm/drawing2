@@ -13,7 +13,11 @@ export class URLQueryRestoreViewportService implements RestoreViewportService {
 
         history.replaceState(null, "", url.toString());
     }
-    async restore(): Promise<Viewport | null> {
+    async restore(): Promise<{
+        x: number;
+        y: number;
+        scale: number;
+    } | null> {
         const url = new URL(window.location.href);
         const data = url.searchParams.get("viewport");
         if (data === null) return null;

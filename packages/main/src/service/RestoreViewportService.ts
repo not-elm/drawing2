@@ -4,7 +4,11 @@ import { URLQueryRestoreViewportService } from "./URLQueryRestoreViewportService
 
 export interface RestoreViewportService {
     save(viewport: Viewport): void;
-    restore(): Promise<Viewport | null>;
+    restore(): Promise<{
+        x: number;
+        y: number;
+        scale: number;
+    } | null>;
 }
 
 export const getRestoreViewportService = singleton<RestoreViewportService>(

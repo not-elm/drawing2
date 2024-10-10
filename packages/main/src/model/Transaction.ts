@@ -15,7 +15,13 @@ interface CommandBase<T extends string> {
 interface InsertBlocksCommand extends CommandBase<"INSERT_BLOCKS"> {
     blocks: Block[];
 }
+interface ReplaceBlocksCommand extends CommandBase<"REPLACE_BLOCKS"> {
+    blocks: Block[];
+}
 interface InsertPointsCommand extends CommandBase<"INSERT_POINTS"> {
+    points: PointEntity[];
+}
+interface ReplacePointsCommand extends CommandBase<"REPLACE_POINTS"> {
     points: PointEntity[];
 }
 interface DeleteBlocksCommand extends CommandBase<"DELETE_BLOCKS"> {
@@ -60,7 +66,9 @@ interface DeleteDependenciesCommand extends CommandBase<"DELETE_DEPENDENCIES"> {
 
 type Command =
     | InsertBlocksCommand
+    | ReplaceBlocksCommand
     | InsertPointsCommand
+    | ReplacePointsCommand
     | DeleteBlocksCommand
     | ScaleBlocksCommand
     | MoveBlocksCommand
@@ -80,8 +88,18 @@ export class Transaction {
         return this;
     }
 
+    replaceBlocks(blocks: Block[]): this {
+        this.commands.push({ type: "REPLACE_BLOCKS", blocks });
+        return this;
+    }
+
     insertPoints(points: PointEntity[]): this {
         this.commands.push({ type: "INSERT_POINTS", points });
+        return this;
+    }
+
+    replacePoints(points: PointEntity[]): this {
+        this.commands.push({ type: "REPLACE_POINTS", points });
         return this;
     }
 
@@ -199,8 +217,14 @@ function processCommand(command: Command, draft: PageDraft) {
         case "INSERT_BLOCKS": {
             return insertBlocks(command, draft);
         }
+        case "REPLACE_BLOCKS": {
+            return replaceBlocks(command, draft);
+        }
         case "INSERT_POINTS": {
             return insertPoints(command, draft);
+        }
+        case "REPLACE_POINTS": {
+            return replacePoints(command, draft);
         }
         case "DELETE_BLOCKS": {
             return deleteBlocks(command, draft);
@@ -237,7 +261,21 @@ function insertBlocks(command: InsertBlocksCommand, draft: PageDraft) {
     }
 }
 
+function replaceBlocks(command: ReplaceBlocksCommand, draft: PageDraft) {
+    for (const block of command.blocks) {
+        draft.blocks[block.id] = block;
+        draft.dirtyEntityIds.push(block.id);
+    }
+}
+
 function insertPoints(command: InsertPointsCommand, draft: PageDraft) {
+    for (const point of command.points) {
+        draft.points[point.id] = point;
+        draft.dirtyEntityIds.push(point.id);
+    }
+}
+
+function replacePoints(command: ReplacePointsCommand, draft: PageDraft) {
     for (const point of command.points) {
         draft.points[point.id] = point;
         draft.dirtyEntityIds.push(point.id);

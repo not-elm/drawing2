@@ -51,12 +51,7 @@ const TextViewInner = memo(function ShapeViewInner({
         (ev) => {
             const handled = controller.handleShapeDoubleClick(
                 shapeId,
-                ev.clientX,
-                ev.clientY,
                 ev.button,
-                {
-                    shiftKey: ev.shiftKey,
-                },
             );
             if (handled) {
                 ev.stopPropagation();

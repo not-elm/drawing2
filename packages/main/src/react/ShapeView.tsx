@@ -70,12 +70,7 @@ const ShapeViewInner = memo(function ShapeViewInner({
         (ev) => {
             const handled = controller.handleShapeDoubleClick(
                 shapeId,
-                ev.clientX,
-                ev.clientY,
                 ev.button,
-                {
-                    shiftKey: ev.shiftKey,
-                },
             );
             if (handled) {
                 ev.stopPropagation();
@@ -97,7 +92,7 @@ const ShapeViewInner = memo(function ShapeViewInner({
                 viewBox={`0 0 ${width} ${height}`}
                 width={width}
                 height={height}
-                css={{ overflow: "visible" }}
+                css={{ overflow: "visible", position: "absolute", inset: 0 }}
             >
                 <path
                     d={`M${path

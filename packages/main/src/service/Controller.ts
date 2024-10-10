@@ -1,9 +1,11 @@
 import { distanceFromPointToLine } from "../geo/Line";
 import { distanceFromPointToPoint } from "../geo/Point";
 import type { Rect } from "../geo/Rect";
+import { getRectanglePath } from "../geo/path";
 import { assert } from "../lib/assert";
 import { randomId } from "../lib/randomId";
 import type { ColorId } from "../model/Colors";
+import { Direction } from "../model/Direction";
 import type { FillMode } from "../model/FillMode";
 import type { Mode } from "../model/Mode";
 import {
@@ -11,49 +13,53 @@ import {
     type LineBlock,
     type PointEntity,
     PointKey,
+    type ShapeBlock,
     type TextBlock,
 } from "../model/Page";
 import type { StrokeStyle } from "../model/StrokeStyle";
 import type { TextAlignment } from "../model/TextAlignment";
 import type { TextBlockSizingMode } from "../model/TextBlockSizingMode";
 import { Transaction } from "../model/Transaction";
+import {
+    createMoveTransformHandle,
+    createScaleTransformHandle,
+} from "../model/TransformHandle";
 import { AppStateStore } from "../store/AppStateStore";
+import { BrushStore } from "../store/BrushStore";
 import {
     CanvasStateStore,
     MouseButton,
     fromCanvasCoordinate,
 } from "../store/CanvasStateStore";
-import { HoverStateStore, testHitEntities } from "../store/HoverStateStore";
-import { PointerStateStore } from "../store/PointerStateStore";
+import { testHitEntities } from "../store/HoverStateStore";
 import { PropertyPanelStateStore } from "../store/PropertyPanelStateStore";
+import { SnapGuideStore } from "../store/SnapGuideStore";
 import { ViewportStore } from "../store/ViewportStore";
 import { GestureRecognizer } from "./GestureRecognizer";
 import { HistoryManager } from "./HistoryManager";
-import { createMovePointPointerEventSession } from "./PointerEventSession/MovePointPointerEventSession";
-import { createMovePointerEventSession } from "./PointerEventSession/MovePointerEventSession";
-import { createNewLinePointerEventSession } from "./PointerEventSession/NewLinePointerEventSession";
-import { createNewShapePointerEventSession } from "./PointerEventSession/NewShapePointerEventSession";
-import type { PointerEventSession } from "./PointerEventSession/PointerEventSession";
-import { createResizePointerEventSession } from "./PointerEventSession/ResizePointerEventSession";
-import { createSelectByRangePointerEventSession } from "./PointerEventSession/SelectByRangePointerEventSessionHandlers";
+import {
+    type PointerEventHandlers,
+    mergeHandlers,
+} from "./PointerEventSession/PointerEventSession";
+import { createBrushSelectSession } from "./PointerEventSession/createBrushSelectSession";
+import { createClickBlockSession } from "./PointerEventSession/createClickBlockSession";
+import { createClickSelectionSession } from "./PointerEventSession/createClickSelectionSession";
+import { createMovePointSession } from "./PointerEventSession/createMovePointSession";
+import { createTransformSession } from "./PointerEventSession/createTransformSession";
 import { getRestoreViewportService } from "./RestoreViewportService";
 
 export class Controller {
     readonly canvasStateStore = new CanvasStateStore();
-    readonly pointerStore = new PointerStateStore();
     readonly viewportStore = new ViewportStore(getRestoreViewportService());
     readonly gestureRecognizer = new GestureRecognizer(this.viewportStore);
-    readonly hoverStateStore = new HoverStateStore(
-        this.canvasStateStore,
-        this.pointerStore,
-        this.viewportStore,
-    );
     readonly appStateStore = new AppStateStore();
     readonly propertyPanelStateStore = new PropertyPanelStateStore(
         this.canvasStateStore,
         this.appStateStore,
     );
     readonly historyManager = new HistoryManager(this.canvasStateStore);
+    readonly snapGuideStore = new SnapGuideStore();
+    readonly brushStore = new BrushStore();
 
     constructor() {
         this.gestureRecognizer.onPointerDown = this.handlePointerDown;
@@ -61,7 +67,7 @@ export class Controller {
 
     private readonly handlePointerDown = (
         ev: PointerEvent,
-        startSession: (handlers: PointerEventSession) => void,
+        startSession: (handlers: PointerEventHandlers) => void,
     ) => {
         const [x, y] = fromCanvasCoordinate(
             ev.clientX,
@@ -75,153 +81,185 @@ export class Controller {
                 switch (object.type) {
                     case "SelectionRect.TopLeftHandle": {
                         startSession(
-                            createResizePointerEventSession(
-                                this.canvasStateStore.getState()
-                                    .selectedBlockIds,
-                                object.selectionRect.x +
-                                    object.selectionRect.width,
-                                object.selectionRect.y +
-                                    object.selectionRect.height,
-                                x,
-                                y,
-                                "XY",
-                                this.canvasStateStore,
-                                this.historyManager,
+                            mergeHandlers(
+                                createClickSelectionSession(
+                                    this.canvasStateStore,
+                                ),
+                                createTransformSession(
+                                    this.historyManager,
+                                    () =>
+                                        createScaleTransformHandle(
+                                            this.canvasStateStore,
+                                            this.viewportStore,
+                                            this.snapGuideStore,
+                                            Direction.topLeft,
+                                        ),
+                                ),
                             ),
                         );
                         return;
                     }
                     case "SelectionRect.LeftHandle": {
                         startSession(
-                            createResizePointerEventSession(
-                                this.canvasStateStore.getState()
-                                    .selectedBlockIds,
-                                object.selectionRect.x +
-                                    object.selectionRect.width,
-                                object.selectionRect.y +
-                                    object.selectionRect.height,
-                                x,
-                                y,
-                                "X",
-                                this.canvasStateStore,
-                                this.historyManager,
+                            mergeHandlers(
+                                createClickSelectionSession(
+                                    this.canvasStateStore,
+                                ),
+                                createTransformSession(
+                                    this.historyManager,
+                                    () =>
+                                        createScaleTransformHandle(
+                                            this.canvasStateStore,
+                                            this.viewportStore,
+                                            this.snapGuideStore,
+                                            Direction.left,
+                                        ),
+                                ),
                             ),
                         );
                         return;
                     }
                     case "SelectionRect.BottomLeftHandle": {
                         startSession(
-                            createResizePointerEventSession(
-                                this.canvasStateStore.getState()
-                                    .selectedBlockIds,
-                                object.selectionRect.x +
-                                    object.selectionRect.width,
-                                object.selectionRect.y,
-                                x,
-                                y,
-                                "XY",
-                                this.canvasStateStore,
-                                this.historyManager,
+                            mergeHandlers(
+                                createClickSelectionSession(
+                                    this.canvasStateStore,
+                                ),
+                                createTransformSession(
+                                    this.historyManager,
+                                    () =>
+                                        createScaleTransformHandle(
+                                            this.canvasStateStore,
+                                            this.viewportStore,
+                                            this.snapGuideStore,
+                                            Direction.bottomLeft,
+                                        ),
+                                ),
                             ),
                         );
                         return;
                     }
                     case "SelectionRect.TopHandle": {
                         startSession(
-                            createResizePointerEventSession(
-                                this.canvasStateStore.getState()
-                                    .selectedBlockIds,
-                                object.selectionRect.x +
-                                    object.selectionRect.width,
-                                object.selectionRect.y +
-                                    object.selectionRect.height,
-                                x,
-                                y,
-                                "Y",
-                                this.canvasStateStore,
-                                this.historyManager,
+                            mergeHandlers(
+                                createClickSelectionSession(
+                                    this.canvasStateStore,
+                                ),
+                                createTransformSession(
+                                    this.historyManager,
+                                    () =>
+                                        createScaleTransformHandle(
+                                            this.canvasStateStore,
+                                            this.viewportStore,
+                                            this.snapGuideStore,
+                                            Direction.top,
+                                        ),
+                                ),
                             ),
                         );
+
                         return;
                     }
                     case "SelectionRect.CenterHandle": {
                         startSession(
-                            createMovePointerEventSession(
-                                x,
-                                y,
-                                ev.shiftKey,
-                                this.canvasStateStore,
-                                this.viewportStore,
-                                this.historyManager,
+                            mergeHandlers(
+                                createClickSelectionSession(
+                                    this.canvasStateStore,
+                                ),
+                                createTransformSession(
+                                    this.historyManager,
+                                    () =>
+                                        createMoveTransformHandle(
+                                            this.canvasStateStore,
+                                            this.viewportStore,
+                                            this.snapGuideStore,
+                                            { x, y },
+                                        ),
+                                ),
                             ),
                         );
                         return;
                     }
                     case "SelectionRect.BottomHandle": {
                         startSession(
-                            createResizePointerEventSession(
-                                this.canvasStateStore.getState()
-                                    .selectedBlockIds,
-                                object.selectionRect.x +
-                                    object.selectionRect.width,
-                                object.selectionRect.y,
-                                x,
-                                y,
-                                "Y",
-                                this.canvasStateStore,
-                                this.historyManager,
+                            mergeHandlers(
+                                createClickSelectionSession(
+                                    this.canvasStateStore,
+                                ),
+                                createTransformSession(
+                                    this.historyManager,
+                                    () =>
+                                        createScaleTransformHandle(
+                                            this.canvasStateStore,
+                                            this.viewportStore,
+                                            this.snapGuideStore,
+                                            Direction.bottom,
+                                        ),
+                                ),
                             ),
                         );
+
                         return;
                     }
                     case "SelectionRect.TopRightHandle": {
                         startSession(
-                            createResizePointerEventSession(
-                                this.canvasStateStore.getState()
-                                    .selectedBlockIds,
-                                object.selectionRect.x,
-                                object.selectionRect.y +
-                                    object.selectionRect.height,
-                                x,
-                                y,
-                                "XY",
-                                this.canvasStateStore,
-                                this.historyManager,
+                            mergeHandlers(
+                                createClickSelectionSession(
+                                    this.canvasStateStore,
+                                ),
+                                createTransformSession(
+                                    this.historyManager,
+                                    () =>
+                                        createScaleTransformHandle(
+                                            this.canvasStateStore,
+                                            this.viewportStore,
+                                            this.snapGuideStore,
+                                            Direction.topRight,
+                                        ),
+                                ),
                             ),
                         );
                         return;
                     }
                     case "SelectionRect.RightHandle": {
                         startSession(
-                            createResizePointerEventSession(
-                                this.canvasStateStore.getState()
-                                    .selectedBlockIds,
-                                object.selectionRect.x,
-                                object.selectionRect.y +
-                                    object.selectionRect.height,
-                                x,
-                                y,
-                                "X",
-                                this.canvasStateStore,
-                                this.historyManager,
+                            mergeHandlers(
+                                createClickSelectionSession(
+                                    this.canvasStateStore,
+                                ),
+                                createTransformSession(
+                                    this.historyManager,
+                                    () =>
+                                        createScaleTransformHandle(
+                                            this.canvasStateStore,
+                                            this.viewportStore,
+                                            this.snapGuideStore,
+                                            Direction.right,
+                                        ),
+                                ),
                             ),
                         );
                         return;
                     }
                     case "SelectionRect.BottomRightHandle": {
                         startSession(
-                            createResizePointerEventSession(
-                                this.canvasStateStore.getState()
-                                    .selectedBlockIds,
-                                object.selectionRect.x,
-                                object.selectionRect.y,
-                                x,
-                                y,
-                                "XY",
-                                this.canvasStateStore,
-                                this.historyManager,
+                            mergeHandlers(
+                                createClickSelectionSession(
+                                    this.canvasStateStore,
+                                ),
+                                createTransformSession(
+                                    this.historyManager,
+                                    () =>
+                                        createScaleTransformHandle(
+                                            this.canvasStateStore,
+                                            this.viewportStore,
+                                            this.snapGuideStore,
+                                            Direction.bottomRight,
+                                        ),
+                                ),
                             ),
                         );
+
                         return;
                     }
                     case "SelectionLine.P1": {
@@ -248,7 +286,7 @@ export class Controller {
                         );
 
                         startSession(
-                            createMovePointPointerEventSession(
+                            createMovePointSession(
                                 originalPoint,
                                 this.canvasStateStore,
                                 this.viewportStore,
@@ -281,7 +319,7 @@ export class Controller {
                         );
 
                         startSession(
-                            createMovePointPointerEventSession(
+                            createMovePointSession(
                                 originalPoint,
                                 this.canvasStateStore,
                                 this.viewportStore,
@@ -292,13 +330,21 @@ export class Controller {
                     }
                     case "SelectionLine.Center": {
                         startSession(
-                            createMovePointerEventSession(
-                                x,
-                                y,
-                                ev.shiftKey,
-                                this.canvasStateStore,
-                                this.viewportStore,
-                                this.historyManager,
+                            mergeHandlers(
+                                createClickBlockSession(
+                                    object.line.id,
+                                    this.canvasStateStore,
+                                ),
+                                createTransformSession(
+                                    this.historyManager,
+                                    () =>
+                                        createMoveTransformHandle(
+                                            this.canvasStateStore,
+                                            this.viewportStore,
+                                            this.snapGuideStore,
+                                            { x, y },
+                                        ),
+                                ),
                             ),
                         );
                         return;
@@ -306,29 +352,41 @@ export class Controller {
                     case "SelectionText.Left": {
                         this.canvasStateStore.setTextBlockSizingMode("fixed");
                         startSession(
-                            createResizePointerEventSession(
-                                this.canvasStateStore.getState()
-                                    .selectedBlockIds,
-                                object.text.x + object.text.width,
-                                object.text.y,
-                                x,
-                                y,
-                                "X",
-                                this.canvasStateStore,
-                                this.historyManager,
+                            mergeHandlers(
+                                createClickSelectionSession(
+                                    this.canvasStateStore,
+                                ),
+                                createTransformSession(
+                                    this.historyManager,
+                                    () =>
+                                        createScaleTransformHandle(
+                                            this.canvasStateStore,
+                                            this.viewportStore,
+                                            this.snapGuideStore,
+                                            Direction.left,
+                                        ),
+                                ),
                             ),
                         );
                         return;
                     }
                     case "SelectionText.Center": {
                         startSession(
-                            createMovePointerEventSession(
-                                x,
-                                y,
-                                ev.shiftKey,
-                                this.canvasStateStore,
-                                this.viewportStore,
-                                this.historyManager,
+                            mergeHandlers(
+                                createClickBlockSession(
+                                    object.text.id,
+                                    this.canvasStateStore,
+                                ),
+                                createTransformSession(
+                                    this.historyManager,
+                                    () =>
+                                        createMoveTransformHandle(
+                                            this.canvasStateStore,
+                                            this.viewportStore,
+                                            this.snapGuideStore,
+                                            { x, y },
+                                        ),
+                                ),
                             ),
                         );
                         return;
@@ -336,16 +394,20 @@ export class Controller {
                     case "SelectionText.Right": {
                         this.canvasStateStore.setTextBlockSizingMode("fixed");
                         startSession(
-                            createResizePointerEventSession(
-                                this.canvasStateStore.getState()
-                                    .selectedBlockIds,
-                                object.text.x,
-                                object.text.y,
-                                x,
-                                y,
-                                "X",
-                                this.canvasStateStore,
-                                this.historyManager,
+                            mergeHandlers(
+                                createClickSelectionSession(
+                                    this.canvasStateStore,
+                                ),
+                                createTransformSession(
+                                    this.historyManager,
+                                    () =>
+                                        createScaleTransformHandle(
+                                            this.canvasStateStore,
+                                            this.viewportStore,
+                                            this.snapGuideStore,
+                                            Direction.right,
+                                        ),
+                                ),
                             ),
                         );
                         return;
@@ -360,13 +422,21 @@ export class Controller {
                             }
                         }
                         startSession(
-                            createMovePointerEventSession(
-                                x,
-                                y,
-                                ev.shiftKey,
-                                this.canvasStateStore,
-                                this.viewportStore,
-                                this.historyManager,
+                            mergeHandlers(
+                                createClickBlockSession(
+                                    object.block.id,
+                                    this.canvasStateStore,
+                                ),
+                                createTransformSession(
+                                    this.historyManager,
+                                    () =>
+                                        createMoveTransformHandle(
+                                            this.canvasStateStore,
+                                            this.viewportStore,
+                                            this.snapGuideStore,
+                                            { x, y },
+                                        ),
+                                ),
                             ),
                         );
                         return;
@@ -378,32 +448,166 @@ export class Controller {
                                     this.canvasStateStore.unselectAll();
                                 }
                                 startSession(
-                                    createSelectByRangePointerEventSession(
+                                    createBrushSelectSession(
                                         this.canvasStateStore,
+                                        this.brushStore,
                                     ),
                                 );
                                 return;
                             }
                             case "new-shape": {
+                                const shape: ShapeBlock = {
+                                    type: "shape",
+                                    id: randomId(),
+                                    x,
+                                    y,
+                                    width: 0,
+                                    height: 0,
+                                    x1: x,
+                                    y1: y,
+                                    x2: x + 1,
+                                    y2: y + 1,
+                                    label: "",
+                                    textAlignX:
+                                        this.appStateStore.getState()
+                                            .defaultTextAlignX,
+                                    textAlignY:
+                                        this.appStateStore.getState()
+                                            .defaultTextAlignY,
+                                    colorId:
+                                        this.appStateStore.getState()
+                                            .defaultColorId,
+                                    fillMode:
+                                        this.appStateStore.getState()
+                                            .defaultFillMode,
+                                    strokeStyle:
+                                        this.appStateStore.getState()
+                                            .defaultStrokeStyle,
+                                    path: getRectanglePath(),
+                                };
+                                const p1: PointEntity = {
+                                    type: "point",
+                                    id: randomId(),
+                                    x,
+                                    y,
+                                };
+                                const p2: PointEntity = {
+                                    type: "point",
+                                    id: randomId(),
+                                    x: x + 1,
+                                    y: y + 1,
+                                };
+                                const transaction = new Transaction(
+                                    this.canvasStateStore.getState().page,
+                                )
+                                    .insertBlocks([shape])
+                                    .insertPoints([p1, p2])
+                                    .addDependencies([
+                                        {
+                                            id: randomId(),
+                                            type: "blockToPoint",
+                                            pointKey: PointKey.SHAPE_P1,
+                                            from: p1.id,
+                                            to: shape.id,
+                                        },
+                                        {
+                                            id: randomId(),
+                                            type: "blockToPoint",
+                                            pointKey: PointKey.SHAPE_P2,
+                                            from: p2.id,
+                                            to: shape.id,
+                                        },
+                                    ]);
+                                this.canvasStateStore.setPage(
+                                    transaction.commit(),
+                                );
+                                this.setMode({ type: "select" });
+                                this.canvasStateStore.unselectAll();
+                                this.canvasStateStore.select(shape.id);
+
                                 startSession(
-                                    createNewShapePointerEventSession(
-                                        ev,
-                                        this,
-                                        this.canvasStateStore,
-                                        this.appStateStore,
-                                        this.viewportStore,
+                                    createTransformSession(
+                                        this.historyManager,
+                                        () =>
+                                            createScaleTransformHandle(
+                                                this.canvasStateStore,
+                                                this.viewportStore,
+                                                this.snapGuideStore,
+                                                Direction.bottomRight,
+                                            ),
                                     ),
                                 );
                                 return;
                             }
                             case "new-line": {
+                                const p1: PointEntity = {
+                                    type: "point",
+                                    id: randomId(),
+                                    x,
+                                    y,
+                                };
+                                const p2: PointEntity = {
+                                    type: "point",
+                                    id: randomId(),
+                                    x,
+                                    y,
+                                };
+                                const line: LineBlock = {
+                                    type: "line",
+                                    id: randomId(),
+                                    x1: x,
+                                    y1: y,
+                                    x2: x,
+                                    y2: y,
+                                    endType1:
+                                        this.appStateStore.getState()
+                                            .defaultLineEndType1,
+                                    endType2:
+                                        this.appStateStore.getState()
+                                            .defaultLineEndType2,
+                                    colorId:
+                                        this.appStateStore.getState()
+                                            .defaultColorId,
+                                    strokeStyle:
+                                        this.appStateStore.getState()
+                                            .defaultStrokeStyle,
+                                };
+                                const transaction = new Transaction(
+                                    this.canvasStateStore.getState().page,
+                                );
+                                transaction
+                                    .insertBlocks([line])
+                                    .insertPoints([p1, p2])
+                                    .addDependencies([
+                                        {
+                                            id: randomId(),
+                                            type: "blockToPoint",
+                                            pointKey: PointKey.LINE_P1,
+                                            from: p1.id,
+                                            to: line.id,
+                                        },
+                                        {
+                                            id: randomId(),
+                                            type: "blockToPoint",
+                                            pointKey: PointKey.LINE_P2,
+                                            from: p2.id,
+                                            to: line.id,
+                                        },
+                                    ]);
+
+                                this.canvasStateStore.setPage(
+                                    transaction.commit(),
+                                );
+                                this.setMode({ type: "select" });
+                                this.canvasStateStore.unselectAll();
+                                this.canvasStateStore.select(line.id);
+
                                 startSession(
-                                    createNewLinePointerEventSession(
-                                        this,
-                                        ev,
+                                    createMovePointSession(
+                                        p2,
                                         this.canvasStateStore,
                                         this.viewportStore,
-                                        this.appStateStore,
+                                        this.historyManager,
                                     ),
                                 );
                                 return;
@@ -414,8 +618,9 @@ export class Controller {
                                 }
                                 this.setMode({ type: "select" });
                                 startSession(
-                                    createSelectByRangePointerEventSession(
+                                    createBrushSelectSession(
                                         this.canvasStateStore,
+                                        this.brushStore,
                                     ),
                                 );
                                 return;
@@ -484,7 +689,6 @@ export class Controller {
                                 return;
                             }
                         }
-                        break;
                     }
                 }
             }
@@ -497,12 +701,6 @@ export class Controller {
 
     handleCanvasMouseMove(canvasX: number, canvasY: number, ev: PointerEvent) {
         this.gestureRecognizer.handlePointerMove(ev);
-
-        const viewport = this.viewportStore.getState();
-        this.pointerStore.setPosition(
-            canvasX / viewport.scale + viewport.x,
-            canvasY / viewport.scale + viewport.y,
-        );
     }
 
     handleCanvasMouseUp(ev: PointerEvent) {
@@ -576,13 +774,7 @@ export class Controller {
         return;
     }
 
-    handleShapeDoubleClick(
-        id: string,
-        canvasX: number,
-        canvasY: number,
-        mouseButton: number,
-        modifiers: { shiftKey: boolean },
-    ) {
+    handleShapeDoubleClick(id: string, mouseButton: number) {
         switch (mouseButton) {
             case MouseButton.Left: {
                 this.canvasStateStore.unselectAll();
@@ -1141,13 +1333,9 @@ function testHitWithRange(
 ): "start" | "middle" | "end" | "none" {
     const outerStart = start - threshold;
     const innerStart =
-        end - start < threshold * 4
-            ? (start * 3 + end * 1) / 4
-            : start + threshold;
+        end - start < threshold * 4 ? (start * 3 + end) / 4 : start + threshold;
     const innerEnd =
-        end - start < threshold * 4
-            ? (start * 1 + end * 3) / 4
-            : end - threshold;
+        end - start < threshold * 4 ? (start + end * 3) / 4 : end - threshold;
     const outerEnd = end + threshold;
 
     if (value < outerStart) {
