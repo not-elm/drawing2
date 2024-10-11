@@ -1,3 +1,4 @@
+import type * as csstype from "csstype";
 import { Store } from "../lib/Store";
 import type { ColorId } from "../model/Colors";
 import type { FillMode } from "../model/FillMode";
@@ -8,6 +9,7 @@ import type { TextBlockSizingMode } from "../model/TextBlockSizingMode";
 
 interface AppState {
     readonly mode: Mode;
+    readonly cursor: csstype.Property.Cursor;
     readonly defaultColorId: ColorId;
     readonly defaultFillMode: FillMode;
     readonly defaultTextAlignX: TextAlignment;
@@ -23,6 +25,7 @@ export class AppStateStore extends Store<AppState> {
     constructor() {
         super({
             mode: { type: "select" },
+            cursor: "default",
             defaultColorId: 0,
             defaultFillMode: "none",
             defaultTextAlignX: "center",
@@ -33,6 +36,10 @@ export class AppStateStore extends Store<AppState> {
             defaultTextBlockSizingMode: "content",
             defaultStrokeStyle: "solid",
         });
+    }
+
+    setCursor(cursor: csstype.Property.Cursor) {
+        this.setState({ ...this.state, cursor });
     }
 
     setDefaultTextAlign(textAlignX: TextAlignment, textAlignY: TextAlignment) {

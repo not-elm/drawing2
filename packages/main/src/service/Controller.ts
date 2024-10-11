@@ -4,6 +4,7 @@ import type { Rect } from "../geo/Rect";
 import { getRectanglePath } from "../geo/path";
 import { assert } from "../lib/assert";
 import { randomId } from "../lib/randomId";
+import { testHitEntities } from "../lib/testHitEntities";
 import type { ColorId } from "../model/Colors";
 import { Direction } from "../model/Direction";
 import type { FillMode } from "../model/FillMode";
@@ -31,7 +32,6 @@ import {
     MouseButton,
     fromCanvasCoordinate,
 } from "../store/CanvasStateStore";
-import { testHitEntities } from "../store/HoverStateStore";
 import { PropertyPanelStateStore } from "../store/PropertyPanelStateStore";
 import { SnapGuideStore } from "../store/SnapGuideStore";
 import { ViewportStore } from "../store/ViewportStore";
@@ -701,6 +701,66 @@ export class Controller {
 
     handleCanvasMouseMove(canvasX: number, canvasY: number, ev: PointerEvent) {
         this.gestureRecognizer.handlePointerMove(ev);
+
+        const [x, y] = fromCanvasCoordinate(
+            canvasX,
+            canvasY,
+            this.viewportStore.getState(),
+        );
+        const object = this.getObjectFromPoint(x, y);
+        switch (object.type) {
+            case "SelectionRect.TopLeftHandle":
+                this.appStateStore.setCursor("nwse-resize");
+                break;
+            case "SelectionRect.TopHandle":
+                this.appStateStore.setCursor("ns-resize");
+                break;
+            case "SelectionRect.TopRightHandle":
+                this.appStateStore.setCursor("nesw-resize");
+                break;
+            case "SelectionRect.LeftHandle":
+                this.appStateStore.setCursor("ew-resize");
+                break;
+            case "SelectionRect.CenterHandle":
+                this.appStateStore.setCursor("default");
+                break;
+            case "SelectionRect.RightHandle":
+                this.appStateStore.setCursor("ew-resize");
+                break;
+            case "SelectionRect.BottomLeftHandle":
+                this.appStateStore.setCursor("nesw-resize");
+                break;
+            case "SelectionRect.BottomHandle":
+                this.appStateStore.setCursor("ns-resize");
+                break;
+            case "SelectionRect.BottomRightHandle":
+                this.appStateStore.setCursor("nwse-resize");
+                break;
+            case "SelectionLine.P1":
+                this.appStateStore.setCursor("grab");
+                break;
+            case "SelectionLine.Center":
+                this.appStateStore.setCursor("default");
+                break;
+            case "SelectionLine.P2":
+                this.appStateStore.setCursor("grab");
+                break;
+            case "SelectionText.Left":
+                this.appStateStore.setCursor("ew-resize");
+                break;
+            case "SelectionText.Center":
+                this.appStateStore.setCursor("default");
+                break;
+            case "SelectionText.Right":
+                this.appStateStore.setCursor("ew-resize");
+                break;
+            case "Block":
+                this.appStateStore.setCursor("default");
+                break;
+            case "Canvas":
+                this.appStateStore.setCursor("default");
+                break;
+        }
     }
 
     handleCanvasMouseUp(ev: PointerEvent) {

@@ -1,6 +1,7 @@
 import { adjustAngle } from "../../geo/adjustAngle";
 import type { StateProvider } from "../../lib/Store";
 import { randomId } from "../../lib/randomId";
+import { testHitEntities } from "../../lib/testHitEntities";
 import { type LineBlock, type PointEntity, PointKey } from "../../model/Page";
 import { Transaction } from "../../model/Transaction";
 import type { AppStateStore } from "../../store/AppStateStore";
@@ -8,7 +9,6 @@ import {
     type CanvasStateStore,
     fromCanvasCoordinate,
 } from "../../store/CanvasStateStore";
-import { testHitEntities } from "../../store/HoverStateStore";
 import type { ViewportStore } from "../../store/ViewportStore";
 import type { Controller } from "../Controller";
 import type { PointerEventHandlers } from "./PointerEventSession";

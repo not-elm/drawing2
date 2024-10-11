@@ -1,7 +1,5 @@
 import { distanceFromPointToLine } from "../geo/Line";
 import { distanceFromPointToRect } from "../geo/Rect";
-import { Store } from "../lib/Store";
-import { assert } from "../lib/assert";
 import type {
     Block,
     Entity,
@@ -9,9 +7,7 @@ import type {
     Page,
     PointEntity,
 } from "../model/Page";
-import type { CanvasStateStore } from "./CanvasStateStore";
-import type { PointerStateStore } from "./PointerStateStore";
-import type { ViewportStore } from "./ViewportStore";
+import { assert } from "./assert";
 
 interface HitTestResult {
     // Hit entities ordered by distance (Small distance first)
@@ -122,29 +118,3 @@ export function testHitEntities(
  * The distance threshold for highlighting a point in canvas coordinate (px).
  */
 const THRESHOLD = 32;
-
-export class HoverStateStore extends Store<{
-    hitEntry: HitTestResultEntry<Entity> | null;
-}> {
-    constructor(
-        private readonly canvasStateStore: CanvasStateStore,
-        private readonly pointerStateStore: PointerStateStore,
-        private readonly viewportStore: ViewportStore,
-    ) {
-        super({
-            hitEntry: null,
-        });
-
-        canvasStateStore.addListener(() => this.recompute());
-        pointerStateStore.addListener(() => this.recompute());
-    }
-
-    recompute(): void {
-        const { page } = this.canvasStateStore.getState();
-        const { scale } = this.viewportStore.getState();
-        const { x, y } = this.pointerStateStore.getState();
-
-        const { entities } = testHitEntities(page, x, y, scale);
-        this.setState({ hitEntry: entities[0] ?? null });
-    }
-}

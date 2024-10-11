@@ -71,6 +71,7 @@ export function Canvas() {
                 overflow: "clip",
                 pointerEvents: "all",
                 background: "#f9fafc",
+                cursor: appState.cursor,
                 ">*": {
                     pointerEvents: "none",
                 },
