@@ -1,6 +1,6 @@
 import type { CSSObject } from "@emotion/styled";
 import { MathJax } from "better-react-mathjax";
-import { type MouseEventHandler, memo, useCallback } from "react";
+import { memo } from "react";
 import type { TextBlock } from "../model/Page";
 import type { TextAlignment } from "../model/TextAlignment";
 import { useController } from "./ControllerProvider";
@@ -47,20 +47,6 @@ const TextViewInner = memo(function ShapeViewInner({
 }) {
     const controller = useController();
 
-    const handleDoubleClick: MouseEventHandler = useCallback(
-        (ev) => {
-            const handled = controller.handleShapeDoubleClick(
-                shapeId,
-                ev.button,
-            );
-            if (handled) {
-                ev.stopPropagation();
-                ev.preventDefault();
-            }
-        },
-        [shapeId, controller],
-    );
-
     const containerRef = useResizeObserver((entry) => {
         const canvasWidth = entry.contentRect.width;
         const canvasHeight = entry.contentRect.height;
@@ -97,7 +83,6 @@ const TextViewInner = memo(function ShapeViewInner({
                     },
                 }[sizingMode] as CSSObject),
             }}
-            onDoubleClick={handleDoubleClick}
         >
             {editing ? (
                 <textarea

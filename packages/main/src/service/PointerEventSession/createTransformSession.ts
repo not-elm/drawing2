@@ -4,14 +4,11 @@ import type { PointerEventHandlers } from "./PointerEventSession";
 
 export function createTransformSession(
     historyManager: HistoryManager,
-    initHandle: () => TransformHandle,
+    transformHandle: TransformHandle,
 ): PointerEventHandlers {
-    let transformHandle: TransformHandle | undefined = undefined;
-
     return {
         onPointerDown() {
             historyManager.pause();
-            transformHandle = initHandle();
         },
         onPointerMove(data) {
             transformHandle?.apply(

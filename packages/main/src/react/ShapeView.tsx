@@ -1,5 +1,5 @@
 import { MathJax } from "better-react-mathjax";
-import { type MouseEventHandler, memo, useCallback } from "react";
+import { memo } from "react";
 import {
     type ColorId,
     ColorPaletteBackground,
@@ -66,20 +66,6 @@ const ShapeViewInner = memo(function ShapeViewInner({
 }) {
     const controller = useController();
 
-    const handleDoubleClick: MouseEventHandler = useCallback(
-        (ev) => {
-            const handled = controller.handleShapeDoubleClick(
-                shapeId,
-                ev.button,
-            );
-            if (handled) {
-                ev.stopPropagation();
-                ev.preventDefault();
-            }
-        },
-        [shapeId, controller],
-    );
-
     const strokeWidth = {
         solid: STROKE_WIDTH_BASE,
         dashed: STROKE_WIDTH_BASE,
@@ -123,39 +109,53 @@ const ShapeViewInner = memo(function ShapeViewInner({
                             ),
                         }[strokeStyle]
                     }
-                    onDoubleClick={handleDoubleClick}
                 />
             </svg>
             <div
                 css={{
                     position: "absolute",
-                    width: "100%",
+                    left: 0,
+                    width,
+                    height,
+                    display: "flex",
+                    flexDirection: "column",
                     fontSize: 24,
                     ...{
-                        "start-outside": {
-                            right: "100%",
+                        "start-outside": {},
+                        "end-outside": {},
+                        start: {
+                            alignItems: "flex-start",
                             textAlign: "start" as const,
                         },
-                        start: { left: 0, textAlign: "start" as const },
                         center: {
-                            left: 0,
+                            alignItems: "center",
                             textAlign: "center" as const,
                         },
-                        end: { right: 0, textAlign: "end" as const },
-                        "end-outside": {
-                            left: "100%",
+                        end: {
+                            alignItems: "end",
                             textAlign: "end" as const,
                         },
                     }[textAlignX],
                     ...{
-                        "start-outside": { bottom: "100%" },
-                        start: { top: 0 },
-                        center: {
-                            top: "50%",
-                            transform: "translateY(-50%)",
+                        "start-outside": {
+                            justifyContent: "flex-end",
+                            top: -height,
+                            bottom: height,
                         },
-                        end: { bottom: 0 },
-                        "end-outside": { top: "100%" },
+                        start: {
+                            justifyContent: "flex-start",
+                        },
+                        center: {
+                            justifyContent: "center",
+                        },
+                        end: {
+                            justifyContent: "end",
+                        },
+                        "end-outside": {
+                            justifyContent: "flex-start",
+                            top: height,
+                            bottom: -height,
+                        },
                     }[textAlignY],
                 }}
             >
