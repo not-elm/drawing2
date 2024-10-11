@@ -48,12 +48,12 @@ const TextViewInner = memo(function ShapeViewInner({
     const controller = useController();
 
     const containerRef = useResizeObserver((entry) => {
-        const canvasWidth = entry.contentRect.width;
-        const canvasHeight = entry.contentRect.height;
+        // ResizeObserver is not affected by CSS transform.
+        // So we don't need to care about the viewport scaling.
         controller.handleTextBlockSizeChanged(
             shapeId,
-            canvasWidth,
-            canvasHeight,
+            entry.contentRect.width,
+            entry.contentRect.height,
         );
     });
 

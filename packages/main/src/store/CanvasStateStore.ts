@@ -72,32 +72,6 @@ export class CanvasStateStore extends Store<CanvasState> {
 
     redo() {}
 
-    moveBlocks(blockIds: string[], deltaX: number, deltaY: number) {
-        this.setState(
-            this.state.setPage(
-                new Transaction(this.state.page)
-                    .moveBlocks(blockIds, deltaX, deltaY)
-                    .commit(),
-            ),
-        );
-    }
-
-    scaleBlocks(
-        blockIds: string[],
-        scaleX: number,
-        scaleY: number,
-        originX: number,
-        originY: number,
-    ) {
-        this.setState(
-            this.state.setPage(
-                new Transaction(this.state.page)
-                    .scaleBlocks(blockIds, originX, originY, scaleX, scaleY)
-                    .commit(),
-            ),
-        );
-    }
-
     setLabel(id: string, label: string) {
         this.setState(
             this.state.setPage(

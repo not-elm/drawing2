@@ -273,7 +273,7 @@ export class Controller {
                             this.canvasStateStore,
                             this.viewportStore,
                             this.snapGuideStore,
-                            Direction.left,
+                            Direction.right,
                         ),
                     );
                     break;
@@ -501,10 +501,10 @@ export class Controller {
                         y,
                         x1: x,
                         y1: y,
-                        x2: x,
-                        y2: y,
-                        width: 0,
-                        height: 0,
+                        x2: x + 1,
+                        y2: y + 1,
+                        width: 1,
+                        height: 1,
                         content: "",
                         textAlignment:
                             this.appStateStore.getState()
@@ -520,8 +520,8 @@ export class Controller {
                     const p2: PointEntity = {
                         type: "point",
                         id: randomId(),
-                        x,
-                        y,
+                        x: x + 1,
+                        y: y + 1,
                     };
                     this.canvasStateStore.setPage(
                         new Transaction(this.canvasStateStore.getState().page)
@@ -670,10 +670,10 @@ export class Controller {
                 y,
                 x1: x,
                 y1: y,
-                x2: x,
-                y2: y,
-                width: 0,
-                height: 0,
+                x2: x + 1,
+                y2: y + 1,
+                width: 1,
+                height: 1,
                 content: "",
                 textAlignment:
                     this.appStateStore.getState().defaultTextBlockTextAlignment,
@@ -688,8 +688,8 @@ export class Controller {
             const p2: PointEntity = {
                 type: "point",
                 id: randomId(),
-                x,
-                y,
+                x: x + 1,
+                y: y + 1,
             };
             this.canvasStateStore.setPage(
                 new Transaction(this.canvasStateStore.getState().page)
@@ -885,65 +885,25 @@ export class Controller {
         return false;
     }
 
-    handleTextBlockSizeChanged(
-        blockId: string,
-        canvasWidth: number,
-        canvasHeight: number,
-    ) {
+    handleTextBlockSizeChanged(blockId: string, width: number, height: number) {
         const block = this.canvasStateStore.getState().page.blocks[blockId];
         assert(block !== undefined, `Block ${blockId} is not found`);
         assert(block.type === "text", `Block ${blockId} is not text`);
 
-        const width = canvasWidth / this.viewportStore.getState().scale;
-        const height = canvasHeight / this.viewportStore.getState().scale;
+        const newWidth = block.sizingMode === "content" ? width : block.width;
+        const newHeight = height;
 
-        const dep1 = this.canvasStateStore
-            .getState()
-            .page.dependencies.getByToEntityId(blockId)
-            .find(
-                (dep) =>
-                    dep.type === "blockToPoint" &&
-                    dep.pointKey === PointKey.TEXT_P1,
-            );
-        assert(dep1 !== undefined, `Point ${PointKey.TEXT_P1} is not found`);
-
-        const dep2 = this.canvasStateStore
-            .getState()
-            .page.dependencies.getByToEntityId(blockId)
-            .find(
-                (dep) =>
-                    dep.type === "blockToPoint" &&
-                    dep.pointKey === PointKey.TEXT_P2,
-            );
-        assert(dep2 !== undefined, `Point ${PointKey.TEXT_P2} is not found`);
-
-        switch (block.sizingMode) {
-            case "fixed": {
-                this.canvasStateStore.setPage(
-                    new Transaction(this.canvasStateStore.getState().page)
-                        .setPointPosition(dep1.from, block.x, block.y)
-                        .setPointPosition(
-                            dep2.from,
-                            block.x + block.width,
-                            block.y + height,
-                        )
-                        .commit(),
-                );
-                break;
-            }
-            case "content": {
-                this.canvasStateStore.setPage(
-                    new Transaction(this.canvasStateStore.getState().page)
-                        .setPointPosition(dep1.from, block.x, block.y)
-                        .setPointPosition(
-                            dep2.from,
-                            block.x + width,
-                            block.y + height,
-                        )
-                        .commit(),
-                );
-            }
-        }
+        this.canvasStateStore.setPage(
+            new Transaction(this.canvasStateStore.getState().page)
+                .scaleBlocks(
+                    [blockId],
+                    block.x,
+                    block.y,
+                    newWidth / block.width,
+                    newHeight / block.height,
+                )
+                .commit(),
+        );
     }
 
     setMode(mode: Mode) {

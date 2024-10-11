@@ -31,6 +31,14 @@ export class ViewportStore extends Store<ViewportState> {
                 scale: 1,
             }),
         );
+
+        this.addListener(() => {
+            document.title = `x: ${this.state.x.toFixed(
+                0,
+            )}, y: ${this.state.y.toFixed(
+                0,
+            )}, scale: ${this.state.scale.toFixed(2)}`;
+        });
     }
 
     movePosition(deltaCanvasX: number, deltaCanvasY: number) {
