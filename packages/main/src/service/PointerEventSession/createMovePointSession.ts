@@ -1,6 +1,6 @@
 import { adjustAngle } from "../../geo/adjustAngle";
 import type { StateProvider } from "../../lib/Store";
-import type { LineBlock } from "../../model/Page";
+import type { PathBlock } from "../../model/Page";
 import { Transaction } from "../../model/Transaction";
 import type { CanvasStateStore } from "../../store/CanvasStateStore";
 import type { ViewportStore } from "../../store/ViewportStore";
@@ -8,7 +8,7 @@ import type { HistoryManager } from "../HistoryManager";
 import type { PointerEventHandlers } from "./PointerEventSession";
 
 export function createMovePointSession(
-    line: LineBlock,
+    path: PathBlock,
     point: "p1" | "p2",
     canvasStateStore: CanvasStateStore,
     viewportProvider: StateProvider<ViewportStore>,
@@ -37,22 +37,22 @@ export function createMovePointSession(
     const originalPoint =
         point === "p1"
             ? {
-                  x: line.x1,
-                  y: line.y1,
+                  x: path.x1,
+                  y: path.y1,
               }
             : {
-                  x: line.x2,
-                  y: line.y2,
+                  x: path.x2,
+                  y: path.y2,
               };
     const otherPoint =
         point === "p1"
             ? {
-                  x: line.x2,
-                  y: line.y2,
+                  x: path.x2,
+                  y: path.y2,
               }
             : {
-                  x: line.x1,
-                  y: line.y1,
+                  x: path.x1,
+                  y: path.y1,
               };
 
     return {
@@ -93,7 +93,7 @@ export function createMovePointSession(
 
             canvasStateStore.setPage(
                 new Transaction(canvasStateStore.getState().page)
-                    .setPointPosition(line.id, point, x, y)
+                    .setPointPosition(path.id, point, x, y)
                     .commit(),
             );
         },
@@ -129,7 +129,7 @@ export function createMovePointSession(
             //     );
             // } else {
             //     switch (hitBlockEntry?.target.type) {
-            //         case "line": {
+            //         case "path": {
             //             const width =
             //                 hitBlockEntry.target.x2 - hitBlockEntry.target.x1;
             //             const height =

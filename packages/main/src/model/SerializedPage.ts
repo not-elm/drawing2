@@ -2,7 +2,7 @@ import type { ColorId } from "./Colors";
 import type { SerializedDependency } from "./Dependency";
 import { DependencyCollection } from "./DependencyCollection";
 import type { FillMode } from "./FillMode";
-import type { Block, LineBlock, Page, ShapeBlock, TextBlock } from "./Page";
+import type { Block, Page, PathBlock, ShapeBlock, TextBlock } from "./Page";
 import type { StrokeStyle } from "./StrokeStyle";
 import type { TextAlignment } from "./TextAlignment";
 import type { TextBlockSizingMode } from "./TextBlockSizingMode";
@@ -31,13 +31,13 @@ export function deserializePage(page: SerializedPage): Page {
 }
 
 export type SerializedBlock =
-    | SerializedLineBlock
+    | SerializedPathBlock
     | SerializedShapeBlock
     | SerializedTextBlock;
 export function serializeBlock(block: Block): SerializedBlock {
     switch (block.type) {
-        case "line":
-            return serializeLineBlock(block);
+        case "path":
+            return serializePathBlock(block);
         case "shape":
             return serializeShapeBlock(block);
         case "text":
@@ -46,8 +46,8 @@ export function serializeBlock(block: Block): SerializedBlock {
 }
 export function deserializeBlock(block: SerializedBlock): Block {
     switch (block.type) {
-        case "line":
-            return deserializeLineBlock(block);
+        case "path":
+            return deserializePathBlock(block);
         case "shape":
             return deserializeShapeBlock(block);
         case "text":
@@ -55,9 +55,9 @@ export function deserializeBlock(block: SerializedBlock): Block {
     }
 }
 
-interface SerializedLineBlock {
+interface SerializedPathBlock {
     id: string;
-    type: "line";
+    type: "path";
     x1: number;
     y1: number;
     endType1: LineEndType;
@@ -67,32 +67,32 @@ interface SerializedLineBlock {
     colorId: ColorId;
     strokeStyle: StrokeStyle;
 }
-function serializeLineBlock(line: LineBlock): SerializedLineBlock {
+function serializePathBlock(path: PathBlock): SerializedPathBlock {
     return {
-        id: line.id,
-        type: "line",
-        x1: line.x1,
-        y1: line.y1,
-        endType1: line.endType1,
-        x2: line.x2,
-        y2: line.y2,
-        endType2: line.endType2,
-        colorId: line.colorId,
-        strokeStyle: line.strokeStyle,
+        id: path.id,
+        type: "path",
+        x1: path.x1,
+        y1: path.y1,
+        endType1: path.endType1,
+        x2: path.x2,
+        y2: path.y2,
+        endType2: path.endType2,
+        colorId: path.colorId,
+        strokeStyle: path.strokeStyle,
     };
 }
-function deserializeLineBlock(line: SerializedLineBlock): LineBlock {
+function deserializePathBlock(path: SerializedPathBlock): PathBlock {
     return {
-        id: line.id,
-        type: "line",
-        x1: line.x1,
-        y1: line.y1,
-        endType1: line.endType1,
-        x2: line.x2,
-        y2: line.y2,
-        endType2: line.endType2,
-        colorId: line.colorId,
-        strokeStyle: line.strokeStyle,
+        id: path.id,
+        type: "path",
+        x1: path.x1,
+        y1: path.y1,
+        endType1: path.endType1,
+        x2: path.x2,
+        y2: path.y2,
+        endType2: path.endType2,
+        colorId: path.colorId,
+        strokeStyle: path.strokeStyle,
     };
 }
 

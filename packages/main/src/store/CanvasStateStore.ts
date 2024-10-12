@@ -132,7 +132,7 @@ export class CanvasStateStore extends Store<CanvasState> {
                     .updateProperty(this.state.selectedBlockIds, (oldBlock) => {
                         switch (oldBlock.type) {
                             case "shape":
-                            case "line": {
+                            case "path": {
                                 return { ...oldBlock, colorId };
                             }
                             default: {
@@ -170,7 +170,7 @@ export class CanvasStateStore extends Store<CanvasState> {
                 new Transaction(this.state.page)
                     .updateProperty(this.state.selectedBlockIds, (oldBlock) => {
                         switch (oldBlock.type) {
-                            case "line": {
+                            case "path": {
                                 return {
                                     ...oldBlock,
                                     [`endType${lineEnd}`]: lineEndType,
@@ -237,7 +237,7 @@ export class CanvasStateStore extends Store<CanvasState> {
                     .updateProperty(this.state.selectedBlockIds, (oldBlock) => {
                         switch (oldBlock.type) {
                             case "shape":
-                            case "line": {
+                            case "path": {
                                 return {
                                     ...oldBlock,
                                     strokeStyle,
@@ -540,19 +540,19 @@ export function isOverlapped(obj1: Block, obj2: Block): boolean {
                 case "text": {
                     return isRectOverlapWithRect(obj1, obj2);
                 }
-                case "line": {
+                case "path": {
                     return isRectOverlapWithLine(obj1, obj2);
                 }
             }
             break;
         }
-        case "line": {
+        case "path": {
             switch (obj2.type) {
                 case "shape":
                 case "text": {
                     return isOverlapped(obj2, obj1);
                 }
-                case "line": {
+                case "path": {
                     return isLineOverlapWithLine(obj1, obj2);
                 }
             }

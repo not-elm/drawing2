@@ -28,7 +28,7 @@ interface MoveBlocksCommand extends CommandBase<"MOVE_BLOCKS"> {
     dy: number;
 }
 interface SetPointPositionCommand extends CommandBase<"SET_POINT_POSITION"> {
-    lineId: string;
+    pathId: string;
     point: "p1" | "p2";
     x: number;
     y: number;
@@ -109,12 +109,18 @@ export class Transaction {
     }
 
     setPointPosition(
-        lineId: string,
+        pathId: string,
         point: "p1" | "p2",
         x: number,
         y: number,
     ): this {
-        this.commands.push({ type: "SET_POINT_POSITION", lineId, point, x, y });
+        this.commands.push({
+            type: "SET_POINT_POSITION",
+            pathId,
+            point,
+            x,
+            y,
+        });
         return this;
     }
 
@@ -253,7 +259,7 @@ function scaleBlocks(command: ScaleBlocksCommand, draft: PageDraft) {
         assert(block !== undefined, `Block not found: ${blockId}`);
 
         switch (block.type) {
-            case "line": {
+            case "path": {
                 draft.blocks[blockId] = {
                     ...block,
                     x1: command.cx + command.scaleX * (block.x1 - command.cx),
@@ -286,7 +292,7 @@ function moveBlocks(command: MoveBlocksCommand, draft: PageDraft) {
         assert(block !== undefined, `Block not found: ${blockId}`);
 
         switch (block.type) {
-            case "line": {
+            case "path": {
                 draft.blocks[blockId] = {
                     ...block,
                     x1: block.x1 + command.dx,
@@ -312,16 +318,16 @@ function moveBlocks(command: MoveBlocksCommand, draft: PageDraft) {
 }
 
 function setPointPosition(command: SetPointPositionCommand, draft: PageDraft) {
-    const line = draft.blocks[command.lineId];
-    assert(line !== undefined, `Block not found: ${command.lineId}`);
-    assert(line.type === "line", `Invalid block type: ${line.type} != line`);
+    const path = draft.blocks[command.pathId];
+    assert(path !== undefined, `Block not found: ${command.pathId}`);
+    assert(path.type === "path", `Invalid block type: ${path.type} != path`);
 
-    draft.blocks[command.lineId] = {
-        ...line,
+    draft.blocks[command.pathId] = {
+        ...path,
         [command.point === "p1" ? "x1" : "x2"]: command.x,
         [command.point === "p1" ? "y1" : "y2"]: command.y,
     };
-    draft.dirtyEntityIds.push(command.lineId);
+    draft.dirtyEntityIds.push(command.pathId);
 }
 
 function mergePoints(command: MergePointsCommand, draft: PageDraft) {

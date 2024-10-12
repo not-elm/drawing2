@@ -2,7 +2,7 @@ import { type WheelEventHandler, useCallback, useEffect } from "react";
 import { getBlocksInViewport } from "../model/Page";
 import { BrushRect } from "./BrushRect";
 import { useController } from "./ControllerProvider";
-import { LineView } from "./LineView";
+import { PathView } from "./PathView";
 import { SelectionRect } from "./SelectionRect";
 import { ShapeView } from "./ShapeView";
 import { SnapGuideLayer } from "./SnapGuideLayer";
@@ -107,8 +107,8 @@ export function Canvas() {
                                 />
                             );
                         }
-                        case "line": {
-                            return <LineView key={block.id} line={block} />;
+                        case "path": {
+                            return <PathView key={block.id} path={block} />;
                         }
                         case "text": {
                             return (

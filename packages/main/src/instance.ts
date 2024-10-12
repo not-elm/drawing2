@@ -3,7 +3,7 @@ import { AppController } from "./service/AppController";
 import { GestureRecognizer } from "./service/GestureRecognizer";
 import { HistoryManager } from "./service/HistoryManager";
 import { EditTextModeController } from "./service/ModeController/EditTextModeController";
-import { NewLineModeController } from "./service/ModeController/NewLineModeController";
+import { NewPathModeController } from "./service/ModeController/NewPathModeController";
 import { NewShapeModeController } from "./service/ModeController/NewShapeModeController";
 import { NewTextModeController } from "./service/ModeController/NewTextModeController";
 import { SelectModeController } from "./service/ModeController/SelectModeController";
@@ -91,8 +91,8 @@ const newShapeModeController = singleton(() => {
     );
 });
 
-const newLineModeController = singleton(() => {
-    return new NewLineModeController(
+const newPathModeController = singleton(() => {
+    return new NewPathModeController(
         canvasStateStore(),
         appStateStore(),
         appController(),
@@ -122,7 +122,7 @@ export function createController(): AppController {
     return appController()
         .addModeController(selectModeController())
         .addModeController(newShapeModeController())
-        .addModeController(newLineModeController())
+        .addModeController(newPathModeController())
         .addModeController(newTextModeController())
         .addModeController(editTextModeController());
 }

@@ -4,7 +4,7 @@ import type { Rect } from "../../geo/Rect";
 import { assert } from "../../lib/assert";
 import { testHitEntities } from "../../lib/testHitEntities";
 import { Direction } from "../../model/Direction";
-import type { Block, LineBlock, TextBlock } from "../../model/Page";
+import type { Block, PathBlock, TextBlock } from "../../model/Page";
 import {
     createMoveTransformHandle,
     createScaleTransformHandle,
@@ -124,13 +124,13 @@ export class SelectModeController extends ModeController {
                 case "SelectionRect.BottomRightHandle":
                     this.appStateStore.setCursor("nwse-resize");
                     break;
-                case "SelectionLine.P1":
+                case "SelectionPath.P1":
                     this.appStateStore.setCursor("grab");
                     break;
-                case "SelectionLine.Center":
+                case "SelectionPath.Center":
                     this.appStateStore.setCursor("default");
                     break;
-                case "SelectionLine.P2":
+                case "SelectionPath.P2":
                     this.appStateStore.setCursor("grab");
                     break;
                 case "SelectionText.Left":
@@ -268,9 +268,9 @@ export class SelectModeController extends ModeController {
                 );
                 break;
             }
-            case "SelectionLine.P1": {
+            case "SelectionPath.P1": {
                 session = createMovePointSession(
-                    selectionHandle.line,
+                    selectionHandle.path,
                     "p1",
                     this.canvasStateStore,
                     this.viewportStore,
@@ -278,9 +278,9 @@ export class SelectModeController extends ModeController {
                 );
                 break;
             }
-            case "SelectionLine.P2": {
+            case "SelectionPath.P2": {
                 session = createMovePointSession(
-                    selectionHandle.line,
+                    selectionHandle.path,
                     "p2",
                     this.canvasStateStore,
                     this.viewportStore,
@@ -288,7 +288,7 @@ export class SelectModeController extends ModeController {
                 );
                 break;
             }
-            case "SelectionLine.Center": {
+            case "SelectionPath.Center": {
                 session = createTransformSession(
                     this.historyManager,
                     createMoveTransformHandle(
@@ -392,29 +392,29 @@ export class SelectModeController extends ModeController {
 
         const selectionType = this.getSelectionType();
 
-        if (selectionType === "line") {
-            const line = this.canvasStateStore
+        if (selectionType === "path") {
+            const path = this.canvasStateStore
                 .getState()
                 .getSelectedBlocks()[0];
-            assert(line.type === "line", "Selected block is not line");
+            assert(path.type === "path", "Selected block is not path");
 
             if (
-                distanceFromPointToPoint({ x: line.x1, y: line.y1 }, { x, y }) <
+                distanceFromPointToPoint({ x: path.x1, y: path.y1 }, { x, y }) <
                 THRESHOLD
             ) {
-                return { type: "SelectionLine.P1", line };
+                return { type: "SelectionPath.P1", path: path };
             }
 
             if (
-                distanceFromPointToPoint({ x: line.x2, y: line.y2 }, { x, y }) <
+                distanceFromPointToPoint({ x: path.x2, y: path.y2 }, { x, y }) <
                 THRESHOLD
             ) {
-                return { type: "SelectionLine.P2", line };
+                return { type: "SelectionPath.P2", path: path };
             }
 
-            if (distanceFromPointToLine({ x, y }, line).distance < THRESHOLD) {
+            if (distanceFromPointToLine({ x, y }, path).distance < THRESHOLD) {
                 {
-                    return { type: "SelectionLine.Center", line };
+                    return { type: "SelectionPath.Center", path: path };
                 }
             }
         }
@@ -550,8 +550,8 @@ export class SelectModeController extends ModeController {
 
         if (selectedBlocks.length === 0) return "none";
 
-        if (selectedBlocks.length === 1 && selectedBlocks[0].type === "line") {
-            return "line";
+        if (selectedBlocks.length === 1 && selectedBlocks[0].type === "path") {
+            return "path";
         }
 
         if (selectedBlocks.length === 1 && selectedBlocks[0].type === "text") {
@@ -562,7 +562,7 @@ export class SelectModeController extends ModeController {
     }
 }
 
-type SelectionType = "line" | "rect" | "text" | "none";
+type SelectionType = "path" | "rect" | "text" | "none";
 
 type SelectionHandleType =
     | { type: "SelectionRect.TopLeftHandle"; selectionRect: Rect }
@@ -574,9 +574,9 @@ type SelectionHandleType =
     | { type: "SelectionRect.BottomLeftHandle"; selectionRect: Rect }
     | { type: "SelectionRect.BottomHandle"; selectionRect: Rect }
     | { type: "SelectionRect.BottomRightHandle"; selectionRect: Rect }
-    | { type: "SelectionLine.P1"; line: LineBlock }
-    | { type: "SelectionLine.Center"; line: LineBlock }
-    | { type: "SelectionLine.P2"; line: LineBlock }
+    | { type: "SelectionPath.P1"; path: PathBlock }
+    | { type: "SelectionPath.Center"; path: PathBlock }
+    | { type: "SelectionPath.P2"; path: PathBlock }
     | { type: "SelectionText.Left"; text: TextBlock }
     | { type: "SelectionText.Center"; text: TextBlock }
     | { type: "SelectionText.Right"; text: TextBlock };

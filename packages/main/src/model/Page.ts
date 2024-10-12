@@ -17,7 +17,7 @@ interface EntityBase<T extends string> {
     id: string;
 }
 
-export interface LineBlock extends EntityBase<"line"> {
+export interface PathBlock extends EntityBase<"path"> {
     x1: number;
     y1: number;
     endType1: LineEndType;
@@ -56,7 +56,7 @@ export interface TextBlock extends EntityBase<"text"> {
     content: string;
 }
 
-export type Block = LineBlock | ShapeBlock | TextBlock;
+export type Block = PathBlock | ShapeBlock | TextBlock;
 
 export type Entity = Block;
 
@@ -74,7 +74,7 @@ export function getBlocksInViewport(page: Page, viewport: Viewport): Block[] {
                 case "shape":
                 case "text":
                     return isRectOverlapWithRect(viewport, block);
-                case "line":
+                case "path":
                     return isRectOverlapWithLine(viewport, block);
             }
         });
@@ -85,7 +85,7 @@ export function getBoundingRect(block: Block): Rect {
         case "shape":
         case "text":
             return block;
-        case "line":
+        case "path":
             return getBoundingRectOfLine(block);
     }
 }

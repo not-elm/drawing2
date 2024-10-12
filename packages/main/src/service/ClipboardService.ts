@@ -66,7 +66,7 @@ export const ClipboardService = new (class {
 
                 // Move blocks a little bit to avoid overlapping with copy sources
                 switch (block.type) {
-                    case "line":
+                    case "path":
                         block.x1 += 10;
                         block.y1 += 10;
                         block.x2 += 10;

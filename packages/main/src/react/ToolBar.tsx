@@ -54,15 +54,15 @@ export function ToolBar() {
                 </li>
                 <li>
                     <Button
-                        aria-checked={appState.mode.type === "new-line"}
+                        aria-checked={appState.mode.type === "new-path"}
                         css={{
                             pointerEvents: "all",
                         }}
                         onPointerDown={() => {
-                            controller.setMode({ type: "new-line" });
+                            controller.setMode({ type: "new-path" });
                         }}
                     >
-                        Line
+                        Path
                     </Button>
                 </li>
                 <li>

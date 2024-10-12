@@ -75,8 +75,8 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
         const selectedShapes = selectedBlocks.filter(
             (obj) => obj.type === "shape",
         );
-        const selectedLines = selectedBlocks.filter(
-            (obj) => obj.type === "line",
+        const selectedPaths = selectedBlocks.filter(
+            (obj) => obj.type === "path",
         );
         const selectedTexts = selectedBlocks.filter(
             (obj) => obj.type === "text",
@@ -90,16 +90,16 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
         );
         const colorIds = new Set([
             ...selectedShapes.map((shape) => shape.colorId),
-            ...selectedLines.map((shape) => shape.colorId),
+            ...selectedPaths.map((shape) => shape.colorId),
         ]);
         const fillModes = new Set([
             ...selectedShapes.map((shape) => shape.fillMode),
         ]);
         const lineEndType1Set = new Set(
-            selectedLines.map((line) => line.endType1),
+            selectedPaths.map((line) => line.endType1),
         );
         const lineEndType2Set = new Set(
-            selectedLines.map((line) => line.endType2),
+            selectedPaths.map((line) => line.endType2),
         );
         const textBlockTextAlignments = new Set(
             selectedTexts.map((text) => text.textAlignment),
@@ -108,7 +108,7 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
             selectedTexts.map((text) => text.sizingMode),
         );
         const strokeStyles = new Set([
-            ...selectedLines.map((line) => line.strokeStyle),
+            ...selectedPaths.map((line) => line.strokeStyle),
             ...selectedShapes.map((shape) => shape.strokeStyle),
         ]);
 
@@ -143,9 +143,9 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
                       ? [...alignYs][0]
                       : null,
             orderSectionVisible:
-                selectedShapes.length > 0 || selectedLines.length > 0,
+                selectedShapes.length > 0 || selectedPaths.length > 0,
             lineEndTypeSectionVisible:
-                selectedLines.length > 0 || appState.mode.type === "new-line",
+                selectedPaths.length > 0 || appState.mode.type === "new-path",
             lineEndType1:
                 lineEndType1Set.size === 0
                     ? appState.defaultLineEndType1
@@ -179,8 +179,8 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
                       ? [...textBlockSizingModes][0]
                       : null,
             strokeStyleSectionVisible:
-                selectedLines.length > 0 ||
-                appState.mode.type === "new-line" ||
+                selectedPaths.length > 0 ||
+                appState.mode.type === "new-path" ||
                 selectedShapes.length > 0 ||
                 appState.mode.type === "new-shape",
             strokeStyle:

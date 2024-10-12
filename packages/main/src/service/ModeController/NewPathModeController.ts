@@ -1,6 +1,6 @@
 import type { Line } from "../../geo/Line";
 import { randomId } from "../../lib/randomId";
-import type { Block, LineBlock } from "../../model/Page";
+import type { Block, PathBlock } from "../../model/Page";
 import { Transaction } from "../../model/Transaction";
 import type { AppStateStore } from "../../store/AppStateStore";
 import type { CanvasStateStore } from "../../store/CanvasStateStore";
@@ -14,7 +14,7 @@ import type { HistoryManager } from "../HistoryManager";
 import { createMovePointSession } from "../PointerEventSession/createMovePointSession";
 import { ModeController } from "./ModeController";
 
-export class NewLineModeController extends ModeController {
+export class NewPathModeController extends ModeController {
     constructor(
         private readonly canvasStateStore: CanvasStateStore,
         private readonly appStateStore: AppStateStore,
@@ -27,7 +27,7 @@ export class NewLineModeController extends ModeController {
     }
 
     getType() {
-        return "new-line";
+        return "new-path";
     }
 
     onBlockPointerDown(data: PointerDownEventHandlerData, _block: Block) {
@@ -35,7 +35,7 @@ export class NewLineModeController extends ModeController {
     }
 
     onCanvasPointerDown(data: PointerDownEventHandlerData): void {
-        const lineBlock = this.insertNewLine({
+        const pathBlock = this.insertNewPath({
             x1: data.x,
             y1: data.y,
             x2: data.x + 1,
@@ -44,12 +44,12 @@ export class NewLineModeController extends ModeController {
 
         this.controller.setMode({ type: "select" });
         this.canvasStateStore.unselectAll();
-        this.canvasStateStore.select(lineBlock.id);
+        this.canvasStateStore.select(pathBlock.id);
 
         this.gestureRecognizer.addSessionHandlers(
             data.pointerId,
             createMovePointSession(
-                lineBlock,
+                pathBlock,
                 "p2",
                 this.canvasStateStore,
                 this.viewportStore,
@@ -58,9 +58,9 @@ export class NewLineModeController extends ModeController {
         );
     }
 
-    private insertNewLine(line: Line): LineBlock {
-        const lineBlock: LineBlock = {
-            type: "line",
+    private insertNewPath(line: Line): PathBlock {
+        const pathBlock: PathBlock = {
+            type: "path",
             id: randomId(),
             x1: line.x1,
             y1: line.y1,
@@ -74,9 +74,9 @@ export class NewLineModeController extends ModeController {
         const transaction = new Transaction(
             this.canvasStateStore.getState().page,
         );
-        transaction.insertBlocks([lineBlock]);
+        transaction.insertBlocks([pathBlock]);
 
         this.canvasStateStore.setPage(transaction.commit());
-        return lineBlock;
+        return pathBlock;
     }
 }

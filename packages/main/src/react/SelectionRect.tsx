@@ -1,5 +1,5 @@
 import styled from "@emotion/styled";
-import type { LineBlock } from "../model/Page";
+import type { PathBlock } from "../model/Page";
 import { useController } from "./ControllerProvider";
 import { useStore } from "./hooks/useStore";
 
@@ -13,7 +13,7 @@ export function SelectionRect() {
 
     const { x, y, width, height } = selectionRect;
     const blocks = canvasState.getSelectedBlocks();
-    const isSingleLineMode = blocks.length === 1 && blocks[0].type === "line";
+    const isSinglePathMode = blocks.length === 1 && blocks[0].type === "path";
     const isSingleTextMode = blocks.length === 1 && blocks[0].type === "text";
 
     if (appState.mode.type === "edit-text") return null;
@@ -38,7 +38,7 @@ export function SelectionRect() {
                     overflow: "visible",
                 }}
             >
-                {!isSingleLineMode && (
+                {!isSinglePathMode && (
                     <rect
                         css={{
                             stroke: "var(--color-selection)",
@@ -68,7 +68,7 @@ export function SelectionRect() {
                             />
                         );
                     }
-                    if (obj.type === "line") {
+                    if (obj.type === "path") {
                         return (
                             <line
                                 key={obj.id}
@@ -86,38 +86,38 @@ export function SelectionRect() {
                     }
                 })}
             </svg>
-            {isSingleLineMode && appState.mode.type === "select" && (
+            {isSinglePathMode && appState.mode.type === "select" && (
                 <>
                     <ResizeHandle
                         css={{
                             left:
-                                ((blocks[0] as LineBlock).x1 - x) *
+                                ((blocks[0] as PathBlock).x1 - x) *
                                 viewport.scale,
                             top:
-                                ((blocks[0] as LineBlock).y1 - y) *
+                                ((blocks[0] as PathBlock).y1 - y) *
                                 viewport.scale,
                             cursor: "grab",
                         }}
                     >
-                        <LineEditHandle />
+                        <PathEditHandle />
                     </ResizeHandle>
                     <ResizeHandle
                         css={{
                             left:
-                                ((blocks[0] as LineBlock).x2 - x) *
+                                ((blocks[0] as PathBlock).x2 - x) *
                                 viewport.scale,
                             top:
-                                ((blocks[0] as LineBlock).y2 - y) *
+                                ((blocks[0] as PathBlock).y2 - y) *
                                 viewport.scale,
                             cursor: "grab",
                         }}
                     >
-                        <LineEditHandle />
+                        <PathEditHandle />
                     </ResizeHandle>
                 </>
             )}
             {isSingleTextMode && appState.mode.type === "select" && null}
-            {!isSingleLineMode &&
+            {!isSinglePathMode &&
                 !isSingleTextMode &&
                 appState.mode.type === "select" && (
                     <>
@@ -213,7 +213,7 @@ const CornerResizeHandle = styled.div({
     minWidth: "8px",
     minHeight: "8px",
 });
-const LineEditHandle = styled.div({
+const PathEditHandle = styled.div({
     background: "#fff",
     outline: "2px solid var(--color-selection)",
     borderRadius: "50%",

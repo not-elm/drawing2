@@ -1,11 +1,11 @@
 import { memo } from "react";
 import { Colors } from "../model/Colors";
-import type { LineBlock } from "../model/Page";
+import type { PathBlock } from "../model/Page";
 
 export const STROKE_WIDTH_BASE = 5;
 
-export const LineView = memo(function LineView({ line }: { line: LineBlock }) {
-    const { x1, y1, x2, y2 } = line;
+export const PathView = memo(function PathView({ path }: { path: PathBlock }) {
+    const { x1, y1, x2, y2 } = path;
     const left = Math.min(x1, x2);
     const top = Math.min(y1, y2);
 
@@ -26,7 +26,7 @@ export const LineView = memo(function LineView({ line }: { line: LineBlock }) {
         solid: STROKE_WIDTH_BASE,
         dashed: STROKE_WIDTH_BASE,
         dotted: STROKE_WIDTH_BASE * 1.4,
-    }[line.strokeStyle];
+    }[path.strokeStyle];
     return (
         <svg
             viewBox="0 0 1 1"
@@ -40,31 +40,31 @@ export const LineView = memo(function LineView({ line }: { line: LineBlock }) {
             }}
         >
             <path
-                css={{ stroke: Colors[line.colorId], fill: "none" }}
-                d={constructPath(line)}
+                css={{ stroke: Colors[path.colorId], fill: "none" }}
+                d={constructPath(path)}
                 strokeWidth={strokeWidth}
                 strokeDasharray={
                     {
                         solid: undefined,
                         dashed: [2 * strokeWidth, strokeWidth + 5].join(" "),
                         dotted: [0, strokeWidth * (0.5 + 1.2 + 0.5)].join(" "),
-                    }[line.strokeStyle]
+                    }[path.strokeStyle]
                 }
                 strokeLinecap="round"
                 strokeLinejoin="round"
             />
-            {line.endType1 === "arrow" && arrowHeadPath1 && (
+            {path.endType1 === "arrow" && arrowHeadPath1 && (
                 <path
-                    css={{ stroke: Colors[line.colorId], fill: "none" }}
+                    css={{ stroke: Colors[path.colorId], fill: "none" }}
                     d={arrowHeadPath1}
                     strokeWidth={strokeWidth}
                     strokeLinecap="round"
                     strokeLinejoin="round"
                 />
             )}
-            {line.endType2 === "arrow" && arrowHeadPath2 && (
+            {path.endType2 === "arrow" && arrowHeadPath2 && (
                 <path
-                    css={{ stroke: Colors[line.colorId], fill: "none" }}
+                    css={{ stroke: Colors[path.colorId], fill: "none" }}
                     d={arrowHeadPath2}
                     strokeWidth={strokeWidth}
                     strokeLinecap="round"
@@ -99,8 +99,8 @@ function constructArrowHeadPath(
     return [`M${q1x} ${q1y}`, `L${x1} ${y1}`, `L${q2x} ${q2y}`].join(" ");
 }
 
-function constructPath(line: LineBlock): string {
-    const { x1, y1, x2, y2 } = line;
+function constructPath(path: PathBlock): string {
+    const { x1, y1, x2, y2 } = path;
     const left = Math.min(x1, x2);
     const top = Math.min(y1, y2);
 

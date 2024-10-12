@@ -41,7 +41,7 @@ export function createBrushSelectSession(
                         }
                         break;
                     }
-                    case "line": {
+                    case "path": {
                         if (isRectOverlapWithLine(rect, block)) {
                             selectedBlockIds.add(block.id);
                         }

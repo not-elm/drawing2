@@ -169,7 +169,7 @@ export class AppController {
         switch (key) {
             case "a": {
                 switch (this.appStateStore.getState().mode.type) {
-                    case "new-line":
+                    case "new-path":
                     case "new-shape":
                     case "new-text":
                     case "select": {
@@ -178,7 +178,7 @@ export class AppController {
                             this.canvasStateStore.selectAll();
                             return true;
                         } else {
-                            this.setMode({ type: "new-line" });
+                            this.setMode({ type: "new-path" });
                             this.appStateStore.setDefaultLineEnd(1, "none");
                             this.appStateStore.setDefaultLineEnd(2, "arrow");
                         }
@@ -188,7 +188,7 @@ export class AppController {
             }
             case "r": {
                 switch (this.appStateStore.getState().mode.type) {
-                    case "new-line":
+                    case "new-path":
                     case "new-text":
                     case "select": {
                         this.setMode({ type: "new-shape" });
@@ -200,7 +200,7 @@ export class AppController {
             case "t": {
                 switch (this.appStateStore.getState().mode.type) {
                     case "new-shape":
-                    case "new-line":
+                    case "new-path":
                     case "select": {
                         this.setMode({ type: "new-text" });
                         return true;
@@ -212,7 +212,7 @@ export class AppController {
                 switch (this.appStateStore.getState().mode.type) {
                     case "new-shape":
                     case "select": {
-                        this.setMode({ type: "new-line" });
+                        this.setMode({ type: "new-path" });
                         this.appStateStore.setDefaultLineEnd(1, "none");
                         this.appStateStore.setDefaultLineEnd(2, "none");
                         return true;
@@ -222,7 +222,7 @@ export class AppController {
             }
             case "z": {
                 switch (this.appStateStore.getState().mode.type) {
-                    case "new-line":
+                    case "new-path":
                     case "new-shape":
                     case "select": {
                         if (modifiers.metaKey || modifiers.ctrlKey) {
