@@ -5,22 +5,22 @@ import type { PathBlock } from "../model/Page";
 export const STROKE_WIDTH_BASE = 5;
 
 export const PathView = memo(function PathView({ path }: { path: PathBlock }) {
-    const { x1, y1, x2, y2 } = path;
-    const left = Math.min(x1, x2);
-    const top = Math.min(y1, y2);
+    const nodes = Object.values(path.nodes);
+    const left = Math.min(...nodes.map((node) => node.x));
+    const top = Math.min(...nodes.map((node) => node.y));
 
-    const arrowHeadPath1 = constructArrowHeadPath(
-        x1 - left,
-        y1 - top,
-        x2 - left,
-        y2 - top,
-    );
-    const arrowHeadPath2 = constructArrowHeadPath(
-        x2 - left,
-        y2 - top,
-        x1 - left,
-        y1 - top,
-    );
+    // const arrowHeadPath1 = constructArrowHeadPath(
+    //     x1 - left,
+    //     y1 - top,
+    //     x2 - left,
+    //     y2 - top,
+    // );
+    // const arrowHeadPath2 = constructArrowHeadPath(
+    //     x2 - left,
+    //     y2 - top,
+    //     x1 - left,
+    //     y1 - top,
+    // );
 
     const strokeWidth = {
         solid: STROKE_WIDTH_BASE,
@@ -53,24 +53,24 @@ export const PathView = memo(function PathView({ path }: { path: PathBlock }) {
                 strokeLinecap="round"
                 strokeLinejoin="round"
             />
-            {path.endType1 === "arrow" && arrowHeadPath1 && (
-                <path
-                    css={{ stroke: Colors[path.colorId], fill: "none" }}
-                    d={arrowHeadPath1}
-                    strokeWidth={strokeWidth}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                />
-            )}
-            {path.endType2 === "arrow" && arrowHeadPath2 && (
-                <path
-                    css={{ stroke: Colors[path.colorId], fill: "none" }}
-                    d={arrowHeadPath2}
-                    strokeWidth={strokeWidth}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                />
-            )}
+            {/*{path.endType1 === "arrow" && arrowHeadPath1 && (*/}
+            {/*    <path*/}
+            {/*        css={{ stroke: Colors[path.colorId], fill: "none" }}*/}
+            {/*        d={arrowHeadPath1}*/}
+            {/*        strokeWidth={strokeWidth}*/}
+            {/*        strokeLinecap="round"*/}
+            {/*        strokeLinejoin="round"*/}
+            {/*    />*/}
+            {/*)}*/}
+            {/*{path.endType2 === "arrow" && arrowHeadPath2 && (*/}
+            {/*    <path*/}
+            {/*        css={{ stroke: Colors[path.colorId], fill: "none" }}*/}
+            {/*        d={arrowHeadPath2}*/}
+            {/*        strokeWidth={strokeWidth}*/}
+            {/*        strokeLinecap="round"*/}
+            {/*        strokeLinejoin="round"*/}
+            {/*    />*/}
+            {/*)}*/}
         </svg>
     );
 });
@@ -100,12 +100,23 @@ function constructArrowHeadPath(
 }
 
 function constructPath(path: PathBlock): string {
-    const { x1, y1, x2, y2 } = path;
-    const left = Math.min(x1, x2);
-    const top = Math.min(y1, y2);
+    const nodes = Object.values(path.nodes);
+    const left = Math.min(...nodes.map((node) => node.x));
+    const top = Math.min(...nodes.map((node) => node.y));
 
+    let lastNodeId = "(nothing)";
     const commands: string[] = [];
-    commands.push(`M${x1 - left} ${y1 - top}`, `L${x2 - left} ${y2 - top}`);
+    for (const [startNodeId, endNodeId] of path.edges) {
+        const startNode = path.nodes[startNodeId];
+        const endNode = path.nodes[endNodeId];
+
+        if (startNodeId !== lastNodeId) {
+            commands.push(`M${startNode.x - left} ${startNode.y - top}`);
+        }
+        commands.push(`L${endNode.x - left} ${endNode.y - top}`);
+
+        lastNodeId = endNodeId;
+    }
 
     return commands.join(" ");
 }

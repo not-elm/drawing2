@@ -69,53 +69,37 @@ export function SelectionRect() {
                         );
                     }
                     if (obj.type === "path") {
-                        return (
-                            <line
-                                key={obj.id}
-                                css={{
-                                    stroke: "var(--color-selection)",
-                                    fill: "none",
-                                }}
-                                x1={(obj.x1 - x) * viewport.scale}
-                                y1={(obj.y1 - y) * viewport.scale}
-                                x2={(obj.x2 - x) * viewport.scale}
-                                y2={(obj.y2 - y) * viewport.scale}
-                                strokeWidth={1}
-                            />
-                        );
+                        return null;
+                        // TODO: Render path
+                        // <line
+                        //     key={obj.id}
+                        //     css={{
+                        //         stroke: "var(--color-selection)",
+                        //         fill: "none",
+                        //     }}
+                        //     x1={(obj.x1 - x) * viewport.scale}
+                        //     y1={(obj.y1 - y) * viewport.scale}
+                        //     x2={(obj.x2 - x) * viewport.scale}
+                        //     y2={(obj.y2 - y) * viewport.scale}
+                        //     strokeWidth={1}
+                        // />
                     }
                 })}
             </svg>
-            {isSinglePathMode && appState.mode.type === "select" && (
-                <>
+            {isSinglePathMode &&
+                appState.mode.type === "select" &&
+                Object.values((blocks[0] as PathBlock).nodes).map((node) => (
                     <ResizeHandle
+                        key={node.id}
                         css={{
-                            left:
-                                ((blocks[0] as PathBlock).x1 - x) *
-                                viewport.scale,
-                            top:
-                                ((blocks[0] as PathBlock).y1 - y) *
-                                viewport.scale,
+                            left: (node.x - x) * viewport.scale,
+                            top: (node.y - y) * viewport.scale,
                             cursor: "grab",
                         }}
                     >
                         <PathEditHandle />
                     </ResizeHandle>
-                    <ResizeHandle
-                        css={{
-                            left:
-                                ((blocks[0] as PathBlock).x2 - x) *
-                                viewport.scale,
-                            top:
-                                ((blocks[0] as PathBlock).y2 - y) *
-                                viewport.scale,
-                            cursor: "grab",
-                        }}
-                    >
-                        <PathEditHandle />
-                    </ResizeHandle>
-                </>
-            )}
+                ))}
             {isSingleTextMode && appState.mode.type === "select" && null}
             {!isSinglePathMode &&
                 !isSingleTextMode &&

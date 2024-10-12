@@ -1,5 +1,6 @@
 import { adjustAngle } from "../../geo/adjustAngle";
 import type { StateProvider } from "../../lib/Store";
+import { assert } from "../../lib/assert";
 import type { PathBlock } from "../../model/Page";
 import { Transaction } from "../../model/Transaction";
 import type { CanvasStateStore } from "../../store/CanvasStateStore";
@@ -9,7 +10,7 @@ import type { PointerEventHandlers } from "./PointerEventSession";
 
 export function createMovePointSession(
     path: PathBlock,
-    point: "p1" | "p2",
+    nodeId: string,
     canvasStateStore: CanvasStateStore,
     viewportProvider: StateProvider<ViewportStore>,
     historyManager: HistoryManager,
@@ -34,26 +35,12 @@ export function createMovePointSession(
 
     historyManager.pause();
 
-    const originalPoint =
-        point === "p1"
-            ? {
-                  x: path.x1,
-                  y: path.y1,
-              }
-            : {
-                  x: path.x2,
-                  y: path.y2,
-              };
+    const originalPoint = path.nodes[nodeId];
+    const edge = path.edges.find((e) => e[0] === nodeId || e[1] === nodeId);
+    assert(edge !== undefined);
+
     const otherPoint =
-        point === "p1"
-            ? {
-                  x: path.x2,
-                  y: path.y2,
-              }
-            : {
-                  x: path.x1,
-                  y: path.y1,
-              };
+        edge[0] === nodeId ? path.nodes[edge[1]] : path.nodes[edge[0]];
 
     return {
         onPointerMove: (data) => {
@@ -93,7 +80,7 @@ export function createMovePointSession(
 
             canvasStateStore.setPage(
                 new Transaction(canvasStateStore.getState().page)
-                    .setPointPosition(path.id, point, x, y)
+                    .setPointPosition(path.id, nodeId, x, y)
                     .commit(),
             );
         },

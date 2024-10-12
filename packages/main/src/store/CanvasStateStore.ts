@@ -6,7 +6,7 @@ import { CanvasState } from "../model/CanvasState";
 import type { ColorId } from "../model/Colors";
 import { DependencyCollection } from "../model/DependencyCollection";
 import type { FillMode } from "../model/FillMode";
-import type { Block, Page } from "../model/Page";
+import { type Block, type Page, getEdgesFromPath } from "../model/Page";
 import {
     type SerializedPage,
     deserializePage,
@@ -541,7 +541,9 @@ export function isOverlapped(obj1: Block, obj2: Block): boolean {
                     return isRectOverlapWithRect(obj1, obj2);
                 }
                 case "path": {
-                    return isRectOverlapWithLine(obj1, obj2);
+                    return getEdgesFromPath(obj2).some((line) =>
+                        isRectOverlapWithLine(obj1, line),
+                    );
                 }
             }
             break;
@@ -553,7 +555,14 @@ export function isOverlapped(obj1: Block, obj2: Block): boolean {
                     return isOverlapped(obj2, obj1);
                 }
                 case "path": {
-                    return isLineOverlapWithLine(obj1, obj2);
+                    const lines1 = getEdgesFromPath(obj2);
+                    const lines2 = getEdgesFromPath(obj2);
+
+                    return lines1.some((line1) =>
+                        lines2.some((line2) =>
+                            isLineOverlapWithLine(line1, line2),
+                        ),
+                    );
                 }
             }
             break;
@@ -562,7 +571,3 @@ export function isOverlapped(obj1: Block, obj2: Block): boolean {
 }
 
 const LOCAL_STORAGE_KEY = "LocalCanvasStateStore.state.page";
-
-export async function initializeCanvasStateStore(): Promise<CanvasStateStore> {
-    return Promise.resolve(new CanvasStateStore());
-}

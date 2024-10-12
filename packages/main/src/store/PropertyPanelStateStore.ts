@@ -20,8 +20,6 @@ interface PropertyPanelState {
     readonly orderSectionVisible: boolean;
 
     readonly lineEndTypeSectionVisible: boolean;
-    readonly lineEndType1: LineEndType | null;
-    readonly lineEndType2: LineEndType | null;
 
     readonly textBlockTextAlignmentSectionVisible: boolean;
     readonly textBlockTextAlignment: TextAlignment | null;
@@ -48,8 +46,6 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
             textAlignY: null,
             orderSectionVisible: true,
             lineEndTypeSectionVisible: true,
-            lineEndType1: null,
-            lineEndType2: null,
             textBlockTextAlignmentSectionVisible: true,
             textBlockTextAlignment: null,
             textBlockSizingModeSectionVisible: true,
@@ -95,12 +91,6 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
         const fillModes = new Set([
             ...selectedShapes.map((shape) => shape.fillMode),
         ]);
-        const lineEndType1Set = new Set(
-            selectedPaths.map((line) => line.endType1),
-        );
-        const lineEndType2Set = new Set(
-            selectedPaths.map((line) => line.endType2),
-        );
         const textBlockTextAlignments = new Set(
             selectedTexts.map((text) => text.textAlignment),
         );
@@ -146,18 +136,6 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
                 selectedShapes.length > 0 || selectedPaths.length > 0,
             lineEndTypeSectionVisible:
                 selectedPaths.length > 0 || appState.mode.type === "new-path",
-            lineEndType1:
-                lineEndType1Set.size === 0
-                    ? appState.defaultLineEndType1
-                    : lineEndType1Set.size === 1
-                      ? [...lineEndType1Set][0]
-                      : null,
-            lineEndType2:
-                lineEndType2Set.size === 0
-                    ? appState.defaultLineEndType2
-                    : lineEndType2Set.size === 1
-                      ? [...lineEndType2Set][0]
-                      : null,
             textBlockTextAlignmentSectionVisible:
                 (selectedShapes.length === 0 && selectedTexts.length > 0) ||
                 appState.mode.type === "new-text" ||

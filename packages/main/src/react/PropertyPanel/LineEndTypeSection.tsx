@@ -10,72 +10,42 @@ export function LineEndTypeSection() {
         <div
             css={{
                 display: "flex",
-                flexDirection: "row",
-                justifyContent: "center",
+                flexDirection: "column",
+                justifyContent: "stretch",
+                gap: 4,
+                pointerEvents: "all",
             }}
         >
-            <div
-                css={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(2, auto)",
-                    gridTemplateRows: "repeat(2, auto)",
-                    columnGap: 32,
-                    rowGap: 4,
+            <PropertyPanelButton
+                onPointerDown={(ev) => {
+                    ev.stopPropagation();
+                    controller.setLineEndType(1, "none");
                 }}
             >
-                <PropertyPanelButton
-                    onPointerDown={(ev) => {
-                        ev.stopPropagation();
-                        controller.setLineEndType(1, "none");
+                <span
+                    style={{
+                        transform: "scaleX(-1)",
                     }}
-                    aria-selected={state.lineEndType1 === "none"}
+                    className="material-symbols-outlined"
                 >
-                    <span
-                        style={{
-                            transform: "scaleX(-1)",
-                        }}
-                        className="material-symbols-outlined"
-                    >
-                        line_end
-                    </span>
-                </PropertyPanelButton>
-                <PropertyPanelButton
-                    onPointerDown={(ev) => {
-                        ev.stopPropagation();
-                        controller.setLineEndType(2, "none");
+                    line_end
+                </span>
+            </PropertyPanelButton>
+            <PropertyPanelButton
+                onPointerDown={(ev) => {
+                    ev.stopPropagation();
+                    controller.setLineEndType(1, "arrow");
+                }}
+            >
+                <span
+                    style={{
+                        transform: "scaleX(-1)",
                     }}
-                    aria-selected={state.lineEndType2 === "none"}
+                    className="material-symbols-outlined"
                 >
-                    <span className="material-symbols-outlined">line_end</span>
-                </PropertyPanelButton>
-                <PropertyPanelButton
-                    onPointerDown={(ev) => {
-                        ev.stopPropagation();
-                        controller.setLineEndType(1, "arrow");
-                    }}
-                    aria-selected={state.lineEndType1 === "arrow"}
-                >
-                    <span
-                        style={{
-                            transform: "scaleX(-1)",
-                        }}
-                        className="material-symbols-outlined"
-                    >
-                        line_end_arrow_notch
-                    </span>
-                </PropertyPanelButton>
-                <PropertyPanelButton
-                    onPointerDown={(ev) => {
-                        ev.stopPropagation();
-                        controller.setLineEndType(2, "arrow");
-                    }}
-                    aria-selected={state.lineEndType2 === "arrow"}
-                >
-                    <span className="material-symbols-outlined">
-                        line_end_arrow_notch
-                    </span>
-                </PropertyPanelButton>
-            </div>
+                    line_end_arrow_notch
+                </span>
+            </PropertyPanelButton>
         </div>
     );
 }

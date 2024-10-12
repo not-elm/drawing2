@@ -29,7 +29,7 @@ interface MoveBlocksCommand extends CommandBase<"MOVE_BLOCKS"> {
 }
 interface SetPointPositionCommand extends CommandBase<"SET_POINT_POSITION"> {
     pathId: string;
-    point: "p1" | "p2";
+    nodeId: string;
     x: number;
     y: number;
 }
@@ -110,14 +110,14 @@ export class Transaction {
 
     setPointPosition(
         pathId: string,
-        point: "p1" | "p2",
+        nodeId: string,
         x: number,
         y: number,
     ): this {
         this.commands.push({
             type: "SET_POINT_POSITION",
             pathId,
-            point,
+            nodeId,
             x,
             y,
         });
@@ -262,10 +262,20 @@ function scaleBlocks(command: ScaleBlocksCommand, draft: PageDraft) {
             case "path": {
                 draft.blocks[blockId] = {
                     ...block,
-                    x1: command.cx + command.scaleX * (block.x1 - command.cx),
-                    y1: command.cy + command.scaleY * (block.y1 - command.cy),
-                    x2: command.cx + command.scaleX * (block.x2 - command.cx),
-                    y2: command.cy + command.scaleY * (block.y2 - command.cy),
+                    nodes: Object.fromEntries(
+                        Object.entries(block.nodes).map(([id, node]) => [
+                            id,
+                            {
+                                ...node,
+                                x:
+                                    command.cx +
+                                    command.scaleX * (node.x - command.cx),
+                                y:
+                                    command.cy +
+                                    command.scaleY * (node.y - command.cy),
+                            },
+                        ]),
+                    ),
                 };
                 break;
             }
@@ -295,10 +305,16 @@ function moveBlocks(command: MoveBlocksCommand, draft: PageDraft) {
             case "path": {
                 draft.blocks[blockId] = {
                     ...block,
-                    x1: block.x1 + command.dx,
-                    y1: block.y1 + command.dy,
-                    x2: block.x2 + command.dx,
-                    y2: block.y2 + command.dy,
+                    nodes: Object.fromEntries(
+                        Object.entries(block.nodes).map(([id, node]) => [
+                            id,
+                            {
+                                ...node,
+                                x: node.x + command.dx,
+                                y: node.y + command.dy,
+                            },
+                        ]),
+                    ),
                 };
                 break;
             }
@@ -322,11 +338,13 @@ function setPointPosition(command: SetPointPositionCommand, draft: PageDraft) {
     assert(path !== undefined, `Block not found: ${command.pathId}`);
     assert(path.type === "path", `Invalid block type: ${path.type} != path`);
 
-    draft.blocks[command.pathId] = {
-        ...path,
-        [command.point === "p1" ? "x1" : "x2"]: command.x,
-        [command.point === "p1" ? "y1" : "y2"]: command.y,
+    const newPath = { ...path };
+    newPath.nodes[command.nodeId] = {
+        ...newPath.nodes[command.nodeId],
+        x: command.x,
+        y: command.y,
     };
+    draft.blocks[command.pathId] = newPath;
     draft.dirtyEntityIds.push(command.pathId);
 }
 

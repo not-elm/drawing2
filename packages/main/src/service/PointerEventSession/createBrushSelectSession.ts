@@ -1,4 +1,5 @@
 import { isRectOverlapWithLine, isRectOverlapWithRect } from "../../geo/Rect";
+import { getEdgesFromPath } from "../../model/Page";
 import type { BrushStore } from "../../store/BrushStore";
 import type { CanvasStateStore } from "../../store/CanvasStateStore";
 import type { PointerEventHandlers } from "./PointerEventSession";
@@ -42,7 +43,11 @@ export function createBrushSelectSession(
                         break;
                     }
                     case "path": {
-                        if (isRectOverlapWithLine(rect, block)) {
+                        if (
+                            getEdgesFromPath(block).some((line) =>
+                                isRectOverlapWithLine(rect, line),
+                            )
+                        ) {
                             selectedBlockIds.add(block.id);
                         }
                         break;

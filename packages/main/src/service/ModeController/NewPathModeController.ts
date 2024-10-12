@@ -50,7 +50,7 @@ export class NewPathModeController extends ModeController {
             data.pointerId,
             createMovePointSession(
                 pathBlock,
-                "p2",
+                pathBlock.edges[0][1],
                 this.canvasStateStore,
                 this.viewportStore,
                 this.historyManager,
@@ -59,15 +59,26 @@ export class NewPathModeController extends ModeController {
     }
 
     private insertNewPath(line: Line): PathBlock {
+        const node1 = {
+            id: randomId(),
+            x: line.x1,
+            y: line.y1,
+            endType: this.appStateStore.getState().defaultLineEndType1,
+        };
+        const node2 = {
+            id: randomId(),
+            x: line.x2,
+            y: line.y2,
+            endType: this.appStateStore.getState().defaultLineEndType2,
+        };
         const pathBlock: PathBlock = {
             type: "path",
             id: randomId(),
-            x1: line.x1,
-            y1: line.y1,
-            x2: line.x2,
-            y2: line.y2,
-            endType1: this.appStateStore.getState().defaultLineEndType1,
-            endType2: this.appStateStore.getState().defaultLineEndType2,
+            nodes: {
+                [node1.id]: node1,
+                [node2.id]: node2,
+            },
+            edges: [[node1.id, node2.id]],
             colorId: this.appStateStore.getState().defaultColorId,
             strokeStyle: this.appStateStore.getState().defaultStrokeStyle,
         };

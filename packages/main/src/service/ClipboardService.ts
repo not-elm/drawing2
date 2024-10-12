@@ -66,12 +66,13 @@ export const ClipboardService = new (class {
 
                 // Move blocks a little bit to avoid overlapping with copy sources
                 switch (block.type) {
-                    case "path":
-                        block.x1 += 10;
-                        block.y1 += 10;
-                        block.x2 += 10;
-                        block.y2 += 10;
+                    case "path": {
+                        for (const node of Object.values(block.nodes)) {
+                            block.nodes[node.id].x += 10;
+                            block.nodes[node.id].y += 10;
+                        }
                         break;
+                    }
                     case "shape":
                         block.x += 10;
                         block.y += 10;

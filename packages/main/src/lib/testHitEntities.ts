@@ -1,6 +1,12 @@
 import { distanceFromPointToLine } from "../geo/Line";
 import { distanceFromPointToRect } from "../geo/Rect";
-import type { Block, Entity, Page, PathBlock } from "../model/Page";
+import {
+    type Block,
+    type Entity,
+    type Page,
+    type PathBlock,
+    getEdgesFromPath,
+} from "../model/Page";
 import { assert } from "./assert";
 
 interface HitTestResult {
@@ -36,19 +42,21 @@ export function testHitEntities(
 
         switch (block.type) {
             case "path": {
-                const { point, distance } = distanceFromPointToLine(
-                    { x, y },
-                    block,
-                );
-                if (distance <= threshold) {
-                    const entry: HitTestResultEntry<PathBlock> = {
-                        target: block,
-                        point,
-                        distance,
-                        zIndex,
-                    };
-                    blocks.push(entry);
-                    entities.push(entry);
+                for (const edge of getEdgesFromPath(block)) {
+                    const { point, distance } = distanceFromPointToLine(
+                        { x, y },
+                        edge,
+                    );
+                    if (distance <= threshold) {
+                        const entry: HitTestResultEntry<PathBlock> = {
+                            target: block,
+                            point,
+                            distance,
+                            zIndex,
+                        };
+                        blocks.push(entry);
+                        entities.push(entry);
+                    }
                 }
                 break;
             }

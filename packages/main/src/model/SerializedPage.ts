@@ -58,12 +58,13 @@ export function deserializeBlock(block: SerializedBlock): Block {
 interface SerializedPathBlock {
     id: string;
     type: "path";
-    x1: number;
-    y1: number;
-    endType1: LineEndType;
-    x2: number;
-    y2: number;
-    endType2: LineEndType;
+    nodes: {
+        id: string;
+        x: number;
+        y: number;
+        endType: LineEndType;
+    }[];
+    edges: [string, string][];
     colorId: ColorId;
     strokeStyle: StrokeStyle;
 }
@@ -71,12 +72,13 @@ function serializePathBlock(path: PathBlock): SerializedPathBlock {
     return {
         id: path.id,
         type: "path",
-        x1: path.x1,
-        y1: path.y1,
-        endType1: path.endType1,
-        x2: path.x2,
-        y2: path.y2,
-        endType2: path.endType2,
+        nodes: Object.entries(path.nodes).map(([id, node]) => ({
+            id,
+            x: node.x,
+            y: node.y,
+            endType: node.endType,
+        })),
+        edges: path.edges,
         colorId: path.colorId,
         strokeStyle: path.strokeStyle,
     };
@@ -85,12 +87,8 @@ function deserializePathBlock(path: SerializedPathBlock): PathBlock {
     return {
         id: path.id,
         type: "path",
-        x1: path.x1,
-        y1: path.y1,
-        endType1: path.endType1,
-        x2: path.x2,
-        y2: path.y2,
-        endType2: path.endType2,
+        nodes: Object.fromEntries(path.nodes.map((node) => [node.id, node])),
+        edges: path.edges,
         colorId: path.colorId,
         strokeStyle: path.strokeStyle,
     };

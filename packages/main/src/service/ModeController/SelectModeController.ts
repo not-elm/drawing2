@@ -4,7 +4,13 @@ import type { Rect } from "../../geo/Rect";
 import { assert } from "../../lib/assert";
 import { testHitEntities } from "../../lib/testHitEntities";
 import { Direction } from "../../model/Direction";
-import type { Block, PathBlock, TextBlock } from "../../model/Page";
+import {
+    type Block,
+    type PathBlock,
+    type PathNode,
+    type TextBlock,
+    getEdgesFromPath,
+} from "../../model/Page";
 import {
     createMoveTransformHandle,
     createScaleTransformHandle,
@@ -124,14 +130,11 @@ export class SelectModeController extends ModeController {
                 case "SelectionRect.BottomRightHandle":
                     this.appStateStore.setCursor("nwse-resize");
                     break;
-                case "SelectionPath.P1":
+                case "SelectionPath.Node":
                     this.appStateStore.setCursor("grab");
                     break;
-                case "SelectionPath.Center":
+                case "SelectionPath.Edge":
                     this.appStateStore.setCursor("default");
-                    break;
-                case "SelectionPath.P2":
-                    this.appStateStore.setCursor("grab");
                     break;
                 case "SelectionText.Left":
                     this.appStateStore.setCursor("ew-resize");
@@ -268,27 +271,17 @@ export class SelectModeController extends ModeController {
                 );
                 break;
             }
-            case "SelectionPath.P1": {
+            case "SelectionPath.Node": {
                 session = createMovePointSession(
                     selectionHandle.path,
-                    "p1",
+                    selectionHandle.node.id,
                     this.canvasStateStore,
                     this.viewportStore,
                     this.historyManager,
                 );
                 break;
             }
-            case "SelectionPath.P2": {
-                session = createMovePointSession(
-                    selectionHandle.path,
-                    "p2",
-                    this.canvasStateStore,
-                    this.viewportStore,
-                    this.historyManager,
-                );
-                break;
-            }
-            case "SelectionPath.Center": {
+            case "SelectionPath.Edge": {
                 session = createTransformSession(
                     this.historyManager,
                     createMoveTransformHandle(
@@ -398,23 +391,24 @@ export class SelectModeController extends ModeController {
                 .getSelectedBlocks()[0];
             assert(path.type === "path", "Selected block is not path");
 
-            if (
-                distanceFromPointToPoint({ x: path.x1, y: path.y1 }, { x, y }) <
-                THRESHOLD
-            ) {
-                return { type: "SelectionPath.P1", path: path };
+            for (const node of Object.values(path.nodes)) {
+                if (
+                    distanceFromPointToPoint(
+                        { x: node.x, y: node.y },
+                        { x, y },
+                    ) < THRESHOLD
+                ) {
+                    return { type: "SelectionPath.Node", path, node };
+                }
             }
 
-            if (
-                distanceFromPointToPoint({ x: path.x2, y: path.y2 }, { x, y }) <
-                THRESHOLD
-            ) {
-                return { type: "SelectionPath.P2", path: path };
-            }
-
-            if (distanceFromPointToLine({ x, y }, path).distance < THRESHOLD) {
-                {
-                    return { type: "SelectionPath.Center", path: path };
+            for (const edge of getEdgesFromPath(path)) {
+                if (
+                    distanceFromPointToLine({ x, y }, edge).distance < THRESHOLD
+                ) {
+                    {
+                        return { type: "SelectionPath.Edge", path: path };
+                    }
                 }
             }
         }
@@ -574,9 +568,8 @@ type SelectionHandleType =
     | { type: "SelectionRect.BottomLeftHandle"; selectionRect: Rect }
     | { type: "SelectionRect.BottomHandle"; selectionRect: Rect }
     | { type: "SelectionRect.BottomRightHandle"; selectionRect: Rect }
-    | { type: "SelectionPath.P1"; path: PathBlock }
-    | { type: "SelectionPath.Center"; path: PathBlock }
-    | { type: "SelectionPath.P2"; path: PathBlock }
+    | { type: "SelectionPath.Edge"; path: PathBlock }
+    | { type: "SelectionPath.Node"; path: PathBlock; node: PathNode }
     | { type: "SelectionText.Left"; text: TextBlock }
     | { type: "SelectionText.Center"; text: TextBlock }
     | { type: "SelectionText.Right"; text: TextBlock };
