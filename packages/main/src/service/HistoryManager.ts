@@ -1,7 +1,7 @@
 import type { CanvasState } from "../model/CanvasState";
 import type { CanvasStateStore } from "../store/CanvasStateStore";
 
-const MAX_HISTORY_LENGTH = 0;
+const MAX_HISTORY_LENGTH = 1000;
 
 export class HistoryManager {
     private readonly undoStack: CanvasState[] = [];
@@ -45,9 +45,15 @@ export class HistoryManager {
         const lastState = this.currentState;
         this.currentState = state;
 
-        if (lastState.page === state.page) return;
-        if (this.paused) return;
-        if (this.processing) return;
+        if (lastState.page === state.page) {
+            return;
+        }
+        if (this.paused) {
+            return;
+        }
+        if (this.processing) {
+            return;
+        }
 
         this.redoStack.length = 0;
         this.undoStack.push(lastState);
@@ -78,6 +84,8 @@ export class HistoryManager {
             this.canvasStateStore.setSelectedBlockIds([
                 ...prevState.selectedBlockIds,
             ]);
+        } catch (e) {
+            console.error(e);
         } finally {
             this.processing = false;
         }

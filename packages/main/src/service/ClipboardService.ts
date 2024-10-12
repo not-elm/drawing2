@@ -35,10 +35,6 @@ export const ClipboardService = new (class {
             blocksInOrder.push(page.blocks[blockId]);
             for (const dep of page.dependencies.getByToEntityId(blockId)) {
                 dependencySet.add(dep);
-                if (dep.type === "blockToPoint") {
-                    const point = page.points[dep.from];
-                    pointSet.add(point);
-                }
             }
         }
         for (const point of pointSet) {

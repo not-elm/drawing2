@@ -4,12 +4,7 @@ import type { Rect } from "../../geo/Rect";
 import { assert } from "../../lib/assert";
 import { testHitEntities } from "../../lib/testHitEntities";
 import { Direction } from "../../model/Direction";
-import {
-    type Block,
-    type LineBlock,
-    PointKey,
-    type TextBlock,
-} from "../../model/Page";
+import type { Block, LineBlock, TextBlock } from "../../model/Page";
 import {
     createMoveTransformHandle,
     createScaleTransformHandle,
@@ -30,7 +25,6 @@ import {
     mergeHandlers,
 } from "../PointerEventSession/PointerEventSession";
 import { createBrushSelectSession } from "../PointerEventSession/createBrushSelectSession";
-import { createMovePointSession } from "../PointerEventSession/createMovePointSession";
 import { createTransformSession } from "../PointerEventSession/createTransformSession";
 import { ModeController } from "./ModeController";
 import type { NewTextModeController } from "./NewTextModeController";
@@ -274,44 +268,46 @@ export class SelectModeController extends ModeController {
                 break;
             }
             case "SelectionLine.P1": {
-                const pId = this.canvasStateStore
-                    .getState()
-                    .page.dependencies.getByToEntityId(selectionHandle.line.id)
-                    .filter((d) => d.type === "blockToPoint")
-                    .filter((d) => d.pointKey === PointKey.LINE_P1)[0];
-                assert(pId !== undefined, "Point not found");
-
-                const point =
-                    this.canvasStateStore.getState().page.points[pId.from];
-                assert(point !== undefined, "Point not found");
-
-                session = createMovePointSession(
-                    point,
-                    this.canvasStateStore,
-                    this.viewportStore,
-                    this.historyManager,
-                );
-                break;
+                throw new Error("Not implemented yet");
+                // TODO
+                // const pId = this.canvasStateStore
+                //     .getState()
+                //     .page.dependencies.getByToEntityId(selectionHandle.line.id)
+                //     .filter((d) => d.type === "blockToPoint")
+                //     .filter((d) => d.pointKey === PointKey.LINE_P1)[0];
+                // assert(pId !== undefined, "Point not found");
+                //
+                // const point =
+                //     this.canvasStateStore.getState().page.points[pId.from];
+                // assert(point !== undefined, "Point not found");
+                //
+                // session = createMovePointSession(
+                //     point,
+                //     this.canvasStateStore,
+                //     this.viewportStore,
+                //     this.historyManager,
+                // );
             }
             case "SelectionLine.P2": {
-                const pId = this.canvasStateStore
-                    .getState()
-                    .page.dependencies.getByToEntityId(selectionHandle.line.id)
-                    .filter((d) => d.type === "blockToPoint")
-                    .filter((d) => d.pointKey === PointKey.LINE_P2)[0];
-                assert(pId !== undefined, "Point not found");
-
-                const point =
-                    this.canvasStateStore.getState().page.points[pId.from];
-                assert(point !== undefined, "Point not found");
-
-                session = createMovePointSession(
-                    point,
-                    this.canvasStateStore,
-                    this.viewportStore,
-                    this.historyManager,
-                );
-                break;
+                throw new Error("Not implemented yet");
+                // TODO
+                // const pId = this.canvasStateStore
+                //     .getState()
+                //     .page.dependencies.getByToEntityId(selectionHandle.line.id)
+                //     .filter((d) => d.type === "blockToPoint")
+                //     .filter((d) => d.pointKey === PointKey.LINE_P2)[0];
+                // assert(pId !== undefined, "Point not found");
+                //
+                // const point =
+                //     this.canvasStateStore.getState().page.points[pId.from];
+                // assert(point !== undefined, "Point not found");
+                //
+                // session = createMovePointSession(
+                //     point,
+                //     this.canvasStateStore,
+                //     this.viewportStore,
+                //     this.historyManager,
+                // );
             }
             case "SelectionLine.Center": {
                 session = createTransformSession(

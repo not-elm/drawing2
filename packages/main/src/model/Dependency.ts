@@ -1,14 +1,8 @@
-import type { PointKey } from "./Page";
-
 interface DependencyBase<T extends string> {
     id: string;
     type: T;
     from: string;
     to: string;
-}
-
-export interface BlockToPointDependency extends DependencyBase<"blockToPoint"> {
-    pointKey: (typeof PointKey)[keyof typeof PointKey];
 }
 
 export interface PointOnLineDependency extends DependencyBase<"pointOnLine"> {
@@ -27,21 +21,15 @@ export interface PointOnShapeDependency extends DependencyBase<"pointOnShape"> {
     ry: number;
 }
 
-export type Dependency =
-    | BlockToPointDependency
-    | PointOnLineDependency
-    | PointOnShapeDependency;
+export type Dependency = PointOnLineDependency | PointOnShapeDependency;
 
 export type SerializedDependency =
-    | SerializedBlockToPointDependency
     | SerializedPointOnLineDependency
     | SerializedPointOnShapeDependency;
 export function serializeDependency(
     dependency: Dependency,
 ): SerializedDependency {
     switch (dependency.type) {
-        case "blockToPoint":
-            return serializeBlockToPointDependency(dependency);
         case "pointOnLine":
             return serializePointOnLineDependency(dependency);
         case "pointOnShape":
@@ -52,43 +40,11 @@ export function deserializeDependency(
     dependency: SerializedDependency,
 ): Dependency {
     switch (dependency.type) {
-        case "blockToPoint":
-            return deserializeBlockToPointDependency(dependency);
         case "pointOnLine":
             return deserializePointOnLineDependency(dependency);
         case "pointOnShape":
             return deserializePointOnShapeDependency(dependency);
     }
-}
-
-interface SerializedBlockToPointDependency {
-    id: string;
-    type: "blockToPoint";
-    from: string;
-    to: string;
-    pointKey: string;
-}
-function serializeBlockToPointDependency(
-    dependency: BlockToPointDependency,
-): SerializedBlockToPointDependency {
-    return {
-        id: dependency.id,
-        type: "blockToPoint",
-        from: dependency.from,
-        to: dependency.to,
-        pointKey: dependency.pointKey,
-    };
-}
-function deserializeBlockToPointDependency(
-    dependency: SerializedBlockToPointDependency,
-): BlockToPointDependency {
-    return {
-        id: dependency.id,
-        type: "blockToPoint",
-        from: dependency.from,
-        to: dependency.to,
-        pointKey: dependency.pointKey,
-    };
 }
 
 interface SerializedPointOnLineDependency {

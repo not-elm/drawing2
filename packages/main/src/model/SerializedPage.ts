@@ -113,10 +113,6 @@ interface SerializedShapeBlock {
     type: "shape";
     x: number;
     y: number;
-    x1: number;
-    y1: number;
-    x2: number;
-    y2: number;
     width: number;
     height: number;
     label: string;
@@ -133,10 +129,6 @@ function serializeShapeBlock(shape: ShapeBlock): SerializedShapeBlock {
         type: "shape",
         x: shape.x,
         y: shape.y,
-        x1: shape.x1,
-        y1: shape.y1,
-        x2: shape.x2,
-        y2: shape.y2,
         width: shape.width,
         height: shape.height,
         label: shape.label,
@@ -154,10 +146,6 @@ function deserializeShapeBlock(shape: SerializedShapeBlock): ShapeBlock {
         type: "shape",
         x: shape.x,
         y: shape.y,
-        x1: shape.x1,
-        y1: shape.y1,
-        x2: shape.x2,
-        y2: shape.y2,
         width: shape.width,
         height: shape.height,
         label: shape.label,
@@ -175,10 +163,6 @@ interface SerializedTextBlock {
     type: "text";
     x: number;
     y: number;
-    x1: number;
-    y1: number;
-    x2: number;
-    y2: number;
     width: number;
     height: number;
     sizingMode: TextBlockSizingMode;
@@ -191,10 +175,6 @@ function serializeTextBlock(text: TextBlock): SerializedTextBlock {
         type: "text",
         x: text.x,
         y: text.y,
-        x1: text.x1,
-        y1: text.y1,
-        x2: text.x2,
-        y2: text.y2,
         width: text.width,
         height: text.height,
         sizingMode: text.sizingMode,
@@ -208,10 +188,6 @@ function deserializeTextBlock(text: SerializedTextBlock): TextBlock {
         type: "text",
         x: text.x,
         y: text.y,
-        x1: text.x1,
-        y1: text.y1,
-        x2: text.x2,
-        y2: text.y2,
         width: text.width,
         height: text.height,
         sizingMode: text.sizingMode,

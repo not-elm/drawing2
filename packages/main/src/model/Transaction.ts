@@ -1,13 +1,12 @@
 import { assert } from "../lib/assert";
 import { randomId } from "../lib/randomId";
 import type {
-    BlockToPointDependency,
     Dependency,
     PointOnLineDependency,
     PointOnShapeDependency,
 } from "./Dependency";
 import type { DependencyCollection } from "./DependencyCollection";
-import { type Block, type Page, type PointEntity, PointKey } from "./Page";
+import type { Block, Page, PointEntity } from "./Page";
 
 interface CommandBase<T extends string> {
     type: T;
@@ -180,10 +179,6 @@ export class Transaction {
             draft.dirtyEntityIds,
         )) {
             switch (dependency.type) {
-                case "blockToPoint": {
-                    recomputeBlockToPointDependency(dependency, draft);
-                    break;
-                }
                 case "pointOnLine": {
                     recomputePointOnLineDependency(dependency, draft);
                     break;
@@ -296,7 +291,7 @@ function deleteBlocks(command: DeleteBlocksCommand, draft: PageDraft) {
 
         // Clean up points with no more dependencies
         for (const dep of deps) {
-            if (dep.type !== "blockToPoint") continue;
+            assert(false, "Unreachable code");
             const pointId = dep.from;
             if (draft.dependencies.getByFromEntityId(pointId).length === 0) {
                 deletePoint(pointId, draft);
@@ -311,42 +306,62 @@ function deletePoint(pointId: string, draft: PageDraft) {
 }
 
 function scaleBlocks(command: ScaleBlocksCommand, draft: PageDraft) {
-    const pointIds = new Set<string>();
     for (const blockId of command.blockIds) {
-        for (const dep of draft.dependencies
-            .getByToEntityId(blockId)
-            .filter((dep) => dep.type === "blockToPoint")) {
-            pointIds.add(dep.from);
+        const block = draft.blocks[blockId];
+        assert(block !== undefined, `Block not found: ${blockId}`);
+
+        switch (block.type) {
+            case "line": {
+                draft.blocks[blockId] = {
+                    ...block,
+                    x1: command.cx + command.scaleX * (block.x1 - command.cx),
+                    y1: command.cy + command.scaleY * (block.y1 - command.cy),
+                    x2: command.cx + command.scaleX * (block.x2 - command.cx),
+                    y2: command.cy + command.scaleY * (block.y2 - command.cy),
+                };
+                break;
+            }
+            case "shape":
+            case "text": {
+                draft.blocks[blockId] = {
+                    ...block,
+                    x: command.cx + command.scaleX * (block.x - command.cx),
+                    y: command.cy + command.scaleY * (block.y - command.cy),
+                    width: block.width * command.scaleX,
+                    height: block.height * command.scaleY,
+                };
+                break;
+            }
         }
-    }
-    for (const pointId of pointIds) {
-        const point = draft.points[pointId];
-        draft.points[pointId] = {
-            ...point,
-            x: (point.x - command.cx) * command.scaleX + command.cx,
-            y: (point.y - command.cy) * command.scaleY + command.cy,
-        };
-        draft.dirtyEntityIds.push(pointId);
     }
 }
 
 function moveBlocks(command: MoveBlocksCommand, draft: PageDraft) {
-    const pointIds = new Set<string>();
     for (const blockId of command.blockIds) {
-        for (const dep of draft.dependencies
-            .getByToEntityId(blockId)
-            .filter((dep) => dep.type === "blockToPoint")) {
-            pointIds.add(dep.from);
+        const block = draft.blocks[blockId];
+        assert(block !== undefined, `Block not found: ${blockId}`);
+
+        switch (block.type) {
+            case "line": {
+                draft.blocks[blockId] = {
+                    ...block,
+                    x1: block.x1 + command.dx,
+                    y1: block.y1 + command.dy,
+                    x2: block.x2 + command.dx,
+                    y2: block.y2 + command.dy,
+                };
+                break;
+            }
+            case "shape":
+            case "text": {
+                draft.blocks[blockId] = {
+                    ...block,
+                    x: block.x + command.dx,
+                    y: block.y + command.dy,
+                };
+                break;
+            }
         }
-    }
-    for (const pointId of pointIds) {
-        const point = draft.points[pointId];
-        draft.points[pointId] = {
-            ...point,
-            x: point.x + command.dx,
-            y: point.y + command.dy,
-        };
-        draft.dirtyEntityIds.push(pointId);
     }
 }
 
@@ -399,130 +414,6 @@ function deleteDependencies(
 ) {
     for (const id of command.dependencyIds) {
         draft.dependencies.deleteById(id);
-    }
-}
-
-function recomputeBlockToPointDependency(
-    dependency: BlockToPointDependency,
-    draft: PageDraft,
-) {
-    const point = draft.points[dependency.from];
-    const block = draft.blocks[dependency.to];
-    switch (dependency.pointKey) {
-        case PointKey.LINE_P1: {
-            assert(
-                block.type === "line",
-                `Invalid block type: ${block.type} !== line`,
-            );
-            draft.blocks[block.id] = {
-                ...block,
-                x1: point.x,
-                y1: point.y,
-            };
-            break;
-        }
-        case PointKey.LINE_P2: {
-            assert(
-                block.type === "line",
-                `Invalid block type: ${block.type} !== line`,
-            );
-            draft.blocks[block.id] = {
-                ...block,
-                x2: point.x,
-                y2: point.y,
-            };
-            break;
-        }
-        case PointKey.SHAPE_P1: {
-            assert(
-                block.type === "shape",
-                `Invalid block type: ${block.type} !== shape`,
-            );
-
-            const x1 = point.x;
-            const x2 = block.x2;
-            const y1 = point.y;
-            const y2 = block.y2;
-            const x = Math.min(x1, x2);
-            const y = Math.min(y1, y2);
-            const width = Math.abs(x1 - x2);
-            const height = Math.abs(y1 - y2);
-
-            draft.blocks[block.id] = {
-                ...block,
-                x,
-                y,
-                width,
-                height,
-                x1,
-                x2,
-                y1,
-                y2,
-            };
-            break;
-        }
-        case PointKey.SHAPE_P2: {
-            assert(
-                block.type === "shape",
-                `Invalid block type: ${block.type} !== shape`,
-            );
-
-            const x1 = block.x1;
-            const x2 = point.x;
-            const y1 = block.y1;
-            const y2 = point.y;
-            const x = Math.min(x1, x2);
-            const y = Math.min(y1, y2);
-            const width = Math.abs(x1 - x2);
-            const height = Math.abs(y1 - y2);
-
-            draft.blocks[block.id] = {
-                ...block,
-                x,
-                y,
-                width,
-                height,
-                x1,
-                x2,
-                y1,
-                y2,
-            };
-            break;
-        }
-        case PointKey.TEXT_P1: {
-            assert(
-                block.type === "text",
-                `Invalid block type: ${block.type} !== text`,
-            );
-
-            draft.blocks[block.id] = {
-                ...block,
-                x1: point.x,
-                y1: point.y,
-                x: Math.min(block.x2, point.x),
-                y: Math.min(block.y2, point.y),
-                width: Math.abs(block.x2 - point.x),
-                height: Math.abs(block.y2 - point.y),
-            };
-            break;
-        }
-        case PointKey.TEXT_P2: {
-            assert(
-                block.type === "text",
-                `Invalid block type: ${block.type} !== text`,
-            );
-
-            draft.blocks[block.id] = {
-                ...block,
-                x2: point.x,
-                y2: point.y,
-                x: Math.min(block.x1, point.x),
-                y: Math.min(block.y1, point.y),
-                width: Math.abs(block.x1 - point.x),
-                height: Math.abs(block.y1 - point.y),
-            };
-            break;
-        }
     }
 }
 

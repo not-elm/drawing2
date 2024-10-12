@@ -2,7 +2,7 @@ import { adjustAngle } from "../../geo/adjustAngle";
 import type { StateProvider } from "../../lib/Store";
 import { randomId } from "../../lib/randomId";
 import { testHitEntities } from "../../lib/testHitEntities";
-import { type LineBlock, type PointEntity, PointKey } from "../../model/Page";
+import type { LineBlock, PointEntity } from "../../model/Page";
 import { Transaction } from "../../model/Transaction";
 import type { AppStateStore } from "../../store/AppStateStore";
 import {
@@ -222,22 +222,7 @@ export function createNewLinePointerEventSession(
                 colorId: appStateStore.getState().defaultColorId,
                 strokeStyle: appStateStore.getState().defaultStrokeStyle,
             };
-            transaction.insertBlocks([line]).addDependencies([
-                {
-                    id: randomId(),
-                    type: "blockToPoint",
-                    pointKey: PointKey.LINE_P1,
-                    from: p1.id,
-                    to: line.id,
-                },
-                {
-                    id: randomId(),
-                    type: "blockToPoint",
-                    pointKey: PointKey.LINE_P2,
-                    from: p2.id,
-                    to: line.id,
-                },
-            ]);
+            transaction.insertBlocks([line]);
 
             canvasStateStore.setPage(transaction.commit());
             controller.setMode({ type: "select" });

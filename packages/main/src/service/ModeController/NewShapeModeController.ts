@@ -2,12 +2,7 @@ import type { Rect } from "../../geo/Rect";
 import { getRectanglePath } from "../../geo/path";
 import { randomId } from "../../lib/randomId";
 import { Direction } from "../../model/Direction";
-import {
-    type Block,
-    type PointEntity,
-    PointKey,
-    type ShapeBlock,
-} from "../../model/Page";
+import type { Block, PointEntity, ShapeBlock } from "../../model/Page";
 import { Transaction } from "../../model/Transaction";
 import { createScaleTransformHandle } from "../../model/TransformHandle";
 import type { AppStateStore } from "../../store/AppStateStore";
@@ -86,14 +81,10 @@ export class NewShapeModeController extends ModeController {
         const shape: ShapeBlock = {
             type: "shape",
             id: randomId(),
-            x: p1.x,
-            y: p1.y,
-            width: 0,
-            height: 0,
-            x1: p1.x,
-            y1: p1.y,
-            x2: p2.x,
-            y2: p2.y,
+            x: rect.x,
+            y: rect.y,
+            width: rect.width,
+            height: rect.height,
             label: "",
             textAlignX: this.appStateStore.getState().defaultTextAlignX,
             textAlignY: this.appStateStore.getState().defaultTextAlignY,
@@ -104,25 +95,7 @@ export class NewShapeModeController extends ModeController {
         };
         const transaction = new Transaction(
             this.canvasStateStore.getState().page,
-        )
-            .insertBlocks([shape])
-            .insertPoints([p1, p2])
-            .addDependencies([
-                {
-                    id: randomId(),
-                    type: "blockToPoint",
-                    pointKey: PointKey.SHAPE_P1,
-                    from: p1.id,
-                    to: shape.id,
-                },
-                {
-                    id: randomId(),
-                    type: "blockToPoint",
-                    pointKey: PointKey.SHAPE_P2,
-                    from: p2.id,
-                    to: shape.id,
-                },
-            ]);
+        ).insertBlocks([shape]);
         this.canvasStateStore.setPage(transaction.commit());
 
         return [shape, p1, p2];

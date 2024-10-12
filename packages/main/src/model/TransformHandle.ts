@@ -2,17 +2,11 @@ import type { Point } from "../geo/Point";
 import { unionRectAll } from "../geo/Rect";
 import type { StateProvider } from "../lib/Store";
 import { assert } from "../lib/assert";
-import { isNotNullish } from "../lib/isNullish";
 import type { CanvasStateStore } from "../store/CanvasStateStore";
 import type { SnapGuideStore } from "../store/SnapGuideStore";
 import type { ViewportStore } from "../store/ViewportStore";
 import type { Direction } from "./Direction";
-import {
-    type Block,
-    type Page,
-    type PointEntity,
-    getBoundingRect,
-} from "./Page";
+import { type Block, type Page, getBoundingRect } from "./Page";
 import {
     type SnapEntry,
     type SnapEntry2D,
@@ -30,18 +24,9 @@ export abstract class TransformHandle {
         readonly snapGuideStore: SnapGuideStore,
     ) {
         this.targetBlockIds = originalBlocks.map((block) => block.id);
-
-        const page = this.canvasStateStore.getState().page;
-        this.originalPoints = this.targetBlockIds
-            .flatMap((blockId) => page.dependencies.getByToEntityId(blockId))
-            .filter((dep) => dep.type === "blockToPoint")
-            .flatMap((dep) => dep.from)
-            .map((from) => page.points[from])
-            .filter(isNotNullish);
     }
 
     protected readonly targetBlockIds: string[];
-    protected readonly originalPoints: PointEntity[];
 
     apply(
         newHandlePoint: Point,
@@ -314,7 +299,6 @@ class ScaleTransformHandle extends TransformHandle {
 
         return new Transaction(page)
             .replaceBlocks(this.originalBlocks)
-            .replacePoints(this.originalPoints)
             .scaleBlocks(
                 this.targetBlockIds,
                 this.transformOrigin.x,
@@ -414,7 +398,6 @@ class MoveTransformHandle extends TransformHandle {
 
         return new Transaction(page)
             .replaceBlocks(this.originalBlocks)
-            .replacePoints(this.originalPoints)
             .moveBlocks(this.targetBlockIds, dx, dy)
             .commit();
     }

@@ -33,10 +33,6 @@ export interface LineBlock extends EntityBase<"line"> {
 export interface ShapeBlock extends EntityBase<"shape"> {
     x: number;
     y: number;
-    x1: number;
-    y1: number;
-    x2: number;
-    y2: number;
     width: number;
     height: number;
     label: string;
@@ -55,10 +51,6 @@ export interface TextBlock extends EntityBase<"text"> {
 
     // Cannot be configured, automatically set by application based on the content
     height: number;
-    x1: number;
-    y1: number;
-    x2: number;
-    y2: number;
 
     sizingMode: TextBlockSizingMode;
     textAlignment: TextAlignment;
