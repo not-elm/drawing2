@@ -6,19 +6,15 @@ import {
     deserializeDependency,
     serializeDependency,
 } from "../model/Dependency";
-import type { Block, Page, PointEntity } from "../model/Page";
+import type { Block, Page } from "../model/Page";
 import {
     type SerializedBlock,
-    type SerializedPointEntity,
     deserializeBlock,
-    deserializePoint,
     serializeBlock,
-    serializePoint,
 } from "../model/SerializedPage";
 
 interface ClipboardData {
     blocks: SerializedBlock[];
-    points: SerializedPointEntity[];
     dependencies: SerializedDependency[];
 }
 
@@ -26,7 +22,6 @@ export const ClipboardService = new (class {
     copy(page: Page, blockIds: string[]): Promise<void> {
         const blockIdSet = new Set(blockIds);
         const blocksInOrder: Block[] = [];
-        const pointSet = new Set<PointEntity>();
         const dependencySet = new Set<Dependency>();
 
         for (const blockId of page.blockIds) {
@@ -37,23 +32,14 @@ export const ClipboardService = new (class {
                 dependencySet.add(dep);
             }
         }
-        for (const point of pointSet) {
-            for (const dep of page.dependencies.getByToEntityId(point.id)) {
-                dependencySet.add(dep);
-            }
-        }
 
-        const entityIds = new Set([
-            ...blockIds,
-            ...Array.from(pointSet).map((p) => p.id),
-        ]);
+        const entityIds = new Set([...blockIds]);
         const dependencies = [...dependencySet].filter(
             (dep) => entityIds.has(dep.from) && entityIds.has(dep.to),
         );
 
         const data: ClipboardData = {
             blocks: blocksInOrder.map(serializeBlock),
-            points: Array.from(pointSet).map(serializePoint),
             dependencies: dependencies.map(serializeDependency),
         };
 
@@ -62,7 +48,6 @@ export const ClipboardService = new (class {
 
     async paste(): Promise<{
         blocks: Block[];
-        points: PointEntity[];
         dependencies: Dependency[];
     }> {
         try {
@@ -70,24 +55,32 @@ export const ClipboardService = new (class {
             const data = JSON.parse(json) as ClipboardData;
 
             const blocks = data.blocks.map(deserializeBlock);
-            const points = data.points.map(deserializePoint);
             const dependencies = data.dependencies.map(deserializeDependency);
 
-            // Renew IDs
             const idMap = new Map<string, string>();
             for (const block of blocks) {
+                // Renew IDs
                 const newId = randomId();
                 idMap.set(block.id, newId);
                 block.id = newId;
-            }
-            for (const point of points) {
-                const newId = randomId();
-                idMap.set(point.id, newId);
-                point.id = newId;
 
-                // Move points a little bit to avoid overlapping with copy sources
-                point.x += 10;
-                point.y += 10;
+                // Move blocks a little bit to avoid overlapping with copy sources
+                switch (block.type) {
+                    case "line":
+                        block.x1 += 10;
+                        block.y1 += 10;
+                        block.x2 += 10;
+                        block.y2 += 10;
+                        break;
+                    case "shape":
+                        block.x += 10;
+                        block.y += 10;
+                        break;
+                    case "text":
+                        block.x += 10;
+                        block.y += 10;
+                        break;
+                }
             }
             for (const dep of dependencies) {
                 const newId = randomId();
@@ -104,13 +97,11 @@ export const ClipboardService = new (class {
 
             return {
                 blocks,
-                points,
                 dependencies,
             };
         } catch {
             return {
                 blocks: [],
-                points: [],
                 dependencies: [],
             };
         }

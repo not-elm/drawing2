@@ -16,10 +16,7 @@ interface EntityBase<T extends string> {
     type: T;
     id: string;
 }
-export interface PointEntity extends EntityBase<"point"> {
-    x: number;
-    y: number;
-}
+
 export interface LineBlock extends EntityBase<"line"> {
     x1: number;
     y1: number;
@@ -61,23 +58,13 @@ export interface TextBlock extends EntityBase<"text"> {
 
 export type Block = LineBlock | ShapeBlock | TextBlock;
 
-export type Entity = Block | PointEntity;
+export type Entity = Block;
 
 export interface Page {
     blocks: Record<string, Block>;
-    points: Record<string, PointEntity>;
     blockIds: string[];
     dependencies: DependencyCollection;
 }
-
-export const PointKey = {
-    LINE_P1: "lineP2",
-    LINE_P2: "lineP1",
-    SHAPE_P1: "shapeP1",
-    SHAPE_P2: "shapeP2",
-    TEXT_P1: "textP1",
-    TEXT_P2: "textP2",
-};
 
 export function getBlocksInViewport(page: Page, viewport: Viewport): Block[] {
     return page.blockIds

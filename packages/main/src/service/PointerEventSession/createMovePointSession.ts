@@ -1,12 +1,10 @@
 import type { StateProvider } from "../../lib/Store";
-import type { PointEntity } from "../../model/Page";
 import type { CanvasStateStore } from "../../store/CanvasStateStore";
 import type { ViewportStore } from "../../store/ViewportStore";
 import type { HistoryManager } from "../HistoryManager";
 import type { PointerEventHandlers } from "./PointerEventSession";
 
 export function createMovePointSession(
-    originalPoint: PointEntity,
     canvasStateStore: CanvasStateStore,
     viewportProvider: StateProvider<ViewportStore>,
     historyManager: HistoryManager,

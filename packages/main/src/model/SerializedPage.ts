@@ -2,21 +2,13 @@ import type { ColorId } from "./Colors";
 import type { SerializedDependency } from "./Dependency";
 import { DependencyCollection } from "./DependencyCollection";
 import type { FillMode } from "./FillMode";
-import type {
-    Block,
-    LineBlock,
-    Page,
-    PointEntity,
-    ShapeBlock,
-    TextBlock,
-} from "./Page";
+import type { Block, LineBlock, Page, ShapeBlock, TextBlock } from "./Page";
 import type { StrokeStyle } from "./StrokeStyle";
 import type { TextAlignment } from "./TextAlignment";
 import type { TextBlockSizingMode } from "./TextBlockSizingMode";
 
 export interface SerializedPage {
     blocks: SerializedBlock[];
-    points: SerializedPointEntity[];
     dependencies: SerializedDependency[];
 }
 export function serializePage(page: Page): SerializedPage {
@@ -24,20 +16,16 @@ export function serializePage(page: Page): SerializedPage {
         blocks: page.blockIds.map((blockId) =>
             serializeBlock(page.blocks[blockId]),
         ),
-        points: Object.values(page.points).map(serializePoint),
         dependencies: page.dependencies.serialize(),
     };
 }
 export function deserializePage(page: SerializedPage): Page {
     const blocks = page.blocks.map(deserializeBlock);
-    const points = Object.fromEntries(
-        page.points.map((point) => [point.id, deserializePoint(point)]),
-    );
+
     const dependencies = DependencyCollection.deserialize(page.dependencies);
     return {
         blocks: Object.fromEntries(blocks.map((block) => [block.id, block])),
         blockIds: blocks.map((block) => block.id),
-        points,
         dependencies,
     };
 }
@@ -193,26 +181,5 @@ function deserializeTextBlock(text: SerializedTextBlock): TextBlock {
         sizingMode: text.sizingMode,
         textAlignment: text.textAlignment,
         content: text.content,
-    };
-}
-
-export interface SerializedPointEntity {
-    id: string;
-    x: number;
-    y: number;
-}
-export function serializePoint(point: PointEntity): SerializedPointEntity {
-    return {
-        id: point.id,
-        x: point.x,
-        y: point.y,
-    };
-}
-export function deserializePoint(point: SerializedPointEntity): PointEntity {
-    return {
-        type: "point",
-        id: point.id,
-        x: point.x,
-        y: point.y,
     };
 }

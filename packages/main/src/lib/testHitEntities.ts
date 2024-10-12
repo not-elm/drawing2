@@ -1,19 +1,12 @@
 import { distanceFromPointToLine } from "../geo/Line";
 import { distanceFromPointToRect } from "../geo/Rect";
-import type {
-    Block,
-    Entity,
-    LineBlock,
-    Page,
-    PointEntity,
-} from "../model/Page";
+import type { Block, Entity, LineBlock, Page } from "../model/Page";
 import { assert } from "./assert";
 
 interface HitTestResult {
     // Hit entities ordered by distance (Small distance first)
     entities: HitTestResultEntry<Entity>[];
     blocks: HitTestResultEntry<Block>[];
-    points: HitTestResultEntry<PointEntity>[];
 }
 
 interface HitTestResultEntry<T> {
@@ -36,24 +29,9 @@ export function testHitEntities(
 ): HitTestResult {
     const entities: HitTestResultEntry<Entity>[] = [];
     const blocks: HitTestResultEntry<Block>[] = [];
-    const points: HitTestResultEntry<PointEntity>[] = [];
 
     // TODO: PointのzIndex値を正しく計算する
-    let zIndexForPoint = 0;
-    for (const point of Object.values(page.points)) {
-        zIndexForPoint++;
-        const distance = Math.hypot(point.x - x, point.y - y) * scale;
-        if (distance <= threshold) {
-            const entry: HitTestResultEntry<PointEntity> = {
-                target: point,
-                point: point,
-                distance,
-                zIndex: zIndexForPoint,
-            };
-            points.push(entry);
-            entities.push(entry);
-        }
-    }
+    const zIndexForPoint = 0;
     for (const [zIndex, blockId] of page.blockIds.entries()) {
         const block = page.blocks[blockId];
         assert(block !== undefined, `Block not found: ${blockId}`);
@@ -103,14 +81,10 @@ export function testHitEntities(
     entities
         .sort((a, b) => -(a.zIndex - b.zIndex))
         .sort((a, b) => a.distance - b.distance);
-    points
-        .sort((a, b) => -(a.zIndex - b.zIndex))
-        .sort((a, b) => a.distance - b.distance);
 
     return {
         entities,
         blocks: blocks,
-        points,
     };
 }
 

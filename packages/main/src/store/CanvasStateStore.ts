@@ -25,7 +25,6 @@ export class CanvasStateStore extends Store<CanvasState> {
             new CanvasState({
                 page: {
                     blocks: {},
-                    points: {},
                     blockIds: [],
                     dependencies: new DependencyCollection(),
                 },
@@ -475,14 +474,13 @@ export class CanvasStateStore extends Store<CanvasState> {
     }
 
     async paste(): Promise<void> {
-        const { blocks, points, dependencies } = await ClipboardService.paste();
+        const { blocks, dependencies } = await ClipboardService.paste();
 
         this.setState(
             this.state
                 .setPage(
                     new Transaction(this.state.page)
                         .insertBlocks(blocks)
-                        .insertPoints(points)
                         .addDependencies(dependencies)
                         .commit(),
                 )
