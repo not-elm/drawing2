@@ -10,7 +10,10 @@ import { Transaction } from "../../model/Transaction";
 import type { AppStateStore } from "../../store/AppStateStore";
 import type { CanvasStateStore } from "../../store/CanvasStateStore";
 import type { ViewportStore } from "../../store/ViewportStore";
-import type { Controller, PointerDownEventHandlerData } from "../Controller";
+import type {
+    AppController,
+    PointerDownEventHandlerData,
+} from "../AppController";
 import type { GestureRecognizer } from "../GestureRecognizer";
 import type { HistoryManager } from "../HistoryManager";
 import { createMovePointSession } from "../PointerEventSession/createMovePointSession";
@@ -20,12 +23,16 @@ export class NewLineModeController extends ModeController {
     constructor(
         private readonly canvasStateStore: CanvasStateStore,
         private readonly appStateStore: AppStateStore,
-        private readonly controller: Controller,
+        private readonly controller: AppController,
         private readonly historyManager: HistoryManager,
         private readonly viewportStore: ViewportStore,
         private readonly gestureRecognizer: GestureRecognizer,
     ) {
         super();
+    }
+
+    getType() {
+        return "new-line";
     }
 
     onBlockPointerDown(data: PointerDownEventHandlerData, _block: Block) {

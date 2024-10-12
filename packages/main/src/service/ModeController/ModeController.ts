@@ -1,8 +1,10 @@
 import type { Mode } from "../../model/Mode";
 import type { Block } from "../../model/Page";
-import type { PointerDownEventHandlerData } from "../Controller";
+import type { PointerDownEventHandlerData } from "../AppController";
 
 export abstract class ModeController {
+    abstract getType(): string;
+
     onBeforeExitMode(mode: Mode): void {}
     onAfterEnterMode(mode: Mode): void {}
 

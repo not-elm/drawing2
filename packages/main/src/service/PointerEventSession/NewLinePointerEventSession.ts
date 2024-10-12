@@ -10,7 +10,7 @@ import {
     fromCanvasCoordinate,
 } from "../../store/CanvasStateStore";
 import type { ViewportStore } from "../../store/ViewportStore";
-import type { Controller } from "../Controller";
+import type { AppController } from "../AppController";
 import type { PointerEventHandlers } from "./PointerEventSession";
 
 export interface NewLinePointerEventSession extends PointerEventHandlers {
@@ -20,7 +20,7 @@ export interface NewLinePointerEventSession extends PointerEventHandlers {
 }
 
 export function createNewLinePointerEventSession(
-    controller: Controller,
+    controller: AppController,
     ev: PointerEvent,
     canvasStateStore: CanvasStateStore,
     viewportProvider: StateProvider<ViewportStore>,

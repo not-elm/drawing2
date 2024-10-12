@@ -3,17 +3,24 @@ import type { Mode } from "../../model/Mode";
 import type { Block } from "../../model/Page";
 import { Transaction } from "../../model/Transaction";
 import type { CanvasStateStore } from "../../store/CanvasStateStore";
-import type { Controller, PointerDownEventHandlerData } from "../Controller";
+import type {
+    AppController,
+    PointerDownEventHandlerData,
+} from "../AppController";
 import { ModeController } from "./ModeController";
 import type { SelectModeController } from "./SelectModeController";
 
 export class EditTextModeController extends ModeController {
     constructor(
-        private readonly controller: Controller,
+        private readonly controller: AppController,
         private readonly selectModeController: SelectModeController,
         private readonly canvasStateStore: CanvasStateStore,
     ) {
         super();
+    }
+
+    getType() {
+        return "edit-text";
     }
 
     onBeforeExitMode(mode: Mode) {

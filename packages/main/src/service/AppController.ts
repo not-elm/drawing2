@@ -7,41 +7,41 @@ import type { StrokeStyle } from "../model/StrokeStyle";
 import type { TextAlignment } from "../model/TextAlignment";
 import type { TextBlockSizingMode } from "../model/TextBlockSizingMode";
 import { Transaction } from "../model/Transaction";
-import { AppStateStore } from "../store/AppStateStore";
-import { BrushStore } from "../store/BrushStore";
+import type { AppStateStore } from "../store/AppStateStore";
+import type { BrushStore } from "../store/BrushStore";
 import {
-    CanvasStateStore,
+    type CanvasStateStore,
     fromCanvasCoordinate,
 } from "../store/CanvasStateStore";
-import { PropertyPanelStateStore } from "../store/PropertyPanelStateStore";
-import { SnapGuideStore } from "../store/SnapGuideStore";
-import { ViewportStore } from "../store/ViewportStore";
-import { GestureRecognizer } from "./GestureRecognizer";
-import { HistoryManager } from "./HistoryManager";
+import type { PropertyPanelStateStore } from "../store/PropertyPanelStateStore";
+import type { SnapGuideStore } from "../store/SnapGuideStore";
+import type { ViewportStore } from "../store/ViewportStore";
+import type { GestureRecognizer } from "./GestureRecognizer";
+import type { HistoryManager } from "./HistoryManager";
 import type { ModeController } from "./ModeController/ModeController";
-import { getRestoreViewportService } from "./RestoreViewportService";
 
-export class Controller {
-    readonly canvasStateStore = new CanvasStateStore();
-    readonly viewportStore = new ViewportStore(getRestoreViewportService());
-    readonly gestureRecognizer = new GestureRecognizer(this.viewportStore);
-    readonly appStateStore = new AppStateStore();
-    readonly propertyPanelStateStore = new PropertyPanelStateStore(
-        this.canvasStateStore,
-        this.appStateStore,
-    );
-    readonly historyManager = new HistoryManager(this.canvasStateStore);
-    readonly snapGuideStore = new SnapGuideStore();
-    readonly brushStore = new BrushStore();
-
-    private readonly modeControllers = new Map<string, ModeController>();
-
-    constructor() {
+export class AppController {
+    constructor(
+        readonly canvasStateStore: CanvasStateStore,
+        readonly viewportStore: ViewportStore,
+        readonly gestureRecognizer: GestureRecognizer,
+        readonly appStateStore: AppStateStore,
+        readonly propertyPanelStateStore: PropertyPanelStateStore,
+        readonly historyManager: HistoryManager,
+        readonly snapGuideStore: SnapGuideStore,
+        readonly brushStore: BrushStore,
+    ) {
         this.gestureRecognizer.onPointerDown = this.handlePointerDown;
     }
 
-    addModeController(type: string, controller: ModeController): this {
-        this.modeControllers.set(type, controller);
+    private readonly modeControllers = new Map<string, ModeController>();
+
+    addModeController(controller: ModeController): this {
+        assert(
+            !this.modeControllers.has(controller.getType()),
+            `Mode ${controller.getType()} is already registered`,
+        );
+        this.modeControllers.set(controller.getType(), controller);
         return this;
     }
 

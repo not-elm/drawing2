@@ -2,17 +2,14 @@ import { distanceFromPointToLine } from "../../geo/Line";
 import { distanceFromPointToPoint } from "../../geo/Point";
 import type { Rect } from "../../geo/Rect";
 import { assert } from "../../lib/assert";
-import { randomId } from "../../lib/randomId";
 import { testHitEntities } from "../../lib/testHitEntities";
 import { Direction } from "../../model/Direction";
 import {
     type Block,
     type LineBlock,
-    type PointEntity,
     PointKey,
     type TextBlock,
 } from "../../model/Page";
-import { Transaction } from "../../model/Transaction";
 import {
     createMoveTransformHandle,
     createScaleTransformHandle,
@@ -22,7 +19,10 @@ import type { BrushStore } from "../../store/BrushStore";
 import type { CanvasStateStore } from "../../store/CanvasStateStore";
 import type { SnapGuideStore } from "../../store/SnapGuideStore";
 import type { ViewportStore } from "../../store/ViewportStore";
-import type { Controller, PointerDownEventHandlerData } from "../Controller";
+import type {
+    AppController,
+    PointerDownEventHandlerData,
+} from "../AppController";
 import type { GestureRecognizer } from "../GestureRecognizer";
 import type { HistoryManager } from "../HistoryManager";
 import {
@@ -33,6 +33,7 @@ import { createBrushSelectSession } from "../PointerEventSession/createBrushSele
 import { createMovePointSession } from "../PointerEventSession/createMovePointSession";
 import { createTransformSession } from "../PointerEventSession/createTransformSession";
 import { ModeController } from "./ModeController";
+import type { NewTextModeController } from "./NewTextModeController";
 
 export class SelectModeController extends ModeController {
     constructor(
@@ -43,9 +44,14 @@ export class SelectModeController extends ModeController {
         private readonly viewportStore: ViewportStore,
         private readonly snapGuideStore: SnapGuideStore,
         private readonly appStateStore: AppStateStore,
-        private readonly controller: Controller,
+        private readonly controller: AppController,
+        private readonly newTextModeController: NewTextModeController,
     ) {
         super();
+    }
+
+    getType() {
+        return "select";
     }
 
     onBlockPointerDown(data: PointerDownEventHandlerData, block: Block) {
@@ -148,73 +154,7 @@ export class SelectModeController extends ModeController {
     }
 
     onCanvasDoubleClick(ev: PointerDownEventHandlerData) {
-        const hitResult = testHitEntities(
-            this.canvasStateStore.getState().page,
-            ev.x,
-            ev.y,
-            this.viewportStore.getState().scale,
-        );
-
-        if (hitResult.blocks.length === 0) {
-            const p1: PointEntity = {
-                type: "point",
-                id: randomId(),
-                x: ev.x,
-                y: ev.y,
-            };
-            const p2: PointEntity = {
-                type: "point",
-                id: randomId(),
-                x: ev.x + 1,
-                y: ev.y + 1,
-            };
-            const text: TextBlock = {
-                id: randomId(),
-                type: "text",
-                x: ev.x,
-                y: ev.y,
-                x1: p1.x,
-                y1: p1.y,
-                x2: p2.x + 1,
-                y2: p2.y + 1,
-                width: 1,
-                height: 1,
-                content: "",
-                textAlignment:
-                    this.appStateStore.getState().defaultTextBlockTextAlignment,
-                sizingMode: "content",
-            };
-            this.canvasStateStore.setPage(
-                new Transaction(this.canvasStateStore.getState().page)
-                    .insertBlocks([text])
-                    .insertPoints([p1, p2])
-                    .addDependencies([
-                        {
-                            id: randomId(),
-                            type: "blockToPoint",
-                            pointKey: PointKey.TEXT_P1,
-                            from: p1.id,
-                            to: text.id,
-                        },
-                        {
-                            id: randomId(),
-                            type: "blockToPoint",
-                            pointKey: PointKey.TEXT_P2,
-                            from: p2.id,
-                            to: text.id,
-                        },
-                    ])
-                    .commit(),
-            );
-            this.controller.setMode({
-                type: "edit-text",
-                blockId: text.id,
-            });
-
-            // To leave focus at the new text block
-            ev.preventDefault();
-            return;
-        }
+        this.newTextModeController.onCanvasPointerDown(ev);
     }
 
     private handleSelectionPointerDown(

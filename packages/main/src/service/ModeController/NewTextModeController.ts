@@ -9,16 +9,23 @@ import {
 import { Transaction } from "../../model/Transaction";
 import type { AppStateStore } from "../../store/AppStateStore";
 import type { CanvasStateStore } from "../../store/CanvasStateStore";
-import type { Controller, PointerDownEventHandlerData } from "../Controller";
+import type {
+    AppController,
+    PointerDownEventHandlerData,
+} from "../AppController";
 import { ModeController } from "./ModeController";
 
 export class NewTextModeController extends ModeController {
     constructor(
         private readonly canvasStateStore: CanvasStateStore,
         private readonly appStateStore: AppStateStore,
-        private readonly controller: Controller,
+        private readonly controller: AppController,
     ) {
         super();
+    }
+
+    getType() {
+        return "new-text";
     }
 
     onBlockPointerDown(data: PointerDownEventHandlerData, _block: Block) {
