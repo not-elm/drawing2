@@ -107,7 +107,10 @@ const TextViewInner = memo(function ShapeViewInner({
                         ev.target.setSelectionRange(0, ev.target.value.length);
                     }}
                     onChange={(ev) =>
-                        controller.setLabelText(shapeId, ev.target.value)
+                        controller.canvasStateStore.setLabel(
+                            shapeId,
+                            ev.target.value,
+                        )
                     }
                     onPointerDown={(ev) => ev.stopPropagation()}
                     value={content}

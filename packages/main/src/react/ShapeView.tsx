@@ -186,7 +186,10 @@ const ShapeViewInner = memo(function ShapeViewInner({
                             );
                         }}
                         onChange={(ev) =>
-                            controller.setLabelText(shapeId, ev.target.value)
+                            controller.canvasStateStore.setLabel(
+                                shapeId,
+                                ev.target.value,
+                            )
                         }
                         onPointerDown={(ev) => ev.stopPropagation()}
                         value={shapeLabel}

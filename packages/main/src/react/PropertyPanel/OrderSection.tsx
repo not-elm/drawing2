@@ -21,7 +21,7 @@ export function OrderSection() {
             <PropertyPanelButton
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.bringSelectedBlocksToFront();
+                    controller.canvasStateStore.bringToFront();
                 }}
             >
                 最前面へ
@@ -29,7 +29,7 @@ export function OrderSection() {
             <PropertyPanelButton
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.bringSelectedBlocksForward();
+                    controller.canvasStateStore.bringForward();
                 }}
             >
                 ひとつ前へ
@@ -37,7 +37,7 @@ export function OrderSection() {
             <PropertyPanelButton
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.sendSelectedBlocksBackward();
+                    controller.canvasStateStore.sendBackward();
                 }}
             >
                 ひとつ後ろへ
@@ -45,7 +45,7 @@ export function OrderSection() {
             <PropertyPanelButton
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.sendSelectedBlocksToBack();
+                    controller.canvasStateStore.sendToBack();
                 }}
             >
                 最背面へ

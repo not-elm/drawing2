@@ -19,12 +19,12 @@ export function Canvas() {
     useEffect(() => {
         function handlePointerMove(ev: PointerEvent) {
             ev.stopPropagation();
-            controller.handleCanvasMouseMove(ev.clientX, ev.clientY, ev);
+            controller.handleMouseMove(ev);
         }
 
         function handlePointerUp(ev: PointerEvent) {
             ev.stopPropagation();
-            controller.handleCanvasMouseUp(ev);
+            controller.handleMouseUp(ev);
         }
 
         window.addEventListener("pointermove", handlePointerMove);
@@ -79,11 +79,11 @@ export function Canvas() {
             onWheel={handleWheel}
             onPointerDown={(ev) => {
                 ev.stopPropagation();
-                controller.handleCanvasMouseDown(ev.nativeEvent);
+                controller.handleMouseDown(ev.nativeEvent);
             }}
             onDoubleClick={(ev) => {
                 ev.stopPropagation();
-                controller.handleCanvasDoubleClick(ev.nativeEvent);
+                controller.handleDoubleClick(ev.nativeEvent);
             }}
         >
             <div
