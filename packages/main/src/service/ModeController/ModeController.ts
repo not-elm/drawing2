@@ -1,5 +1,5 @@
 import type { Mode } from "../../model/Mode";
-import type { Block } from "../../model/Page";
+import type { Entity } from "../../model/Page";
 import type { PointerDownEventHandlerData } from "../AppController";
 
 export abstract class ModeController {
@@ -10,6 +10,9 @@ export abstract class ModeController {
 
     onCanvasPointerDown(data: PointerDownEventHandlerData): void {}
     onCanvasDoubleClick(data: PointerDownEventHandlerData): void {}
-    onBlockPointerDown(data: PointerDownEventHandlerData, block: Block): void {}
+    onEntityPointerDown(
+        data: PointerDownEventHandlerData,
+        entity: Entity,
+    ): void {}
     onMouseMove(x: number, y: number): void {}
 }

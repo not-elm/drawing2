@@ -81,8 +81,8 @@ export class HistoryManager {
         this.processing = true;
         try {
             this.canvasStateStore.setPage(prevState.page);
-            this.canvasStateStore.setSelectedBlockIds([
-                ...prevState.selectedBlockIds,
+            this.canvasStateStore.setSelectedEntityIds([
+                ...prevState.selectedEntityIds,
             ]);
         } catch (e) {
             console.error(e);
@@ -109,8 +109,8 @@ export class HistoryManager {
         this.processing = true;
         try {
             this.canvasStateStore.setPage(nextPage.page);
-            this.canvasStateStore.setSelectedBlockIds([
-                ...nextPage.selectedBlockIds,
+            this.canvasStateStore.setSelectedEntityIds([
+                ...nextPage.selectedEntityIds,
             ]);
         } finally {
             this.processing = false;

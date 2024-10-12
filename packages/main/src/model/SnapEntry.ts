@@ -1,6 +1,6 @@
 import type { Line } from "../geo/Line";
 import type { Point } from "../geo/Point";
-import { type Page, getBlocksInViewport, getBoundingRect } from "./Page";
+import { type Page, getBoundingRect, getEntitiesInViewport } from "./Page";
 import type { Viewport } from "./Viewport";
 
 export interface SnapEntry2D {
@@ -25,20 +25,20 @@ export function computeSnapEntry2D(
     page: Page,
     viewport: Viewport,
     point: Point,
-    ignoreBlockIds: string[],
+    ignoreEntityIds: string[],
     threshold = 16,
 ): SnapEntry2D {
     let bestXPoints: Point[] = [];
     let bestYPoints: Point[] = [];
-    const ignoreBlockIdSet = new Set(ignoreBlockIds);
+    const ignoreEntityIdSet = new Set(ignoreEntityIds);
     let minXDistance = threshold / viewport.scale;
     let minYDistance = threshold / viewport.scale;
 
-    for (const otherBlock of getBlocksInViewport(page, viewport)) {
-        if (ignoreBlockIdSet.has(otherBlock.id)) {
+    for (const otherEntity of getEntitiesInViewport(page, viewport)) {
+        if (ignoreEntityIdSet.has(otherEntity.id)) {
             continue;
         }
-        const otherBoundingRect = getBoundingRect(otherBlock);
+        const otherBoundingRect = getBoundingRect(otherEntity);
         const otherSnapPoints = [
             { x: otherBoundingRect.x, y: otherBoundingRect.y },
             {

@@ -5,7 +5,7 @@ import type { FillMode } from "../model/FillMode";
 import type { Mode } from "../model/Mode";
 import type { StrokeStyle } from "../model/StrokeStyle";
 import type { TextAlignment } from "../model/TextAlignment";
-import type { TextBlockSizingMode } from "../model/TextBlockSizingMode";
+import type { TextEntitySizingMode } from "../model/TextEntitySizingMode";
 import { Transaction } from "../model/Transaction";
 import type { AppStateStore } from "../store/AppStateStore";
 import type { BrushStore } from "../store/BrushStore";
@@ -93,9 +93,9 @@ export class AppController {
             y,
             this.viewportStore.getState().scale,
         );
-        const result = hitResult.blocks.at(0);
+        const result = hitResult.entities.at(0);
         if (result !== undefined) {
-            this.getModeController().onBlockPointerDown(data, result.target);
+            this.getModeController().onEntityPointerDown(data, result.target);
             return;
         }
 
@@ -136,18 +136,18 @@ export class AppController {
         });
     }
 
-    startTextEditing(blockId: string) {
+    startTextEditing(entityId: string) {
         const oldState = this.appStateStore.getState();
         if (
             oldState.mode.type === "edit-text" &&
-            oldState.mode.blockId === blockId
+            oldState.mode.entityId === entityId
         ) {
             return;
         }
 
         this.canvasStateStore.unselectAll();
-        this.canvasStateStore.select(blockId);
-        this.setMode({ type: "edit-text", blockId });
+        this.canvasStateStore.select(entityId);
+        this.setMode({ type: "edit-text", entityId: entityId });
     }
 
     handleScroll(deltaCanvasX: number, deltaCanvasY: number) {
@@ -286,7 +286,7 @@ export class AppController {
             case "Backspace": {
                 switch (this.appStateStore.getState().mode.type) {
                     case "select": {
-                        this.canvasStateStore.deleteSelectedBlocks();
+                        this.canvasStateStore.deleteSelectedEntities();
                         return true;
                     }
                 }
@@ -297,22 +297,26 @@ export class AppController {
         return false;
     }
 
-    handleTextBlockSizeChanged(blockId: string, width: number, height: number) {
-        const block = this.canvasStateStore.getState().page.blocks[blockId];
-        assert(block !== undefined, `Block ${blockId} is not found`);
-        assert(block.type === "text", `Block ${blockId} is not text`);
+    handleTextEntitySizeChanged(
+        entityId: string,
+        width: number,
+        height: number,
+    ) {
+        const entity = this.canvasStateStore.getState().page.entities[entityId];
+        assert(entity !== undefined, `Entity ${entityId} is not found`);
+        assert(entity.type === "text", `Entity ${entityId} is not text`);
 
-        const newWidth = block.sizingMode === "content" ? width : block.width;
+        const newWidth = entity.sizingMode === "content" ? width : entity.width;
         const newHeight = height;
 
         this.canvasStateStore.setPage(
             new Transaction(this.canvasStateStore.getState().page)
-                .scaleBlocks(
-                    [blockId],
-                    block.x,
-                    block.y,
-                    newWidth / block.width,
-                    newHeight / block.height,
+                .scaleEntities(
+                    [entityId],
+                    entity.x,
+                    entity.y,
+                    newWidth / entity.width,
+                    newHeight / entity.height,
                 )
                 .commit(),
         );
@@ -338,14 +342,14 @@ export class AppController {
         this.appStateStore.setDefaultLineEnd(lineEnd, endType);
     }
 
-    setTextBlockTextAlignment(alignment: TextAlignment) {
-        this.canvasStateStore.setTextBlockTextAlignment(alignment);
-        this.appStateStore.setDefaultTextBlockTextAlignment(alignment);
+    setTextEntityTextAlignment(alignment: TextAlignment) {
+        this.canvasStateStore.setTextEntityTextAlignment(alignment);
+        this.appStateStore.setDefaultTextEntityTextAlignment(alignment);
     }
 
-    setTextBlockSizingMode(sizingMode: TextBlockSizingMode) {
-        this.canvasStateStore.setTextBlockSizingMode(sizingMode);
-        this.appStateStore.setDefaultTextBlockSizingMode(sizingMode);
+    setTextEntitySizingMode(sizingMode: TextEntitySizingMode) {
+        this.canvasStateStore.setTextEntitySizingMode(sizingMode);
+        this.appStateStore.setDefaultTextEntitySizingMode(sizingMode);
     }
 
     setStrokeStyle(strokeStyle: StrokeStyle) {

@@ -1,10 +1,9 @@
 import { distanceFromPointToLine } from "../geo/Line";
 import { distanceFromPointToRect } from "../geo/Rect";
 import {
-    type Block,
     type Entity,
     type Page,
-    type PathBlock,
+    type PathEntity,
     getEdgesFromPath,
 } from "../model/Page";
 import { assert } from "./assert";
@@ -12,7 +11,6 @@ import { assert } from "./assert";
 interface HitTestResult {
     // Hit entities ordered by distance (Small distance first)
     entities: HitTestResultEntry<Entity>[];
-    blocks: HitTestResultEntry<Block>[];
 }
 
 interface HitTestResultEntry<T> {
@@ -34,27 +32,26 @@ export function testHitEntities(
     threshold = THRESHOLD,
 ): HitTestResult {
     const entities: HitTestResultEntry<Entity>[] = [];
-    const blocks: HitTestResultEntry<Block>[] = [];
 
-    for (const [zIndex, blockId] of page.blockIds.entries()) {
-        const block = page.blocks[blockId];
-        assert(block !== undefined, `Block not found: ${blockId}`);
+    for (const [zIndex, entityId] of page.entityIds.entries()) {
+        const entity = page.entities[entityId];
+        assert(entity !== undefined, `Entity not found: ${entityId}`);
 
-        switch (block.type) {
+        switch (entity.type) {
             case "path": {
-                for (const edge of getEdgesFromPath(block)) {
+                for (const edge of getEdgesFromPath(entity)) {
                     const { point, distance } = distanceFromPointToLine(
                         { x, y },
                         edge,
                     );
                     if (distance <= threshold) {
-                        const entry: HitTestResultEntry<PathBlock> = {
-                            target: block,
+                        const entry: HitTestResultEntry<PathEntity> = {
+                            target: entity,
                             point,
                             distance,
                             zIndex,
                         };
-                        blocks.push(entry);
+                        entities.push(entry);
                         entities.push(entry);
                     }
                 }
@@ -64,16 +61,16 @@ export function testHitEntities(
             case "text": {
                 const { point, distance } = distanceFromPointToRect(
                     { x, y },
-                    block,
+                    entity,
                 );
                 if (distance <= threshold) {
-                    const entry: HitTestResultEntry<Block> = {
-                        target: block,
+                    const entry: HitTestResultEntry<Entity> = {
+                        target: entity,
                         point,
                         distance,
                         zIndex,
                     };
-                    blocks.push(entry);
+                    entities.push(entry);
                     entities.push(entry);
                 }
                 break;
@@ -81,7 +78,7 @@ export function testHitEntities(
         }
     }
 
-    blocks
+    entities
         .sort((a, b) => -(a.zIndex - b.zIndex))
         .sort((a, b) => a.distance - b.distance);
     entities
@@ -90,7 +87,6 @@ export function testHitEntities(
 
     return {
         entities,
-        blocks: blocks,
     };
 }
 

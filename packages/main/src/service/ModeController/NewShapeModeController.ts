@@ -2,7 +2,7 @@ import type { Rect } from "../../geo/Rect";
 import { getRectanglePath } from "../../geo/path";
 import { randomId } from "../../lib/randomId";
 import { Direction } from "../../model/Direction";
-import type { Block, ShapeBlock } from "../../model/Page";
+import type { Entity, ShapeEntity } from "../../model/Page";
 import { Transaction } from "../../model/Transaction";
 import { createScaleTransformHandle } from "../../model/TransformHandle";
 import type { AppStateStore } from "../../store/AppStateStore";
@@ -35,7 +35,7 @@ export class NewShapeModeController extends ModeController {
         return "new-shape";
     }
 
-    onBlockPointerDown(data: PointerDownEventHandlerData, _block: Block) {
+    onEntityPointerDown(data: PointerDownEventHandlerData, entity: Entity) {
         this.onCanvasPointerDown(data);
     }
 
@@ -65,8 +65,8 @@ export class NewShapeModeController extends ModeController {
         );
     }
 
-    private insertNewShape(rect: Rect): ShapeBlock {
-        const shape: ShapeBlock = {
+    private insertNewShape(rect: Rect): ShapeEntity {
+        const shape: ShapeEntity = {
             type: "shape",
             id: randomId(),
             x: rect.x,
@@ -83,7 +83,7 @@ export class NewShapeModeController extends ModeController {
         };
         const transaction = new Transaction(
             this.canvasStateStore.getState().page,
-        ).insertBlocks([shape]);
+        ).insertEntities([shape]);
         this.canvasStateStore.setPage(transaction.commit());
 
         return shape;

@@ -1,6 +1,6 @@
 import { assert } from "../../lib/assert";
 import type { Mode } from "../../model/Mode";
-import type { Block } from "../../model/Page";
+import type { Entity } from "../../model/Page";
 import { Transaction } from "../../model/Transaction";
 import type { CanvasStateStore } from "../../store/CanvasStateStore";
 import type {
@@ -26,21 +26,21 @@ export class EditTextModeController extends ModeController {
     onBeforeExitMode(mode: Mode) {
         assert(mode.type === "edit-text", `Unexpected mode ${mode.type}`);
 
-        const blockId = mode.blockId;
-        const block = this.canvasStateStore.getState().page.blocks[blockId];
-        assert(block !== undefined, `Block ${blockId} is not found`);
-        if (block.type === "text" && block.content === "") {
+        const entityId = mode.entityId;
+        const entity = this.canvasStateStore.getState().page.entities[entityId];
+        assert(entity !== undefined, `Entity ${entityId} is not found`);
+        if (entity.type === "text" && entity.content === "") {
             this.canvasStateStore.setPage(
                 new Transaction(this.canvasStateStore.getState().page)
-                    .deleteBlocks([blockId])
+                    .deleteEntities([entityId])
                     .commit(),
             );
         }
     }
 
-    onBlockPointerDown(data: PointerDownEventHandlerData, block: Block) {
+    onEntityPointerDown(data: PointerDownEventHandlerData, entity: Entity) {
         this.controller.setMode({ type: "select" });
-        this.selectModeController.onBlockPointerDown(data, block);
+        this.selectModeController.onEntityPointerDown(data, entity);
     }
 
     onCanvasPointerDown(data: PointerDownEventHandlerData): void {

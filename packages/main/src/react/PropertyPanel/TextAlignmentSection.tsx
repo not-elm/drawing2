@@ -14,7 +14,6 @@ export function TextAlignmentSection() {
         >
             <div
                 css={{
-                    display: "block",
                     position: "relative",
                     border: "1px solid #d0d0d0",
                     borderRadius: "6px",

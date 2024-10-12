@@ -21,19 +21,19 @@ export function SizingModeSection() {
             }}
         >
             <PropertyPanelButton
-                aria-selected={state.textBlockSizingMode === "content"}
+                aria-selected={state.textEntitySizingMode === "content"}
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.setTextBlockSizingMode("content");
+                    controller.setTextEntitySizingMode("content");
                 }}
             >
                 内容に合わせて自動調整
             </PropertyPanelButton>
             <PropertyPanelButton
-                aria-selected={state.textBlockSizingMode === "fixed"}
+                aria-selected={state.textEntitySizingMode === "fixed"}
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.setTextBlockSizingMode("fixed");
+                    controller.setTextEntitySizingMode("fixed");
                 }}
             >
                 幅を固定

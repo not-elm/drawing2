@@ -8,8 +8,8 @@ export function createBrushSelectSession(
     canvasStateStore: CanvasStateStore,
     brushStore: BrushStore,
 ): PointerEventHandlers {
-    const originalSelectedBlockIds =
-        canvasStateStore.getState().selectedBlockIds;
+    const originalSelectedEntityIds =
+        canvasStateStore.getState().selectedEntityIds;
 
     return {
         onPointerDown: (data) => {
@@ -30,32 +30,32 @@ export function createBrushSelectSession(
             };
             brushStore.setRect(rect);
 
-            const selectedBlockIds = new Set(originalSelectedBlockIds);
-            for (const block of Object.values(
-                canvasStateStore.getState().page.blocks,
+            const selectedEntityIds = new Set(originalSelectedEntityIds);
+            for (const entity of Object.values(
+                canvasStateStore.getState().page.entities,
             )) {
-                switch (block.type) {
+                switch (entity.type) {
                     case "shape":
                     case "text": {
-                        if (isRectOverlapWithRect(rect, block)) {
-                            selectedBlockIds.add(block.id);
+                        if (isRectOverlapWithRect(rect, entity)) {
+                            selectedEntityIds.add(entity.id);
                         }
                         break;
                     }
                     case "path": {
                         if (
-                            getEdgesFromPath(block).some((line) =>
+                            getEdgesFromPath(entity).some((line) =>
                                 isRectOverlapWithLine(rect, line),
                             )
                         ) {
-                            selectedBlockIds.add(block.id);
+                            selectedEntityIds.add(entity.id);
                         }
                         break;
                     }
                 }
             }
 
-            canvasStateStore.setSelectedBlockIds([...selectedBlockIds]);
+            canvasStateStore.setSelectedEntityIds([...selectedEntityIds]);
         },
         onPointerUp: () => {
             brushStore.setActive(false);

@@ -10,7 +10,7 @@ import type { DependencyCollection } from "./DependencyCollection";
 import type { FillMode } from "./FillMode";
 import type { StrokeStyle } from "./StrokeStyle";
 import type { TextAlignment } from "./TextAlignment";
-import type { TextBlockSizingMode } from "./TextBlockSizingMode";
+import type { TextEntitySizingMode } from "./TextEntitySizingMode";
 import type { Viewport } from "./Viewport";
 
 interface EntityBase<T extends string> {
@@ -25,14 +25,14 @@ export interface PathNode {
     endType: LineEndType;
 }
 
-export interface PathBlock extends EntityBase<"path"> {
+export interface PathEntity extends EntityBase<"path"> {
     nodes: Record<string, PathNode>;
     edges: [string, string][];
     colorId: ColorId;
     strokeStyle: StrokeStyle;
 }
 
-export interface ShapeBlock extends EntityBase<"shape"> {
+export interface ShapeEntity extends EntityBase<"shape"> {
     x: number;
     y: number;
     width: number;
@@ -46,7 +46,7 @@ export interface ShapeBlock extends EntityBase<"shape"> {
     path: number[][];
 }
 
-export interface TextBlock extends EntityBase<"text"> {
+export interface TextEntity extends EntityBase<"text"> {
     x: number;
     y: number;
     // If sizingMode=auto, width and height will be automatically set by application
@@ -55,24 +55,20 @@ export interface TextBlock extends EntityBase<"text"> {
     // Cannot be configured, automatically set by application based on the content
     height: number;
 
-    sizingMode: TextBlockSizingMode;
+    sizingMode: TextEntitySizingMode;
     textAlignment: TextAlignment;
-
-    // TODO: リッチテキストフォーマット対応
     content: string;
 }
 
-export type Block = PathBlock | ShapeBlock | TextBlock;
-
-export type Entity = Block;
+export type Entity = PathEntity | ShapeEntity | TextEntity;
 
 export interface Page {
-    blocks: Record<string, Block>;
-    blockIds: string[];
+    entities: Record<string, Entity>;
+    entityIds: string[];
     dependencies: DependencyCollection;
 }
 
-export function getEdgesFromPath(path: PathBlock): Line[] {
+export function getEdgesFromPath(path: PathEntity): Line[] {
     return path.edges.map(([startNodeId, endNodeId]) => {
         const startNode = path.nodes[startNodeId];
         assert(
@@ -94,7 +90,7 @@ export function getEdgesFromPath(path: PathBlock): Line[] {
     });
 }
 
-export function getBoundingRectOfPath(path: PathBlock): Rect {
+export function getBoundingRectOfPath(path: PathEntity): Rect {
     const xs = Object.values(path.nodes).map((node) => node.x);
     const ys = Object.values(path.nodes).map((node) => node.y);
 
@@ -106,28 +102,31 @@ export function getBoundingRectOfPath(path: PathBlock): Rect {
     };
 }
 
-export function getBlocksInViewport(page: Page, viewport: Viewport): Block[] {
-    return page.blockIds
-        .map((blockId) => page.blocks[blockId])
-        .filter((block) => {
-            switch (block.type) {
+export function getEntitiesInViewport(
+    page: Page,
+    viewport: Viewport,
+): Entity[] {
+    return page.entityIds
+        .map((entityId) => page.entities[entityId])
+        .filter((entity) => {
+            switch (entity.type) {
                 case "shape":
                 case "text":
-                    return isRectOverlapWithRect(viewport, block);
+                    return isRectOverlapWithRect(viewport, entity);
                 case "path":
-                    return getEdgesFromPath(block).some((line) =>
+                    return getEdgesFromPath(entity).some((line) =>
                         isRectOverlapWithLine(viewport, line),
                     );
             }
         });
 }
 
-export function getBoundingRect(block: Block): Rect {
-    switch (block.type) {
+export function getBoundingRect(entity: Entity): Rect {
+    switch (entity.type) {
         case "shape":
         case "text":
-            return block;
+            return entity;
         case "path":
-            return getBoundingRectOfPath(block);
+            return getBoundingRectOfPath(entity);
     }
 }

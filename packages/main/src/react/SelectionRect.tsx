@@ -1,5 +1,5 @@
 import styled from "@emotion/styled";
-import type { PathBlock } from "../model/Page";
+import type { PathEntity } from "../model/Page";
 import { useController } from "./ControllerProvider";
 import { useStore } from "./hooks/useStore";
 
@@ -12,9 +12,11 @@ export function SelectionRect() {
     if (selectionRect === null) return null;
 
     const { x, y, width, height } = selectionRect;
-    const blocks = canvasState.getSelectedBlocks();
-    const isSinglePathMode = blocks.length === 1 && blocks[0].type === "path";
-    const isSingleTextMode = blocks.length === 1 && blocks[0].type === "text";
+    const entities = canvasState.getSelectedEntities();
+    const isSinglePathMode =
+        entities.length === 1 && entities[0].type === "path";
+    const isSingleTextMode =
+        entities.length === 1 && entities[0].type === "text";
 
     if (appState.mode.type === "edit-text") return null;
 
@@ -51,7 +53,7 @@ export function SelectionRect() {
                         strokeWidth={3}
                     />
                 )}
-                {blocks.map((obj) => {
+                {entities.map((obj) => {
                     if (obj.type === "shape") {
                         return (
                             <rect
@@ -88,7 +90,7 @@ export function SelectionRect() {
             </svg>
             {isSinglePathMode &&
                 appState.mode.type === "select" &&
-                Object.values((blocks[0] as PathBlock).nodes).map((node) => (
+                Object.values((entities[0] as PathEntity).nodes).map((node) => (
                     <ResizeHandle
                         key={node.id}
                         css={{

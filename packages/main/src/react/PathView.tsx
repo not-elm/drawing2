@@ -1,10 +1,10 @@
 import { memo } from "react";
 import { Colors } from "../model/Colors";
-import type { PathBlock } from "../model/Page";
+import type { PathEntity } from "../model/Page";
 
 export const STROKE_WIDTH_BASE = 5;
 
-export const PathView = memo(function PathView({ path }: { path: PathBlock }) {
+export const PathView = memo(function PathView({ path }: { path: PathEntity }) {
     const nodes = Object.values(path.nodes);
     const left = Math.min(...nodes.map((node) => node.x));
     const top = Math.min(...nodes.map((node) => node.y));
@@ -99,7 +99,7 @@ function constructArrowHeadPath(
     return [`M${q1x} ${q1y}`, `L${x1} ${y1}`, `L${q2x} ${q2y}`].join(" ");
 }
 
-function constructPath(path: PathBlock): string {
+function constructPath(path: PathEntity): string {
     const nodes = Object.values(path.nodes);
     const left = Math.min(...nodes.map((node) => node.x));
     const top = Math.min(...nodes.map((node) => node.y));

@@ -6,40 +6,39 @@ import {
     deserializeDependency,
     serializeDependency,
 } from "../model/Dependency";
-import type { Block, Page } from "../model/Page";
+import type { Entity, Page } from "../model/Page";
 import {
-    type SerializedBlock,
-    deserializeBlock,
-    serializeBlock,
+    type SerializedEntity,
+    deserializeEntity,
+    serializeEntity,
 } from "../model/SerializedPage";
 
 interface ClipboardData {
-    blocks: SerializedBlock[];
+    entities: SerializedEntity[];
     dependencies: SerializedDependency[];
 }
 
 export const ClipboardService = new (class {
-    copy(page: Page, blockIds: string[]): Promise<void> {
-        const blockIdSet = new Set(blockIds);
-        const blocksInOrder: Block[] = [];
+    copy(page: Page, entityIds: string[]): Promise<void> {
+        const entityIdSet = new Set(entityIds);
+        const entitiesInOrder: Entity[] = [];
         const dependencySet = new Set<Dependency>();
 
-        for (const blockId of page.blockIds) {
-            if (!blockIdSet.has(blockId)) continue;
+        for (const entityId of page.entityIds) {
+            if (!entityIdSet.has(entityId)) continue;
 
-            blocksInOrder.push(page.blocks[blockId]);
-            for (const dep of page.dependencies.getByToEntityId(blockId)) {
+            entitiesInOrder.push(page.entities[entityId]);
+            for (const dep of page.dependencies.getByToEntityId(entityId)) {
                 dependencySet.add(dep);
             }
         }
 
-        const entityIds = new Set([...blockIds]);
         const dependencies = [...dependencySet].filter(
-            (dep) => entityIds.has(dep.from) && entityIds.has(dep.to),
+            (dep) => entityIdSet.has(dep.from) && entityIdSet.has(dep.to),
         );
 
         const data: ClipboardData = {
-            blocks: blocksInOrder.map(serializeBlock),
+            entities: entitiesInOrder.map(serializeEntity),
             dependencies: dependencies.map(serializeDependency),
         };
 
@@ -47,39 +46,39 @@ export const ClipboardService = new (class {
     }
 
     async paste(): Promise<{
-        blocks: Block[];
+        entities: Entity[];
         dependencies: Dependency[];
     }> {
         try {
             const json = await navigator.clipboard.readText();
             const data = JSON.parse(json) as ClipboardData;
 
-            const blocks = data.blocks.map(deserializeBlock);
+            const entities = data.entities.map(deserializeEntity);
             const dependencies = data.dependencies.map(deserializeDependency);
 
             const idMap = new Map<string, string>();
-            for (const block of blocks) {
+            for (const entity of entities) {
                 // Renew IDs
                 const newId = randomId();
-                idMap.set(block.id, newId);
-                block.id = newId;
+                idMap.set(entity.id, newId);
+                entity.id = newId;
 
-                // Move blocks a little bit to avoid overlapping with copy sources
-                switch (block.type) {
+                // Move entities a little bit to avoid overlapping with copy sources
+                switch (entity.type) {
                     case "path": {
-                        for (const node of Object.values(block.nodes)) {
-                            block.nodes[node.id].x += 10;
-                            block.nodes[node.id].y += 10;
+                        for (const node of Object.values(entity.nodes)) {
+                            entity.nodes[node.id].x += 10;
+                            entity.nodes[node.id].y += 10;
                         }
                         break;
                     }
                     case "shape":
-                        block.x += 10;
-                        block.y += 10;
+                        entity.x += 10;
+                        entity.y += 10;
                         break;
                     case "text":
-                        block.x += 10;
-                        block.y += 10;
+                        entity.x += 10;
+                        entity.y += 10;
                         break;
                 }
             }
@@ -97,12 +96,12 @@ export const ClipboardService = new (class {
             }
 
             return {
-                blocks,
+                entities: entities,
                 dependencies,
             };
         } catch {
             return {
-                blocks: [],
+                entities: [],
                 dependencies: [],
             };
         }

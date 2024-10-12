@@ -2,60 +2,62 @@ import type { ColorId } from "./Colors";
 import type { SerializedDependency } from "./Dependency";
 import { DependencyCollection } from "./DependencyCollection";
 import type { FillMode } from "./FillMode";
-import type { Block, Page, PathBlock, ShapeBlock, TextBlock } from "./Page";
+import type { Entity, Page, PathEntity, ShapeEntity, TextEntity } from "./Page";
 import type { StrokeStyle } from "./StrokeStyle";
 import type { TextAlignment } from "./TextAlignment";
-import type { TextBlockSizingMode } from "./TextBlockSizingMode";
+import type { TextEntitySizingMode } from "./TextEntitySizingMode";
 
 export interface SerializedPage {
-    blocks: SerializedBlock[];
+    entities: SerializedEntity[];
     dependencies: SerializedDependency[];
 }
 export function serializePage(page: Page): SerializedPage {
     return {
-        blocks: page.blockIds.map((blockId) =>
-            serializeBlock(page.blocks[blockId]),
+        entities: page.entityIds.map((entityId) =>
+            serializeEntity(page.entities[entityId]),
         ),
         dependencies: page.dependencies.serialize(),
     };
 }
 export function deserializePage(page: SerializedPage): Page {
-    const blocks = page.blocks.map(deserializeBlock);
+    const entities = page.entities.map(deserializeEntity);
 
     const dependencies = DependencyCollection.deserialize(page.dependencies);
     return {
-        blocks: Object.fromEntries(blocks.map((block) => [block.id, block])),
-        blockIds: blocks.map((block) => block.id),
+        entities: Object.fromEntries(
+            entities.map((entity) => [entity.id, entity]),
+        ),
+        entityIds: entities.map((entity) => entity.id),
         dependencies,
     };
 }
 
-export type SerializedBlock =
-    | SerializedPathBlock
-    | SerializedShapeBlock
-    | SerializedTextBlock;
-export function serializeBlock(block: Block): SerializedBlock {
-    switch (block.type) {
+export type SerializedEntity =
+    | SerializedPathEntity
+    | SerializedShapeEntity
+    | SerializedTextEntity;
+export function serializeEntity(entity: Entity): SerializedEntity {
+    switch (entity.type) {
         case "path":
-            return serializePathBlock(block);
+            return serializePathEntity(entity);
         case "shape":
-            return serializeShapeBlock(block);
+            return serializeShapeEntity(entity);
         case "text":
-            return serializeTextBlock(block);
+            return serializeTextEnitity(entity);
     }
 }
-export function deserializeBlock(block: SerializedBlock): Block {
-    switch (block.type) {
+export function deserializeEntity(entity: SerializedEntity): Entity {
+    switch (entity.type) {
         case "path":
-            return deserializePathBlock(block);
+            return deserializePathEntity(entity);
         case "shape":
-            return deserializeShapeBlock(block);
+            return deserializeShapeEntity(entity);
         case "text":
-            return deserializeTextBlock(block);
+            return deserializeTextEntity(entity);
     }
 }
 
-interface SerializedPathBlock {
+interface SerializedPathEntity {
     id: string;
     type: "path";
     nodes: {
@@ -68,7 +70,7 @@ interface SerializedPathBlock {
     colorId: ColorId;
     strokeStyle: StrokeStyle;
 }
-function serializePathBlock(path: PathBlock): SerializedPathBlock {
+function serializePathEntity(path: PathEntity): SerializedPathEntity {
     return {
         id: path.id,
         type: "path",
@@ -83,7 +85,7 @@ function serializePathBlock(path: PathBlock): SerializedPathBlock {
         strokeStyle: path.strokeStyle,
     };
 }
-function deserializePathBlock(path: SerializedPathBlock): PathBlock {
+function deserializePathEntity(path: SerializedPathEntity): PathEntity {
     return {
         id: path.id,
         type: "path",
@@ -94,7 +96,7 @@ function deserializePathBlock(path: SerializedPathBlock): PathBlock {
     };
 }
 
-interface SerializedShapeBlock {
+interface SerializedShapeEntity {
     id: string;
     type: "shape";
     x: number;
@@ -109,7 +111,7 @@ interface SerializedShapeBlock {
     strokeStyle: StrokeStyle;
     path: number[][];
 }
-function serializeShapeBlock(shape: ShapeBlock): SerializedShapeBlock {
+function serializeShapeEntity(shape: ShapeEntity): SerializedShapeEntity {
     return {
         id: shape.id,
         type: "shape",
@@ -126,7 +128,7 @@ function serializeShapeBlock(shape: ShapeBlock): SerializedShapeBlock {
         path: shape.path,
     };
 }
-function deserializeShapeBlock(shape: SerializedShapeBlock): ShapeBlock {
+function deserializeShapeEntity(shape: SerializedShapeEntity): ShapeEntity {
     return {
         id: shape.id,
         type: "shape",
@@ -144,18 +146,18 @@ function deserializeShapeBlock(shape: SerializedShapeBlock): ShapeBlock {
     };
 }
 
-interface SerializedTextBlock {
+interface SerializedTextEntity {
     id: string;
     type: "text";
     x: number;
     y: number;
     width: number;
     height: number;
-    sizingMode: TextBlockSizingMode;
+    sizingMode: TextEntitySizingMode;
     textAlignment: TextAlignment;
     content: string;
 }
-function serializeTextBlock(text: TextBlock): SerializedTextBlock {
+function serializeTextEnitity(text: TextEntity): SerializedTextEntity {
     return {
         id: text.id,
         type: "text",
@@ -168,7 +170,7 @@ function serializeTextBlock(text: TextBlock): SerializedTextBlock {
         content: text.content,
     };
 }
-function deserializeTextBlock(text: SerializedTextBlock): TextBlock {
+function deserializeTextEntity(text: SerializedTextEntity): TextEntity {
     return {
         id: text.id,
         type: "text",

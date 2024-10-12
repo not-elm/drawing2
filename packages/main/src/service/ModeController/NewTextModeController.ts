@@ -1,6 +1,6 @@
 import type { Rect } from "../../geo/Rect";
 import { randomId } from "../../lib/randomId";
-import type { Block, TextBlock } from "../../model/Page";
+import type { Entity, TextEntity } from "../../model/Page";
 import { Transaction } from "../../model/Transaction";
 import type { AppStateStore } from "../../store/AppStateStore";
 import type { CanvasStateStore } from "../../store/CanvasStateStore";
@@ -23,7 +23,7 @@ export class NewTextModeController extends ModeController {
         return "new-text";
     }
 
-    onBlockPointerDown(data: PointerDownEventHandlerData, _block: Block) {
+    onEntityPointerDown(data: PointerDownEventHandlerData, entity: Entity) {
         this.onCanvasPointerDown(data);
     }
 
@@ -37,15 +37,15 @@ export class NewTextModeController extends ModeController {
 
         this.controller.setMode({
             type: "edit-text",
-            blockId: text.id,
+            entityId: text.id,
         });
 
-        // To leave focus at the new text block
+        // To leave focus at the new text entity
         data.preventDefault();
     }
 
-    private insertNewText(rect: Rect): TextBlock {
-        const text: TextBlock = {
+    private insertNewText(rect: Rect): TextEntity {
+        const text: TextEntity = {
             id: randomId(),
             type: "text",
             x: rect.x,
@@ -54,13 +54,13 @@ export class NewTextModeController extends ModeController {
             height: rect.height,
             content: "",
             textAlignment:
-                this.appStateStore.getState().defaultTextBlockTextAlignment,
+                this.appStateStore.getState().defaultTextEntityTextAlignment,
             sizingMode: "content",
         };
 
         this.canvasStateStore.setPage(
             new Transaction(this.canvasStateStore.getState().page)
-                .insertBlocks([text])
+                .insertEntities([text])
                 .commit(),
         );
 

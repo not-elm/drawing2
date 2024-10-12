@@ -7,7 +7,7 @@ import {
     Colors,
 } from "../model/Colors";
 import type { FillMode } from "../model/FillMode";
-import type { ShapeBlock } from "../model/Page";
+import type { ShapeEntity } from "../model/Page";
 import type { StrokeStyle } from "../model/StrokeStyle";
 import type { TextAlignment } from "../model/TextAlignment";
 import { useController } from "./ControllerProvider";
@@ -16,7 +16,7 @@ import { STROKE_WIDTH_BASE } from "./PathView";
 export const ShapeView = memo(function ShapeView({
     shape,
     isLabelEditing,
-}: { shape: ShapeBlock; isLabelEditing: boolean }) {
+}: { shape: ShapeEntity; isLabelEditing: boolean }) {
     return (
         <div
             style={{ transform: `translate(${shape.x}px, ${shape.y}px)` }}

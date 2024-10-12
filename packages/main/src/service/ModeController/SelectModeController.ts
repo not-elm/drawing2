@@ -5,10 +5,10 @@ import { assert } from "../../lib/assert";
 import { testHitEntities } from "../../lib/testHitEntities";
 import { Direction } from "../../model/Direction";
 import {
-    type Block,
-    type PathBlock,
+    type Entity,
+    type PathEntity,
     type PathNode,
-    type TextBlock,
+    type TextEntity,
     getEdgesFromPath,
 } from "../../model/Page";
 import {
@@ -55,7 +55,7 @@ export class SelectModeController extends ModeController {
         return "select";
     }
 
-    onBlockPointerDown(data: PointerDownEventHandlerData, block: Block) {
+    onEntityPointerDown(data: PointerDownEventHandlerData, entity: Entity) {
         const selectionHandle = this.getSelectionHandleType(data.x, data.y);
         if (selectionHandle !== null) {
             this.handleSelectionPointerDown(data, selectionHandle);
@@ -66,7 +66,7 @@ export class SelectModeController extends ModeController {
             this.canvasStateStore.unselectAll();
         }
 
-        this.canvasStateStore.select(block.id);
+        this.canvasStateStore.select(entity.id);
 
         this.gestureRecognizer.addSessionHandlers(
             data.pointerId,
@@ -294,7 +294,7 @@ export class SelectModeController extends ModeController {
                 break;
             }
             case "SelectionText.Left": {
-                this.canvasStateStore.setTextBlockSizingMode("fixed");
+                this.canvasStateStore.setTextEntitySizingMode("fixed");
                 session = createTransformSession(
                     this.historyManager,
                     createScaleTransformHandle(
@@ -319,7 +319,7 @@ export class SelectModeController extends ModeController {
                 break;
             }
             case "SelectionText.Right": {
-                this.canvasStateStore.setTextBlockSizingMode("fixed");
+                this.canvasStateStore.setTextEntitySizingMode("fixed");
                 session = createTransformSession(
                     this.historyManager,
                     createScaleTransformHandle(
@@ -344,7 +344,7 @@ export class SelectModeController extends ModeController {
                         data.newX,
                         data.newY,
                         this.viewportStore.getState().scale,
-                    ).blocks.at(0);
+                    ).entities.at(0);
 
                     if (data.shiftKey) {
                         if (object !== undefined) {
@@ -352,12 +352,12 @@ export class SelectModeController extends ModeController {
                         }
                     } else {
                         if (object !== undefined) {
-                            const selectedBlockIds =
+                            const selectedEntityIds =
                                 this.canvasStateStore.getState()
-                                    .selectedBlockIds;
+                                    .selectedEntityIds;
                             if (
-                                selectedBlockIds.length === 1 &&
-                                selectedBlockIds[0] === object.target.id
+                                selectedEntityIds.length === 1 &&
+                                selectedEntityIds[0] === object.target.id
                             ) {
                                 this.controller.startTextEditing(
                                     object.target.id,
@@ -388,8 +388,8 @@ export class SelectModeController extends ModeController {
         if (selectionType === "path") {
             const path = this.canvasStateStore
                 .getState()
-                .getSelectedBlocks()[0];
-            assert(path.type === "path", "Selected block is not path");
+                .getSelectedEntities()[0];
+            assert(path.type === "path", "Selected entity is not path");
 
             for (const node of Object.values(path.nodes)) {
                 if (
@@ -416,8 +416,8 @@ export class SelectModeController extends ModeController {
         if (selectionType === "text") {
             const text = this.canvasStateStore
                 .getState()
-                .getSelectedBlocks()[0];
-            assert(text.type === "text", "Selected block is not text");
+                .getSelectedEntities()[0];
+            assert(text.type === "text", "Selected entity is not text");
 
             const hitAreaX = testHitWithRange(
                 x,
@@ -538,17 +538,23 @@ export class SelectModeController extends ModeController {
     }
 
     private getSelectionType(): SelectionType {
-        const selectedBlocks = this.canvasStateStore
+        const selectedEntities = this.canvasStateStore
             .getState()
-            .getSelectedBlocks();
+            .getSelectedEntities();
 
-        if (selectedBlocks.length === 0) return "none";
+        if (selectedEntities.length === 0) return "none";
 
-        if (selectedBlocks.length === 1 && selectedBlocks[0].type === "path") {
+        if (
+            selectedEntities.length === 1 &&
+            selectedEntities[0].type === "path"
+        ) {
             return "path";
         }
 
-        if (selectedBlocks.length === 1 && selectedBlocks[0].type === "text") {
+        if (
+            selectedEntities.length === 1 &&
+            selectedEntities[0].type === "text"
+        ) {
             return "text";
         }
 
@@ -568,11 +574,11 @@ type SelectionHandleType =
     | { type: "SelectionRect.BottomLeftHandle"; selectionRect: Rect }
     | { type: "SelectionRect.BottomHandle"; selectionRect: Rect }
     | { type: "SelectionRect.BottomRightHandle"; selectionRect: Rect }
-    | { type: "SelectionPath.Edge"; path: PathBlock }
-    | { type: "SelectionPath.Node"; path: PathBlock; node: PathNode }
-    | { type: "SelectionText.Left"; text: TextBlock }
-    | { type: "SelectionText.Center"; text: TextBlock }
-    | { type: "SelectionText.Right"; text: TextBlock };
+    | { type: "SelectionPath.Edge"; path: PathEntity }
+    | { type: "SelectionPath.Node"; path: PathEntity; node: PathNode }
+    | { type: "SelectionText.Left"; text: TextEntity }
+    | { type: "SelectionText.Center"; text: TextEntity }
+    | { type: "SelectionText.Right"; text: TextEntity };
 
 /**
  * Test if a given value is inside of a range.

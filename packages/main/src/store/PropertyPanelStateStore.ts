@@ -2,7 +2,7 @@ import { Store } from "../lib/Store";
 import type { FillMode } from "../model/FillMode";
 import type { StrokeStyle } from "../model/StrokeStyle";
 import type { TextAlignment } from "../model/TextAlignment";
-import type { TextBlockSizingMode } from "../model/TextBlockSizingMode";
+import type { TextEntitySizingMode } from "../model/TextEntitySizingMode";
 import type { AppStateStore } from "./AppStateStore";
 import type { CanvasStateStore } from "./CanvasStateStore";
 
@@ -21,11 +21,11 @@ interface PropertyPanelState {
 
     readonly lineEndTypeSectionVisible: boolean;
 
-    readonly textBlockTextAlignmentSectionVisible: boolean;
-    readonly textBlockTextAlignment: TextAlignment | null;
+    readonly textEntityTextAlignmentSectionVisible: boolean;
+    readonly textEntityTextAlignment: TextAlignment | null;
 
-    readonly textBlockSizingModeSectionVisible: boolean;
-    readonly textBlockSizingMode: TextBlockSizingMode | null;
+    readonly textEntitySizingModeSectionVisible: boolean;
+    readonly textEntitySizingMode: TextEntitySizingMode | null;
 
     readonly strokeStyleSectionVisible: boolean;
     readonly strokeStyle: StrokeStyle | null;
@@ -46,10 +46,10 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
             textAlignY: null,
             orderSectionVisible: true,
             lineEndTypeSectionVisible: true,
-            textBlockTextAlignmentSectionVisible: true,
-            textBlockTextAlignment: null,
-            textBlockSizingModeSectionVisible: true,
-            textBlockSizingMode: null,
+            textEntityTextAlignmentSectionVisible: true,
+            textEntityTextAlignment: null,
+            textEntitySizingModeSectionVisible: true,
+            textEntitySizingMode: null,
             strokeStyleSectionVisible: true,
             strokeStyle: null,
         });
@@ -67,14 +67,14 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
         const appState = this.appStateStore.getState();
         const canvasState = this.canvasStateStore.getState();
 
-        const selectedBlocks = canvasState.getSelectedBlocks();
-        const selectedShapes = selectedBlocks.filter(
+        const selectedEntitys = canvasState.getSelectedEntities();
+        const selectedShapes = selectedEntitys.filter(
             (obj) => obj.type === "shape",
         );
-        const selectedPaths = selectedBlocks.filter(
+        const selectedPaths = selectedEntitys.filter(
             (obj) => obj.type === "path",
         );
-        const selectedTexts = selectedBlocks.filter(
+        const selectedTexts = selectedEntitys.filter(
             (obj) => obj.type === "text",
         );
 
@@ -91,10 +91,10 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
         const fillModes = new Set([
             ...selectedShapes.map((shape) => shape.fillMode),
         ]);
-        const textBlockTextAlignments = new Set(
+        const textEntityTextAlignments = new Set(
             selectedTexts.map((text) => text.textAlignment),
         );
-        const textBlockSizingModes = new Set(
+        const textEntitySizingModes = new Set(
             selectedTexts.map((text) => text.sizingMode),
         );
         const strokeStyles = new Set([
@@ -136,25 +136,25 @@ export class PropertyPanelStateStore extends Store<PropertyPanelState> {
                 selectedShapes.length > 0 || selectedPaths.length > 0,
             lineEndTypeSectionVisible:
                 selectedPaths.length > 0 || appState.mode.type === "new-path",
-            textBlockTextAlignmentSectionVisible:
+            textEntityTextAlignmentSectionVisible:
                 (selectedShapes.length === 0 && selectedTexts.length > 0) ||
                 appState.mode.type === "new-text" ||
                 appState.mode.type === "edit-text",
-            textBlockTextAlignment:
-                textBlockTextAlignments.size === 0
-                    ? appState.defaultTextBlockTextAlignment
-                    : textBlockTextAlignments.size === 1
-                      ? [...textBlockTextAlignments][0]
+            textEntityTextAlignment:
+                textEntityTextAlignments.size === 0
+                    ? appState.defaultTextEntityTextAlignment
+                    : textEntityTextAlignments.size === 1
+                      ? [...textEntityTextAlignments][0]
                       : null,
-            textBlockSizingModeSectionVisible:
+            textEntitySizingModeSectionVisible:
                 selectedTexts.length > 0 ||
                 appState.mode.type === "new-text" ||
                 appState.mode.type === "edit-text",
-            textBlockSizingMode:
-                textBlockSizingModes.size === 0
-                    ? appState.defaultTextBlockSizingMode
-                    : textBlockSizingModes.size === 1
-                      ? [...textBlockSizingModes][0]
+            textEntitySizingMode:
+                textEntitySizingModes.size === 0
+                    ? appState.defaultTextEntitySizingMode
+                    : textEntitySizingModes.size === 1
+                      ? [...textEntitySizingModes][0]
                       : null,
             strokeStyleSectionVisible:
                 selectedPaths.length > 0 ||

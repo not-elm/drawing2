@@ -6,7 +6,7 @@ import type { CanvasStateStore } from "../store/CanvasStateStore";
 import type { SnapGuideStore } from "../store/SnapGuideStore";
 import type { ViewportStore } from "../store/ViewportStore";
 import type { Direction } from "./Direction";
-import { type Block, type Page, getBoundingRect } from "./Page";
+import { type Entity, type Page, getBoundingRect } from "./Page";
 import {
     type SnapEntry,
     type SnapEntry2D,
@@ -18,15 +18,15 @@ import { Transaction } from "./Transaction";
 export abstract class TransformHandle {
     constructor(
         readonly originalHandlePoint: Point,
-        readonly originalBlocks: Block[],
+        readonly originalEntities: Entity[],
         readonly canvasStateStore: CanvasStateStore,
         readonly viewportProvider: StateProvider<ViewportStore>,
         readonly snapGuideStore: SnapGuideStore,
     ) {
-        this.targetBlockIds = originalBlocks.map((block) => block.id);
+        this.targetEntityIds = originalEntities.map((entity) => entity.id);
     }
 
-    protected readonly targetBlockIds: string[];
+    protected readonly targetEntityIds: string[];
 
     apply(
         newHandlePoint: Point,
@@ -94,7 +94,7 @@ export abstract class TransformHandle {
                 page,
                 viewport,
                 snapPoint,
-                this.targetBlockIds,
+                this.targetEntityIds,
                 0,
             );
             if (!snapEntry2D.x.snapped && !snapEntry2D.y.snapped) {
@@ -165,7 +165,7 @@ export abstract class TransformHandle {
                 page,
                 viewport,
                 snapPoint,
-                this.targetBlockIds,
+                this.targetEntityIds,
             );
             if (snapEntry2D.x.distance < bestSnapEntryX.distance) {
                 bestSnapEntryX = snapEntry2D.x;
@@ -207,7 +207,7 @@ class ScaleTransformHandle extends TransformHandle {
 
     constructor(
         originalHandlePoint: Point,
-        originalBlocks: Block[],
+        originalEntities: Entity[],
         canvasStateStore: CanvasStateStore,
         viewportProvider: StateProvider<ViewportStore>,
         snapGuideStore: SnapGuideStore,
@@ -215,7 +215,7 @@ class ScaleTransformHandle extends TransformHandle {
     ) {
         super(
             originalHandlePoint,
-            originalBlocks,
+            originalEntities,
             canvasStateStore,
             viewportProvider,
             snapGuideStore,
@@ -298,9 +298,9 @@ class ScaleTransformHandle extends TransformHandle {
             : 1;
 
         return new Transaction(page)
-            .replaceBlocks(this.originalBlocks)
-            .scaleBlocks(
-                this.targetBlockIds,
+            .replaceEntities(this.originalEntities)
+            .scaleEntities(
+                this.targetEntityIds,
                 this.transformOrigin.x,
                 this.transformOrigin.y,
                 scaleX,
@@ -321,20 +321,20 @@ class ScaleTransformHandle extends TransformHandle {
 class MoveTransformHandle extends TransformHandle {
     constructor(
         originalHandlePoint: Point,
-        originalBlocks: Block[],
+        originalEntities: Entity[],
         canvasStateStore: CanvasStateStore,
         viewportProvider: StateProvider<ViewportStore>,
         snapGuideStore: SnapGuideStore,
     ) {
         super(
             originalHandlePoint,
-            originalBlocks,
+            originalEntities,
             canvasStateStore,
             viewportProvider,
             snapGuideStore,
         );
 
-        const rect = unionRectAll(this.originalBlocks.map(getBoundingRect));
+        const rect = unionRectAll(this.originalEntities.map(getBoundingRect));
         this.originalSnapPoints = [
             { x: rect.x, y: rect.y },
             { x: rect.x + rect.width, y: rect.y },
@@ -397,8 +397,8 @@ class MoveTransformHandle extends TransformHandle {
         const dy = newHandlePoint.y - this.originalHandlePoint.y;
 
         return new Transaction(page)
-            .replaceBlocks(this.originalBlocks)
-            .moveBlocks(this.targetBlockIds, dx, dy)
+            .replaceEntities(this.originalEntities)
+            .moveEntities(this.targetEntityIds, dx, dy)
             .commit();
     }
 }
@@ -409,14 +409,14 @@ export function createScaleTransformHandle(
     snapGuideStore: SnapGuideStore,
     direction: Direction,
 ): TransformHandle {
-    const targetBlocks = canvasStateStore.getState().getSelectedBlocks();
-    const boundingRect = unionRectAll(targetBlocks.map(getBoundingRect));
+    const targetEntities = canvasStateStore.getState().getSelectedEntities();
+    const boundingRect = unionRectAll(targetEntities.map(getBoundingRect));
     const handlePoint = direction.getPoint(boundingRect);
     const transformOrigin = direction.opposite.getPoint(boundingRect);
 
     return new ScaleTransformHandle(
         handlePoint,
-        targetBlocks,
+        targetEntities,
         canvasStateStore,
         viewportProvider,
         snapGuideStore,
@@ -430,11 +430,11 @@ export function createMoveTransformHandle(
     snapGuideStore: SnapGuideStore,
     handlePoint: Point,
 ): TransformHandle {
-    const targetBlocks = canvasStateStore.getState().getSelectedBlocks();
+    const targetEntities = canvasStateStore.getState().getSelectedEntities();
 
     return new MoveTransformHandle(
         handlePoint,
-        targetBlocks,
+        targetEntities,
         canvasStateStore,
         viewportProvider,
         snapGuideStore,

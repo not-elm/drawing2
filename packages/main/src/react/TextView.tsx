@@ -1,7 +1,7 @@
 import type { CSSObject } from "@emotion/styled";
 import { MathJax } from "better-react-mathjax";
 import { memo } from "react";
-import type { TextBlock } from "../model/Page";
+import type { TextEntity } from "../model/Page";
 import type { TextAlignment } from "../model/TextAlignment";
 import { useController } from "./ControllerProvider";
 import { useResizeObserver } from "./hooks/useResizeObserver";
@@ -9,7 +9,7 @@ import { useResizeObserver } from "./hooks/useResizeObserver";
 export const TextView = memo(function ShapeView({
     text,
     editing,
-}: { text: TextBlock; editing: boolean }) {
+}: { text: TextEntity; editing: boolean }) {
     return (
         <div
             style={{ transform: `translate(${text.x}px, ${text.y}px)` }}
@@ -50,7 +50,7 @@ const TextViewInner = memo(function ShapeViewInner({
     const containerRef = useResizeObserver((entry) => {
         // ResizeObserver is not affected by CSS transform.
         // So we don't need to care about the viewport scaling.
-        controller.handleTextBlockSizeChanged(
+        controller.handleTextEntitySizeChanged(
             shapeId,
             entry.contentRect.width,
             entry.contentRect.height,
@@ -89,7 +89,6 @@ const TextViewInner = memo(function ShapeViewInner({
                     autoFocus={true}
                     autoComplete="off"
                     css={{
-                        display: "block",
                         fieldSizing: "content",
                         border: "none",
                         background: "none",

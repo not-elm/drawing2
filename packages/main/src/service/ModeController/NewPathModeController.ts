@@ -1,6 +1,6 @@
 import type { Line } from "../../geo/Line";
 import { randomId } from "../../lib/randomId";
-import type { Block, PathBlock } from "../../model/Page";
+import type { Entity, PathEntity } from "../../model/Page";
 import { Transaction } from "../../model/Transaction";
 import type { AppStateStore } from "../../store/AppStateStore";
 import type { CanvasStateStore } from "../../store/CanvasStateStore";
@@ -30,12 +30,12 @@ export class NewPathModeController extends ModeController {
         return "new-path";
     }
 
-    onBlockPointerDown(data: PointerDownEventHandlerData, _block: Block) {
+    onEntityPointerDown(data: PointerDownEventHandlerData, entity: Entity) {
         this.onCanvasPointerDown(data);
     }
 
     onCanvasPointerDown(data: PointerDownEventHandlerData): void {
-        const pathBlock = this.insertNewPath({
+        const pathEntity = this.insertNewPath({
             x1: data.x,
             y1: data.y,
             x2: data.x + 1,
@@ -44,13 +44,13 @@ export class NewPathModeController extends ModeController {
 
         this.controller.setMode({ type: "select" });
         this.canvasStateStore.unselectAll();
-        this.canvasStateStore.select(pathBlock.id);
+        this.canvasStateStore.select(pathEntity.id);
 
         this.gestureRecognizer.addSessionHandlers(
             data.pointerId,
             createMovePointSession(
-                pathBlock,
-                pathBlock.edges[0][1],
+                pathEntity,
+                pathEntity.edges[0][1],
                 this.canvasStateStore,
                 this.viewportStore,
                 this.historyManager,
@@ -58,7 +58,7 @@ export class NewPathModeController extends ModeController {
         );
     }
 
-    private insertNewPath(line: Line): PathBlock {
+    private insertNewPath(line: Line): PathEntity {
         const node1 = {
             id: randomId(),
             x: line.x1,
@@ -71,7 +71,7 @@ export class NewPathModeController extends ModeController {
             y: line.y2,
             endType: this.appStateStore.getState().defaultLineEndType2,
         };
-        const pathBlock: PathBlock = {
+        const pathEntity: PathEntity = {
             type: "path",
             id: randomId(),
             nodes: {
@@ -85,9 +85,9 @@ export class NewPathModeController extends ModeController {
         const transaction = new Transaction(
             this.canvasStateStore.getState().page,
         );
-        transaction.insertBlocks([pathBlock]);
+        transaction.insertEntities([pathEntity]);
 
         this.canvasStateStore.setPage(transaction.commit());
-        return pathBlock;
+        return pathEntity;
     }
 }

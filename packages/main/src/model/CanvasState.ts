@@ -1,60 +1,60 @@
 import { type Rect, unionRectAll } from "../geo/Rect";
 import { dataclass } from "../lib/dataclass";
 import { isNotNullish } from "../lib/isNullish";
-import { type Block, type Page, getBoundingRect } from "./Page";
+import { type Entity, type Page, getBoundingRect } from "./Page";
 
 export class CanvasState extends dataclass<{
     readonly page: Page;
-    readonly selectedBlockIds: string[];
+    readonly selectedEntityIds: string[];
 }>() {
     setPage(page: Page): CanvasState {
         return this.copy({
             page,
-            selectedBlockIds: [...this.selectedBlockIds].filter(
-                (id) => id in page.blocks,
+            selectedEntityIds: [...this.selectedEntityIds].filter(
+                (id) => id in page.entities,
             ),
         });
     }
 
     select(id: string): CanvasState {
-        if (this.selectedBlockIds.includes(id)) {
+        if (this.selectedEntityIds.includes(id)) {
             return this;
         }
 
-        return this.setSelectedBlockIds([...this.selectedBlockIds, id]);
+        return this.setSelectedEntityIds([...this.selectedEntityIds, id]);
     }
 
     selectAll(): CanvasState {
-        return this.setSelectedBlockIds(this.page.blockIds);
+        return this.setSelectedEntityIds(this.page.entityIds);
     }
 
     unselect(id: string): CanvasState {
-        return this.setSelectedBlockIds(
-            this.selectedBlockIds.filter((i) => i !== id),
+        return this.setSelectedEntityIds(
+            this.selectedEntityIds.filter((i) => i !== id),
         );
     }
 
     unselectAll(): CanvasState {
-        return this.setSelectedBlockIds([]);
+        return this.setSelectedEntityIds([]);
     }
 
-    setSelectedBlockIds(selectedBlockIds: string[]): CanvasState {
+    setSelectedEntityIds(selectedEntityIds: string[]): CanvasState {
         return this.copy({
-            selectedBlockIds: selectedBlockIds.filter(
-                (id) => id in this.page.blocks,
+            selectedEntityIds: selectedEntityIds.filter(
+                (id) => id in this.page.entities,
             ),
         });
     }
 
     getSelectionRect(): Rect | null {
-        const rects = this.getSelectedBlocks().map(getBoundingRect);
+        const rects = this.getSelectedEntities().map(getBoundingRect);
         if (rects.length === 0) return null;
         return unionRectAll(rects);
     }
 
-    getSelectedBlocks(): Block[] {
-        return [...this.selectedBlockIds]
-            .map((id) => this.page.blocks[id])
+    getSelectedEntities(): Entity[] {
+        return [...this.selectedEntityIds]
+            .map((id) => this.page.entities[id])
             .filter(isNotNullish);
     }
 }

@@ -5,7 +5,7 @@ import type { FillMode } from "../model/FillMode";
 import type { Mode } from "../model/Mode";
 import type { StrokeStyle } from "../model/StrokeStyle";
 import type { TextAlignment } from "../model/TextAlignment";
-import type { TextBlockSizingMode } from "../model/TextBlockSizingMode";
+import type { TextEntitySizingMode } from "../model/TextEntitySizingMode";
 
 interface AppState {
     readonly mode: Mode;
@@ -16,8 +16,8 @@ interface AppState {
     readonly defaultTextAlignY: TextAlignment;
     readonly defaultLineEndType1: LineEndType;
     readonly defaultLineEndType2: LineEndType;
-    readonly defaultTextBlockTextAlignment: TextAlignment;
-    readonly defaultTextBlockSizingMode: TextBlockSizingMode;
+    readonly defaultTextEntityTextAlignment: TextAlignment;
+    readonly defaultTextEntitySizingMode: TextEntitySizingMode;
     readonly defaultStrokeStyle: StrokeStyle;
 }
 
@@ -32,8 +32,8 @@ export class AppStateStore extends Store<AppState> {
             defaultTextAlignY: "center",
             defaultLineEndType1: "none",
             defaultLineEndType2: "arrow",
-            defaultTextBlockTextAlignment: "start",
-            defaultTextBlockSizingMode: "content",
+            defaultTextEntityTextAlignment: "start",
+            defaultTextEntitySizingMode: "content",
             defaultStrokeStyle: "solid",
         });
     }
@@ -65,17 +65,17 @@ export class AppStateStore extends Store<AppState> {
         });
     }
 
-    setDefaultTextBlockTextAlignment(alignment: TextAlignment) {
+    setDefaultTextEntityTextAlignment(alignment: TextAlignment) {
         this.setState({
             ...this.state,
-            defaultTextBlockTextAlignment: alignment,
+            defaultTextEntityTextAlignment: alignment,
         });
     }
 
-    setDefaultTextBlockSizingMode(sizingMode: TextBlockSizingMode) {
+    setDefaultTextEntitySizingMode(sizingMode: TextEntitySizingMode) {
         this.setState({
             ...this.state,
-            defaultTextBlockSizingMode: sizingMode,
+            defaultTextEntitySizingMode: sizingMode,
         });
     }
 

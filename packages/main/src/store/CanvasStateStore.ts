@@ -6,7 +6,7 @@ import { CanvasState } from "../model/CanvasState";
 import type { ColorId } from "../model/Colors";
 import { DependencyCollection } from "../model/DependencyCollection";
 import type { FillMode } from "../model/FillMode";
-import { type Block, type Page, getEdgesFromPath } from "../model/Page";
+import { type Entity, type Page, getEdgesFromPath } from "../model/Page";
 import {
     type SerializedPage,
     deserializePage,
@@ -14,7 +14,7 @@ import {
 } from "../model/SerializedPage";
 import type { StrokeStyle } from "../model/StrokeStyle";
 import type { TextAlignment } from "../model/TextAlignment";
-import type { TextBlockSizingMode } from "../model/TextBlockSizingMode";
+import type { TextEntitySizingMode } from "../model/TextEntitySizingMode";
 import { Transaction } from "../model/Transaction";
 import type { Viewport } from "../model/Viewport";
 import { ClipboardService } from "../service/ClipboardService";
@@ -24,11 +24,11 @@ export class CanvasStateStore extends Store<CanvasState> {
         super(
             new CanvasState({
                 page: {
-                    blocks: {},
-                    blockIds: [],
+                    entities: {},
+                    entityIds: [],
                     dependencies: new DependencyCollection(),
                 },
-                selectedBlockIds: [],
+                selectedEntityIds: [],
             }),
         );
 
@@ -39,29 +39,29 @@ export class CanvasStateStore extends Store<CanvasState> {
         }, 1000);
     }
 
-    deleteBlock(blockIds: string[]) {
+    deleteEntity(entityIds: string[]) {
         this.setState(
             this.state.setPage(
                 new Transaction(this.state.page)
-                    .deleteBlocks(blockIds)
+                    .deleteEntities(entityIds)
                     .commit(),
             ),
         );
     }
 
-    deleteSelectedBlocks() {
-        this.deleteBlock(this.state.selectedBlockIds);
+    deleteSelectedEntities() {
+        this.deleteEntity(this.state.selectedEntityIds);
     }
 
     updateZIndex(currentIndex: number, newIndex: number) {
-        const newBlockIds = this.state.page.blockIds.slice();
-        const [id] = newBlockIds.splice(currentIndex, 1);
-        newBlockIds.splice(newIndex, 0, id);
+        const newEntityIds = this.state.page.entityIds.slice();
+        const [id] = newEntityIds.splice(currentIndex, 1);
+        newEntityIds.splice(newIndex, 0, id);
 
         this.setState(
             this.state.setPage({
                 ...this.state.page,
-                blockIds: newBlockIds,
+                entityIds: newEntityIds,
             }),
         );
     }
@@ -75,18 +75,18 @@ export class CanvasStateStore extends Store<CanvasState> {
         this.setState(
             this.state.setPage(
                 new Transaction(this.state.page)
-                    .updateProperty([id], (oldBlock) => {
-                        switch (oldBlock.type) {
+                    .updateProperty([id], (oldEntity) => {
+                        switch (oldEntity.type) {
                             case "shape": {
-                                return { ...oldBlock, label };
+                                return { ...oldEntity, label };
                             }
                             case "text": {
-                                return { ...oldBlock, content: label };
+                                return { ...oldEntity, content: label };
                             }
                             default: {
                                 assert(
                                     false,
-                                    `Invalid block type: ${oldBlock.id} ${oldBlock.type}`,
+                                    `Invalid entity type: ${oldEntity.id} ${oldEntity.type}`,
                                 );
                             }
                         }
@@ -100,26 +100,29 @@ export class CanvasStateStore extends Store<CanvasState> {
         this.setState(
             this.state.setPage(
                 new Transaction(this.state.page)
-                    .updateProperty(this.state.selectedBlockIds, (oldBlock) => {
-                        switch (oldBlock.type) {
-                            case "shape": {
-                                return {
-                                    ...oldBlock,
-                                    textAlignX,
-                                    textAlignY,
-                                };
+                    .updateProperty(
+                        this.state.selectedEntityIds,
+                        (oldEntity) => {
+                            switch (oldEntity.type) {
+                                case "shape": {
+                                    return {
+                                        ...oldEntity,
+                                        textAlignX,
+                                        textAlignY,
+                                    };
+                                }
+                                case "text": {
+                                    return {
+                                        ...oldEntity,
+                                        textAlignment: textAlignX,
+                                    };
+                                }
+                                default: {
+                                    return oldEntity;
+                                }
                             }
-                            case "text": {
-                                return {
-                                    ...oldBlock,
-                                    textAlignment: textAlignX,
-                                };
-                            }
-                            default: {
-                                return oldBlock;
-                            }
-                        }
-                    })
+                        },
+                    )
                     .commit(),
             ),
         );
@@ -129,17 +132,20 @@ export class CanvasStateStore extends Store<CanvasState> {
         this.setState(
             this.state.setPage(
                 new Transaction(this.state.page)
-                    .updateProperty(this.state.selectedBlockIds, (oldBlock) => {
-                        switch (oldBlock.type) {
-                            case "shape":
-                            case "path": {
-                                return { ...oldBlock, colorId };
+                    .updateProperty(
+                        this.state.selectedEntityIds,
+                        (oldEntity) => {
+                            switch (oldEntity.type) {
+                                case "shape":
+                                case "path": {
+                                    return { ...oldEntity, colorId };
+                                }
+                                default: {
+                                    return oldEntity;
+                                }
                             }
-                            default: {
-                                return oldBlock;
-                            }
-                        }
-                    })
+                        },
+                    )
                     .commit(),
             ),
         );
@@ -149,16 +155,19 @@ export class CanvasStateStore extends Store<CanvasState> {
         this.setState(
             this.state.setPage(
                 new Transaction(this.state.page)
-                    .updateProperty(this.state.selectedBlockIds, (oldBlock) => {
-                        switch (oldBlock.type) {
-                            case "shape": {
-                                return { ...oldBlock, fillMode };
+                    .updateProperty(
+                        this.state.selectedEntityIds,
+                        (oldEntity) => {
+                            switch (oldEntity.type) {
+                                case "shape": {
+                                    return { ...oldEntity, fillMode };
+                                }
+                                default: {
+                                    return oldEntity;
+                                }
                             }
-                            default: {
-                                return oldBlock;
-                            }
-                        }
-                    })
+                        },
+                    )
                     .commit(),
             ),
         );
@@ -168,63 +177,72 @@ export class CanvasStateStore extends Store<CanvasState> {
         this.setState(
             this.state.setPage(
                 new Transaction(this.state.page)
-                    .updateProperty(this.state.selectedBlockIds, (oldBlock) => {
-                        switch (oldBlock.type) {
-                            case "path": {
-                                return {
-                                    ...oldBlock,
-                                    [`endType${lineEnd}`]: lineEndType,
-                                };
+                    .updateProperty(
+                        this.state.selectedEntityIds,
+                        (oldEntity) => {
+                            switch (oldEntity.type) {
+                                case "path": {
+                                    return {
+                                        ...oldEntity,
+                                        [`endType${lineEnd}`]: lineEndType,
+                                    };
+                                }
+                                default: {
+                                    return oldEntity;
+                                }
                             }
-                            default: {
-                                return oldBlock;
-                            }
-                        }
-                    })
+                        },
+                    )
                     .commit(),
             ),
         );
     }
 
-    setTextBlockTextAlignment(alignment: TextAlignment) {
+    setTextEntityTextAlignment(alignment: TextAlignment) {
         this.setState(
             this.state.setPage(
                 new Transaction(this.state.page)
-                    .updateProperty(this.state.selectedBlockIds, (oldBlock) => {
-                        switch (oldBlock.type) {
-                            case "text": {
-                                return {
-                                    ...oldBlock,
-                                    textAlignment: alignment,
-                                };
+                    .updateProperty(
+                        this.state.selectedEntityIds,
+                        (oldEntity) => {
+                            switch (oldEntity.type) {
+                                case "text": {
+                                    return {
+                                        ...oldEntity,
+                                        textAlignment: alignment,
+                                    };
+                                }
+                                default: {
+                                    return oldEntity;
+                                }
                             }
-                            default: {
-                                return oldBlock;
-                            }
-                        }
-                    })
+                        },
+                    )
                     .commit(),
             ),
         );
     }
 
-    setTextBlockSizingMode(sizingMode: TextBlockSizingMode) {
+    setTextEntitySizingMode(sizingMode: TextEntitySizingMode) {
         this.setState(
             this.state.setPage(
                 new Transaction(this.state.page)
-                    .updateProperty(this.state.selectedBlockIds, (oldBlock) => {
-                        switch (oldBlock.type) {
-                            case "text": {
-                                return {
-                                    ...oldBlock,
-                                    sizingMode,
-                                };
+                    .updateProperty(
+                        this.state.selectedEntityIds,
+                        (oldEntity) => {
+                            switch (oldEntity.type) {
+                                case "text": {
+                                    return {
+                                        ...oldEntity,
+                                        sizingMode,
+                                    };
+                                }
+                                default: {
+                                    return oldEntity;
+                                }
                             }
-                            default: {
-                                return oldBlock;
-                            }
-                        }
-                    })
+                        },
+                    )
                     .commit(),
             ),
         );
@@ -234,35 +252,38 @@ export class CanvasStateStore extends Store<CanvasState> {
         this.setState(
             this.state.setPage(
                 new Transaction(this.state.page)
-                    .updateProperty(this.state.selectedBlockIds, (oldBlock) => {
-                        switch (oldBlock.type) {
-                            case "shape":
-                            case "path": {
-                                return {
-                                    ...oldBlock,
-                                    strokeStyle,
-                                };
+                    .updateProperty(
+                        this.state.selectedEntityIds,
+                        (oldEntity) => {
+                            switch (oldEntity.type) {
+                                case "shape":
+                                case "path": {
+                                    return {
+                                        ...oldEntity,
+                                        strokeStyle,
+                                    };
+                                }
+                                default: {
+                                    return oldEntity;
+                                }
                             }
-                            default: {
-                                return oldBlock;
-                            }
-                        }
-                    })
+                        },
+                    )
                     .commit(),
             ),
         );
     }
 
     bringToFront() {
-        this.bringForwardOf(this.state.page.blockIds.length - 1);
+        this.bringForwardOf(this.state.page.entityIds.length - 1);
     }
 
     bringForward() {
-        const selectedIdSet = new Set(this.state.selectedBlockIds);
+        const selectedIdSet = new Set(this.state.selectedEntityIds);
 
         let mostBackwardResult = null;
         for (const selectedId of selectedIdSet) {
-            const result = this.findForwardOverlappedBlock(
+            const result = this.findForwardOverlappedEntity(
                 selectedId,
                 selectedIdSet,
             );
@@ -276,7 +297,7 @@ export class CanvasStateStore extends Store<CanvasState> {
             }
         }
         if (mostBackwardResult === null) {
-            // selected blocks are already at the front
+            // selected entities are already at the front
             return;
         }
 
@@ -288,11 +309,11 @@ export class CanvasStateStore extends Store<CanvasState> {
     }
 
     sendBackward() {
-        const selectedIdSet = new Set(this.state.selectedBlockIds);
+        const selectedIdSet = new Set(this.state.selectedEntityIds);
 
         let mostForwardResult = null;
         for (const selectedId of selectedIdSet) {
-            const result = this.findBackwardOverlappedBlock(
+            const result = this.findBackwardOverlappedEntity(
                 selectedId,
                 selectedIdSet,
             );
@@ -306,7 +327,7 @@ export class CanvasStateStore extends Store<CanvasState> {
             }
         }
         if (mostForwardResult === null) {
-            // selected blocks are already at the front
+            // selected entities are already at the front
             return;
         }
 
@@ -314,82 +335,81 @@ export class CanvasStateStore extends Store<CanvasState> {
     }
 
     /**
-     * Update the z-index of the selected blocks to bring them
-     * forward of the target block
-     * @param targetBlockZIndex
+     * Update the z-index of the selected entities to bring them
+     * forward of the target entity
+     * @param targetZIndex
      */
-    private bringForwardOf(targetBlockZIndex: number) {
-        const selectedIdSet = new Set(this.state.selectedBlockIds);
+    private bringForwardOf(targetZIndex: number) {
+        const selectedIdSet = new Set(this.state.selectedEntityIds);
 
-        // Current z-index of selected blocks
+        // Current z-index of selected entities
         const currentIndices = [];
-        for (let i = 0; i < this.state.page.blockIds.length; i++) {
-            if (selectedIdSet.has(this.state.page.blockIds[i])) {
+        for (let i = 0; i < this.state.page.entityIds.length; i++) {
+            if (selectedIdSet.has(this.state.page.entityIds[i])) {
                 currentIndices.push(i);
             }
         }
 
         for (const currentIndex of currentIndices.toReversed()) {
-            if (currentIndex >= targetBlockZIndex) continue;
+            if (currentIndex >= targetZIndex) continue;
 
-            this.updateZIndex(currentIndex, targetBlockZIndex);
-            targetBlockZIndex -= 1;
+            this.updateZIndex(currentIndex, targetZIndex);
+            targetZIndex -= 1;
         }
     }
 
     /**
-     * Update the z-index of the selected blocks to send them
-     * backward of the target block
-     * @param targetBlockZIndex
+     * Update the z-index of the selected entities to send them
+     * backward of the target entity
      */
-    private sendBackwardOf(targetBlockZIndex: number) {
-        const selectedIdSet = new Set(this.state.selectedBlockIds);
+    private sendBackwardOf(targetZIndex: number) {
+        const selectedIdSet = new Set(this.state.selectedEntityIds);
 
-        // Current z-index of selected blocks
+        // Current z-index of selected entities
         const currentIndices = [];
-        for (let i = 0; i < this.state.page.blockIds.length; i++) {
-            if (selectedIdSet.has(this.state.page.blockIds[i])) {
+        for (let i = 0; i < this.state.page.entityIds.length; i++) {
+            if (selectedIdSet.has(this.state.page.entityIds[i])) {
                 currentIndices.push(i);
             }
         }
 
         for (const currentIndex of currentIndices) {
-            if (currentIndex <= targetBlockZIndex) continue;
+            if (currentIndex <= targetZIndex) continue;
 
-            this.updateZIndex(currentIndex, targetBlockZIndex);
-            targetBlockZIndex += 1;
+            this.updateZIndex(currentIndex, targetZIndex);
+            targetZIndex += 1;
         }
     }
 
     /**
-     * Find the overlapped block with the given block from the blocks
-     * located in front of it, and return the most-backward block.
+     * Find the overlapped entity with the given entity from the entities
+     * located in front of it, and return the most-backward entity.
      */
-    private findForwardOverlappedBlock(
-        blockId: string,
-        ignoreBlockIds: Set<string>,
-    ): { blockId: string; globalIndex: number } | null {
+    private findForwardOverlappedEntity(
+        entityId: string,
+        ignoreEntityIds: Set<string>,
+    ): { entityId: string; globalIndex: number } | null {
         let globalIndex = 0;
-        for (; globalIndex < this.state.page.blockIds.length; globalIndex++) {
-            if (this.state.page.blockIds[globalIndex] === blockId) break;
+        for (; globalIndex < this.state.page.entityIds.length; globalIndex++) {
+            if (this.state.page.entityIds[globalIndex] === entityId) break;
         }
 
-        const refBlock = this.state.page.blocks[blockId];
-        assert(refBlock !== undefined, "Cannot find the reference block");
+        const refEntity = this.state.page.entities[entityId];
+        assert(refEntity !== undefined, "Cannot find the reference entity");
         globalIndex++;
 
-        for (; globalIndex < this.state.page.blockIds.length; globalIndex++) {
-            const blockId = this.state.page.blockIds[globalIndex];
-            if (ignoreBlockIds.has(blockId)) {
+        for (; globalIndex < this.state.page.entityIds.length; globalIndex++) {
+            const entityId = this.state.page.entityIds[globalIndex];
+            if (ignoreEntityIds.has(entityId)) {
                 continue;
             }
 
-            const otherBlock = this.state.page.blocks[blockId];
+            const otherEntity = this.state.page.entities[entityId];
 
-            if (otherBlock === undefined) continue;
+            if (otherEntity === undefined) continue;
 
-            if (isOverlapped(refBlock, otherBlock)) {
-                return { blockId: blockId, globalIndex };
+            if (isOverlapped(refEntity, otherEntity)) {
+                return { entityId: entityId, globalIndex };
             }
         }
 
@@ -397,34 +417,34 @@ export class CanvasStateStore extends Store<CanvasState> {
     }
 
     /**
-     * Find the overlapped block with the given block from the blocks
-     * located behind of it, and return the most-forward block.
+     * Find the overlapped entity with the given entity from the entities
+     * located behind of it, and return the most-forward entity.
      */
-    private findBackwardOverlappedBlock(
-        blockId: string,
-        ignoreBlockIds: Set<string>,
-    ): { blockId: string; globalIndex: number } | null {
-        let globalIndex = this.state.page.blockIds.length - 1;
+    private findBackwardOverlappedEntity(
+        entityId: string,
+        ignoreEntityIds: Set<string>,
+    ): { entityId: string; globalIndex: number } | null {
+        let globalIndex = this.state.page.entityIds.length - 1;
         for (; globalIndex >= 0; globalIndex--) {
-            if (this.state.page.blockIds[globalIndex] === blockId) break;
+            if (this.state.page.entityIds[globalIndex] === entityId) break;
         }
 
-        const refBlock = this.state.page.blocks[blockId];
-        assert(refBlock !== undefined, "Cannot find the reference block");
+        const refEntity = this.state.page.entities[entityId];
+        assert(refEntity !== undefined, "Cannot find the reference entity");
         globalIndex--;
 
         for (; globalIndex >= 0; globalIndex--) {
-            const blockId = this.state.page.blockIds[globalIndex];
-            if (ignoreBlockIds.has(blockId)) {
+            const entityId = this.state.page.entityIds[globalIndex];
+            if (ignoreEntityIds.has(entityId)) {
                 continue;
             }
 
-            const otherBlock = this.state.page.blocks[blockId];
+            const otherEntity = this.state.page.entities[entityId];
 
-            if (otherBlock === undefined) continue;
+            if (otherEntity === undefined) continue;
 
-            if (isOverlapped(refBlock, otherBlock)) {
-                return { blockId: blockId, globalIndex };
+            if (isOverlapped(refEntity, otherEntity)) {
+                return { entityId: entityId, globalIndex };
             }
         }
 
@@ -451,44 +471,44 @@ export class CanvasStateStore extends Store<CanvasState> {
     }
 
     toggleSelect(id: string) {
-        if (this.state.selectedBlockIds.includes(id)) {
+        if (this.state.selectedEntityIds.includes(id)) {
             this.unselect(id);
         } else {
             this.select(id);
         }
     }
 
-    setSelectedBlockIds(ids: string[]) {
-        this.setState(this.state.setSelectedBlockIds(ids));
+    setSelectedEntityIds(ids: string[]) {
+        this.setState(this.state.setSelectedEntityIds(ids));
     }
 
     copy() {
-        if (this.state.selectedBlockIds.length === 0) return;
+        if (this.state.selectedEntityIds.length === 0) return;
 
-        ClipboardService.copy(this.state.page, this.state.selectedBlockIds);
+        ClipboardService.copy(this.state.page, this.state.selectedEntityIds);
     }
 
     async cut() {
         this.copy();
-        this.deleteSelectedBlocks();
+        this.deleteSelectedEntities();
     }
 
     async paste(): Promise<void> {
-        const { blocks, dependencies } = await ClipboardService.paste();
+        const { entities, dependencies } = await ClipboardService.paste();
 
         this.setState(
             this.state
                 .setPage(
                     new Transaction(this.state.page)
-                        .insertBlocks(blocks)
+                        .insertEntities(entities)
                         .addDependencies(dependencies)
                         .commit(),
                 )
-                .setSelectedBlockIds(blocks.map((block) => block.id)),
+                .setSelectedEntityIds(entities.map((entity) => entity.id)),
         );
 
-        // Copy pasted blocks so that next paste operation will
-        // create a new copy of blocks in different position
+        // Copy pasted entities so that next paste operation will
+        // create a new copy of entities in different position
         this.copy();
     }
 
@@ -531,7 +551,7 @@ export function fromCanvasCoordinate(
     ];
 }
 
-export function isOverlapped(obj1: Block, obj2: Block): boolean {
+export function isOverlapped(obj1: Entity, obj2: Entity): boolean {
     switch (obj1.type) {
         case "shape":
         case "text": {

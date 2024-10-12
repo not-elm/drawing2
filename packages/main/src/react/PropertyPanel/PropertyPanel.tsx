@@ -8,7 +8,7 @@ import { OrderSection } from "./OrderSection";
 import { SizingModeSection } from "./SizingModeSection";
 import { StrokeStyleSection } from "./StrokeStyleSection";
 import { TextAlignmentSection } from "./TextAlignmentSection";
-import { TextBlockTextAlignmentSection } from "./TextBlockTextAlignmentSection";
+import { TextEntityTextAlignmentSection } from "./TextEntityTextAlignmentSection";
 
 export function PropertyPanel() {
     const controller = useController();
@@ -29,12 +29,12 @@ export function PropertyPanel() {
             {state.colorSectionVisible && <ColorSection />}
             {state.fillModeSectionVisible && <FillModeSection />}
             {state.textAlignSectionVisible && <TextAlignmentSection />}
-            {state.textBlockTextAlignmentSectionVisible && (
-                <TextBlockTextAlignmentSection />
+            {state.textEntityTextAlignmentSectionVisible && (
+                <TextEntityTextAlignmentSection />
             )}
             {state.orderSectionVisible && <OrderSection />}
             {state.lineEndTypeSectionVisible && <LineEndTypeSection />}
-            {state.textBlockSizingModeSectionVisible && <SizingModeSection />}
+            {state.textEntitySizingModeSectionVisible && <SizingModeSection />}
             {state.strokeStyleSectionVisible && <StrokeStyleSection />}
         </Card>
     );

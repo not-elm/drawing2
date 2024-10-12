@@ -1,29 +1,29 @@
 import { assert } from "../lib/assert";
-import type { Dependency, PointOnShapeDependency } from "./Dependency";
+import type { Dependency } from "./Dependency";
 import type { DependencyCollection } from "./DependencyCollection";
-import type { Block, Page } from "./Page";
+import type { Entity, Page } from "./Page";
 
 interface CommandBase<T extends string> {
     type: T;
 }
-interface InsertBlocksCommand extends CommandBase<"INSERT_BLOCKS"> {
-    blocks: Block[];
+interface InsertEntitiesCommand extends CommandBase<"INSERT_ENTITIES"> {
+    entities: Entity[];
 }
-interface ReplaceBlocksCommand extends CommandBase<"REPLACE_BLOCKS"> {
-    blocks: Block[];
+interface ReplaceEntitiesCommand extends CommandBase<"REPLACE_ENTITIES"> {
+    entities: Entity[];
 }
-interface DeleteBlocksCommand extends CommandBase<"DELETE_BLOCKS"> {
-    blockIds: string[];
+interface DeleteEntitiesCommand extends CommandBase<"DELETE_ENTITIES"> {
+    entityIds: string[];
 }
-interface ScaleBlocksCommand extends CommandBase<"SCALE_BLOCKS"> {
-    blockIds: string[];
+interface ScaleEntitiesCommand extends CommandBase<"SCALE_ENTITIES"> {
+    entityIds: string[];
     cx: number;
     cy: number;
     scaleX: number;
     scaleY: number;
 }
-interface MoveBlocksCommand extends CommandBase<"MOVE_BLOCKS"> {
-    blockIds: string[];
+interface MoveEntitiesCommand extends CommandBase<"MOVE_ENTITIES"> {
+    entityIds: string[];
     dx: number;
     dy: number;
 }
@@ -33,18 +33,10 @@ interface SetPointPositionCommand extends CommandBase<"SET_POINT_POSITION"> {
     x: number;
     y: number;
 }
-
-/**
- * Merge the point `from` into the point `to`. The point `from` will be deleted.
- */
-interface MergePointsCommand extends CommandBase<"MERGE_POINTS"> {
-    from: string;
-    to: string;
-}
-interface UpdateBlockPropertyCommand
-    extends CommandBase<"UPDATE_BLOCK_PROPERTY"> {
-    blockIds: string[];
-    updater: (block: Readonly<Block>) => Block;
+interface UpdateEntityPropertyCommand
+    extends CommandBase<"UPDATE_ENTITY_PROPERTY"> {
+    entityIds: string[];
+    updater: (entity: Readonly<Entity>) => Entity;
 }
 interface AddDependenciesCommand extends CommandBase<"ADD_DEPENDENCIES"> {
     dependencies: Dependency[];
@@ -54,14 +46,13 @@ interface DeleteDependenciesCommand extends CommandBase<"DELETE_DEPENDENCIES"> {
 }
 
 type Command =
-    | InsertBlocksCommand
-    | ReplaceBlocksCommand
-    | DeleteBlocksCommand
-    | ScaleBlocksCommand
-    | MoveBlocksCommand
+    | InsertEntitiesCommand
+    | ReplaceEntitiesCommand
+    | DeleteEntitiesCommand
+    | ScaleEntitiesCommand
+    | MoveEntitiesCommand
     | SetPointPositionCommand
-    | MergePointsCommand
-    | UpdateBlockPropertyCommand
+    | UpdateEntityPropertyCommand
     | AddDependenciesCommand
     | DeleteDependenciesCommand;
 
@@ -70,31 +61,31 @@ export class Transaction {
 
     constructor(private readonly page: Page) {}
 
-    insertBlocks(blocks: Block[]): this {
-        this.commands.push({ type: "INSERT_BLOCKS", blocks });
+    insertEntities(entities: Entity[]): this {
+        this.commands.push({ type: "INSERT_ENTITIES", entities });
         return this;
     }
 
-    replaceBlocks(blocks: Block[]): this {
-        this.commands.push({ type: "REPLACE_BLOCKS", blocks });
+    replaceEntities(entities: Entity[]): this {
+        this.commands.push({ type: "REPLACE_ENTITIES", entities });
         return this;
     }
 
-    deleteBlocks(blockIds: string[]): this {
-        this.commands.push({ type: "DELETE_BLOCKS", blockIds });
+    deleteEntities(entityIds: string[]): this {
+        this.commands.push({ type: "DELETE_ENTITIES", entityIds });
         return this;
     }
 
-    scaleBlocks(
-        blockIds: string[],
+    scaleEntities(
+        entityIds: string[],
         cx: number,
         cy: number,
         scaleX: number,
         scaleY: number,
     ): this {
         this.commands.push({
-            type: "SCALE_BLOCKS",
-            blockIds,
+            type: "SCALE_ENTITIES",
+            entityIds,
             cx,
             cy,
             scaleX,
@@ -103,8 +94,8 @@ export class Transaction {
         return this;
     }
 
-    moveBlocks(blockIds: string[], dx: number, dy: number): this {
-        this.commands.push({ type: "MOVE_BLOCKS", blockIds, dx, dy });
+    moveEntities(entityIds: string[], dx: number, dy: number): this {
+        this.commands.push({ type: "MOVE_ENTITIES", entityIds, dx, dy });
         return this;
     }
 
@@ -124,18 +115,13 @@ export class Transaction {
         return this;
     }
 
-    mergePoints(from: string, to: string): this {
-        this.commands.push({ type: "MERGE_POINTS", from, to });
-        return this;
-    }
-
     updateProperty(
-        blockIds: string[],
-        updater: (block: Readonly<Block>) => Block,
+        entityIds: string[],
+        updater: (entity: Readonly<Entity>) => Entity,
     ): this {
         this.commands.push({
-            type: "UPDATE_BLOCK_PROPERTY",
-            blockIds,
+            type: "UPDATE_ENTITY_PROPERTY",
+            entityIds,
             updater,
         });
         return this;
@@ -153,8 +139,8 @@ export class Transaction {
 
     commit(): Page {
         const draft: PageDraft = {
-            blocks: { ...this.page.blocks },
-            blockIds: [...this.page.blockIds],
+            entities: { ...this.page.entities },
+            entityIds: [...this.page.entityIds],
             dependencies: this.page.dependencies,
             dirtyEntityIds: [],
         };
@@ -163,56 +149,42 @@ export class Transaction {
             processCommand(command, draft);
         }
 
-        for (const dependency of draft.dependencies.collectDependencies(
-            draft.dirtyEntityIds,
-        )) {
-            switch (dependency.type) {
-                case "pointOnShape": {
-                    recomputePointOnShapeDependency(dependency, draft);
-                    break;
-                }
-            }
-        }
-
         return {
-            blocks: draft.blocks,
-            blockIds: draft.blockIds,
+            entities: draft.entities,
+            entityIds: draft.entityIds,
             dependencies: draft.dependencies,
         };
     }
 }
 
 interface PageDraft {
-    blocks: Record<string, Block>;
-    blockIds: string[];
+    entities: Record<string, Entity>;
+    entityIds: string[];
     dependencies: DependencyCollection;
     dirtyEntityIds: string[];
 }
 
 function processCommand(command: Command, draft: PageDraft) {
     switch (command.type) {
-        case "INSERT_BLOCKS": {
-            return insertBlocks(command, draft);
+        case "INSERT_ENTITIES": {
+            return insertEntities(command, draft);
         }
-        case "REPLACE_BLOCKS": {
-            return replaceBlocks(command, draft);
+        case "REPLACE_ENTITIES": {
+            return replaceEntities(command, draft);
         }
-        case "DELETE_BLOCKS": {
-            return deleteBlocks(command, draft);
+        case "DELETE_ENTITIES": {
+            return deleteEntities(command, draft);
         }
-        case "SCALE_BLOCKS": {
-            return scaleBlocks(command, draft);
+        case "SCALE_ENTITIES": {
+            return scaleEntities(command, draft);
         }
-        case "MOVE_BLOCKS": {
-            return moveBlocks(command, draft);
+        case "MOVE_ENTITIES": {
+            return moveEntities(command, draft);
         }
         case "SET_POINT_POSITION": {
             return setPointPosition(command, draft);
         }
-        case "MERGE_POINTS": {
-            return mergePoints(command, draft);
-        }
-        case "UPDATE_BLOCK_PROPERTY": {
+        case "UPDATE_ENTITY_PROPERTY": {
             return updateShapeProperty(command, draft);
         }
         case "ADD_DEPENDENCIES": {
@@ -224,46 +196,44 @@ function processCommand(command: Command, draft: PageDraft) {
     }
 }
 
-function insertBlocks(command: InsertBlocksCommand, draft: PageDraft) {
-    for (const block of command.blocks) {
-        draft.blocks[block.id] = block;
-        draft.blockIds.push(block.id);
-        draft.dirtyEntityIds.push(block.id);
+function insertEntities(command: InsertEntitiesCommand, draft: PageDraft) {
+    for (const entity of command.entities) {
+        draft.entities[entity.id] = entity;
+        draft.entityIds.push(entity.id);
+        draft.dirtyEntityIds.push(entity.id);
     }
 }
 
-function replaceBlocks(command: ReplaceBlocksCommand, draft: PageDraft) {
-    for (const block of command.blocks) {
-        draft.blocks[block.id] = block;
-        draft.dirtyEntityIds.push(block.id);
+function replaceEntities(command: ReplaceEntitiesCommand, draft: PageDraft) {
+    for (const entity of command.entities) {
+        draft.entities[entity.id] = entity;
+        draft.dirtyEntityIds.push(entity.id);
     }
 }
 
-function deleteBlocks(command: DeleteBlocksCommand, draft: PageDraft) {
-    for (const blockId of command.blockIds) {
-        const deps = draft.dependencies.getByToEntityId(blockId);
+function deleteEntities(command: DeleteEntitiesCommand, draft: PageDraft) {
+    for (const entityId of command.entityIds) {
+        delete draft.entities[entityId];
 
-        delete draft.blocks[blockId];
+        const index = draft.entityIds.indexOf(entityId);
+        assert(index !== -1, `Entity not found: ${entityId}`);
+        draft.entityIds.splice(index, 1);
 
-        const index = draft.blockIds.indexOf(blockId);
-        assert(index !== -1, `Block not found: ${blockId}`);
-        draft.blockIds.splice(index, 1);
-
-        draft.dependencies.deleteByEntityId(blockId);
+        draft.dependencies.deleteByEntityId(entityId);
     }
 }
 
-function scaleBlocks(command: ScaleBlocksCommand, draft: PageDraft) {
-    for (const blockId of command.blockIds) {
-        const block = draft.blocks[blockId];
-        assert(block !== undefined, `Block not found: ${blockId}`);
+function scaleEntities(command: ScaleEntitiesCommand, draft: PageDraft) {
+    for (const entityId of command.entityIds) {
+        const entity = draft.entities[entityId];
+        assert(entity !== undefined, `Entity not found: ${entityId}`);
 
-        switch (block.type) {
+        switch (entity.type) {
             case "path": {
-                draft.blocks[blockId] = {
-                    ...block,
+                draft.entities[entityId] = {
+                    ...entity,
                     nodes: Object.fromEntries(
-                        Object.entries(block.nodes).map(([id, node]) => [
+                        Object.entries(entity.nodes).map(([id, node]) => [
                             id,
                             {
                                 ...node,
@@ -281,32 +251,32 @@ function scaleBlocks(command: ScaleBlocksCommand, draft: PageDraft) {
             }
             case "shape":
             case "text": {
-                draft.blocks[blockId] = {
-                    ...block,
-                    x: command.cx + command.scaleX * (block.x - command.cx),
-                    y: command.cy + command.scaleY * (block.y - command.cy),
-                    width: block.width * command.scaleX,
-                    height: block.height * command.scaleY,
+                draft.entities[entityId] = {
+                    ...entity,
+                    x: command.cx + command.scaleX * (entity.x - command.cx),
+                    y: command.cy + command.scaleY * (entity.y - command.cy),
+                    width: entity.width * command.scaleX,
+                    height: entity.height * command.scaleY,
                 };
                 break;
             }
         }
 
-        draft.dirtyEntityIds.push(block.id);
+        draft.dirtyEntityIds.push(entity.id);
     }
 }
 
-function moveBlocks(command: MoveBlocksCommand, draft: PageDraft) {
-    for (const blockId of command.blockIds) {
-        const block = draft.blocks[blockId];
-        assert(block !== undefined, `Block not found: ${blockId}`);
+function moveEntities(command: MoveEntitiesCommand, draft: PageDraft) {
+    for (const entityId of command.entityIds) {
+        const entity = draft.entities[entityId];
+        assert(entity !== undefined, `Entity not found: ${entityId}`);
 
-        switch (block.type) {
+        switch (entity.type) {
             case "path": {
-                draft.blocks[blockId] = {
-                    ...block,
+                draft.entities[entityId] = {
+                    ...entity,
                     nodes: Object.fromEntries(
-                        Object.entries(block.nodes).map(([id, node]) => [
+                        Object.entries(entity.nodes).map(([id, node]) => [
                             id,
                             {
                                 ...node,
@@ -320,23 +290,23 @@ function moveBlocks(command: MoveBlocksCommand, draft: PageDraft) {
             }
             case "shape":
             case "text": {
-                draft.blocks[blockId] = {
-                    ...block,
-                    x: block.x + command.dx,
-                    y: block.y + command.dy,
+                draft.entities[entityId] = {
+                    ...entity,
+                    x: entity.x + command.dx,
+                    y: entity.y + command.dy,
                 };
                 break;
             }
         }
 
-        draft.dirtyEntityIds.push(block.id);
+        draft.dirtyEntityIds.push(entity.id);
     }
 }
 
 function setPointPosition(command: SetPointPositionCommand, draft: PageDraft) {
-    const path = draft.blocks[command.pathId];
-    assert(path !== undefined, `Block not found: ${command.pathId}`);
-    assert(path.type === "path", `Invalid block type: ${path.type} != path`);
+    const path = draft.entities[command.pathId];
+    assert(path !== undefined, `Entity not found: ${command.pathId}`);
+    assert(path.type === "path", `Invalid entity type: ${path.type} != path`);
 
     const newPath = { ...path };
     newPath.nodes[command.nodeId] = {
@@ -344,33 +314,16 @@ function setPointPosition(command: SetPointPositionCommand, draft: PageDraft) {
         x: command.x,
         y: command.y,
     };
-    draft.blocks[command.pathId] = newPath;
+    draft.entities[command.pathId] = newPath;
     draft.dirtyEntityIds.push(command.pathId);
 }
 
-function mergePoints(command: MergePointsCommand, draft: PageDraft) {
-    throw new Error("TODO(merge point)");
-    // for (const oldDependency of draft.dependencies.getByFromEntityId(
-    //     command.from,
-    // )) {
-    //     draft.dependencies.add({
-    //         ...oldDependency,
-    //         id: randomId(),
-    //         from: command.to,
-    //     });
-    // }
-    // draft.dependencies.deleteByEntityId(command.from);
-    // delete draft.points[command.from];
-    //
-    // draft.dirtyEntityIds.push(command.to);
-}
-
 function updateShapeProperty(
-    command: UpdateBlockPropertyCommand,
+    command: UpdateEntityPropertyCommand,
     draft: PageDraft,
 ) {
-    for (const id of command.blockIds) {
-        draft.blocks[id] = command.updater(draft.blocks[id]);
+    for (const id of command.entityIds) {
+        draft.entities[id] = command.updater(draft.entities[id]);
         draft.dirtyEntityIds.push(id);
     }
 }
@@ -389,25 +342,4 @@ function deleteDependencies(
     for (const id of command.dependencyIds) {
         draft.dependencies.deleteById(id);
     }
-}
-
-function recomputePointOnShapeDependency(
-    dependency: PointOnShapeDependency,
-    draft: PageDraft,
-) {
-    throw new Error("TODO(link)");
-    // const { rx, ry } = dependency;
-    //
-    // const shape = draft.blocks[dependency.from];
-    // assert(
-    //     shape.type === "shape" || shape.type === "text",
-    //     `Invalid block type: ${shape.type} != (shape or text)`,
-    // );
-    //
-    // const point = draft.points[dependency.to];
-    // draft.points[point.id] = {
-    //     ...point,
-    //     x: shape.x + rx * shape.width,
-    //     y: shape.y + ry * shape.height,
-    // };
 }

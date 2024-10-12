@@ -1,5 +1,5 @@
 import { type WheelEventHandler, useCallback, useEffect } from "react";
-import { getBlocksInViewport } from "../model/Page";
+import { getEntitiesInViewport } from "../model/Page";
 import { BrushRect } from "./BrushRect";
 import { useController } from "./ControllerProvider";
 import { PathView } from "./PathView";
@@ -93,31 +93,31 @@ export function Canvas() {
                     transformOrigin: `${viewport.x}px ${viewport.y}px`,
                 }}
             >
-                {getBlocksInViewport(page, viewport).map((block) => {
-                    switch (block.type) {
+                {getEntitiesInViewport(page, viewport).map((entity) => {
+                    switch (entity.type) {
                         case "shape": {
                             return (
                                 <ShapeView
-                                    key={block.id}
-                                    shape={block}
+                                    key={entity.id}
+                                    shape={entity}
                                     isLabelEditing={
                                         appState.mode.type === "edit-text" &&
-                                        appState.mode.blockId === block.id
+                                        appState.mode.entityId === entity.id
                                     }
                                 />
                             );
                         }
                         case "path": {
-                            return <PathView key={block.id} path={block} />;
+                            return <PathView key={entity.id} path={entity} />;
                         }
                         case "text": {
                             return (
                                 <TextView
-                                    key={block.id}
-                                    text={block}
+                                    key={entity.id}
+                                    text={entity}
                                     editing={
                                         appState.mode.type === "edit-text" &&
-                                        appState.mode.blockId === block.id
+                                        appState.mode.entityId === entity.id
                                     }
                                 />
                             );

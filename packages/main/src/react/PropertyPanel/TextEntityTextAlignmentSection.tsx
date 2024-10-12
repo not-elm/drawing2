@@ -3,7 +3,7 @@ import { CardSection } from "../Card";
 import { useController } from "../ControllerProvider";
 import { useStore } from "../hooks/useStore";
 
-export function TextBlockTextAlignmentSection() {
+export function TextEntityTextAlignmentSection() {
     return (
         <CardSection
             css={{
@@ -14,7 +14,6 @@ export function TextBlockTextAlignmentSection() {
         >
             <div
                 css={{
-                    display: "block",
                     position: "relative",
                     border: "1px solid #d0d0d0",
                     borderRadius: "6px",
@@ -33,14 +32,14 @@ export function TextBlockTextAlignmentSection() {
 function TextAlignButton({ alignment }: { alignment: TextAlignment }) {
     const controller = useController();
     const state = useStore(controller.propertyPanelStateStore);
-    const selected = state.textBlockTextAlignment === alignment;
+    const selected = state.textEntityTextAlignment === alignment;
 
     return (
         <button
             type="button"
             onPointerDown={(ev) => {
                 ev.stopPropagation();
-                controller.setTextBlockTextAlignment(alignment);
+                controller.setTextEntityTextAlignment(alignment);
             }}
             aria-selected={selected}
             css={{
