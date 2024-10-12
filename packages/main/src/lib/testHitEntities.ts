@@ -30,8 +30,6 @@ export function testHitEntities(
     const entities: HitTestResultEntry<Entity>[] = [];
     const blocks: HitTestResultEntry<Block>[] = [];
 
-    // TODO: PointのzIndex値を正しく計算する
-    const zIndexForPoint = 0;
     for (const [zIndex, blockId] of page.blockIds.entries()) {
         const block = page.blocks[blockId];
         assert(block !== undefined, `Block not found: ${blockId}`);
@@ -47,7 +45,7 @@ export function testHitEntities(
                         target: block,
                         point,
                         distance,
-                        zIndex: zIndex + zIndexForPoint,
+                        zIndex,
                     };
                     blocks.push(entry);
                     entities.push(entry);
@@ -65,7 +63,7 @@ export function testHitEntities(
                         target: block,
                         point,
                         distance,
-                        zIndex: zIndex + zIndexForPoint,
+                        zIndex,
                     };
                     blocks.push(entry);
                     entities.push(entry);

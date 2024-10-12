@@ -25,6 +25,7 @@ import {
     mergeHandlers,
 } from "../PointerEventSession/PointerEventSession";
 import { createBrushSelectSession } from "../PointerEventSession/createBrushSelectSession";
+import { createMovePointSession } from "../PointerEventSession/createMovePointSession";
 import { createTransformSession } from "../PointerEventSession/createTransformSession";
 import { ModeController } from "./ModeController";
 import type { NewTextModeController } from "./NewTextModeController";
@@ -268,46 +269,24 @@ export class SelectModeController extends ModeController {
                 break;
             }
             case "SelectionLine.P1": {
-                throw new Error("Not implemented yet");
-                // TODO
-                // const pId = this.canvasStateStore
-                //     .getState()
-                //     .page.dependencies.getByToEntityId(selectionHandle.line.id)
-                //     .filter((d) => d.type === "blockToPoint")
-                //     .filter((d) => d.pointKey === PointKey.LINE_P1)[0];
-                // assert(pId !== undefined, "Point not found");
-                //
-                // const point =
-                //     this.canvasStateStore.getState().page.points[pId.from];
-                // assert(point !== undefined, "Point not found");
-                //
-                // session = createMovePointSession(
-                //     point,
-                //     this.canvasStateStore,
-                //     this.viewportStore,
-                //     this.historyManager,
-                // );
+                session = createMovePointSession(
+                    selectionHandle.line,
+                    "p1",
+                    this.canvasStateStore,
+                    this.viewportStore,
+                    this.historyManager,
+                );
+                break;
             }
             case "SelectionLine.P2": {
-                throw new Error("Not implemented yet");
-                // TODO
-                // const pId = this.canvasStateStore
-                //     .getState()
-                //     .page.dependencies.getByToEntityId(selectionHandle.line.id)
-                //     .filter((d) => d.type === "blockToPoint")
-                //     .filter((d) => d.pointKey === PointKey.LINE_P2)[0];
-                // assert(pId !== undefined, "Point not found");
-                //
-                // const point =
-                //     this.canvasStateStore.getState().page.points[pId.from];
-                // assert(point !== undefined, "Point not found");
-                //
-                // session = createMovePointSession(
-                //     point,
-                //     this.canvasStateStore,
-                //     this.viewportStore,
-                //     this.historyManager,
-                // );
+                session = createMovePointSession(
+                    selectionHandle.line,
+                    "p2",
+                    this.canvasStateStore,
+                    this.viewportStore,
+                    this.historyManager,
+                );
+                break;
             }
             case "SelectionLine.Center": {
                 session = createTransformSession(

@@ -11,6 +11,7 @@ import type {
 } from "../AppController";
 import type { GestureRecognizer } from "../GestureRecognizer";
 import type { HistoryManager } from "../HistoryManager";
+import { createMovePointSession } from "../PointerEventSession/createMovePointSession";
 import { ModeController } from "./ModeController";
 
 export class NewLineModeController extends ModeController {
@@ -45,16 +46,16 @@ export class NewLineModeController extends ModeController {
         this.canvasStateStore.unselectAll();
         this.canvasStateStore.select(lineBlock.id);
 
-        // TODO
-        // this.gestureRecognizer.addSessionHandlers(
-        //     data.pointerId,
-        //     createMovePointSession(
-        //         p2,
-        //         this.canvasStateStore,
-        //         this.viewportStore,
-        //         this.historyManager,
-        //     ),
-        // );
+        this.gestureRecognizer.addSessionHandlers(
+            data.pointerId,
+            createMovePointSession(
+                lineBlock,
+                "p2",
+                this.canvasStateStore,
+                this.viewportStore,
+                this.historyManager,
+            ),
+        );
     }
 
     private insertNewLine(line: Line): LineBlock {

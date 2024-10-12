@@ -28,7 +28,8 @@ interface MoveBlocksCommand extends CommandBase<"MOVE_BLOCKS"> {
     dy: number;
 }
 interface SetPointPositionCommand extends CommandBase<"SET_POINT_POSITION"> {
-    pointId: string;
+    lineId: string;
+    point: "p1" | "p2";
     x: number;
     y: number;
 }
@@ -107,8 +108,13 @@ export class Transaction {
         return this;
     }
 
-    setPointPosition(pointId: string, x: number, y: number): this {
-        this.commands.push({ type: "SET_POINT_POSITION", pointId, x, y });
+    setPointPosition(
+        lineId: string,
+        point: "p1" | "p2",
+        x: number,
+        y: number,
+    ): this {
+        this.commands.push({ type: "SET_POINT_POSITION", lineId, point, x, y });
         return this;
     }
 
@@ -269,6 +275,8 @@ function scaleBlocks(command: ScaleBlocksCommand, draft: PageDraft) {
                 break;
             }
         }
+
+        draft.dirtyEntityIds.push(block.id);
     }
 }
 
@@ -298,22 +306,26 @@ function moveBlocks(command: MoveBlocksCommand, draft: PageDraft) {
                 break;
             }
         }
+
+        draft.dirtyEntityIds.push(block.id);
     }
 }
 
 function setPointPosition(command: SetPointPositionCommand, draft: PageDraft) {
-    throw new Error("TODO");
-    // const point = draft.points[command.pointId];
-    // draft.points[command.pointId] = {
-    //     ...point,
-    //     x: command.x,
-    //     y: command.y,
-    // };
-    // draft.dirtyEntityIds.push(command.pointId);
+    const line = draft.blocks[command.lineId];
+    assert(line !== undefined, `Block not found: ${command.lineId}`);
+    assert(line.type === "line", `Invalid block type: ${line.type} != line`);
+
+    draft.blocks[command.lineId] = {
+        ...line,
+        [command.point === "p1" ? "x1" : "x2"]: command.x,
+        [command.point === "p1" ? "y1" : "y2"]: command.y,
+    };
+    draft.dirtyEntityIds.push(command.lineId);
 }
 
 function mergePoints(command: MergePointsCommand, draft: PageDraft) {
-    throw new Error("TODO");
+    throw new Error("TODO(merge point)");
     // for (const oldDependency of draft.dependencies.getByFromEntityId(
     //     command.from,
     // )) {
@@ -359,7 +371,7 @@ function recomputePointOnShapeDependency(
     dependency: PointOnShapeDependency,
     draft: PageDraft,
 ) {
-    throw new Error("TODO");
+    throw new Error("TODO(link)");
     // const { rx, ry } = dependency;
     //
     // const shape = draft.blocks[dependency.from];
