@@ -1,3 +1,4 @@
+import type { StrokeStyle } from "../../core/model/StrokeStyle";
 import { CardSection } from "../Card";
 import { useController } from "../ControllerProvider";
 import { useStore } from "../hooks/useStore";
@@ -6,6 +7,11 @@ import { PropertyPanelButton } from "./PropertyPanelButton";
 export function StrokeStyleSection() {
     const controller = useController();
     const state = useStore(controller.propertyPanelStateStore);
+
+    const setStrokeStyle = (strokeStyle: StrokeStyle) => {
+        controller.canvasStateStore.setStrokeStyle(strokeStyle);
+        controller.appStateStore.setDefaultStrokeStyle(strokeStyle);
+    };
 
     return (
         <CardSection
@@ -23,7 +29,7 @@ export function StrokeStyleSection() {
             <PropertyPanelButton
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.setStrokeStyle("solid");
+                    setStrokeStyle("solid");
                 }}
                 aria-selected={state.strokeStyle === "solid"}
             >
@@ -32,7 +38,7 @@ export function StrokeStyleSection() {
             <PropertyPanelButton
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.setStrokeStyle("dashed");
+                    setStrokeStyle("dashed");
                 }}
                 aria-selected={state.strokeStyle === "dashed"}
             >
@@ -41,7 +47,7 @@ export function StrokeStyleSection() {
             <PropertyPanelButton
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.setStrokeStyle("dotted");
+                    setStrokeStyle("dotted");
                 }}
                 aria-selected={state.strokeStyle === "dotted"}
             >

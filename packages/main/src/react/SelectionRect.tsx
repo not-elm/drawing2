@@ -1,5 +1,5 @@
 import styled from "@emotion/styled";
-import type { PathEntity } from "../model/PathEntity";
+import { entityHandleMap, entityViewHandleMap } from "../instance";
 import { useController } from "./ControllerProvider";
 import { useStore } from "./hooks/useStore";
 
@@ -54,64 +54,44 @@ export function SelectionRect() {
                     />
                 )}
                 {entities.map((entity) => {
-                    if (entity.type === "shape") {
-                        return (
-                            <rect
-                                key={entity.id}
-                                css={{
-                                    stroke: "var(--color-selection)",
-                                    fill: "none",
-                                }}
-                                x={
-                                    (entity.rect.left - selectionRect.left) *
-                                    viewport.scale
-                                }
-                                y={
-                                    (entity.rect.top - selectionRect.top) *
-                                    viewport.scale
-                                }
-                                width={entity.rect.width * viewport.scale}
-                                height={entity.rect.height * viewport.scale}
-                                strokeWidth={1}
-                            />
-                        );
-                    }
-                    if (entity.type === "path") {
-                        return null;
-                        // TODO: Render path
-                        // <line
-                        //     key={entity.id}
-                        //     css={{
-                        //         stroke: "var(--color-selection)",
-                        //         fill: "none",
-                        //     }}
-                        //     x1={(entity.x1 - x) * viewport.scale}
-                        //     y1={(entity.y1 - y) * viewport.scale}
-                        //     x2={(entity.x2 - x) * viewport.scale}
-                        //     y2={(entity.y2 - y) * viewport.scale}
-                        //     strokeWidth={1}
-                        // />
-                    }
+                    const d = entityViewHandleMap().getOutline(
+                        entity,
+                        viewport,
+                    );
+
+                    return (
+                        <path
+                            key={entity.id}
+                            css={{
+                                stroke: "var(--color-selection)",
+                                fill: "none",
+                            }}
+                            d={d}
+                            strokeWidth={1}
+                        />
+                    );
                 })}
             </svg>
             {isSinglePathMode &&
                 appState.mode.type === "select" &&
-                Object.values((entities[0] as PathEntity).nodes).map((node) => (
-                    <ResizeHandle
-                        key={node.id}
-                        css={{
-                            left:
-                                (node.point.x - selectionRect.left) *
-                                viewport.scale,
-                            top:
-                                (node.point.y - selectionRect.top) *
-                                viewport.scale,
-                            cursor: "grab",
-                        }}
-                    >
-                        <PathEditHandle />
-                    </ResizeHandle>
-                ))}
+                entityHandleMap()
+                    .getNodes(entities[0])
+                    .map((node) => (
+                        <ResizeHandle
+                            key={node.id}
+                            css={{
+                                left:
+                                    (node.point.x - selectionRect.left) *
+                                    viewport.scale,
+                                top:
+                                    (node.point.y - selectionRect.top) *
+                                    viewport.scale,
+                                cursor: "grab",
+                            }}
+                        >
+                            <PathEditHandle />
+                        </ResizeHandle>
+                    ))}
             {isSingleTextMode && appState.mode.type === "select" && null}
             {!isSinglePathMode &&
                 !isSingleTextMode &&

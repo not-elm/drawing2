@@ -1,4 +1,4 @@
-import type { TextAlignment } from "../../model/TextAlignment";
+import type { TextAlignment } from "../../core/model/TextAlignment";
 import { CardSection } from "../Card";
 import { useController } from "../ControllerProvider";
 import { useStore } from "../hooks/useStore";
@@ -39,7 +39,12 @@ function TextAlignButton({ alignment }: { alignment: TextAlignment }) {
             type="button"
             onPointerDown={(ev) => {
                 ev.stopPropagation();
-                controller.setTextEntityTextAlignment(alignment);
+                controller.canvasStateStore.setTextEntityTextAlignment(
+                    alignment,
+                );
+                controller.appStateStore.setDefaultTextEntityTextAlignment(
+                    alignment,
+                );
             }}
             aria-selected={selected}
             css={{

@@ -1,5 +1,5 @@
-import { ColorPaletteBackground, Colors } from "../../model/Colors";
-import type { FillMode } from "../../model/FillMode";
+import { ColorPaletteBackground, Colors } from "../../core/model/Colors";
+import type { FillMode } from "../../core/model/FillMode";
 import { CardSection } from "../Card";
 import { useController } from "../ControllerProvider";
 import { useStore } from "../hooks/useStore";
@@ -45,7 +45,8 @@ function ColorButton({
         <PropertyPanelButton
             onPointerDown={(ev) => {
                 ev.stopPropagation();
-                controller.setFillMode(fillMode);
+                controller.canvasStateStore.setFillMode(fillMode);
+                controller.appStateStore.setDefaultFillMode(fillMode);
             }}
             title={title}
             aria-selected={selected}

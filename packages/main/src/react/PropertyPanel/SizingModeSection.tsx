@@ -24,7 +24,12 @@ export function SizingModeSection() {
                 aria-selected={state.textEntitySizingMode === "content"}
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.setTextEntitySizingMode("content");
+                    controller.canvasStateStore.setTextEntitySizingMode(
+                        "content",
+                    );
+                    controller.appStateStore.setDefaultTextEntitySizingMode(
+                        "content",
+                    );
                 }}
             >
                 内容に合わせて自動調整
@@ -33,7 +38,12 @@ export function SizingModeSection() {
                 aria-selected={state.textEntitySizingMode === "fixed"}
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.setTextEntitySizingMode("fixed");
+                    controller.canvasStateStore.setTextEntitySizingMode(
+                        "fixed",
+                    );
+                    controller.appStateStore.setDefaultTextEntitySizingMode(
+                        "fixed",
+                    );
                 }}
             >
                 幅を固定

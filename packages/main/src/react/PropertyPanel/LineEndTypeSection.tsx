@@ -1,10 +1,8 @@
 import { useController } from "../ControllerProvider";
-import { useStore } from "../hooks/useStore";
 import { PropertyPanelButton } from "./PropertyPanelButton";
 
 export function LineEndTypeSection() {
     const controller = useController();
-    const state = useStore(controller.propertyPanelStateStore);
 
     return (
         <div
@@ -19,7 +17,8 @@ export function LineEndTypeSection() {
             <PropertyPanelButton
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.setLineEndType(1, "none");
+                    controller.canvasStateStore.setLineEndType(1, "none");
+                    controller.appStateStore.setDefaultLineEnd(1, "none");
                 }}
             >
                 <span
@@ -34,7 +33,8 @@ export function LineEndTypeSection() {
             <PropertyPanelButton
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.setLineEndType(1, "arrow");
+                    controller.canvasStateStore.setLineEndType(1, "arrow");
+                    controller.appStateStore.setDefaultLineEnd(1, "arrow");
                 }}
             >
                 <span

@@ -1,8 +1,8 @@
-import type { Point } from "../geo/Point";
-import type { Entity } from "../model/Entity";
-import type { Page } from "../model/Page";
-import { type PathEntity, getEdgesFromPath } from "../model/PathEntity";
+import type { Entity } from "../core/model/Entity";
+import type { Page } from "../core/model/Page";
+import { entityHandleMap } from "../instance";
 import { assert } from "./assert";
+import type { Point } from "./geo/Point";
 
 interface HitTestResult {
     // Hit entities ordered by distance (Small distance first)
@@ -33,38 +33,18 @@ export function testHitEntities(
         const entity = page.entities[entityId];
         assert(entity !== undefined, `Entity not found: ${entityId}`);
 
-        switch (entity.type) {
-            case "path": {
-                for (const edge of getEdgesFromPath(entity)) {
-                    const { point: hitPoint, distance } =
-                        edge.getDistanceFrom(point);
-                    if (distance <= margin) {
-                        const entry: HitTestResultEntry<PathEntity> = {
-                            target: entity,
-                            point: hitPoint,
-                            distance,
-                            zIndex,
-                        };
-                        entities.push(entry);
-                    }
-                }
-                break;
-            }
-            case "shape":
-            case "text": {
-                const { point: hitPoint, distance } =
-                    entity.rect.getDistanceFrom(point);
-                if (distance <= margin) {
-                    const entry: HitTestResultEntry<Entity> = {
-                        target: entity,
-                        point: hitPoint,
-                        distance,
-                        zIndex,
-                    };
-                    entities.push(entry);
-                }
-                break;
-            }
+        const { point: hitPoint, distance } = entityHandleMap().getDistance(
+            entity,
+            point,
+        );
+        if (distance <= margin) {
+            const entry: HitTestResultEntry<Entity> = {
+                target: entity,
+                point: hitPoint,
+                distance,
+                zIndex,
+            };
+            entities.push(entry);
         }
     }
 

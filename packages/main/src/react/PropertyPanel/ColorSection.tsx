@@ -1,4 +1,4 @@
-import { type ColorId, Colors } from "../../model/Colors";
+import { type ColorId, Colors } from "../../core/model/Colors";
 import { CardSection } from "../Card";
 import { useController } from "../ControllerProvider";
 import { useStore } from "../hooks/useStore";
@@ -48,7 +48,8 @@ function ColorButton({ colorId }: { colorId: ColorId }) {
         <PropertyPanelButton
             onPointerDown={(ev) => {
                 ev.stopPropagation();
-                controller.setColor(colorId);
+                controller.canvasStateStore.setColor(colorId);
+                controller.appStateStore.setDefaultColor(colorId);
             }}
             aria-selected={selected}
             css={{

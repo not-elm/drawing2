@@ -1,12 +1,10 @@
 import { type WheelEventHandler, useCallback, useEffect } from "react";
-import { getEntitiesInViewport } from "../model/Page";
+import { getEntitiesInViewport } from "../core/model/Page";
+import { entityViewHandleMap } from "../instance";
 import { BrushRect } from "./BrushRect";
 import { useController } from "./ControllerProvider";
-import { PathView } from "./PathView";
 import { SelectionRect } from "./SelectionRect";
-import { ShapeView } from "./ShapeView";
 import { SnapGuideLayer } from "./SnapGuideLayer";
-import { TextView } from "./TextView";
 import { useResizeObserver } from "./hooks/useResizeObserver";
 import { useStore } from "./hooks/useStore";
 
@@ -95,38 +93,8 @@ export function Canvas() {
                 }}
             >
                 {getEntitiesInViewport(page, viewport).map((entity) => {
-                    switch (entity.type) {
-                        case "shape": {
-                            return (
-                                <ShapeView
-                                    key={entity.id}
-                                    shape={entity}
-                                    isLabelEditing={
-                                        appState.mode.type === "edit-text" &&
-                                        appState.mode.entityId === entity.id
-                                    }
-                                />
-                            );
-                        }
-                        case "path": {
-                            return <PathView key={entity.id} path={entity} />;
-                        }
-                        case "text": {
-                            return (
-                                <TextView
-                                    key={entity.id}
-                                    text={entity}
-                                    editing={
-                                        appState.mode.type === "edit-text" &&
-                                        appState.mode.entityId === entity.id
-                                    }
-                                />
-                            );
-                        }
-                        default: {
-                            return null;
-                        }
-                    }
+                    const View = entityViewHandleMap().getViewComponent(entity);
+                    return <View entity={entity} key={entity.id} />;
                 })}
                 <BrushRect />
             </div>
