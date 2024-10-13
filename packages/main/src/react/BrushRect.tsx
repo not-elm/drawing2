@@ -16,8 +16,8 @@ export function BrushRect() {
             css={{
                 overflow: "visible",
                 position: "absolute",
-                left: rect.x,
-                top: rect.y,
+                left: rect.left,
+                top: rect.top,
             }}
         >
             <rect

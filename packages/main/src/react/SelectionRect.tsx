@@ -1,5 +1,5 @@
 import styled from "@emotion/styled";
-import type { PathEntity } from "../model/Page";
+import type { PathEntity } from "../model/PathEntity";
 import { useController } from "./ControllerProvider";
 import { useStore } from "./hooks/useStore";
 
@@ -11,7 +11,6 @@ export function SelectionRect() {
     const selectionRect = canvasState.getSelectionRect();
     if (selectionRect === null) return null;
 
-    const { x, y, width, height } = selectionRect;
     const entities = canvasState.getSelectedEntities();
     const isSinglePathMode =
         entities.length === 1 && entities[0].type === "path";
@@ -24,10 +23,11 @@ export function SelectionRect() {
         <div
             css={{
                 position: "absolute",
-                left: (x - viewport.x) * viewport.scale,
-                top: (y - viewport.y) * viewport.scale,
-                width: width * viewport.scale,
-                height: height * viewport.scale,
+                left:
+                    (selectionRect.left - viewport.rect.left) * viewport.scale,
+                top: (selectionRect.top - viewport.rect.top) * viewport.scale,
+                width: selectionRect.width * viewport.scale,
+                height: selectionRect.height * viewport.scale,
             }}
         >
             <svg
@@ -48,41 +48,47 @@ export function SelectionRect() {
                         }}
                         x={0}
                         y={0}
-                        width={width * viewport.scale}
-                        height={height * viewport.scale}
+                        width={selectionRect.width * viewport.scale}
+                        height={selectionRect.height * viewport.scale}
                         strokeWidth={3}
                     />
                 )}
-                {entities.map((obj) => {
-                    if (obj.type === "shape") {
+                {entities.map((entity) => {
+                    if (entity.type === "shape") {
                         return (
                             <rect
-                                key={obj.id}
+                                key={entity.id}
                                 css={{
                                     stroke: "var(--color-selection)",
                                     fill: "none",
                                 }}
-                                x={(obj.x - x) * viewport.scale}
-                                y={(obj.y - y) * viewport.scale}
-                                width={obj.width * viewport.scale}
-                                height={obj.height * viewport.scale}
+                                x={
+                                    (entity.rect.left - selectionRect.left) *
+                                    viewport.scale
+                                }
+                                y={
+                                    (entity.rect.top - selectionRect.top) *
+                                    viewport.scale
+                                }
+                                width={entity.rect.width * viewport.scale}
+                                height={entity.rect.height * viewport.scale}
                                 strokeWidth={1}
                             />
                         );
                     }
-                    if (obj.type === "path") {
+                    if (entity.type === "path") {
                         return null;
                         // TODO: Render path
                         // <line
-                        //     key={obj.id}
+                        //     key={entity.id}
                         //     css={{
                         //         stroke: "var(--color-selection)",
                         //         fill: "none",
                         //     }}
-                        //     x1={(obj.x1 - x) * viewport.scale}
-                        //     y1={(obj.y1 - y) * viewport.scale}
-                        //     x2={(obj.x2 - x) * viewport.scale}
-                        //     y2={(obj.y2 - y) * viewport.scale}
+                        //     x1={(entity.x1 - x) * viewport.scale}
+                        //     y1={(entity.y1 - y) * viewport.scale}
+                        //     x2={(entity.x2 - x) * viewport.scale}
+                        //     y2={(entity.y2 - y) * viewport.scale}
                         //     strokeWidth={1}
                         // />
                     }
@@ -94,8 +100,12 @@ export function SelectionRect() {
                     <ResizeHandle
                         key={node.id}
                         css={{
-                            left: (node.x - x) * viewport.scale,
-                            top: (node.y - y) * viewport.scale,
+                            left:
+                                (node.point.x - selectionRect.left) *
+                                viewport.scale,
+                            top:
+                                (node.point.y - selectionRect.top) *
+                                viewport.scale,
                             cursor: "grab",
                         }}
                     >

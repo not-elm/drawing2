@@ -1,6 +1,6 @@
 import { assert } from "../../lib/assert";
+import type { Entity } from "../../model/Entity";
 import type { Mode } from "../../model/Mode";
-import type { Entity } from "../../model/Page";
 import { Transaction } from "../../model/Transaction";
 import type { CanvasStateStore } from "../../store/CanvasStateStore";
 import type {

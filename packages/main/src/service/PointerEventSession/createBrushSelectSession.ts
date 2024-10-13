@@ -1,5 +1,6 @@
-import { isRectOverlapWithLine, isRectOverlapWithRect } from "../../geo/Rect";
-import { getEdgesFromPath } from "../../model/Page";
+import { Rect } from "../../geo/Rect";
+import { getBoundingRect } from "../../model/Entity";
+import { getEdgesFromPath } from "../../model/PathEntity";
 import type { BrushStore } from "../../store/BrushStore";
 import type { CanvasStateStore } from "../../store/CanvasStateStore";
 import type { PointerEventHandlers } from "./PointerEventSession";
@@ -14,20 +15,15 @@ export function createBrushSelectSession(
     return {
         onPointerDown: (data) => {
             brushStore.setActive(true);
-            brushStore.setRect({
-                x: data.startX,
-                y: data.startY,
-                width: 0,
-                height: 0,
-            });
+            brushStore.setRect(
+                new Rect({
+                    p0: data.start,
+                    p1: data.start,
+                }),
+            );
         },
         onPointerMove: (data) => {
-            const rect = {
-                x: Math.min(data.startX, data.newX),
-                y: Math.min(data.startY, data.newY),
-                width: Math.abs(data.newX - data.startX),
-                height: Math.abs(data.newY - data.startY),
-            };
+            const rect = Rect.fromPoints(data.start, data.new);
             brushStore.setRect(rect);
 
             const selectedEntityIds = new Set(originalSelectedEntityIds);
@@ -37,7 +33,7 @@ export function createBrushSelectSession(
                 switch (entity.type) {
                     case "shape":
                     case "text": {
-                        if (isRectOverlapWithRect(rect, entity)) {
+                        if (rect.isOverlappedWith(getBoundingRect(entity))) {
                             selectedEntityIds.add(entity.id);
                         }
                         break;
@@ -45,7 +41,7 @@ export function createBrushSelectSession(
                     case "path": {
                         if (
                             getEdgesFromPath(entity).some((line) =>
-                                isRectOverlapWithLine(rect, line),
+                                rect.isOverlappedWith(line),
                             )
                         ) {
                             selectedEntityIds.add(entity.id);

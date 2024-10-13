@@ -19,12 +19,12 @@ export function Grid() {
                 inset: 0,
                 backgroundImage: `url(${tileImageUrl})`,
                 backgroundPosition: `${
-                    (Math.ceil(viewport.x / TILE_SIZE) * TILE_SIZE -
-                        viewport.x) *
+                    (Math.ceil(viewport.rect.left / TILE_SIZE) * TILE_SIZE -
+                        viewport.rect.left) *
                     viewport.scale
                 }px ${
-                    (Math.ceil(viewport.y / TILE_SIZE) * TILE_SIZE -
-                        viewport.y) *
+                    (Math.ceil(viewport.rect.top / TILE_SIZE) * TILE_SIZE -
+                        viewport.rect.top) *
                     viewport.scale
                 }px`,
                 backgroundRepeat: "repeat",

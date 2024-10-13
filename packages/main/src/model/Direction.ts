@@ -1,3 +1,4 @@
+import type { Point } from "../geo/Point";
 import type { Rect } from "../geo/Rect";
 
 export type DirectionKind =
@@ -11,14 +12,14 @@ export type DirectionKind =
     | "bottomRight";
 
 export interface Direction {
-    getPoint(rect: Rect): { x: number; y: number };
+    getPoint(rect: Rect): Point;
     opposite: Direction;
 }
 
 export const Direction = {
     topLeft: {
         getPoint(rect: Rect) {
-            return { x: rect.x, y: rect.y };
+            return rect.topLeft;
         },
         get opposite(): Direction {
             return Direction.bottomRight;
@@ -26,7 +27,7 @@ export const Direction = {
     },
     top: {
         getPoint(rect: Rect) {
-            return { x: rect.x + rect.width / 2, y: rect.y };
+            return rect.topCenter;
         },
         get opposite(): Direction {
             return Direction.bottom;
@@ -34,7 +35,7 @@ export const Direction = {
     },
     topRight: {
         getPoint(rect: Rect) {
-            return { x: rect.x + rect.width, y: rect.y };
+            return rect.topRight;
         },
         get opposite(): Direction {
             return Direction.bottomLeft;
@@ -42,7 +43,7 @@ export const Direction = {
     },
     left: {
         getPoint(rect: Rect) {
-            return { x: rect.x, y: rect.y + rect.height / 2 };
+            return rect.centerLeft;
         },
         get opposite(): Direction {
             return Direction.right;
@@ -50,7 +51,7 @@ export const Direction = {
     },
     right: {
         getPoint(rect: Rect) {
-            return { x: rect.x + rect.width, y: rect.y + rect.height / 2 };
+            return rect.centerRight;
         },
         get opposite(): Direction {
             return Direction.left;
@@ -58,7 +59,7 @@ export const Direction = {
     },
     bottomLeft: {
         getPoint(rect: Rect) {
-            return { x: rect.x, y: rect.y + rect.height };
+            return rect.bottomLeft;
         },
         get opposite(): Direction {
             return Direction.topRight;
@@ -66,7 +67,7 @@ export const Direction = {
     },
     bottom: {
         getPoint(rect: Rect) {
-            return { x: rect.x + rect.width / 2, y: rect.y + rect.height };
+            return rect.bottomCenter;
         },
         get opposite(): Direction {
             return Direction.top;
@@ -74,7 +75,7 @@ export const Direction = {
     },
     bottomRight: {
         getPoint(rect: Rect) {
-            return { x: rect.x + rect.width, y: rect.y + rect.height };
+            return rect.bottomRight;
         },
         get opposite(): Direction {
             return Direction.topLeft;

@@ -7,7 +7,7 @@ import {
     Colors,
 } from "../model/Colors";
 import type { FillMode } from "../model/FillMode";
-import type { ShapeEntity } from "../model/Page";
+import type { ShapeEntity } from "../model/ShapeEntity";
 import type { StrokeStyle } from "../model/StrokeStyle";
 import type { TextAlignment } from "../model/TextAlignment";
 import { useController } from "./ControllerProvider";
@@ -19,14 +19,16 @@ export const ShapeView = memo(function ShapeView({
 }: { shape: ShapeEntity; isLabelEditing: boolean }) {
     return (
         <div
-            style={{ transform: `translate(${shape.x}px, ${shape.y}px)` }}
+            style={{
+                transform: `translate(${shape.rect.left}px, ${shape.rect.top}px)`,
+            }}
             css={{ position: "absolute" }}
         >
             <ShapeViewInner
                 isLabelEditing={isLabelEditing}
                 shapeId={shape.id}
-                width={shape.width}
-                height={shape.height}
+                width={shape.rect.width}
+                height={shape.rect.height}
                 path={shape.path}
                 colorId={shape.colorId}
                 fillMode={shape.fillMode}

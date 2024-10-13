@@ -1,6 +1,7 @@
-import type { Rect } from "../../geo/Rect";
+import { Rect } from "../../geo/Rect";
 import { randomId } from "../../lib/randomId";
-import type { Entity, TextEntity } from "../../model/Page";
+import type { Entity } from "../../model/Entity";
+import type { TextEntity } from "../../model/TextEntity";
 import { Transaction } from "../../model/Transaction";
 import type { AppStateStore } from "../../store/AppStateStore";
 import type { CanvasStateStore } from "../../store/CanvasStateStore";
@@ -28,12 +29,7 @@ export class NewTextModeController extends ModeController {
     }
 
     onCanvasPointerDown(data: PointerDownEventHandlerData): void {
-        const text = this.insertNewText({
-            x: data.x,
-            y: data.y,
-            width: 1,
-            height: 1,
-        });
+        const text = this.insertNewText(Rect.fromSize(data.point, 1, 1));
 
         this.controller.setMode({
             type: "edit-text",
@@ -48,10 +44,7 @@ export class NewTextModeController extends ModeController {
         const text: TextEntity = {
             id: randomId(),
             type: "text",
-            x: rect.x,
-            y: rect.y,
-            width: rect.width,
-            height: rect.height,
+            rect,
             content: "",
             textAlignment:
                 this.appStateStore.getState().defaultTextEntityTextAlignment,

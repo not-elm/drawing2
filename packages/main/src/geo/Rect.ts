@@ -1,114 +1,192 @@
 import { assert } from "../lib/assert";
-import {
-    type Line,
-    distanceFromPointToLine,
-    isLineOverlapWithLine,
-} from "./Line";
-import type { Point } from "./Point";
+import { dataclass } from "../lib/dataclass";
+import { Line } from "./Line";
+import { Point } from "./Point";
 
-export interface Rect {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}
-
-export function isRectOverlapWithRect(rect1: Rect, rect2: Rect): boolean {
-    return (
-        rect1.x < rect2.x + rect2.width &&
-        rect1.x + rect1.width > rect2.x &&
-        rect1.y < rect2.y + rect2.height &&
-        rect1.y + rect1.height > rect2.y
-    );
-}
-
-export function isRectOverlapWithLine(rect: Rect, line: Line): boolean {
-    return (
-        isRectOverlapWithPoint(rect, { x: line.x1, y: line.y1 }) ||
-        isRectOverlapWithPoint(rect, { x: line.x2, y: line.y2 }) ||
-        isLineOverlapWithLine(line, {
-            x1: rect.x,
-            y1: rect.y,
-            x2: rect.x + rect.width,
-            y2: rect.y,
-        }) ||
-        isLineOverlapWithLine(line, {
-            x1: rect.x + rect.width,
-            y1: rect.y,
-            x2: rect.x + rect.width,
-            y2: rect.y + rect.height,
-        }) ||
-        isLineOverlapWithLine(line, {
-            x1: rect.x + rect.width,
-            y1: rect.y + rect.height,
-            x2: rect.x,
-            y2: rect.y + rect.height,
-        }) ||
-        isLineOverlapWithLine(line, {
-            x1: rect.x,
-            y1: rect.y + rect.height,
-            x2: rect.x,
-            y2: rect.y,
-        })
-    );
-}
-
-export function isRectOverlapWithPoint(rect: Rect, point: Point): boolean {
-    return (
-        rect.x <= point.x &&
-        point.x <= rect.x + rect.width &&
-        rect.y <= point.y &&
-        point.y <= rect.y + rect.height
-    );
-}
-
-export function unionRect(rect1: Rect, rect2: Rect): Rect {
-    const x = Math.min(rect1.x, rect2.x);
-    const y = Math.min(rect1.y, rect2.y);
-    const width = Math.max(rect1.x + rect1.width, rect2.x + rect2.width) - x;
-    const height = Math.max(rect1.y + rect1.height, rect2.y + rect2.height) - y;
-    return { x, y, width, height };
-}
-
-export function unionRectAll(rects: Rect[]): Rect {
-    assert(rects.length > 0);
-    let rect = rects[0];
-    for (const r of rects) {
-        rect = unionRect(rect, r);
-    }
-    return rect;
-}
-
-/**
- * Calculate the distance from a point to a rectangle.
- * @return The distance from the point to the rectangle,
- * 		and the nearest point on the rectangle.
- */
-export function distanceFromPointToRect(
-    point: Point,
-    rect: Rect,
-): {
-    distance: number;
-    point: Point;
-} {
-    if (isRectOverlapWithPoint(rect, point)) {
-        return { distance: 0, point };
+export class Rect extends dataclass<{
+    p0: Point;
+    p1: Point;
+}>() {
+    static of(x: number, y: number, width: number, height: number): Rect {
+        return new Rect({
+            p0: new Point(x, y),
+            p1: new Point(x + width, y + height),
+        });
     }
 
-    const { x: x1, y: y1 } = rect;
-    const x2 = x1 + rect.width;
-    const y2 = y1 + rect.height;
+    static fromSize(topLeft: Point, width: number, height: number): Rect {
+        return Rect.of(topLeft.x, topLeft.y, width, height);
+    }
 
-    return [
-        { x1: x2, y1, x2, y2 },
-        { x1, y1: y2, x2, y2 },
-        { x1, y1, x2: x1, y2 },
-        { x1, y1, x2, y2: y1 },
-    ]
-        .map((edge) => distanceFromPointToLine(point, edge))
-        .sort((a, b) => a.distance - b.distance)[0];
-}
+    static fromPoints(p0: Point, p1: Point): Rect {
+        const x = Math.min(p0.x, p1.x);
+        const y = Math.min(p0.y, p1.y);
+        const width = Math.abs(p1.x - p0.x);
+        const height = Math.abs(p1.y - p0.y);
+        return Rect.of(x, y, width, height);
+    }
 
-export function getBoundingRectOfRect(rect: Rect): Rect {
-    return rect;
+    get left(): number {
+        return this.p0.x;
+    }
+
+    get right(): number {
+        return this.p1.x;
+    }
+
+    get top(): number {
+        return this.p0.y;
+    }
+
+    get bottom(): number {
+        return this.p1.y;
+    }
+
+    get width(): number {
+        return this.p1.x - this.p0.x;
+    }
+
+    get height(): number {
+        return this.p1.y - this.p0.y;
+    }
+
+    get topLeft(): Point {
+        return this.p0;
+    }
+
+    get topCenter(): Point {
+        return new Point(this.p0.x + (this.p1.x - this.p0.x) / 2, this.p0.y);
+    }
+
+    get topRight(): Point {
+        return new Point(this.p1.x, this.p0.y);
+    }
+
+    get centerLeft(): Point {
+        return new Point(this.p0.x, this.p0.y + (this.p1.y - this.p0.y) / 2);
+    }
+
+    get center(): Point {
+        return new Point(
+            this.p0.x + (this.p1.x - this.p0.x) / 2,
+            this.p0.y + (this.p1.y - this.p0.y) / 2,
+        );
+    }
+
+    get centerRight(): Point {
+        return new Point(this.p1.x, this.p0.y + (this.p1.y - this.p0.y) / 2);
+    }
+
+    get bottomLeft(): Point {
+        return new Point(this.p0.x, this.p1.y);
+    }
+
+    get bottomCenter(): Point {
+        return new Point(this.p0.x + (this.p1.x - this.p0.x) / 2, this.p1.y);
+    }
+
+    get bottomRight(): Point {
+        return this.p1;
+    }
+
+    get topEdge(): Line {
+        return new Line({
+            p1: this.topLeft,
+            p2: this.topRight,
+        });
+    }
+
+    get rightEdge(): Line {
+        return new Line({
+            p1: this.topRight,
+            p2: this.bottomRight,
+        });
+    }
+
+    get bottomEdge(): Line {
+        return new Line({
+            p1: this.bottomRight,
+            p2: this.bottomLeft,
+        });
+    }
+
+    get leftEdge(): Line {
+        return new Line({
+            p1: this.bottomLeft,
+            p2: this.topLeft,
+        });
+    }
+
+    isOverlappedWith(other: Rect | Line | Point): boolean {
+        if (other instanceof Rect) {
+            return (
+                this.left < other.left + other.width &&
+                this.left + this.width > other.left &&
+                this.top < other.top + other.height &&
+                this.top + this.height > other.top
+            );
+        }
+
+        if (other instanceof Line) {
+            return (
+                this.isOverlappedWith(other.p1) ||
+                this.isOverlappedWith(other.p2) ||
+                this.topEdge.isOverlappedWith(other) ||
+                this.rightEdge.isOverlappedWith(other) ||
+                this.bottomEdge.isOverlappedWith(other) ||
+                this.leftEdge.isOverlappedWith(other)
+            );
+        }
+
+        if (other instanceof Point) {
+            return (
+                this.left <= other.x &&
+                other.x <= this.left + this.width &&
+                this.top <= other.y &&
+                other.y <= this.top + this.height
+            );
+        }
+
+        throw new Error("Unsupported type");
+    }
+
+    union(other: Rect): Rect {
+        const x = Math.min(this.left, other.left);
+        const y = Math.min(this.top, other.top);
+        const width =
+            Math.max(this.left + this.width, other.left + other.width) - x;
+        const height =
+            Math.max(this.top + this.height, other.top + other.height) - y;
+
+        return Rect.of(x, y, width, height);
+    }
+
+    static union(rects: Rect[]): Rect {
+        assert(rects.length > 0);
+        let rect = rects[0];
+        for (const r of rects) {
+            rect = rect.union(r);
+        }
+        return rect;
+    }
+
+    getDistanceFrom(point: Point): {
+        distance: number;
+        point: Point;
+    } {
+        if (this.isOverlappedWith(point)) {
+            return { distance: 0, point };
+        }
+
+        return [this.topEdge, this.rightEdge, this.bottomEdge, this.leftEdge]
+            .map((edge) => edge.getDistanceFrom(point))
+            .sort((a, b) => a.distance - b.distance)[0];
+    }
+
+    translate(dx: number, dy: number): Rect {
+        return new Rect({
+            p0: this.p0.translate(dx, dy),
+            p1: this.p1.translate(dx, dy),
+        });
+    }
 }

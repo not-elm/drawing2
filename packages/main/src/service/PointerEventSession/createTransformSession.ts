@@ -11,10 +11,10 @@ export function createTransformSession(
             historyManager.pause();
         },
         onPointerMove(data) {
-            transformHandle?.apply(
-                { x: data.newX, y: data.newY },
-                { constraint: data.shiftKey, snap: data.ctrlKey },
-            );
+            transformHandle?.apply(data.new, {
+                constraint: data.shiftKey,
+                snap: data.ctrlKey,
+            });
         },
         onPointerUp() {
             transformHandle?.dispose();

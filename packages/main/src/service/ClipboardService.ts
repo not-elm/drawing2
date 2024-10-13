@@ -6,7 +6,8 @@ import {
     deserializeDependency,
     serializeDependency,
 } from "../model/Dependency";
-import type { Entity, Page } from "../model/Page";
+import type { Entity } from "../model/Entity";
+import type { Page } from "../model/Page";
 import {
     type SerializedEntity,
     deserializeEntity,
@@ -67,18 +68,13 @@ export const ClipboardService = new (class {
                 switch (entity.type) {
                     case "path": {
                         for (const node of Object.values(entity.nodes)) {
-                            entity.nodes[node.id].x += 10;
-                            entity.nodes[node.id].y += 10;
+                            entity.nodes[node.id].point.translate(10, 10);
                         }
                         break;
                     }
                     case "shape":
-                        entity.x += 10;
-                        entity.y += 10;
-                        break;
                     case "text":
-                        entity.x += 10;
-                        entity.y += 10;
+                        entity.rect = entity.rect.translate(10, 10);
                         break;
                 }
             }

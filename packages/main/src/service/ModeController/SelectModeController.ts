@@ -1,16 +1,15 @@
-import { distanceFromPointToLine } from "../../geo/Line";
-import { distanceFromPointToPoint } from "../../geo/Point";
+import type { Point } from "../../geo/Point";
 import type { Rect } from "../../geo/Rect";
 import { assert } from "../../lib/assert";
 import { testHitEntities } from "../../lib/testHitEntities";
 import { Direction } from "../../model/Direction";
+import type { Entity } from "../../model/Entity";
 import {
-    type Entity,
     type PathEntity,
     type PathNode,
-    type TextEntity,
     getEdgesFromPath,
-} from "../../model/Page";
+} from "../../model/PathEntity";
+import type { TextEntity } from "../../model/TextEntity";
 import {
     createMoveTransformHandle,
     createScaleTransformHandle,
@@ -56,7 +55,7 @@ export class SelectModeController extends ModeController {
     }
 
     onEntityPointerDown(data: PointerDownEventHandlerData, entity: Entity) {
-        const selectionHandle = this.getSelectionHandleType(data.x, data.y);
+        const selectionHandle = this.getSelectionHandleType(data.point);
         if (selectionHandle !== null) {
             this.handleSelectionPointerDown(data, selectionHandle);
             return;
@@ -76,14 +75,14 @@ export class SelectModeController extends ModeController {
                     this.canvasStateStore,
                     this.viewportStore,
                     this.snapGuideStore,
-                    { x: data.x, y: data.y },
+                    data.point,
                 ),
             ),
         );
     }
 
     onCanvasPointerDown(data: PointerDownEventHandlerData): void {
-        const selectionHandle = this.getSelectionHandleType(data.x, data.y);
+        const selectionHandle = this.getSelectionHandleType(data.point);
         if (selectionHandle !== null) {
             this.handleSelectionPointerDown(data, selectionHandle);
             return;
@@ -99,8 +98,8 @@ export class SelectModeController extends ModeController {
         );
     }
 
-    onMouseMove(x: number, y: number) {
-        const selectionHandle = this.getSelectionHandleType(x, y);
+    onMouseMove(point: Point) {
+        const selectionHandle = this.getSelectionHandleType(point);
         if (selectionHandle !== null) {
             switch (selectionHandle.type) {
                 case "SelectionRect.TopLeftHandle":
@@ -159,7 +158,7 @@ export class SelectModeController extends ModeController {
         data: PointerDownEventHandlerData,
         selectionHandle: SelectionHandleType,
     ) {
-        const { pointerId, x, y } = data;
+        const { pointerId, point } = data;
 
         let session: PointerEventHandlers;
         switch (selectionHandle.type) {
@@ -266,7 +265,7 @@ export class SelectModeController extends ModeController {
                         this.canvasStateStore,
                         this.viewportStore,
                         this.snapGuideStore,
-                        { x, y },
+                        point,
                     ),
                 );
                 break;
@@ -276,7 +275,6 @@ export class SelectModeController extends ModeController {
                     selectionHandle.path,
                     selectionHandle.node.id,
                     this.canvasStateStore,
-                    this.viewportStore,
                     this.historyManager,
                 );
                 break;
@@ -288,7 +286,7 @@ export class SelectModeController extends ModeController {
                         this.canvasStateStore,
                         this.viewportStore,
                         this.snapGuideStore,
-                        { x, y },
+                        point,
                     ),
                 );
                 break;
@@ -313,7 +311,7 @@ export class SelectModeController extends ModeController {
                         this.canvasStateStore,
                         this.viewportStore,
                         this.snapGuideStore,
-                        { x, y },
+                        point,
                     ),
                 );
                 break;
@@ -341,8 +339,7 @@ export class SelectModeController extends ModeController {
 
                     const object = testHitEntities(
                         this.canvasStateStore.getState().page,
-                        data.newX,
-                        data.newY,
+                        data.new,
                         this.viewportStore.getState().scale,
                     ).entities.at(0);
 
@@ -376,12 +373,10 @@ export class SelectModeController extends ModeController {
     }
 
     private getSelectionHandleType(
-        x: number,
-        y: number,
+        point: Point,
+        margin = 8,
     ): SelectionHandleType | null {
-        const THRESHOLD = 16;
-
-        if (this.appStateStore.getState().mode.type !== "select") return null;
+        const marginInCanvas = margin / this.viewportStore.getState().scale;
 
         const selectionType = this.getSelectionType();
 
@@ -392,20 +387,13 @@ export class SelectModeController extends ModeController {
             assert(path.type === "path", "Selected entity is not path");
 
             for (const node of Object.values(path.nodes)) {
-                if (
-                    distanceFromPointToPoint(
-                        { x: node.x, y: node.y },
-                        { x, y },
-                    ) < THRESHOLD
-                ) {
+                if (point.getDistanceFrom(node.point) < marginInCanvas) {
                     return { type: "SelectionPath.Node", path, node };
                 }
             }
 
             for (const edge of getEdgesFromPath(path)) {
-                if (
-                    distanceFromPointToLine({ x, y }, edge).distance < THRESHOLD
-                ) {
+                if (edge.getDistanceFrom(point).distance < marginInCanvas) {
                     {
                         return { type: "SelectionPath.Edge", path: path };
                     }
@@ -420,14 +408,14 @@ export class SelectModeController extends ModeController {
             assert(text.type === "text", "Selected entity is not text");
 
             const hitAreaX = testHitWithRange(
-                x,
-                text.x,
-                text.x + text.width,
-                32,
+                point.x,
+                text.rect.left,
+                text.rect.right,
+                marginInCanvas,
             );
             if (
-                text.y - THRESHOLD < y &&
-                y < text.y + text.height + THRESHOLD
+                text.rect.top - marginInCanvas < point.y &&
+                point.y < text.rect.bottom + marginInCanvas
             ) {
                 switch (hitAreaX) {
                     case "start": {
@@ -449,16 +437,16 @@ export class SelectModeController extends ModeController {
                 .getSelectionRect();
             assert(selectionRect !== null, "SelectionRect must not be null");
             const hitAreaX = testHitWithRange(
-                x,
-                selectionRect.x,
-                selectionRect.x + selectionRect.width,
-                THRESHOLD,
+                point.x,
+                selectionRect.left,
+                selectionRect.right,
+                marginInCanvas,
             );
             const hitAreaY = testHitWithRange(
-                y,
-                selectionRect.y,
-                selectionRect.y + selectionRect.height,
-                THRESHOLD,
+                point.y,
+                selectionRect.top,
+                selectionRect.bottom,
+                marginInCanvas,
             );
 
             switch (hitAreaX) {
@@ -589,14 +577,18 @@ function testHitWithRange(
     value: number,
     start: number,
     end: number,
-    threshold: number,
+    marginInCanvas: number,
 ): "start" | "middle" | "end" | "none" {
-    const outerStart = start - threshold;
+    const outerStart = start - marginInCanvas;
     const innerStart =
-        end - start < threshold * 4 ? (start * 3 + end) / 4 : start + threshold;
+        end - start < marginInCanvas * 4
+            ? (start * 3 + end) / 4
+            : start + marginInCanvas;
     const innerEnd =
-        end - start < threshold * 4 ? (start + end * 3) / 4 : end - threshold;
-    const outerEnd = end + threshold;
+        end - start < marginInCanvas * 4
+            ? (start + end * 3) / 4
+            : end - marginInCanvas;
+    const outerEnd = end + marginInCanvas;
 
     if (value < outerStart) {
         return "none";

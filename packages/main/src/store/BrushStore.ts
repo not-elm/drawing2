@@ -1,4 +1,4 @@
-import type { Rect } from "../geo/Rect";
+import { Rect } from "../geo/Rect";
 import { Store } from "../lib/Store";
 
 export class BrushStore extends Store<{
@@ -8,12 +8,7 @@ export class BrushStore extends Store<{
     constructor() {
         super({
             active: false,
-            rect: {
-                x: 0,
-                y: 0,
-                width: 0,
-                height: 0,
-            },
+            rect: Rect.of(0, 0, 0, 0),
         });
     }
 

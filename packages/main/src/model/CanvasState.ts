@@ -1,7 +1,8 @@
-import { type Rect, unionRectAll } from "../geo/Rect";
+import { Rect } from "../geo/Rect";
 import { dataclass } from "../lib/dataclass";
 import { isNotNullish } from "../lib/isNullish";
-import { type Entity, type Page, getBoundingRect } from "./Page";
+import { type Entity, getBoundingRect } from "./Entity";
+import type { Page } from "./Page";
 
 export class CanvasState extends dataclass<{
     readonly page: Page;
@@ -49,7 +50,7 @@ export class CanvasState extends dataclass<{
     getSelectionRect(): Rect | null {
         const rects = this.getSelectedEntities().map(getBoundingRect);
         if (rects.length === 0) return null;
-        return unionRectAll(rects);
+        return Rect.union(rects);
     }
 
     getSelectedEntities(): Entity[] {

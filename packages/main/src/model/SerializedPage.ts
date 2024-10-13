@@ -1,10 +1,16 @@
+import { Point } from "../geo/Point";
+import { Rect } from "../geo/Rect";
 import type { ColorId } from "./Colors";
 import type { SerializedDependency } from "./Dependency";
 import { DependencyCollection } from "./DependencyCollection";
+import type { Entity } from "./Entity";
 import type { FillMode } from "./FillMode";
-import type { Entity, Page, PathEntity, ShapeEntity, TextEntity } from "./Page";
+import type { Page } from "./Page";
+import type { PathEntity } from "./PathEntity";
+import type { ShapeEntity } from "./ShapeEntity";
 import type { StrokeStyle } from "./StrokeStyle";
 import type { TextAlignment } from "./TextAlignment";
+import type { TextEntity } from "./TextEntity";
 import type { TextEntitySizingMode } from "./TextEntitySizingMode";
 
 export interface SerializedPage {
@@ -43,7 +49,7 @@ export function serializeEntity(entity: Entity): SerializedEntity {
         case "shape":
             return serializeShapeEntity(entity);
         case "text":
-            return serializeTextEnitity(entity);
+            return serializeTextEntity(entity);
     }
 }
 export function deserializeEntity(entity: SerializedEntity): Entity {
@@ -76,8 +82,8 @@ function serializePathEntity(path: PathEntity): SerializedPathEntity {
         type: "path",
         nodes: Object.entries(path.nodes).map(([id, node]) => ({
             id,
-            x: node.x,
-            y: node.y,
+            x: node.point.x,
+            y: node.point.y,
             endType: node.endType,
         })),
         edges: path.edges,
@@ -89,7 +95,16 @@ function deserializePathEntity(path: SerializedPathEntity): PathEntity {
     return {
         id: path.id,
         type: "path",
-        nodes: Object.fromEntries(path.nodes.map((node) => [node.id, node])),
+        nodes: Object.fromEntries(
+            path.nodes.map((node) => [
+                node.id,
+                {
+                    id: node.id,
+                    point: new Point(node.x, node.y),
+                    endType: node.endType,
+                },
+            ]),
+        ),
         edges: path.edges,
         colorId: path.colorId,
         strokeStyle: path.strokeStyle,
@@ -115,10 +130,10 @@ function serializeShapeEntity(shape: ShapeEntity): SerializedShapeEntity {
     return {
         id: shape.id,
         type: "shape",
-        x: shape.x,
-        y: shape.y,
-        width: shape.width,
-        height: shape.height,
+        x: shape.rect.left,
+        y: shape.rect.top,
+        width: shape.rect.width,
+        height: shape.rect.height,
         label: shape.label,
         textAlignX: shape.textAlignX,
         textAlignY: shape.textAlignY,
@@ -132,10 +147,7 @@ function deserializeShapeEntity(shape: SerializedShapeEntity): ShapeEntity {
     return {
         id: shape.id,
         type: "shape",
-        x: shape.x,
-        y: shape.y,
-        width: shape.width,
-        height: shape.height,
+        rect: Rect.of(shape.x, shape.y, shape.width, shape.height),
         label: shape.label,
         textAlignX: shape.textAlignX,
         textAlignY: shape.textAlignY,
@@ -157,14 +169,14 @@ interface SerializedTextEntity {
     textAlignment: TextAlignment;
     content: string;
 }
-function serializeTextEnitity(text: TextEntity): SerializedTextEntity {
+function serializeTextEntity(text: TextEntity): SerializedTextEntity {
     return {
         id: text.id,
         type: "text",
-        x: text.x,
-        y: text.y,
-        width: text.width,
-        height: text.height,
+        x: text.rect.left,
+        y: text.rect.top,
+        width: text.rect.width,
+        height: text.rect.height,
         sizingMode: text.sizingMode,
         textAlignment: text.textAlignment,
         content: text.content,
@@ -174,10 +186,7 @@ function deserializeTextEntity(text: SerializedTextEntity): TextEntity {
     return {
         id: text.id,
         type: "text",
-        x: text.x,
-        y: text.y,
-        width: text.width,
-        height: text.height,
+        rect: Rect.of(text.x, text.y, text.width, text.height),
         sizingMode: text.sizingMode,
         textAlignment: text.textAlignment,
         content: text.content,

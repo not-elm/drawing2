@@ -1,8 +1,9 @@
-import type { Rect } from "../../geo/Rect";
+import { Rect } from "../../geo/Rect";
 import { getRectanglePath } from "../../geo/path";
 import { randomId } from "../../lib/randomId";
 import { Direction } from "../../model/Direction";
-import type { Entity, ShapeEntity } from "../../model/Page";
+import type { Entity } from "../../model/Entity";
+import type { ShapeEntity } from "../../model/ShapeEntity";
 import { Transaction } from "../../model/Transaction";
 import { createScaleTransformHandle } from "../../model/TransformHandle";
 import type { AppStateStore } from "../../store/AppStateStore";
@@ -40,12 +41,12 @@ export class NewShapeModeController extends ModeController {
     }
 
     onCanvasPointerDown(data: PointerDownEventHandlerData): void {
-        const shape = this.insertNewShape({
-            x: data.x,
-            y: data.y,
-            width: 1,
-            height: 1,
-        });
+        const shape = this.insertNewShape(
+            new Rect({
+                p0: data.point,
+                p1: data.point.translate(1, 1),
+            }),
+        );
 
         this.controller.setMode({ type: "select" });
         this.canvasStateStore.unselectAll();
@@ -69,10 +70,7 @@ export class NewShapeModeController extends ModeController {
         const shape: ShapeEntity = {
             type: "shape",
             id: randomId(),
-            x: rect.x,
-            y: rect.y,
-            width: rect.width,
-            height: rect.height,
+            rect,
             label: "",
             textAlignX: this.appStateStore.getState().defaultTextAlignX,
             textAlignY: this.appStateStore.getState().defaultTextAlignY,

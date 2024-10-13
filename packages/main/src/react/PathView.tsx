@@ -1,13 +1,14 @@
 import { memo } from "react";
 import { Colors } from "../model/Colors";
-import type { PathEntity } from "../model/Page";
+
+import type { PathEntity } from "../model/PathEntity";
 
 export const STROKE_WIDTH_BASE = 5;
 
 export const PathView = memo(function PathView({ path }: { path: PathEntity }) {
     const nodes = Object.values(path.nodes);
-    const left = Math.min(...nodes.map((node) => node.x));
-    const top = Math.min(...nodes.map((node) => node.y));
+    const left = Math.min(...nodes.map((node) => node.point.x));
+    const top = Math.min(...nodes.map((node) => node.point.y));
 
     // const arrowHeadPath1 = constructArrowHeadPath(
     //     x1 - left,
@@ -101,8 +102,8 @@ function constructArrowHeadPath(
 
 function constructPath(path: PathEntity): string {
     const nodes = Object.values(path.nodes);
-    const left = Math.min(...nodes.map((node) => node.x));
-    const top = Math.min(...nodes.map((node) => node.y));
+    const left = Math.min(...nodes.map((node) => node.point.x));
+    const top = Math.min(...nodes.map((node) => node.point.y));
 
     let lastNodeId = "(nothing)";
     const commands: string[] = [];
@@ -111,9 +112,11 @@ function constructPath(path: PathEntity): string {
         const endNode = path.nodes[endNodeId];
 
         if (startNodeId !== lastNodeId) {
-            commands.push(`M${startNode.x - left} ${startNode.y - top}`);
+            commands.push(
+                `M${startNode.point.x - left} ${startNode.point.y - top}`,
+            );
         }
-        commands.push(`L${endNode.x - left} ${endNode.y - top}`);
+        commands.push(`L${endNode.point.x - left} ${endNode.point.y - top}`);
 
         lastNodeId = endNodeId;
     }

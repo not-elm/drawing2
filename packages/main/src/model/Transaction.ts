@@ -1,7 +1,11 @@
+import type { Point } from "../geo/Point";
+import { Rect } from "../geo/Rect";
+import { Transform } from "../geo/Transform";
 import { assert } from "../lib/assert";
 import type { Dependency } from "./Dependency";
 import type { DependencyCollection } from "./DependencyCollection";
-import type { Entity, Page } from "./Page";
+import type { Entity } from "./Entity";
+import type { Page } from "./Page";
 
 interface CommandBase<T extends string> {
     type: T;
@@ -15,23 +19,14 @@ interface ReplaceEntitiesCommand extends CommandBase<"REPLACE_ENTITIES"> {
 interface DeleteEntitiesCommand extends CommandBase<"DELETE_ENTITIES"> {
     entityIds: string[];
 }
-interface ScaleEntitiesCommand extends CommandBase<"SCALE_ENTITIES"> {
+interface TransformEntitiesCommand extends CommandBase<"TRANSFORM_ENTITIES"> {
     entityIds: string[];
-    cx: number;
-    cy: number;
-    scaleX: number;
-    scaleY: number;
-}
-interface MoveEntitiesCommand extends CommandBase<"MOVE_ENTITIES"> {
-    entityIds: string[];
-    dx: number;
-    dy: number;
+    transform: Transform;
 }
 interface SetPointPositionCommand extends CommandBase<"SET_POINT_POSITION"> {
     pathId: string;
     nodeId: string;
-    x: number;
-    y: number;
+    point: Point;
 }
 interface UpdateEntityPropertyCommand
     extends CommandBase<"UPDATE_ENTITY_PROPERTY"> {
@@ -49,8 +44,7 @@ type Command =
     | InsertEntitiesCommand
     | ReplaceEntitiesCommand
     | DeleteEntitiesCommand
-    | ScaleEntitiesCommand
-    | MoveEntitiesCommand
+    | TransformEntitiesCommand
     | SetPointPositionCommand
     | UpdateEntityPropertyCommand
     | AddDependenciesCommand
@@ -78,39 +72,33 @@ export class Transaction {
 
     scaleEntities(
         entityIds: string[],
-        cx: number,
-        cy: number,
+        origin: Point,
         scaleX: number,
         scaleY: number,
     ): this {
         this.commands.push({
-            type: "SCALE_ENTITIES",
+            type: "TRANSFORM_ENTITIES",
             entityIds,
-            cx,
-            cy,
-            scaleX,
-            scaleY,
+            transform: Transform.scale(origin, scaleX, scaleY),
         });
         return this;
     }
 
     moveEntities(entityIds: string[], dx: number, dy: number): this {
-        this.commands.push({ type: "MOVE_ENTITIES", entityIds, dx, dy });
+        this.commands.push({
+            type: "TRANSFORM_ENTITIES",
+            entityIds,
+            transform: Transform.translate(dx, dy),
+        });
         return this;
     }
 
-    setPointPosition(
-        pathId: string,
-        nodeId: string,
-        x: number,
-        y: number,
-    ): this {
+    setPointPosition(pathId: string, nodeId: string, point: Point): this {
         this.commands.push({
             type: "SET_POINT_POSITION",
             pathId,
             nodeId,
-            x,
-            y,
+            point,
         });
         return this;
     }
@@ -175,11 +163,8 @@ function processCommand(command: Command, draft: PageDraft) {
         case "DELETE_ENTITIES": {
             return deleteEntities(command, draft);
         }
-        case "SCALE_ENTITIES": {
-            return scaleEntities(command, draft);
-        }
-        case "MOVE_ENTITIES": {
-            return moveEntities(command, draft);
+        case "TRANSFORM_ENTITIES": {
+            return transformEntities(command, draft);
         }
         case "SET_POINT_POSITION": {
             return setPointPosition(command, draft);
@@ -223,7 +208,10 @@ function deleteEntities(command: DeleteEntitiesCommand, draft: PageDraft) {
     }
 }
 
-function scaleEntities(command: ScaleEntitiesCommand, draft: PageDraft) {
+function transformEntities(
+    command: TransformEntitiesCommand,
+    draft: PageDraft,
+) {
     for (const entityId of command.entityIds) {
         const entity = draft.entities[entityId];
         assert(entity !== undefined, `Entity not found: ${entityId}`);
@@ -233,67 +221,31 @@ function scaleEntities(command: ScaleEntitiesCommand, draft: PageDraft) {
                 draft.entities[entityId] = {
                     ...entity,
                     nodes: Object.fromEntries(
-                        Object.entries(entity.nodes).map(([id, node]) => [
-                            id,
-                            {
-                                ...node,
-                                x:
-                                    command.cx +
-                                    command.scaleX * (node.x - command.cx),
-                                y:
-                                    command.cy +
-                                    command.scaleY * (node.y - command.cy),
-                            },
-                        ]),
+                        Object.entries(entity.nodes).map(([id, node]) => {
+                            const newPoint = command.transform.apply(
+                                node.point,
+                            );
+
+                            return [
+                                id,
+                                {
+                                    ...node,
+                                    x: newPoint.x,
+                                    y: newPoint.y,
+                                },
+                            ];
+                        }),
                     ),
                 };
                 break;
             }
             case "shape":
             case "text": {
+                const p0 = command.transform.apply(entity.rect.p0);
+                const p1 = command.transform.apply(entity.rect.p1);
                 draft.entities[entityId] = {
                     ...entity,
-                    x: command.cx + command.scaleX * (entity.x - command.cx),
-                    y: command.cy + command.scaleY * (entity.y - command.cy),
-                    width: entity.width * command.scaleX,
-                    height: entity.height * command.scaleY,
-                };
-                break;
-            }
-        }
-
-        draft.dirtyEntityIds.push(entity.id);
-    }
-}
-
-function moveEntities(command: MoveEntitiesCommand, draft: PageDraft) {
-    for (const entityId of command.entityIds) {
-        const entity = draft.entities[entityId];
-        assert(entity !== undefined, `Entity not found: ${entityId}`);
-
-        switch (entity.type) {
-            case "path": {
-                draft.entities[entityId] = {
-                    ...entity,
-                    nodes: Object.fromEntries(
-                        Object.entries(entity.nodes).map(([id, node]) => [
-                            id,
-                            {
-                                ...node,
-                                x: node.x + command.dx,
-                                y: node.y + command.dy,
-                            },
-                        ]),
-                    ),
-                };
-                break;
-            }
-            case "shape":
-            case "text": {
-                draft.entities[entityId] = {
-                    ...entity,
-                    x: entity.x + command.dx,
-                    y: entity.y + command.dy,
+                    rect: Rect.fromPoints(p0, p1),
                 };
                 break;
             }
@@ -311,8 +263,7 @@ function setPointPosition(command: SetPointPositionCommand, draft: PageDraft) {
     const newPath = { ...path };
     newPath.nodes[command.nodeId] = {
         ...newPath.nodes[command.nodeId],
-        x: command.x,
-        y: command.y,
+        point: command.point,
     };
     draft.entities[command.pathId] = newPath;
     draft.dirtyEntityIds.push(command.pathId);

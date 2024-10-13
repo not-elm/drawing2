@@ -1,6 +1,7 @@
-import type { Line } from "../../geo/Line";
+import { Line } from "../../geo/Line";
 import { randomId } from "../../lib/randomId";
-import type { Entity, PathEntity } from "../../model/Page";
+import type { Entity } from "../../model/Entity";
+import type { PathEntity } from "../../model/PathEntity";
 import { Transaction } from "../../model/Transaction";
 import type { AppStateStore } from "../../store/AppStateStore";
 import type { CanvasStateStore } from "../../store/CanvasStateStore";
@@ -35,12 +36,12 @@ export class NewPathModeController extends ModeController {
     }
 
     onCanvasPointerDown(data: PointerDownEventHandlerData): void {
-        const pathEntity = this.insertNewPath({
-            x1: data.x,
-            y1: data.y,
-            x2: data.x + 1,
-            y2: data.y + 1,
-        });
+        const pathEntity = this.insertNewPath(
+            new Line({
+                p1: data.point,
+                p2: data.point.translate(1, 1),
+            }),
+        );
 
         this.controller.setMode({ type: "select" });
         this.canvasStateStore.unselectAll();
@@ -52,7 +53,6 @@ export class NewPathModeController extends ModeController {
                 pathEntity,
                 pathEntity.edges[0][1],
                 this.canvasStateStore,
-                this.viewportStore,
                 this.historyManager,
             ),
         );
@@ -61,14 +61,12 @@ export class NewPathModeController extends ModeController {
     private insertNewPath(line: Line): PathEntity {
         const node1 = {
             id: randomId(),
-            x: line.x1,
-            y: line.y1,
+            point: line.p1,
             endType: this.appStateStore.getState().defaultLineEndType1,
         };
         const node2 = {
             id: randomId(),
-            x: line.x2,
-            y: line.y2,
+            point: line.p2,
             endType: this.appStateStore.getState().defaultLineEndType2,
         };
         const pathEntity: PathEntity = {

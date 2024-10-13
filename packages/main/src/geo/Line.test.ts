@@ -1,22 +1,22 @@
 import { describe, expect, test } from "bun:test";
-import { isLineOverlapWithLine } from "./Line";
+import { Line } from "./Line";
 
-describe("isLineOverlapWithLine", () => {
+describe("overlap", () => {
     test.each([
-        [{ x1: 0, y1: 0, x2: 1, y2: 1 }, { x1: 0, y1: 1, x2: 1, y2: 0 }, true],
+        [Line.of(0, 0, 1, 1), Line.of(0, 1, 1, 0), true],
 
         // Not crossed
-        [{ x1: 0, y1: 0, x2: 1, y2: 1 }, { x1: 0, y1: 4, x2: 1, y2: 3 }, false],
+        [Line.of(0, 0, 1, 1), Line.of(0, 4, 1, 3), false],
 
         // Share the same point
-        [{ x1: 0, y1: 0, x2: 1, y2: 1 }, { x1: 0, y1: 2, x2: 1, y2: 1 }, true],
+        [Line.of(0, 0, 1, 1), Line.of(0, 2, 1, 1), true],
 
         // Parallel lines
-        [{ x1: 0, y1: 0, x2: 1, y2: 1 }, { x1: 0, y1: 1, x2: 1, y2: 2 }, false],
+        [Line.of(0, 0, 1, 1), Line.of(0, 1, 1, 2), false],
 
         // Same lines
-        [{ x1: 0, y1: 0, x2: 1, y2: 1 }, { x1: 0, y1: 0, x2: 1, y2: 1 }, true],
+        [Line.of(0, 0, 1, 1), Line.of(0, 0, 1, 1), true],
     ])("case %#", (line1, line2, expected) => {
-        expect(isLineOverlapWithLine(line1, line2)).toBe(expected);
+        expect(line1.isOverlappedWith(line2)).toBe(expected);
     });
 });

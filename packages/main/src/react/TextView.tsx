@@ -1,8 +1,8 @@
 import type { CSSObject } from "@emotion/styled";
 import { MathJax } from "better-react-mathjax";
 import { memo } from "react";
-import type { TextEntity } from "../model/Page";
 import type { TextAlignment } from "../model/TextAlignment";
+import type { TextEntity } from "../model/TextEntity";
 import { useController } from "./ControllerProvider";
 import { useResizeObserver } from "./hooks/useResizeObserver";
 
@@ -12,14 +12,16 @@ export const TextView = memo(function ShapeView({
 }: { text: TextEntity; editing: boolean }) {
     return (
         <div
-            style={{ transform: `translate(${text.x}px, ${text.y}px)` }}
+            style={{
+                transform: `translate(${text.rect.left}px, ${text.rect.top}px)`,
+            }}
             css={{ position: "absolute" }}
         >
             <TextViewInner
                 editing={editing}
                 shapeId={text.id}
-                width={text.width}
-                height={text.height}
+                width={text.rect.width}
+                height={text.rect.height}
                 sizingMode={text.sizingMode}
                 textAlignment={text.textAlignment}
                 content={text.content}

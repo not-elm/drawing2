@@ -1,12 +1,13 @@
-import { isLineOverlapWithLine } from "../geo/Line";
-import { isRectOverlapWithLine, isRectOverlapWithRect } from "../geo/Rect";
+import { Point } from "../geo/Point";
 import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
 import { CanvasState } from "../model/CanvasState";
 import type { ColorId } from "../model/Colors";
 import { DependencyCollection } from "../model/DependencyCollection";
+import type { Entity } from "../model/Entity";
 import type { FillMode } from "../model/FillMode";
-import { type Entity, type Page, getEdgesFromPath } from "../model/Page";
+import type { Page } from "../model/Page";
+import { getEdgesFromPath } from "../model/PathEntity";
 import {
     type SerializedPage,
     deserializePage,
@@ -544,11 +545,11 @@ export function fromCanvasCoordinate(
     canvasX: number,
     canvasY: number,
     viewport: Viewport,
-): [x: number, y: number] {
-    return [
-        canvasX / viewport.scale + viewport.x,
-        canvasY / viewport.scale + viewport.y,
-    ];
+): Point {
+    return new Point(
+        canvasX / viewport.scale + viewport.rect.left,
+        canvasY / viewport.scale + viewport.rect.top,
+    );
 }
 
 export function isOverlapped(obj1: Entity, obj2: Entity): boolean {
@@ -558,11 +559,11 @@ export function isOverlapped(obj1: Entity, obj2: Entity): boolean {
             switch (obj2.type) {
                 case "shape":
                 case "text": {
-                    return isRectOverlapWithRect(obj1, obj2);
+                    return obj1.rect.isOverlappedWith(obj2.rect);
                 }
                 case "path": {
                     return getEdgesFromPath(obj2).some((line) =>
-                        isRectOverlapWithLine(obj1, line),
+                        obj1.rect.isOverlappedWith(line),
                     );
                 }
             }
@@ -579,9 +580,7 @@ export function isOverlapped(obj1: Entity, obj2: Entity): boolean {
                     const lines2 = getEdgesFromPath(obj2);
 
                     return lines1.some((line1) =>
-                        lines2.some((line2) =>
-                            isLineOverlapWithLine(line1, line2),
-                        ),
+                        lines2.some((line2) => line1.isOverlappedWith(line2)),
                     );
                 }
             }

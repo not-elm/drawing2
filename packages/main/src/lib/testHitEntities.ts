@@ -1,11 +1,7 @@
-import { distanceFromPointToLine } from "../geo/Line";
-import { distanceFromPointToRect } from "../geo/Rect";
-import {
-    type Entity,
-    type Page,
-    type PathEntity,
-    getEdgesFromPath,
-} from "../model/Page";
+import type { Point } from "../geo/Point";
+import type { Entity } from "../model/Entity";
+import type { Page } from "../model/Page";
+import { type PathEntity, getEdgesFromPath } from "../model/PathEntity";
 import { assert } from "./assert";
 
 interface HitTestResult {
@@ -26,11 +22,11 @@ interface HitTestResultEntry<T> {
 
 export function testHitEntities(
     page: Page,
-    x: number,
-    y: number,
+    point: Point,
     scale: number,
-    threshold = THRESHOLD,
+    marginInCanvas = 8,
 ): HitTestResult {
+    const margin = marginInCanvas / scale;
     const entities: HitTestResultEntry<Entity>[] = [];
 
     for (const [zIndex, entityId] of page.entityIds.entries()) {
@@ -40,18 +36,15 @@ export function testHitEntities(
         switch (entity.type) {
             case "path": {
                 for (const edge of getEdgesFromPath(entity)) {
-                    const { point, distance } = distanceFromPointToLine(
-                        { x, y },
-                        edge,
-                    );
-                    if (distance <= threshold) {
+                    const { point: hitPoint, distance } =
+                        edge.getDistanceFrom(point);
+                    if (distance <= margin) {
                         const entry: HitTestResultEntry<PathEntity> = {
                             target: entity,
-                            point,
+                            point: hitPoint,
                             distance,
                             zIndex,
                         };
-                        entities.push(entry);
                         entities.push(entry);
                     }
                 }
@@ -59,18 +52,15 @@ export function testHitEntities(
             }
             case "shape":
             case "text": {
-                const { point, distance } = distanceFromPointToRect(
-                    { x, y },
-                    entity,
-                );
-                if (distance <= threshold) {
+                const { point: hitPoint, distance } =
+                    entity.rect.getDistanceFrom(point);
+                if (distance <= margin) {
                     const entry: HitTestResultEntry<Entity> = {
                         target: entity,
-                        point,
+                        point: hitPoint,
                         distance,
                         zIndex,
                     };
-                    entities.push(entry);
                     entities.push(entry);
                 }
                 break;
@@ -81,16 +71,8 @@ export function testHitEntities(
     entities
         .sort((a, b) => -(a.zIndex - b.zIndex))
         .sort((a, b) => a.distance - b.distance);
-    entities
-        .sort((a, b) => -(a.zIndex - b.zIndex))
-        .sort((a, b) => a.distance - b.distance);
 
     return {
         entities,
     };
 }
-
-/**
- * The distance threshold for highlighting a point in canvas coordinate (px).
- */
-const THRESHOLD = 32;

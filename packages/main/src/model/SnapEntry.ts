@@ -1,6 +1,7 @@
 import type { Line } from "../geo/Line";
 import type { Point } from "../geo/Point";
-import { type Page, getBoundingRect, getEntitiesInViewport } from "./Page";
+import { getBoundingRect } from "./Entity";
+import { type Page, getEntitiesInViewport } from "./Page";
 import type { Viewport } from "./Viewport";
 
 export interface SnapEntry2D {
@@ -40,23 +41,11 @@ export function computeSnapEntry2D(
         }
         const otherBoundingRect = getBoundingRect(otherEntity);
         const otherSnapPoints = [
-            { x: otherBoundingRect.x, y: otherBoundingRect.y },
-            {
-                x: otherBoundingRect.x + otherBoundingRect.width,
-                y: otherBoundingRect.y,
-            },
-            {
-                x: otherBoundingRect.x,
-                y: otherBoundingRect.y + otherBoundingRect.height,
-            },
-            {
-                x: otherBoundingRect.x + otherBoundingRect.width,
-                y: otherBoundingRect.y + otherBoundingRect.height,
-            },
-            {
-                x: otherBoundingRect.x + otherBoundingRect.width / 2,
-                y: otherBoundingRect.y + otherBoundingRect.height / 2,
-            },
+            otherBoundingRect.topLeft,
+            otherBoundingRect.topRight,
+            otherBoundingRect.bottomLeft,
+            otherBoundingRect.bottomRight,
+            otherBoundingRect.center,
         ];
         for (const otherSnapPoint of otherSnapPoints) {
             const xDistance = Math.abs(point.x - otherSnapPoint.x);

@@ -1,3 +1,5 @@
+import type { Point } from "../../geo/Point";
+
 export interface PointerEventSession {
     pointerId: number;
     data: PointerEventSessionData;
@@ -14,12 +16,9 @@ export interface PointerEventSessionData {
     startAt: number;
     endAt: number;
     isShortClick: boolean;
-    startX: number;
-    startY: number;
-    lastX: number;
-    lastY: number;
-    newX: number;
-    newY: number;
+    start: Point;
+    last: Point;
+    new: Point;
     shiftKey: boolean;
     ctrlKey: boolean;
     metaKey: boolean;

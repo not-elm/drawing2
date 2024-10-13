@@ -22,7 +22,7 @@ export class GestureRecognizer {
     onPointerUp?: (ev: PointerEvent) => void;
 
     handlePointerDown(ev: PointerEvent) {
-        const [x, y] = fromCanvasCoordinate(
+        const point = fromCanvasCoordinate(
             ev.clientX,
             ev.clientY,
             this.viewportProvider.getState(),
@@ -32,12 +32,9 @@ export class GestureRecognizer {
             startAt: timestamp,
             endAt: timestamp,
             isShortClick: false,
-            startX: x,
-            startY: y,
-            lastX: x,
-            lastY: y,
-            newX: x,
-            newY: y,
+            start: point,
+            last: point,
+            new: point,
             shiftKey: ev.shiftKey,
             ctrlKey: ev.ctrlKey,
             metaKey: ev.metaKey,
@@ -69,21 +66,19 @@ export class GestureRecognizer {
         const session = this.sessions.get(ev.pointerId);
         if (session === undefined) return;
 
-        const [x, y] = fromCanvasCoordinate(
+        const point = fromCanvasCoordinate(
             ev.clientX,
             ev.clientY,
             this.viewportProvider.getState(),
         );
 
         const newData = { ...session.data };
-        newData.newX = x;
-        newData.newY = y;
+        newData.new = point;
         newData.shiftKey = ev.shiftKey;
         newData.ctrlKey = ev.ctrlKey;
         newData.metaKey = ev.metaKey;
         session.handlers?.onPointerMove?.(newData);
-        newData.lastX = x;
-        newData.lastY = y;
+        newData.last = point;
 
         session.data = newData;
     }
@@ -94,15 +89,14 @@ export class GestureRecognizer {
         const session = this.sessions.get(ev.pointerId);
         if (session === undefined) return;
 
-        const [x, y] = fromCanvasCoordinate(
+        const point = fromCanvasCoordinate(
             ev.clientX,
             ev.clientY,
             this.viewportProvider.getState(),
         );
 
         const newData = { ...session.data };
-        newData.newX = x;
-        newData.newY = y;
+        newData.new = point;
         newData.shiftKey = ev.shiftKey;
         newData.ctrlKey = ev.ctrlKey;
         newData.metaKey = ev.metaKey;

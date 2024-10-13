@@ -1,3 +1,4 @@
+import type { Point } from "../geo/Point";
 import { assert } from "../lib/assert";
 import { testHitEntities } from "../lib/testHitEntities";
 import type { ColorId } from "../model/Colors";
@@ -74,23 +75,21 @@ export class AppController {
         ev: PointerEvent,
         pointerId: number,
     ) => {
-        const [x, y] = fromCanvasCoordinate(
+        const point = fromCanvasCoordinate(
             ev.clientX,
             ev.clientY,
             this.viewportStore.getState(),
         );
         const data: PointerDownEventHandlerData = {
             pointerId,
-            x,
-            y,
+            point,
             shiftKey: ev.shiftKey,
             preventDefault: () => ev.preventDefault(),
         };
 
         const hitResult = testHitEntities(
             this.canvasStateStore.getState().page,
-            x,
-            y,
+            point,
             this.viewportStore.getState().scale,
         );
         const result = hitResult.entities.at(0);
@@ -109,12 +108,12 @@ export class AppController {
     handleMouseMove(ev: PointerEvent) {
         this.gestureRecognizer.handlePointerMove(ev);
 
-        const [x, y] = fromCanvasCoordinate(
+        const point = fromCanvasCoordinate(
             ev.clientX,
             ev.clientY,
             this.viewportStore.getState(),
         );
-        this.getModeController().onMouseMove(x, y);
+        this.getModeController().onMouseMove(point);
     }
 
     handleMouseUp(ev: PointerEvent) {
@@ -122,14 +121,13 @@ export class AppController {
     }
 
     handleDoubleClick(ev: MouseEvent) {
-        const [x, y] = fromCanvasCoordinate(
+        const point = fromCanvasCoordinate(
             ev.clientX,
             ev.clientY,
             this.viewportStore.getState(),
         );
         this.getModeController().onCanvasDoubleClick({
-            x,
-            y,
+            point,
             shiftKey: ev.shiftKey,
             pointerId: -1,
             preventDefault: () => ev.preventDefault(),
@@ -306,17 +304,17 @@ export class AppController {
         assert(entity !== undefined, `Entity ${entityId} is not found`);
         assert(entity.type === "text", `Entity ${entityId} is not text`);
 
-        const newWidth = entity.sizingMode === "content" ? width : entity.width;
+        const newWidth =
+            entity.sizingMode === "content" ? width : entity.rect.width;
         const newHeight = height;
 
         this.canvasStateStore.setPage(
             new Transaction(this.canvasStateStore.getState().page)
                 .scaleEntities(
                     [entityId],
-                    entity.x,
-                    entity.y,
-                    newWidth / entity.width,
-                    newHeight / entity.height,
+                    entity.rect.topLeft,
+                    newWidth / entity.rect.width,
+                    newHeight / entity.rect.height,
                 )
                 .commit(),
         );
@@ -359,8 +357,7 @@ export class AppController {
 }
 
 export interface PointerDownEventHandlerData {
-    x: number;
-    y: number;
+    point: Point;
     pointerId: number;
     shiftKey: boolean;
     preventDefault: () => void;

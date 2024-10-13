@@ -1,12 +1,14 @@
-import type { Point } from "../geo/Point";
-import { unionRectAll } from "../geo/Rect";
+import { Line } from "../geo/Line";
+import { Point } from "../geo/Point";
+import { Rect } from "../geo/Rect";
 import type { StateProvider } from "../lib/Store";
 import { assert } from "../lib/assert";
 import type { CanvasStateStore } from "../store/CanvasStateStore";
 import type { SnapGuideStore } from "../store/SnapGuideStore";
 import type { ViewportStore } from "../store/ViewportStore";
 import type { Direction } from "./Direction";
-import { type Entity, type Page, getBoundingRect } from "./Page";
+import { type Entity, getBoundingRect } from "./Entity";
+import type { Page } from "./Page";
 import {
     type SnapEntry,
     type SnapEntry2D,
@@ -37,17 +39,26 @@ export abstract class TransformHandle {
     ) {
         const { constraint = true, snap = true } = option;
 
-        newHandlePoint = { ...newHandlePoint };
         let primaryAxis: "x" | "y" | null = null;
 
         if (snap) {
             const snapEntry2D = this.computeSnap(newHandlePoint);
             if (snapEntry2D.x.snapped) {
-                newHandlePoint.x += snapEntry2D.x.after - snapEntry2D.x.before;
+                newHandlePoint = new Point(
+                    newHandlePoint.x +
+                        snapEntry2D.x.after -
+                        snapEntry2D.x.before,
+                    newHandlePoint.y,
+                );
                 primaryAxis = "x";
             }
             if (snapEntry2D.y.snapped) {
-                newHandlePoint.y += snapEntry2D.y.after - snapEntry2D.y.before;
+                newHandlePoint = new Point(
+                    newHandlePoint.x,
+                    newHandlePoint.y +
+                        snapEntry2D.y.after -
+                        snapEntry2D.y.before,
+                );
 
                 if (snapEntry2D.x.snapped) {
                     primaryAxis =
@@ -120,20 +131,20 @@ export abstract class TransformHandle {
             const maxY = Math.max(...ys);
 
             if (minX !== maxX) {
-                snapGuide.lines.push({
-                    x1: minX,
-                    y1: snapEntry2D.y.after,
-                    x2: maxX,
-                    y2: snapEntry2D.y.after,
-                });
+                snapGuide.lines.push(
+                    new Line({
+                        p1: new Point(minX, snapEntry2D.y.after),
+                        p2: new Point(maxX, snapEntry2D.y.after),
+                    }),
+                );
             }
             if (minY !== maxY) {
-                snapGuide.lines.push({
-                    x1: snapEntry2D.x.after,
-                    y1: minY,
-                    x2: snapEntry2D.x.after,
-                    y2: maxY,
-                });
+                snapGuide.lines.push(
+                    new Line({
+                        p1: new Point(snapEntry2D.x.after, minY),
+                        p2: new Point(snapEntry2D.x.after, maxY),
+                    }),
+                );
             }
         }
 
@@ -258,31 +269,27 @@ class ScaleTransformHandle extends TransformHandle {
                     this.ix !== 0,
                     "If ix==0, X-axis should not be snapped.",
                 );
-                return {
-                    x: point.x,
-                    y:
-                        Math.abs(dx / this.ix) * this.iy +
-                        this.transformOrigin.y,
-                };
+                return new Point(
+                    point.x,
+                    Math.abs(dx / this.ix) * this.iy + this.transformOrigin.y,
+                );
             }
             case "y": {
                 assert(
                     this.iy !== 0,
                     "If iy==0, Y-axis should not be snapped.",
                 );
-                return {
-                    x:
-                        Math.abs(dy / this.iy) * this.ix +
-                        this.transformOrigin.x,
-                    y: point.y,
-                };
+                return new Point(
+                    Math.abs(dy / this.iy) * this.ix + this.transformOrigin.x,
+                    point.y,
+                );
             }
             case null: {
                 const norm = dx * this.ix + dy * this.iy;
-                return {
-                    x: norm * this.ix + this.transformOrigin.x,
-                    y: norm * this.iy + this.transformOrigin.y,
-                };
+                return new Point(
+                    norm * this.ix + this.transformOrigin.x,
+                    norm * this.iy + this.transformOrigin.y,
+                );
             }
         }
     }
@@ -301,8 +308,7 @@ class ScaleTransformHandle extends TransformHandle {
             .replaceEntities(this.originalEntities)
             .scaleEntities(
                 this.targetEntityIds,
-                this.transformOrigin.x,
-                this.transformOrigin.y,
+                this.transformOrigin,
                 scaleX,
                 scaleY,
             )
@@ -334,13 +340,13 @@ class MoveTransformHandle extends TransformHandle {
             snapGuideStore,
         );
 
-        const rect = unionRectAll(this.originalEntities.map(getBoundingRect));
+        const rect = Rect.union(this.originalEntities.map(getBoundingRect));
         this.originalSnapPoints = [
-            { x: rect.x, y: rect.y },
-            { x: rect.x + rect.width, y: rect.y },
-            { x: rect.x, y: rect.y + rect.height },
-            { x: rect.x + rect.width, y: rect.y + rect.height },
-            { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 },
+            rect.topLeft,
+            rect.topRight,
+            rect.bottomLeft,
+            rect.bottomRight,
+            rect.center,
         ];
     }
 
@@ -350,10 +356,7 @@ class MoveTransformHandle extends TransformHandle {
         const dx = newHandlePoint.x - this.originalHandlePoint.x;
         const dy = newHandlePoint.y - this.originalHandlePoint.y;
 
-        return this.originalSnapPoints.map((point) => ({
-            x: point.x + dx,
-            y: point.y + dy,
-        }));
+        return this.originalSnapPoints.map((point) => point.translate(dx, dy));
     }
 
     protected applyConstraints(
@@ -362,31 +365,19 @@ class MoveTransformHandle extends TransformHandle {
     ): Point {
         switch (primaryAxis) {
             case "x": {
-                return {
-                    x: point.x,
-                    y: this.originalHandlePoint.y,
-                };
+                return new Point(point.x, this.originalHandlePoint.y);
             }
             case "y": {
-                return {
-                    x: this.originalHandlePoint.x,
-                    y: point.y,
-                };
+                return new Point(this.originalHandlePoint.x, point.y);
             }
             case null: {
                 const dx = Math.abs(point.x - this.originalHandlePoint.x);
                 const dy = Math.abs(point.y - this.originalHandlePoint.y);
 
                 if (dx > dy) {
-                    return {
-                        x: point.x,
-                        y: this.originalHandlePoint.y,
-                    };
+                    return new Point(point.x, this.originalHandlePoint.y);
                 } else {
-                    return {
-                        x: this.originalHandlePoint.x,
-                        y: point.y,
-                    };
+                    return new Point(this.originalHandlePoint.x, point.y);
                 }
             }
         }
@@ -410,7 +401,7 @@ export function createScaleTransformHandle(
     direction: Direction,
 ): TransformHandle {
     const targetEntities = canvasStateStore.getState().getSelectedEntities();
-    const boundingRect = unionRectAll(targetEntities.map(getBoundingRect));
+    const boundingRect = Rect.union(targetEntities.map(getBoundingRect));
     const handlePoint = direction.getPoint(boundingRect);
     const transformOrigin = direction.opposite.getPoint(boundingRect);
 

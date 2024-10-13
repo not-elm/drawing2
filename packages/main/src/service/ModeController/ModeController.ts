@@ -1,5 +1,6 @@
+import type { Point } from "../../geo/Point";
+import type { Entity } from "../../model/Entity";
 import type { Mode } from "../../model/Mode";
-import type { Entity } from "../../model/Page";
 import type { PointerDownEventHandlerData } from "../AppController";
 
 export abstract class ModeController {
@@ -14,5 +15,5 @@ export abstract class ModeController {
         data: PointerDownEventHandlerData,
         entity: Entity,
     ): void {}
-    onMouseMove(x: number, y: number): void {}
+    onMouseMove(point: Point): void {}
 }

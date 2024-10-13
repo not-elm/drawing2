@@ -89,8 +89,9 @@ export function Canvas() {
             <div
                 css={{
                     position: "relative",
-                    transform: `translate(${-viewport.x}px, ${-viewport.y}px) scale(${scale})`,
-                    transformOrigin: `${viewport.x}px ${viewport.y}px`,
+                    transform: `translate(${-viewport.rect.left}px, ${-viewport
+                        .rect.top}px) scale(${scale})`,
+                    transformOrigin: `${viewport.rect.left}px ${viewport.rect.top}px`,
                 }}
             >
                 {getEntitiesInViewport(page, viewport).map((entity) => {
