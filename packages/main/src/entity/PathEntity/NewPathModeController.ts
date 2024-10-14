@@ -9,6 +9,8 @@ import { createMovePointSession } from "../../core/PointerEventSession/createMov
 import type { Entity } from "../../core/model/Entity";
 import type { AppStateStore } from "../../core/store/AppStateStore";
 import type { CanvasStateStore } from "../../core/store/CanvasStateStore";
+import { PROPERTY_KEY_COLOR_ID } from "../../core/view/PropertySection/ColorPropertySection/ColorPropertySection";
+import { colorPropertySection } from "../../instance";
 import { Line } from "../../lib/geo/Line";
 import { randomId } from "../../lib/randomId";
 import type { PathEntity } from "./PathEntity";
@@ -74,7 +76,8 @@ export class NewPathModeController extends ModeController {
                 [node2.id]: node2,
             },
             edges: [[node1.id, node2.id]],
-            colorId: this.appStateStore.getState().defaultColorId,
+            [PROPERTY_KEY_COLOR_ID]:
+                colorPropertySection().getState().defaultColorId,
             strokeStyle: this.appStateStore.getState().defaultStrokeStyle,
         };
 

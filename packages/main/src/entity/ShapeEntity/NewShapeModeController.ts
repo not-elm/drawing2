@@ -13,6 +13,17 @@ import type { AppStateStore } from "../../core/store/AppStateStore";
 import type { CanvasStateStore } from "../../core/store/CanvasStateStore";
 import type { SnapGuideStore } from "../../core/store/SnapGuideStore";
 import type { ViewportStore } from "../../core/store/ViewportStore";
+import { PROPERTY_KEY_COLOR_ID } from "../../core/view/PropertySection/ColorPropertySection/ColorPropertySection";
+import { PROPERTY_KEY_FILL_MODE } from "../../core/view/PropertySection/FillModePropertySection/FillModePropertySection";
+import {
+    PROPERTY_KEY_TEXT_ALIGNMENT_X,
+    PROPERTY_KEY_TEXT_ALIGNMENT_Y,
+} from "../../core/view/PropertySection/TextAlignmentPropertySection/TextAlignmentPropertySection";
+import {
+    colorPropertySection,
+    fillModePropertySection,
+    textAlignmentPropertySection,
+} from "../../instance";
 import { Rect } from "../../lib/geo/Rect";
 import { getRectanglePath } from "../../lib/geo/path";
 import { randomId } from "../../lib/randomId";
@@ -70,11 +81,15 @@ export class NewShapeModeController extends ModeController {
             type: "shape",
             id: randomId(),
             rect,
-            label: "",
-            textAlignX: this.appStateStore.getState().defaultTextAlignX,
-            textAlignY: this.appStateStore.getState().defaultTextAlignY,
-            colorId: this.appStateStore.getState().defaultColorId,
-            fillMode: this.appStateStore.getState().defaultFillMode,
+            content: "",
+            [PROPERTY_KEY_TEXT_ALIGNMENT_X]:
+                textAlignmentPropertySection().getState().defaultAlignX,
+            [PROPERTY_KEY_TEXT_ALIGNMENT_Y]:
+                textAlignmentPropertySection().getState().defaultAlignY,
+            [PROPERTY_KEY_COLOR_ID]:
+                colorPropertySection().getState().defaultColorId,
+            [PROPERTY_KEY_FILL_MODE]:
+                fillModePropertySection().getState().defaultFillMode,
             strokeStyle: this.appStateStore.getState().defaultStrokeStyle,
             path: getRectanglePath(),
         };

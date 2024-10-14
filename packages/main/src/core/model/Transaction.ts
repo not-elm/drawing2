@@ -31,7 +31,8 @@ interface SetPointPositionCommand extends CommandBase<"SET_POINT_POSITION"> {
 interface UpdateEntityPropertyCommand
     extends CommandBase<"UPDATE_ENTITY_PROPERTY"> {
     entityIds: string[];
-    updater: (entity: Readonly<Entity>) => Entity;
+    key: string;
+    value: unknown;
 }
 interface AddDependenciesCommand extends CommandBase<"ADD_DEPENDENCIES"> {
     dependencies: Dependency[];
@@ -103,14 +104,12 @@ export class Transaction {
         return this;
     }
 
-    updateProperty(
-        entityIds: string[],
-        updater: (entity: Readonly<Entity>) => Entity,
-    ): this {
+    updateProperty(entityIds: string[], key: string, value: unknown): this {
         this.commands.push({
             type: "UPDATE_ENTITY_PROPERTY",
             entityIds,
-            updater,
+            key,
+            value,
         });
         return this;
     }
@@ -170,7 +169,7 @@ function processCommand(command: Command, draft: PageDraft) {
             return setPointPosition(command, draft);
         }
         case "UPDATE_ENTITY_PROPERTY": {
-            return updateShapeProperty(command, draft);
+            return updateEntityProperty(command, draft);
         }
         case "ADD_DEPENDENCIES": {
             return addDependencies(command, draft);
@@ -220,7 +219,7 @@ function transformEntities(
             entity,
             command.transform,
         );
-        draft.dirtyEntityIds.push(entity.id);
+        draft.dirtyEntityIds.push(entityId);
     }
 }
 
@@ -236,13 +235,20 @@ function setPointPosition(command: SetPointPositionCommand, draft: PageDraft) {
     draft.dirtyEntityIds.push(command.pathId);
 }
 
-function updateShapeProperty(
+function updateEntityProperty(
     command: UpdateEntityPropertyCommand,
     draft: PageDraft,
 ) {
-    for (const id of command.entityIds) {
-        draft.entities[id] = command.updater(draft.entities[id]);
-        draft.dirtyEntityIds.push(id);
+    for (const entityId of command.entityIds) {
+        const entity = draft.entities[entityId];
+        assert(entity !== undefined, `Entity not found: ${entityId}`);
+
+        draft.entities[entityId] = entityHandleMap().setProperty(
+            entity,
+            command.key,
+            command.value,
+        );
+        draft.dirtyEntityIds.push(entityId);
     }
 }
 

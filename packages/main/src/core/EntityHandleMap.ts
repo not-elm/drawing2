@@ -20,6 +20,26 @@ export class EntityHandleMap {
         return this.get(entity.type).transform(entity, transform) as E;
     }
 
+    isPropertySupported(entity: Entity, propertyKey: string): boolean {
+        return this.get(entity.type).isPropertySupported(entity, propertyKey);
+    }
+
+    setProperty<E extends Entity>(
+        entity: E,
+        propertyKey: string,
+        value: unknown,
+    ): E {
+        return this.get(entity.type).setProperty(
+            entity,
+            propertyKey,
+            value,
+        ) as E;
+    }
+
+    getProperty<T>(entity: Entity, propertyKey: string): T | undefined {
+        return this.get(entity.type).getProperty<T>(entity, propertyKey);
+    }
+
     getBoundingRect(entity: Entity): Rect {
         return this.get(entity.type).getBoundingRect(entity);
     }

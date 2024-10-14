@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import type { AppController } from "../../core/AppController";
 import type { Entity } from "../../core/model/Entity";
 import type { Viewport } from "../../core/model/Viewport";
 import { assert } from "../../lib/assert";
@@ -7,11 +8,15 @@ import type { EntityViewHandle } from "./EntityViewHandle";
 export class EntityViewHandleMap {
     private map = new Map<string, EntityViewHandle<Entity>>();
 
-    register<E extends Entity>(view: EntityViewHandle<E>): this {
+    constructor(private readonly appController: AppController) {}
+
+    register<E extends Entity>(handle: EntityViewHandle<E>): this {
         this.map.set(
-            view.getType(),
-            view as unknown as EntityViewHandle<Entity>,
+            handle.getType(),
+            handle as unknown as EntityViewHandle<Entity>,
         );
+        handle.initialize(this.appController);
+
         return this;
     }
 

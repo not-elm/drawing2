@@ -1,4 +1,4 @@
-type StateOf<T> = T extends Store<infer S> ? S : never;
+export type StateOf<T> = T extends Store<infer S> ? S : never;
 
 const ListenerCountMap: Record<string, number> = {};
 

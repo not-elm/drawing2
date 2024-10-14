@@ -2,6 +2,8 @@ import type { CSSObject } from "@emotion/styled";
 import { MathJax } from "better-react-mathjax";
 import { memo } from "react";
 import type { TextAlignment } from "../../core/model/TextAlignment";
+import { getTextAlignmentX } from "../../core/view/PropertySection/TextAlignmentPropertySection/TextAlignmentPropertySection";
+import { assert } from "../../lib/assert";
 import { useController } from "../../react/ControllerProvider";
 import { useResizeObserver } from "../../react/hooks/useResizeObserver";
 import { useStore } from "../../react/hooks/useStore";
@@ -14,6 +16,9 @@ export const TextView = memo(function ShapeView({
     const editing =
         appState.mode.type === "edit-text" &&
         appState.mode.entityId === entity.id;
+
+    const textAlignment = getTextAlignmentX(entity);
+    assert(textAlignment !== undefined, "Text alignment must not be null");
 
     return (
         <div
@@ -28,7 +33,7 @@ export const TextView = memo(function ShapeView({
                 width={entity.rect.width}
                 height={entity.rect.height}
                 sizingMode={entity.sizingMode}
-                textAlignment={entity.textAlignment}
+                textAlignment={textAlignment}
                 content={entity.content}
             />
         </div>
@@ -113,10 +118,7 @@ const TextViewInner = memo(function ShapeViewInner({
                         ev.target.setSelectionRange(0, ev.target.value.length);
                     }}
                     onChange={(ev) =>
-                        controller.canvasStateStore.setLabel(
-                            shapeId,
-                            ev.target.value,
-                        )
+                        controller.canvasStateStore.setContent(ev.target.value)
                     }
                     onPointerDown={(ev) => ev.stopPropagation()}
                     value={content}

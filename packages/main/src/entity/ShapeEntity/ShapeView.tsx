@@ -40,7 +40,7 @@ export const ShapeView = memo(function ShapeView({
                 fillMode={entity.fillMode}
                 textAlignX={entity.textAlignX}
                 textAlignY={entity.textAlignY}
-                shapeLabel={entity.label}
+                shapeLabel={entity.content}
                 strokeStyle={entity.strokeStyle}
             />
         </div>
@@ -194,8 +194,7 @@ const ShapeViewInner = memo(function ShapeViewInner({
                             );
                         }}
                         onChange={(ev) =>
-                            controller.canvasStateStore.setLabel(
-                                shapeId,
+                            controller.canvasStateStore.setContent(
                                 ev.target.value,
                             )
                         }

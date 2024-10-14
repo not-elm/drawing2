@@ -3,6 +3,8 @@ import { EntityHandle } from "../../core/EntityHandle";
 import type { SerializedEntity } from "../../core/model/SerializedPage";
 import type { TextAlignment } from "../../core/model/TextAlignment";
 import type { TextEntitySizingMode } from "../../core/model/TextEntitySizingMode";
+import { PROPERTY_KEY_COLOR_ID } from "../../core/view/PropertySection/ColorPropertySection/ColorPropertySection";
+import { PROPERTY_KEY_TEXT_ALIGNMENT_X } from "../../core/view/PropertySection/TextAlignmentPropertySection/TextAlignmentPropertySection";
 import { assert } from "../../lib/assert";
 import { Rect } from "../../lib/geo/Rect";
 import type { Transform } from "../../lib/geo/Transform";
@@ -53,7 +55,7 @@ export class TextEntityHandle extends EntityHandle<TextEntity> {
             width: entity.rect.width,
             height: entity.rect.height,
             sizingMode: entity.sizingMode,
-            textAlignment: entity.textAlignment,
+            textAlignment: entity[PROPERTY_KEY_TEXT_ALIGNMENT_X],
             content: entity.content,
         } satisfies SerializedTextEntity;
     }
@@ -71,7 +73,8 @@ export class TextEntityHandle extends EntityHandle<TextEntity> {
                 serialized.height,
             ),
             sizingMode: serialized.sizingMode,
-            textAlignment: serialized.textAlignment,
+            [PROPERTY_KEY_TEXT_ALIGNMENT_X]: serialized.textAlignment,
+            [PROPERTY_KEY_COLOR_ID]: 0,
             content: serialized.content,
         };
     }

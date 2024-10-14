@@ -4,17 +4,21 @@ import {
     type PointerDownEvent,
 } from "../../core/ModeController/ModeController";
 import type { Entity } from "../../core/model/Entity";
-import type { AppStateStore } from "../../core/store/AppStateStore";
 import type { CanvasStateStore } from "../../core/store/CanvasStateStore";
+import { PROPERTY_KEY_COLOR_ID } from "../../core/view/PropertySection/ColorPropertySection/ColorPropertySection";
+import { PROPERTY_KEY_TEXT_ALIGNMENT_X } from "../../core/view/PropertySection/TextAlignmentPropertySection/TextAlignmentPropertySection";
+import {
+    colorPropertySection,
+    textAlignmentPropertySection,
+} from "../../instance";
 import { Rect } from "../../lib/geo/Rect";
 import { randomId } from "../../lib/randomId";
 import type { TextEntity } from "./TextEntity";
 
 export class NewTextModeController extends ModeController {
     constructor(
-        private readonly canvasStateStore: CanvasStateStore,
-        private readonly appStateStore: AppStateStore,
         private readonly appController: AppController,
+        private readonly canvasStateStore: CanvasStateStore,
     ) {
         super();
     }
@@ -35,6 +39,9 @@ export class NewTextModeController extends ModeController {
             entityId: text.id,
         });
 
+        this.canvasStateStore.unselectAll();
+        this.canvasStateStore.select(text.id);
+
         // To leave focus at the new text entity
         data.preventDefault();
     }
@@ -45,8 +52,10 @@ export class NewTextModeController extends ModeController {
             type: "text",
             rect,
             content: "",
-            textAlignment:
-                this.appStateStore.getState().defaultTextEntityTextAlignment,
+            [PROPERTY_KEY_TEXT_ALIGNMENT_X]:
+                textAlignmentPropertySection().getState().defaultAlignX,
+            [PROPERTY_KEY_COLOR_ID]:
+                colorPropertySection().getState().defaultColorId,
             sizingMode: "content",
         };
 

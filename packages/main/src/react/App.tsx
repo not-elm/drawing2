@@ -1,8 +1,7 @@
 import { useEffect } from "react";
+import { propertySection, toolBar } from "../instance";
 import { Canvas } from "./Canvas";
 import { useController } from "./ControllerProvider";
-import { PropertyPanel } from "./PropertyPanel/PropertyPanel";
-import { ToolBar } from "./ToolBar";
 
 export function App() {
     const controller = useController();
@@ -56,7 +55,7 @@ export function App() {
                     justifyContent: "center",
                 }}
             >
-                <ToolBar />
+                {toolBar().render()}
             </div>
             <div
                 css={{
@@ -74,7 +73,7 @@ export function App() {
                     },
                 }}
             >
-                <PropertyPanel />
+                {propertySection().render()}
             </div>
         </div>
     );

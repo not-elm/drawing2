@@ -1,9 +1,16 @@
-import { CardSection } from "../Card";
-import { useController } from "../ControllerProvider";
-import { PropertyPanelButton } from "./PropertyPanelButton";
+import type { StateOf } from "../../../../lib/Store";
+import { CardSection } from "../../../../react/Card";
+import { PropertyPanelButton } from "../PropertyPanelButton";
+import type { StrokeStylePropertySection } from "./StrokeStylePropertySection";
 
-export function OrderSection() {
-    const controller = useController();
+export function StrokeStylePropertySectionView({
+    controller,
+    state,
+}: {
+    controller: StrokeStylePropertySection;
+    state: StateOf<StrokeStylePropertySection>;
+}) {
+    if (!state.visible) return null;
 
     return (
         <CardSection
@@ -21,34 +28,29 @@ export function OrderSection() {
             <PropertyPanelButton
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.canvasStateStore.bringToFront();
+                    controller.setStrokeStyle("solid");
                 }}
+                aria-selected={state.selectedStrokeStyle === "solid"}
             >
-                最前面へ
+                実線
             </PropertyPanelButton>
             <PropertyPanelButton
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.canvasStateStore.bringForward();
+                    controller.setStrokeStyle("dashed");
                 }}
+                aria-selected={state.selectedStrokeStyle === "dashed"}
             >
-                ひとつ前へ
+                破線
             </PropertyPanelButton>
             <PropertyPanelButton
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    controller.canvasStateStore.sendBackward();
+                    controller.setStrokeStyle("dotted");
                 }}
+                aria-selected={state.selectedStrokeStyle === "dotted"}
             >
-                ひとつ後ろへ
-            </PropertyPanelButton>
-            <PropertyPanelButton
-                onPointerDown={(ev) => {
-                    ev.stopPropagation();
-                    controller.canvasStateStore.sendToBack();
-                }}
-            >
-                最背面へ
+                点線
             </PropertyPanelButton>
         </CardSection>
     );

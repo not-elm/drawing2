@@ -26,6 +26,27 @@ export abstract class EntityHandle<E extends Entity> {
         return entity;
     }
 
+    isPropertySupported(entity: E, propertyKey: string): boolean {
+        return propertyKey in entity;
+    }
+
+    setProperty(entity: E, propertyKey: string, value: unknown): E {
+        if (!this.isPropertySupported(entity, propertyKey)) return entity;
+
+        const newEntity = { ...entity };
+        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        (newEntity as any)[propertyKey] = value;
+        return newEntity;
+    }
+
+    getProperty<T = unknown>(
+        entity: Entity,
+        propertyKey: string,
+    ): T | undefined {
+        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+        return (entity as any)[propertyKey] as T | undefined;
+    }
+
     getNodes(entity: E): PathNode[] {
         return [];
     }

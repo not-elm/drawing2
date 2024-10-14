@@ -4,17 +4,13 @@ import { assert } from "../../lib/assert";
 import { Point } from "../../lib/geo/Point";
 import { ClipboardService } from "../ClipboardService";
 import { CanvasState } from "../model/CanvasState";
-import type { ColorId } from "../model/Colors";
 import { DependencyCollection } from "../model/DependencyCollection";
-import type { FillMode } from "../model/FillMode";
 import type { Page } from "../model/Page";
 import {
     type SerializedPage,
     deserializePage,
     serializePage,
 } from "../model/SerializedPage";
-import type { StrokeStyle } from "../model/StrokeStyle";
-import type { TextAlignment } from "../model/TextAlignment";
 import type { TextEntitySizingMode } from "../model/TextEntitySizingMode";
 import { Transaction } from "../model/Transaction";
 import type { Viewport } from "../model/Viewport";
@@ -66,212 +62,26 @@ export class CanvasStateStore extends Store<CanvasState> {
         );
     }
 
-    // Command or Pageをスタックで管理
-    undo() {}
-
-    redo() {}
-
-    setLabel(id: string, label: string) {
-        this.setState(
-            this.state.setPage(
-                new Transaction(this.state.page)
-                    .updateProperty([id], (oldEntity) => {
-                        switch (oldEntity.type) {
-                            case "shape": {
-                                return { ...oldEntity, label };
-                            }
-                            case "text": {
-                                return { ...oldEntity, content: label };
-                            }
-                            default: {
-                                assert(
-                                    false,
-                                    `Invalid entity type: ${oldEntity.id} ${oldEntity.type}`,
-                                );
-                            }
-                        }
-                    })
-                    .commit(),
-            ),
-        );
+    edit(updater: (tx: Transaction) => void) {
+        const tx = new Transaction(this.state.page);
+        updater(tx);
+        this.setPage(tx.commit());
     }
 
-    setTextAlign(textAlignX: TextAlignment, textAlignY: TextAlignment) {
-        this.setState(
-            this.state.setPage(
-                new Transaction(this.state.page)
-                    .updateProperty(
-                        this.state.selectedEntityIds,
-                        (oldEntity) => {
-                            switch (oldEntity.type) {
-                                case "shape": {
-                                    return {
-                                        ...oldEntity,
-                                        textAlignX,
-                                        textAlignY,
-                                    };
-                                }
-                                case "text": {
-                                    return {
-                                        ...oldEntity,
-                                        textAlignment: textAlignX,
-                                    };
-                                }
-                                default: {
-                                    return oldEntity;
-                                }
-                            }
-                        },
-                    )
-                    .commit(),
-            ),
-        );
-    }
-
-    setColor(colorId: ColorId) {
-        this.setState(
-            this.state.setPage(
-                new Transaction(this.state.page)
-                    .updateProperty(
-                        this.state.selectedEntityIds,
-                        (oldEntity) => {
-                            switch (oldEntity.type) {
-                                case "shape":
-                                case "path": {
-                                    return { ...oldEntity, colorId };
-                                }
-                                default: {
-                                    return oldEntity;
-                                }
-                            }
-                        },
-                    )
-                    .commit(),
-            ),
-        );
-    }
-
-    setFillMode(fillMode: FillMode) {
-        this.setState(
-            this.state.setPage(
-                new Transaction(this.state.page)
-                    .updateProperty(
-                        this.state.selectedEntityIds,
-                        (oldEntity) => {
-                            switch (oldEntity.type) {
-                                case "shape": {
-                                    return { ...oldEntity, fillMode };
-                                }
-                                default: {
-                                    return oldEntity;
-                                }
-                            }
-                        },
-                    )
-                    .commit(),
-            ),
-        );
-    }
-
-    setLineEndType(lineEnd: 1 | 2, lineEndType: LineEndType) {
-        this.setState(
-            this.state.setPage(
-                new Transaction(this.state.page)
-                    .updateProperty(
-                        this.state.selectedEntityIds,
-                        (oldEntity) => {
-                            switch (oldEntity.type) {
-                                case "path": {
-                                    return {
-                                        ...oldEntity,
-                                        [`endType${lineEnd}`]: lineEndType,
-                                    };
-                                }
-                                default: {
-                                    return oldEntity;
-                                }
-                            }
-                        },
-                    )
-                    .commit(),
-            ),
-        );
-    }
-
-    setTextEntityTextAlignment(alignment: TextAlignment) {
-        this.setState(
-            this.state.setPage(
-                new Transaction(this.state.page)
-                    .updateProperty(
-                        this.state.selectedEntityIds,
-                        (oldEntity) => {
-                            switch (oldEntity.type) {
-                                case "text": {
-                                    return {
-                                        ...oldEntity,
-                                        textAlignment: alignment,
-                                    };
-                                }
-                                default: {
-                                    return oldEntity;
-                                }
-                            }
-                        },
-                    )
-                    .commit(),
-            ),
-        );
+    setContent(content: string) {
+        this.edit((tx) => {
+            tx.updateProperty(this.state.selectedEntityIds, "content", content);
+        });
     }
 
     setTextEntitySizingMode(sizingMode: TextEntitySizingMode) {
-        this.setState(
-            this.state.setPage(
-                new Transaction(this.state.page)
-                    .updateProperty(
-                        this.state.selectedEntityIds,
-                        (oldEntity) => {
-                            switch (oldEntity.type) {
-                                case "text": {
-                                    return {
-                                        ...oldEntity,
-                                        sizingMode,
-                                    };
-                                }
-                                default: {
-                                    return oldEntity;
-                                }
-                            }
-                        },
-                    )
-                    .commit(),
-            ),
-        );
-    }
-
-    setStrokeStyle(strokeStyle: StrokeStyle) {
-        this.setState(
-            this.state.setPage(
-                new Transaction(this.state.page)
-                    .updateProperty(
-                        this.state.selectedEntityIds,
-                        (oldEntity) => {
-                            switch (oldEntity.type) {
-                                case "shape":
-                                case "path": {
-                                    return {
-                                        ...oldEntity,
-                                        strokeStyle,
-                                    };
-                                }
-                                default: {
-                                    return oldEntity;
-                                }
-                            }
-                        },
-                    )
-                    .commit(),
-            ),
-        );
+        this.edit((tx) => {
+            tx.updateProperty(
+                this.state.selectedEntityIds,
+                "sizingMode",
+                sizingMode,
+            );
+        });
     }
 
     bringToFront() {

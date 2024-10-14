@@ -1,6 +1,8 @@
 import type { ColorId } from "../../core/model/Colors";
 import type { Entity, EntityBase } from "../../core/model/Entity";
 import type { StrokeStyle } from "../../core/model/StrokeStyle";
+import { PROPERTY_KEY_COLOR_ID } from "../../core/view/PropertySection/ColorPropertySection/ColorPropertySection";
+import { PROPERTY_KEY_STROKE_STYLE } from "../../core/view/PropertySection/StrokeStylePropertySection/StrokeStylePropertySection";
 import { assert } from "../../lib/assert";
 import { Line } from "../../lib/geo/Line";
 import type { Point } from "../../lib/geo/Point";
@@ -17,8 +19,8 @@ export type PathEdge = [PathNode, PathNode];
 export interface PathEntity extends EntityBase<"path"> {
     nodes: Record<string, PathNode>;
     edges: [string, string][];
-    colorId: ColorId;
-    strokeStyle: StrokeStyle;
+    [PROPERTY_KEY_STROKE_STYLE]: StrokeStyle;
+    [PROPERTY_KEY_COLOR_ID]: ColorId;
 }
 
 export function getEdgesFromPath(path: PathEntity): Line[] {
