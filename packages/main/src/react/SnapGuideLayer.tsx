@@ -1,10 +1,10 @@
-import { useController } from "./ControllerProvider";
 import { useStore } from "./hooks/useStore";
+import { useApp } from "./useApp";
 
 export function SnapGuideLayer() {
-    const controller = useController();
-    const viewport = useStore(controller.viewportStore);
-    const { guide } = useStore(controller.snapGuideStore);
+    const app = useApp();
+    const viewport = useStore(app.viewportStore);
+    const { guide } = useStore(app.snapGuideStore);
     if (guide === null) return null;
 
     return (

@@ -1,19 +1,24 @@
-import type { PathEdge, PathNode } from "../entity/PathEntity/PathEntity";
-import { assert } from "../lib/assert";
-import type { Line } from "../lib/geo/Line";
-import type { Point } from "../lib/geo/Point";
-import type { Rect } from "../lib/geo/Rect";
-import type { Transform } from "../lib/geo/Transform";
-import type { EntityHandle } from "./EntityHandle";
-import type { Entity } from "./model/Entity";
-import type { SerializedEntity } from "./model/SerializedPage";
+import type {PathEdge, PathNode,} from "../default/entity/PathEntity/PathEntity";
+import {assert} from "../lib/assert";
+import type {Line} from "../lib/geo/Line";
+import type {Point} from "../lib/geo/Point";
+import type {Rect} from "../lib/geo/Rect";
+import type {Transform} from "../lib/geo/Transform";
+import type {EntityOperations} from "./EntityOperations";
+import type {Entity} from "./model/Entity";
+import type {SerializedEntity} from "./model/SerializedPage";
+import type {Viewport} from "./model/Viewport";
 
 export class EntityHandleMap {
-    private readonly map = new Map<string, EntityHandle<Entity>>();
+    private readonly map = new Map<string, EntityOperations<Entity>>();
 
-    register(handle: EntityHandle<Entity>): this {
+    register(handle: EntityOperations<Entity>): this {
         this.map.set(handle.getType(), handle);
         return this;
+    }
+
+    onViewSizeChange(entity: Entity, width: number, height: number) {
+        this.get(entity.type).onViewSizeChange(entity, width, height);
     }
 
     transform<E extends Entity>(entity: E, transform: Transform): E {
@@ -103,7 +108,7 @@ export class EntityHandleMap {
         return this.get(entity.type).getDistance(entity, point);
     }
 
-    private get(type: string): EntityHandle<Entity> {
+    private get(type: string): EntityOperations<Entity> {
         const handle = this.map.get(type);
         assert(
             handle !== undefined,
@@ -111,5 +116,9 @@ export class EntityHandleMap {
         );
 
         return handle;
+    }
+
+    getOutlinePath(entity: Entity, viewport: Viewport): string {
+        return this.get(entity.type).getOutlinePath(entity, viewport);
     }
 }

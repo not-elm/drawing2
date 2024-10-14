@@ -1,5 +1,5 @@
+import type { CanvasStateStore } from "./CanvasStateStore";
 import type { CanvasState } from "./model/CanvasState";
-import type { CanvasStateStore } from "./store/CanvasStateStore";
 
 const MAX_HISTORY_LENGTH = 1000;
 

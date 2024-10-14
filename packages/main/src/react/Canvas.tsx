@@ -1,28 +1,27 @@
 import { type WheelEventHandler, useCallback, useEffect } from "react";
 import { getEntitiesInViewport } from "../core/model/Page";
-import { entityViewHandleMap } from "../instance";
 import { BrushRect } from "./BrushRect";
-import { useController } from "./ControllerProvider";
 import { SelectionRect } from "./SelectionRect";
 import { SnapGuideLayer } from "./SnapGuideLayer";
 import { useResizeObserver } from "./hooks/useResizeObserver";
 import { useStore } from "./hooks/useStore";
+import { useApp } from "./useApp";
 
 export function Canvas() {
-    const controller = useController();
-    const { page } = useStore(controller.canvasStateStore);
-    const viewport = useStore(controller.viewportStore);
-    const appState = useStore(controller.appStateStore);
+    const app = useApp();
+    const { page } = useStore(app.canvasStateStore);
+    const viewport = useStore(app.viewportStore);
+    const appState = useStore(app.appStateStore);
 
     useEffect(() => {
         function handlePointerMove(ev: PointerEvent) {
             ev.stopPropagation();
-            controller.handleMouseMove(ev);
+            app.handleMouseMove(ev);
         }
 
         function handlePointerUp(ev: PointerEvent) {
             ev.stopPropagation();
-            controller.handleMouseUp(ev);
+            app.handleMouseUp(ev);
         }
 
         window.addEventListener("pointermove", handlePointerMove);
@@ -32,12 +31,12 @@ export function Canvas() {
             window.removeEventListener("pointermove", handlePointerMove);
             window.removeEventListener("pointerup", handlePointerUp);
         };
-    }, [controller]);
+    }, [app]);
 
     const handleWheel: WheelEventHandler = useCallback(
         (ev) => {
             if (ev.ctrlKey) {
-                controller.handleScale(
+                app.handleScale(
                     Math.min(
                         Math.max(0.1, viewport.scale - ev.deltaY * 0.0005),
                         4,
@@ -46,15 +45,15 @@ export function Canvas() {
                     ev.clientY,
                 );
             } else {
-                controller.handleScroll(ev.deltaX, ev.deltaY);
+                app.handleScroll(ev.deltaX, ev.deltaY);
             }
         },
-        [controller, viewport.scale],
+        [app, viewport.scale],
     );
 
     const scale = viewport.scale;
     const resizeObserverRef = useResizeObserver((entry) => {
-        controller.viewportStore.setViewportSize(
+        app.viewportStore.setViewportSize(
             entry.contentRect.width,
             entry.contentRect.height,
         );
@@ -77,11 +76,11 @@ export function Canvas() {
             onWheel={handleWheel}
             onPointerDown={(ev) => {
                 ev.stopPropagation();
-                controller.handleMouseDown(ev.nativeEvent);
+                app.handleMouseDown(ev.nativeEvent);
             }}
             onDoubleClick={(ev) => {
                 ev.stopPropagation();
-                controller.handleDoubleClick(ev.nativeEvent);
+                app.handleDoubleClick(ev.nativeEvent);
             }}
         >
             <div
@@ -92,10 +91,12 @@ export function Canvas() {
                     transformOrigin: `${viewport.rect.left}px ${viewport.rect.top}px`,
                 }}
             >
-                {getEntitiesInViewport(page, viewport).map((entity) => {
-                    const View = entityViewHandleMap().getViewComponent(entity);
-                    return <View entity={entity} key={entity.id} />;
-                })}
+                {getEntitiesInViewport(page, viewport, app.handle).map(
+                    (entity) => {
+                        const View = app.viewHandle.getViewComponent(entity);
+                        return <View entity={entity} key={entity.id} />;
+                    },
+                )}
                 <BrushRect />
             </div>
 

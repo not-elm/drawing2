@@ -1,7 +1,7 @@
-import { entityHandleMap } from "../instance";
 import { assert } from "../lib/assert";
 import { Transform } from "../lib/geo/Transform";
 import { randomId } from "../lib/randomId";
+import type { EntityHandleMap } from "./EntityHandleMap";
 import {
     type Dependency,
     type SerializedDependency,
@@ -17,7 +17,9 @@ interface ClipboardData {
     dependencies: SerializedDependency[];
 }
 
-export const ClipboardService = new (class {
+export class ClipboardService {
+    constructor(private readonly handle: EntityHandleMap) {}
+
     copy(page: Page, entityIds: string[]): Promise<void> {
         const entityIdSet = new Set(entityIds);
         const entitiesInOrder: Entity[] = [];
@@ -38,7 +40,7 @@ export const ClipboardService = new (class {
 
         const data: ClipboardData = {
             entities: entitiesInOrder.map((entity) =>
-                entityHandleMap().serialize(entity),
+                this.handle.serialize(entity),
             ),
             dependencies: dependencies.map(serializeDependency),
         };
@@ -57,7 +59,7 @@ export const ClipboardService = new (class {
             const idMap = new Map<string, string>();
 
             const entities = data.entities
-                .map((entity) => entityHandleMap().deserialize(entity))
+                .map((entity) => this.handle.deserialize(entity))
                 .map((entity) => {
                     // Renew IDs
                     const newId = randomId();
@@ -65,7 +67,7 @@ export const ClipboardService = new (class {
                     entity.id = newId;
 
                     // Move entities a little bit to avoid overlapping with copy sources
-                    return entityHandleMap().transform(
+                    return this.handle.transform(
                         entity,
                         Transform.translate(10, 10),
                     );
@@ -96,4 +98,4 @@ export const ClipboardService = new (class {
             };
         }
     }
-})();
+}

@@ -3,19 +3,19 @@ import { assert } from "../../lib/assert";
 import { Line } from "../../lib/geo/Line";
 import { Point } from "../../lib/geo/Point";
 import { Rect } from "../../lib/geo/Rect";
-import type { CanvasStateStore } from "../store/CanvasStateStore";
-import type { SnapGuideStore } from "../store/SnapGuideStore";
-import type { ViewportStore } from "../store/ViewportStore";
+import type { CanvasStateStore } from "../CanvasStateStore";
+import type { EntityHandleMap } from "../EntityHandleMap";
+import type { SnapGuideStore } from "../SnapGuideStore";
+import type { ViewportStore } from "../ViewportStore";
 import type { Direction } from "./Direction";
-import { type Entity, getBoundingRect } from "./Entity";
-import type { Page } from "./Page";
+import type { Entity } from "./Entity";
 import {
     type SnapEntry,
     type SnapEntry2D,
     type SnapGuide,
     computeSnapEntry2D,
 } from "./SnapEntry";
-import { Transaction } from "./Transaction";
+import type { Transaction } from "./Transaction";
 
 export abstract class TransformHandle {
     constructor(
@@ -24,6 +24,7 @@ export abstract class TransformHandle {
         readonly canvasStateStore: CanvasStateStore,
         readonly viewportProvider: StateProvider<ViewportStore>,
         readonly snapGuideStore: SnapGuideStore,
+        readonly handle: EntityHandleMap,
     ) {
         this.targetEntityIds = originalEntities.map((entity) => entity.id);
     }
@@ -75,8 +76,9 @@ export abstract class TransformHandle {
         }
 
         const oldPage = this.canvasStateStore.getState().page;
-        const newPage = this.applyTransform(oldPage, newHandlePoint);
-        this.canvasStateStore.setPage(newPage);
+        this.canvasStateStore.edit((tx) => {
+            this.applyTransform(tx, newHandlePoint);
+        });
 
         if (snap) {
             this.snapGuideStore.setSnapGuide(
@@ -106,6 +108,7 @@ export abstract class TransformHandle {
                 viewport,
                 snapPoint,
                 this.targetEntityIds,
+                this.handle,
                 0,
             );
             if (!snapEntry2D.x.snapped && !snapEntry2D.y.snapped) {
@@ -177,6 +180,7 @@ export abstract class TransformHandle {
                 viewport,
                 snapPoint,
                 this.targetEntityIds,
+                this.handle,
             );
             if (snapEntry2D.x.distance < bestSnapEntryX.distance) {
                 bestSnapEntryX = snapEntry2D.x;
@@ -208,7 +212,10 @@ export abstract class TransformHandle {
         primaryAxis: "x" | "y" | null,
     ): Point;
 
-    protected abstract applyTransform(page: Page, newHandlePoint: Point): Page;
+    protected abstract applyTransform(
+        tx: Transaction,
+        newHandlePoint: Point,
+    ): void;
 }
 
 class ScaleTransformHandle extends TransformHandle {
@@ -223,6 +230,7 @@ class ScaleTransformHandle extends TransformHandle {
         viewportProvider: StateProvider<ViewportStore>,
         snapGuideStore: SnapGuideStore,
         private readonly transformOrigin: Point,
+        handle: EntityHandleMap,
     ) {
         super(
             originalHandlePoint,
@@ -230,6 +238,7 @@ class ScaleTransformHandle extends TransformHandle {
             canvasStateStore,
             viewportProvider,
             snapGuideStore,
+            handle,
         );
 
         const norm = Math.hypot(
@@ -294,7 +303,7 @@ class ScaleTransformHandle extends TransformHandle {
         }
     }
 
-    protected applyTransform(page: Page, newHandlePoint: Point): Page {
+    protected applyTransform(tx: Transaction, newHandlePoint: Point) {
         const scaleX = this.isScalableInXAxis
             ? (newHandlePoint.x - this.transformOrigin.x) /
               (this.originalHandlePoint.x - this.transformOrigin.x)
@@ -304,15 +313,12 @@ class ScaleTransformHandle extends TransformHandle {
               (this.originalHandlePoint.y - this.transformOrigin.y)
             : 1;
 
-        return new Transaction(page)
-            .replaceEntities(this.originalEntities)
-            .scaleEntities(
-                this.targetEntityIds,
-                this.transformOrigin,
-                scaleX,
-                scaleY,
-            )
-            .commit();
+        tx.replaceEntities(this.originalEntities).scaleEntities(
+            this.targetEntityIds,
+            this.transformOrigin,
+            scaleX,
+            scaleY,
+        );
     }
 
     private get isScalableInXAxis() {
@@ -331,6 +337,7 @@ class MoveTransformHandle extends TransformHandle {
         canvasStateStore: CanvasStateStore,
         viewportProvider: StateProvider<ViewportStore>,
         snapGuideStore: SnapGuideStore,
+        handle: EntityHandleMap,
     ) {
         super(
             originalHandlePoint,
@@ -338,9 +345,14 @@ class MoveTransformHandle extends TransformHandle {
             canvasStateStore,
             viewportProvider,
             snapGuideStore,
+            handle,
         );
 
-        const rect = Rect.union(this.originalEntities.map(getBoundingRect));
+        const rect = Rect.union(
+            this.originalEntities.map((entity) =>
+                handle.getBoundingRect(entity),
+            ),
+        );
         this.originalSnapPoints = [
             rect.topLeft,
             rect.topRight,
@@ -383,14 +395,15 @@ class MoveTransformHandle extends TransformHandle {
         }
     }
 
-    protected applyTransform(page: Page, newHandlePoint: Point): Page {
+    protected applyTransform(tx: Transaction, newHandlePoint: Point): void {
         const dx = newHandlePoint.x - this.originalHandlePoint.x;
         const dy = newHandlePoint.y - this.originalHandlePoint.y;
 
-        return new Transaction(page)
-            .replaceEntities(this.originalEntities)
-            .moveEntities(this.targetEntityIds, dx, dy)
-            .commit();
+        tx.replaceEntities(this.originalEntities).moveEntities(
+            this.targetEntityIds,
+            dx,
+            dy,
+        );
     }
 }
 
@@ -399,9 +412,12 @@ export function createScaleTransformHandle(
     viewportProvider: StateProvider<ViewportStore>,
     snapGuideStore: SnapGuideStore,
     direction: Direction,
+    handle: EntityHandleMap,
 ): TransformHandle {
     const targetEntities = canvasStateStore.getState().getSelectedEntities();
-    const boundingRect = Rect.union(targetEntities.map(getBoundingRect));
+    const boundingRect = Rect.union(
+        targetEntities.map((entity) => handle.getBoundingRect(entity)),
+    );
     const handlePoint = direction.getPoint(boundingRect);
     const transformOrigin = direction.opposite.getPoint(boundingRect);
 
@@ -412,6 +428,7 @@ export function createScaleTransformHandle(
         viewportProvider,
         snapGuideStore,
         transformOrigin,
+        handle,
     );
 }
 
@@ -420,6 +437,7 @@ export function createMoveTransformHandle(
     viewportProvider: StateProvider<ViewportStore>,
     snapGuideStore: SnapGuideStore,
     handlePoint: Point,
+    handle: EntityHandleMap,
 ): TransformHandle {
     const targetEntities = canvasStateStore.getState().getSelectedEntities();
 
@@ -429,5 +447,6 @@ export function createMoveTransformHandle(
         canvasStateStore,
         viewportProvider,
         snapGuideStore,
+        handle,
     );
 }

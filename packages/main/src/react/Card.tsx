@@ -1,10 +1,21 @@
 import styled from "@emotion/styled";
 
-export const Card = styled.div({
+const Card = styled.div({
     background: "#fff",
     border: "1px solid #c0c0c0",
     boxShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
     padding: "4px 4px",
     borderRadius: "12px",
 });
-export const CardSection = styled.div({});
+
+const CardSection = styled.div({
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+});
+
+const defaults = Object.assign(Card, {
+    Section: CardSection,
+});
+
+export { defaults as Card };

@@ -1,4 +1,4 @@
-import { entityHandleMap } from "../../instance";
+import type { EntityHandleMap } from "../EntityHandleMap";
 import type { SerializedDependency } from "./Dependency";
 import { DependencyCollection } from "./DependencyCollection";
 import type { Page } from "./Page";
@@ -7,18 +7,22 @@ export interface SerializedPage {
     entities: SerializedEntity[];
     dependencies: SerializedDependency[];
 }
-export function serializePage(page: Page): SerializedPage {
+export function serializePage(
+    page: Page,
+    handle: EntityHandleMap,
+): SerializedPage {
     return {
         entities: page.entityIds.map((entityId) =>
-            entityHandleMap().serialize(page.entities[entityId]),
+            handle.serialize(page.entities[entityId]),
         ),
         dependencies: page.dependencies.serialize(),
     };
 }
-export function deserializePage(page: SerializedPage): Page {
-    const entities = page.entities.map((entity) =>
-        entityHandleMap().deserialize(entity),
-    );
+export function deserializePage(
+    page: SerializedPage,
+    handle: EntityHandleMap,
+): Page {
+    const entities = page.entities.map((entity) => handle.deserialize(entity));
 
     const dependencies = DependencyCollection.deserialize(page.dependencies);
     return {

@@ -1,9 +1,9 @@
-import { useController } from "./ControllerProvider";
 import { useStore } from "./hooks/useStore";
+import { useApp } from "./useApp";
 
 export function BrushRect() {
-    const controller = useController();
-    const { active, rect } = useStore(controller.brushStore);
+    const app = useApp();
+    const { active, rect } = useStore(app.brushStore);
     if (!active) {
         return null;
     }

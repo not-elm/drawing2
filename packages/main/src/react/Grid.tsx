@@ -1,10 +1,10 @@
 import { useMemo } from "react";
-import { useController } from "./ControllerProvider";
 import { useStore } from "./hooks/useStore";
+import { useApp } from "./useApp";
 
 export function Grid() {
-    const controller = useController();
-    const viewport = useStore(controller.viewportStore);
+    const app = useApp();
+    const viewport = useStore(app.viewportStore);
 
     const canvas = useMemo(() => document.createElement("canvas"), []);
 

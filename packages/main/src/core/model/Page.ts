@@ -1,4 +1,4 @@
-import { entityHandleMap } from "../../instance";
+import type { EntityHandleMap } from "../EntityHandleMap";
 import type { DependencyCollection } from "./DependencyCollection";
 import type { Entity } from "./Entity";
 import type { Viewport } from "./Viewport";
@@ -12,10 +12,9 @@ export interface Page {
 export function getEntitiesInViewport(
     page: Page,
     viewport: Viewport,
+    handle: EntityHandleMap,
 ): Entity[] {
     return page.entityIds
         .map((entityId) => page.entities[entityId])
-        .filter((entity) =>
-            entityHandleMap().isOverlapWith(entity, viewport.rect),
-        );
+        .filter((entity) => handle.isOverlapWith(entity, viewport.rect));
 }

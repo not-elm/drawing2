@@ -1,12 +1,12 @@
 import type { StateProvider } from "../lib/Store";
 import { assert } from "../lib/assert";
+import { fromCanvasCoordinate } from "./CanvasStateStore";
 import type {
     PointerEventHandlers,
     PointerEventSession,
     PointerEventSessionData,
-} from "./PointerEventSession/PointerEventSession";
-import { fromCanvasCoordinate } from "./store/CanvasStateStore";
-import type { ViewportStore } from "./store/ViewportStore";
+} from "./PointerEventSession";
+import type { ViewportStore } from "./ViewportStore";
 
 const THRESHOLD_CLICK_DURATION_IN_MILLI = 200;
 

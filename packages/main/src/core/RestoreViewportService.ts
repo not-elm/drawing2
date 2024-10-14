@@ -1,5 +1,3 @@
-import { singleton } from "../lib/singleton";
-import { URLQueryRestoreViewportService } from "./URLQueryRestoreViewportService";
 import type { Viewport } from "./model/Viewport";
 
 export interface RestoreViewportService {
@@ -10,9 +8,3 @@ export interface RestoreViewportService {
         scale: number;
     } | null>;
 }
-
-export const getRestoreViewportService = singleton<RestoreViewportService>(
-    () => {
-        return new URLQueryRestoreViewportService();
-    },
-);
