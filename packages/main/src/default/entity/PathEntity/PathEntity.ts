@@ -13,6 +13,7 @@ import {
     PROPERTY_KEY_STROKE_STYLE,
     type StrokeStyle,
 } from "../../property/StrokeStyle";
+import { PROPERTY_KEY_STROKE_WIDTH } from "../../property/StrokeWidth";
 
 export class PathEntity extends Entity<{
     id: string;
@@ -20,6 +21,7 @@ export class PathEntity extends Entity<{
     edges: [string, string][];
     [PROPERTY_KEY_STROKE_STYLE]: StrokeStyle;
     [PROPERTY_KEY_COLOR_ID]: ColorId;
+    [PROPERTY_KEY_STROKE_WIDTH]: number;
 }> {
     readonly type = "path";
 
@@ -90,6 +92,7 @@ export class PathEntity extends Entity<{
             edges: this.props.edges,
             colorId: this.props.colorId,
             strokeStyle: this.props.strokeStyle,
+            strokeWidth: this.props.strokeWidth,
         } satisfies SerializedPathEntity;
     }
 
@@ -167,6 +170,7 @@ export class PathEntity extends Entity<{
             edges: serialized.edges,
             [PROPERTY_KEY_COLOR_ID]: serialized.colorId,
             [PROPERTY_KEY_STROKE_STYLE]: serialized.strokeStyle,
+            [PROPERTY_KEY_STROKE_WIDTH]: serialized.strokeWidth,
         });
     }
 }
@@ -182,4 +186,5 @@ interface SerializedPathEntity extends JSONObject {
     edges: [string, string][];
     colorId: ColorId;
     strokeStyle: StrokeStyle;
+    strokeWidth: number;
 }

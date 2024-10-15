@@ -15,6 +15,7 @@ import { randomId } from "../../lib/randomId";
 import { PathEntity } from "../entity/PathEntity/PathEntity";
 import { PROPERTY_KEY_COLOR_ID } from "../property/Colors";
 import { PROPERTY_KEY_STROKE_STYLE } from "../property/StrokeStyle";
+import { PROPERTY_KEY_STROKE_WIDTH } from "../property/StrokeWidth";
 
 export class NewPathModeController extends ModeController {
     constructor(
@@ -80,6 +81,9 @@ export class NewPathModeController extends ModeController {
             [PROPERTY_KEY_STROKE_STYLE]: this.app.defaultPropertyStore
                 .getState()
                 .getOrDefault(PROPERTY_KEY_STROKE_STYLE, "solid"),
+            [PROPERTY_KEY_STROKE_WIDTH]: this.app.defaultPropertyStore
+                .getState()
+                .getOrDefault(PROPERTY_KEY_STROKE_WIDTH, 2),
         });
 
         this.app.edit((tx) => {

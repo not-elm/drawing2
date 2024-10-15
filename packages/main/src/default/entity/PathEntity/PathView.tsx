@@ -24,11 +24,14 @@ export const PathView = memo(function PathView({
     //     y1 - top,
     // );
 
-    const strokeWidth = {
-        solid: STROKE_WIDTH_BASE,
-        dashed: STROKE_WIDTH_BASE,
-        dotted: STROKE_WIDTH_BASE * 1.4,
-    }[entity.props.strokeStyle];
+    const strokeWidth =
+        ({
+            solid: STROKE_WIDTH_BASE,
+            dashed: STROKE_WIDTH_BASE,
+            dotted: STROKE_WIDTH_BASE * 1.4,
+        }[entity.props.strokeStyle] *
+            entity.props.strokeWidth) /
+        2;
     return (
         <svg
             viewBox="0 0 1 1"

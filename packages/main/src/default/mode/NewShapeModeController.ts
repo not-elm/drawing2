@@ -18,6 +18,7 @@ import { ShapeEntity } from "../entity/ShapeEntity/ShapeEntity";
 import { PROPERTY_KEY_COLOR_ID } from "../property/Colors";
 import { PROPERTY_KEY_FILL_STYLE } from "../property/FillStyle";
 import { PROPERTY_KEY_STROKE_STYLE } from "../property/StrokeStyle";
+import { PROPERTY_KEY_STROKE_WIDTH } from "../property/StrokeWidth";
 import {
     PROPERTY_KEY_TEXT_ALIGNMENT_X,
     PROPERTY_KEY_TEXT_ALIGNMENT_Y,
@@ -90,6 +91,9 @@ export class NewShapeModeController extends ModeController {
             [PROPERTY_KEY_STROKE_STYLE]: this.app.defaultPropertyStore
                 .getState()
                 .getOrDefault(PROPERTY_KEY_STROKE_STYLE, "solid"),
+            [PROPERTY_KEY_STROKE_WIDTH]: this.app.defaultPropertyStore
+                .getState()
+                .getOrDefault(PROPERTY_KEY_STROKE_WIDTH, 2),
             path: getRectanglePath(),
         });
 

@@ -11,6 +11,7 @@ import {
     PROPERTY_KEY_STROKE_STYLE,
     type StrokeStyle,
 } from "../../property/StrokeStyle";
+import { PROPERTY_KEY_STROKE_WIDTH } from "../../property/StrokeWidth";
 import {
     PROPERTY_KEY_TEXT_ALIGNMENT_X,
     PROPERTY_KEY_TEXT_ALIGNMENT_Y,
@@ -26,6 +27,7 @@ export class ShapeEntity extends Entity<{
     [PROPERTY_KEY_COLOR_ID]: ColorId;
     [PROPERTY_KEY_FILL_STYLE]: FillStyle;
     [PROPERTY_KEY_STROKE_STYLE]: StrokeStyle;
+    [PROPERTY_KEY_STROKE_WIDTH]: number;
     path: number[][];
 }> {
     readonly type = "shape";
@@ -52,6 +54,7 @@ export class ShapeEntity extends Entity<{
             colorId: this.props[PROPERTY_KEY_COLOR_ID],
             fillStyle: this.props[PROPERTY_KEY_FILL_STYLE],
             strokeStyle: this.props[PROPERTY_KEY_STROKE_STYLE],
+            strokeWidth: this.props[PROPERTY_KEY_STROKE_WIDTH],
             path: this.props.path,
         };
     }
@@ -73,6 +76,7 @@ export class ShapeEntity extends Entity<{
             [PROPERTY_KEY_COLOR_ID]: serialized.colorId,
             [PROPERTY_KEY_FILL_STYLE]: serialized.fillStyle,
             [PROPERTY_KEY_STROKE_STYLE]: serialized.strokeStyle,
+            [PROPERTY_KEY_STROKE_WIDTH]: serialized.strokeWidth,
             path: serialized.path,
         });
     }
@@ -91,5 +95,6 @@ interface SerializedShapeEntity extends JSONObject {
     colorId: ColorId;
     fillStyle: FillStyle;
     strokeStyle: StrokeStyle;
+    strokeWidth: number;
     path: number[][];
 }

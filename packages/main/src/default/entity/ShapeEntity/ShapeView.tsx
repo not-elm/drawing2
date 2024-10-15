@@ -18,6 +18,7 @@ import {
     PROPERTY_KEY_STROKE_STYLE,
     type StrokeStyle,
 } from "../../property/StrokeStyle";
+import { PROPERTY_KEY_STROKE_WIDTH } from "../../property/StrokeWidth";
 import {
     PROPERTY_KEY_TEXT_ALIGNMENT_X,
     PROPERTY_KEY_TEXT_ALIGNMENT_Y,
@@ -54,6 +55,7 @@ export const ShapeView = memo(function ShapeView({
                 fillStyle={entity.props[PROPERTY_KEY_FILL_STYLE]}
                 strokeStyle={entity.props[PROPERTY_KEY_STROKE_STYLE]}
                 shapeLabel={entity.props.content}
+                strokeWidthValue={entity.props[PROPERTY_KEY_STROKE_WIDTH]}
             />
         </div>
     );
@@ -71,6 +73,7 @@ const ShapeViewInner = memo(function ShapeViewInner({
     shapeLabel,
     isLabelEditing,
     strokeStyle,
+    strokeWidthValue,
 }: {
     shapeId: string;
     width: number;
@@ -83,14 +86,18 @@ const ShapeViewInner = memo(function ShapeViewInner({
     shapeLabel: string;
     isLabelEditing: boolean;
     strokeStyle: StrokeStyle;
+    strokeWidthValue: number;
 }) {
     const app = useApp();
 
-    const strokeWidth = {
-        solid: STROKE_WIDTH_BASE,
-        dashed: STROKE_WIDTH_BASE,
-        dotted: STROKE_WIDTH_BASE * 1.4,
-    }[strokeStyle];
+    const strokeWidth =
+        ({
+            solid: STROKE_WIDTH_BASE,
+            dashed: STROKE_WIDTH_BASE,
+            dotted: STROKE_WIDTH_BASE * 1.4,
+        }[strokeStyle] *
+            strokeWidthValue) /
+        2;
 
     return (
         <>
@@ -117,7 +124,7 @@ const ShapeViewInner = memo(function ShapeViewInner({
                             },
                         }[fillStyle],
                     }}
-                    strokeWidth={5}
+                    strokeWidth={strokeWidth}
                     strokeDasharray={
                         {
                             solid: undefined,
