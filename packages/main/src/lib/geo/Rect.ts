@@ -188,8 +188,12 @@ export class Rect extends dataclass<{
     }
 
     transform(transform: Transform): Rect {
-        const p0 = transform.apply(this.p0);
-        const p1 = transform.apply(this.p1);
+        const q0 = transform.apply(this.p0);
+        const q1 = transform.apply(this.p1);
+
+        const p0 = new Point(Math.min(q0.x, q1.x), Math.min(q0.y, q1.y));
+        const p1 = new Point(Math.max(q0.x, q1.x), Math.max(q0.y, q1.y));
+
         return new Rect({ p0, p1 });
     }
 }

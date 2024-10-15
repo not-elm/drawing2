@@ -1,43 +1,44 @@
-import type { App } from "../../core/App";
-import type { AppStateStore } from "../../core/AppStateStore";
-import type { BrushStore } from "../../core/BrushStore";
-import type { CanvasStateStore } from "../../core/CanvasStateStore";
-import { Direction } from "../../core/Direction";
-import type { Entity } from "../../core/Entity";
-import type { GestureRecognizer } from "../../core/GestureRecognizer";
-import type { HistoryManager } from "../../core/HistoryManager";
+import type { App } from "../../../core/App";
+import type { AppStateStore } from "../../../core/AppStateStore";
+import type { CanvasStateStore } from "../../../core/CanvasStateStore";
+import { Direction } from "../../../core/Direction";
+import type { Entity } from "../../../core/Entity";
+import type { GestureRecognizer } from "../../../core/GestureRecognizer";
+import type { HistoryManager } from "../../../core/HistoryManager";
 import {
     ModeController,
     type PointerDownEvent,
-} from "../../core/ModeController";
-import type { PathNode } from "../../core/Path";
+} from "../../../core/ModeController";
+import type { PathNode } from "../../../core/Path";
 import {
     type PointerEventHandlers,
     mergeHandlers,
-} from "../../core/PointerEventSession";
-import type { SnapGuideStore } from "../../core/SnapGuideStore";
+} from "../../../core/PointerEventSession";
 import {
     createMoveTransformHandle,
     createScaleTransformHandle,
-} from "../../core/TransformHandle";
-import type { ViewportStore } from "../../core/ViewportStore";
-import { createBrushSelectSession } from "../../core/createBrushSelectSession";
-import { createMovePointSession } from "../../core/createMovePointSession";
-import { createTransformSession } from "../../core/createTransformSession";
-import { assert } from "../../lib/assert";
-import type { Point } from "../../lib/geo/Point";
-import type { Rect } from "../../lib/geo/Rect";
-import { testHitEntities } from "../../lib/testHitEntities";
-import { PathEntity } from "../entity/PathEntity/PathEntity";
-import { TextEntity } from "../entity/TextEntity/TextEntity";
-import { PROPERTY_KEY_SIZING_MODE } from "../property/SizingMode";
-import { EditTextModeController } from "./EditTextModeController";
-import type { NewTextModeController } from "./NewTextModeController";
+} from "../../../core/TransformHandle";
+import type { ViewportStore } from "../../../core/ViewportStore";
+import { createBrushSelectSession } from "../../../core/createBrushSelectSession";
+import { createMovePointSession } from "../../../core/createMovePointSession";
+import { createTransformSession } from "../../../core/createTransformSession";
+import { assert } from "../../../lib/assert";
+import type { Point } from "../../../lib/geo/Point";
+import type { Rect } from "../../../lib/geo/Rect";
+import { testHitEntities } from "../../../lib/testHitEntities";
+import { PathEntity } from "../../entity/PathEntity/PathEntity";
+import { TextEntity } from "../../entity/TextEntity/TextEntity";
+import { PROPERTY_KEY_SIZING_MODE } from "../../property/SizingMode";
+import { EditTextModeController } from "../EditTextModeController";
+import type { NewTextModeController } from "../NewTextModeController";
+import { BrushStore } from "./BrushStore";
+import type { SnapGuideStore } from "./SnapGuideStore";
 
 export class SelectModeController extends ModeController {
+    readonly brushStore = new BrushStore();
+
     constructor(
         private readonly canvasStateStore: CanvasStateStore,
-        private readonly brushStore: BrushStore,
         private readonly gestureRecognizer: GestureRecognizer,
         private readonly historyManager: HistoryManager,
         private readonly viewportStore: ViewportStore,

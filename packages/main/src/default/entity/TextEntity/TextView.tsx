@@ -5,6 +5,7 @@ import { assert } from "../../../lib/assert";
 import { useResizeObserver } from "../../../react/hooks/useResizeObserver";
 import { useStore } from "../../../react/hooks/useStore";
 import { useApp } from "../../../react/useApp";
+import { isEditTextMode } from "../../mode/EditTextModeController";
 import {
     PROPERTY_KEY_TEXT_ALIGNMENT_X,
     type TextAlignment,
@@ -16,7 +17,7 @@ export const TextView = memo(function ShapeView({
 }: { entity: TextEntity }) {
     const appState = useStore(useApp().appStateStore);
     const editing =
-        appState.mode.type === "edit-text" &&
+        isEditTextMode(appState.mode) &&
         appState.mode.entityId === entity.props.id;
 
     const textAlignment = entity.props[PROPERTY_KEY_TEXT_ALIGNMENT_X];

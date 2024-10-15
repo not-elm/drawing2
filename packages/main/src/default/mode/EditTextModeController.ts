@@ -1,12 +1,12 @@
 import type { App } from "../../core/App";
 import type { Entity } from "../../core/Entity";
-import type { Mode } from "../../core/Mode";
 import {
+    type Mode,
     type ModeChangeEvent,
     ModeController,
     type PointerDownEvent,
 } from "../../core/ModeController";
-import type { SelectModeController } from "./SelectModeController";
+import type { SelectModeController } from "./select/SelectModeController";
 
 export class EditTextModeController extends ModeController {
     constructor(
@@ -43,4 +43,13 @@ export class EditTextModeController extends ModeController {
         this.app.setMode({ type: "select" });
         this.selectModeController.onCanvasPointerDown(data);
     }
+}
+
+export interface EditTextMode extends Mode {
+    type: "edit-text";
+    entityId: string;
+}
+
+export function isEditTextMode(mode: Mode): mode is EditTextMode {
+    return mode.type === "edit-text";
 }

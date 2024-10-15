@@ -1,3 +1,10 @@
+import {
+    type SnapEntry,
+    type SnapEntry2D,
+    type SnapGuide,
+    computeSnapEntry2D,
+} from "../default/mode/select/SnapEntry";
+import type { SnapGuideStore } from "../default/mode/select/SnapGuideStore";
 import type { StateProvider } from "../lib/Store";
 import { assert } from "../lib/assert";
 import { Line } from "../lib/geo/Line";
@@ -6,13 +13,6 @@ import { Rect } from "../lib/geo/Rect";
 import type { CanvasStateStore } from "./CanvasStateStore";
 import type { Direction } from "./Direction";
 import type { Entity } from "./Entity";
-import {
-    type SnapEntry,
-    type SnapEntry2D,
-    type SnapGuide,
-    computeSnapEntry2D,
-} from "./SnapEntry";
-import type { SnapGuideStore } from "./SnapGuideStore";
 import type { Transaction } from "./Transaction";
 import type { ViewportStore } from "./ViewportStore";
 

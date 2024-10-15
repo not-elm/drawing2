@@ -2,6 +2,7 @@ import { MathJax } from "better-react-mathjax";
 import { memo } from "react";
 import { useStore } from "../../../react/hooks/useStore";
 import { useApp } from "../../../react/useApp";
+import { isEditTextMode } from "../../mode/EditTextModeController";
 import {
     type ColorId,
     ColorPaletteBackground,
@@ -31,7 +32,7 @@ export const ShapeView = memo(function ShapeView({
     const app = useApp();
     const appState = useStore(app.appStateStore);
     const isLabelEditing =
-        appState.mode.type === "edit-text" &&
+        isEditTextMode(appState.mode) &&
         appState.mode.entityId === entity.props.id;
 
     return (

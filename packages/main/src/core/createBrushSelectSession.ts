@@ -1,5 +1,5 @@
+import type { BrushStore } from "../default/mode/select/BrushStore";
 import { Rect } from "../lib/geo/Rect";
-import type { BrushStore } from "./BrushStore";
 import type { CanvasStateStore } from "./CanvasStateStore";
 import type { PointerEventHandlers } from "./PointerEventSession";
 

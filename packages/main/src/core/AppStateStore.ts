@@ -1,6 +1,7 @@
 import type * as csstype from "csstype";
 import { Store } from "../lib/Store";
-import type { Mode } from "./Mode";
+
+import type { Mode } from "./ModeController";
 
 interface AppState {
     readonly mode: Mode;

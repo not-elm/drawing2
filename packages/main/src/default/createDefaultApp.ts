@@ -9,7 +9,7 @@ import { EditTextModeController } from "./mode/EditTextModeController";
 import { NewPathModeController } from "./mode/NewPathModeController";
 import { NewShapeModeController } from "./mode/NewShapeModeController";
 import { NewTextModeController } from "./mode/NewTextModeController";
-import { SelectModeController } from "./mode/SelectModeController";
+import { SelectModeController } from "./mode/select/SelectModeController";
 
 export function createDefaultApp(): App {
     const app = new App();
@@ -25,7 +25,6 @@ export function createDefaultApp(): App {
 
     const selectModeController = new SelectModeController(
         app.canvasStateStore,
-        app.brushStore,
         app.gestureRecognizer,
         app.historyManager,
         app.viewportStore,

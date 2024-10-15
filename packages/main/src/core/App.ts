@@ -1,9 +1,9 @@
 import type { ComponentType } from "react";
+import { SnapGuideStore } from "../default/mode/select/SnapGuideStore";
 import { EventEmitter } from "../lib/EventEmitter";
 import { assert } from "../lib/assert";
 import { testHitEntities } from "../lib/testHitEntities";
 import { AppStateStore } from "./AppStateStore";
-import { BrushStore } from "./BrushStore";
 import { CanvasStateStore, fromCanvasCoordinate } from "./CanvasStateStore";
 import { ClipboardService } from "./ClipboardService";
 import { DefaultPropertyStore } from "./DefaultPropertyStore";
@@ -11,13 +11,12 @@ import type { Entity, EntityConstructor } from "./Entity";
 import { type EntityConverter, EntityConverterMap } from "./EntityDeserializer";
 import { GestureRecognizer } from "./GestureRecognizer";
 import { HistoryManager } from "./HistoryManager";
-import type { Mode } from "./Mode";
 import type {
+    Mode,
     ModeChangeEvent,
     ModeController,
     PointerDownEvent,
 } from "./ModeController";
-import { SnapGuideStore } from "./SnapGuideStore";
 import { Transaction } from "./Transaction";
 import { ViewportStore } from "./ViewportStore";
 
@@ -35,14 +34,15 @@ export class App extends EventEmitter<{
     readonly gestureRecognizer = new GestureRecognizer(this.viewportStore);
     readonly appStateStore = new AppStateStore();
     readonly historyManager = new HistoryManager(this.canvasStateStore);
-    readonly snapGuideStore = new SnapGuideStore();
-    readonly brushStore = new BrushStore();
     readonly defaultPropertyStore = new DefaultPropertyStore();
     private readonly modeControllers = new Map<string, ModeController>();
     private readonly entityViewMap = new Map<
         EntityConstructor<Entity>,
         ComponentType<{ entity: Entity }>
     >();
+
+    // TODO: Move to SelectMode package
+    readonly snapGuideStore = new SnapGuideStore();
 
     addModeController(controller: ModeController): this {
         assert(

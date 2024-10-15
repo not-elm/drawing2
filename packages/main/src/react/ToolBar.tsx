@@ -1,5 +1,5 @@
 import type { LiHTMLAttributes, ReactNode } from "react";
-import type { Mode } from "../core/Mode";
+import type { Mode } from "../core/ModeController";
 import { Button } from "./Button";
 import { Card } from "./Card";
 import { useStore } from "./hooks/useStore";

@@ -8,7 +8,6 @@ import {
     ModeController,
     type PointerDownEvent,
 } from "../../core/ModeController";
-import type { SnapGuideStore } from "../../core/SnapGuideStore";
 import { createScaleTransformHandle } from "../../core/TransformHandle";
 import type { ViewportStore } from "../../core/ViewportStore";
 import { createTransformSession } from "../../core/createTransformSession";
@@ -23,6 +22,7 @@ import {
     PROPERTY_KEY_TEXT_ALIGNMENT_X,
     PROPERTY_KEY_TEXT_ALIGNMENT_Y,
 } from "../property/TextAlignment";
+import type { SnapGuideStore } from "./select/SnapGuideStore";
 
 export class NewShapeModeController extends ModeController {
     constructor(
@@ -77,10 +77,10 @@ export class NewShapeModeController extends ModeController {
             content: "",
             [PROPERTY_KEY_TEXT_ALIGNMENT_X]: this.app.defaultPropertyStore
                 .getState()
-                .getOrDefault(PROPERTY_KEY_TEXT_ALIGNMENT_X, "start"),
+                .getOrDefault(PROPERTY_KEY_TEXT_ALIGNMENT_X, "center"),
             [PROPERTY_KEY_TEXT_ALIGNMENT_Y]: this.app.defaultPropertyStore
                 .getState()
-                .getOrDefault(PROPERTY_KEY_TEXT_ALIGNMENT_Y, "start"),
+                .getOrDefault(PROPERTY_KEY_TEXT_ALIGNMENT_Y, "center"),
             [PROPERTY_KEY_COLOR_ID]: this.app.defaultPropertyStore
                 .getState()
                 .getOrDefault(PROPERTY_KEY_COLOR_ID, 0),

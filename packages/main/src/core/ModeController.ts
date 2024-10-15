@@ -1,6 +1,11 @@
 import type { Point } from "../lib/geo/Point";
 import type { Entity } from "./Entity";
-import type { Mode } from "./Mode";
+
+export interface Mode {
+    type: string;
+
+    [key: string]: unknown;
+}
 
 export abstract class ModeController {
     abstract getType(): string;

@@ -1,4 +1,4 @@
-import { Store } from "../lib/Store";
+import { Store } from "../../../lib/Store";
 import type { SnapGuide } from "./SnapEntry";
 
 interface SnapGuideState {

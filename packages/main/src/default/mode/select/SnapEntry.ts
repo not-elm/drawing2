@@ -1,7 +1,7 @@
-import type { Line } from "../lib/geo/Line";
-import type { Point } from "../lib/geo/Point";
-import { type Page, getEntitiesInViewport } from "./Page";
-import type { Viewport } from "./Viewport";
+import { type Page, getEntitiesInViewport } from "../../../core/Page";
+import type { Viewport } from "../../../core/Viewport";
+import type { Line } from "../../../lib/geo/Line";
+import type { Point } from "../../../lib/geo/Point";
 
 export interface SnapEntry2D {
     x: SnapEntry;

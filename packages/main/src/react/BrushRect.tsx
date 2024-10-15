@@ -1,9 +1,22 @@
+import { SelectModeController } from "../default/mode/select/SelectModeController";
 import { useStore } from "./hooks/useStore";
 import { useApp } from "./useApp";
 
 export function BrushRect() {
     const app = useApp();
-    const { active, rect } = useStore(app.brushStore);
+    const modeController = app.getModeController();
+
+    if (!(modeController instanceof SelectModeController)) return null;
+
+    return <BrushRectInner selectModeController={modeController} />;
+}
+
+function BrushRectInner({
+    selectModeController,
+}: {
+    selectModeController: SelectModeController;
+}) {
+    const { active, rect } = useStore(selectModeController.brushStore);
     if (!active) {
         return null;
     }
