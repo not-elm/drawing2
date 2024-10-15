@@ -24,12 +24,9 @@ export class App extends EventEmitter<{
     beforeExitMode: (ev: ModeChangeEvent) => void;
     afterEnterMode: (ev: ModeChangeEvent) => void;
 }> {
-    private readonly entityConverter = new EntityConverterMap();
+    readonly entityConverter = new EntityConverterMap();
     readonly clipboardService = new ClipboardService(this.entityConverter);
-    readonly canvasStateStore = new CanvasStateStore(
-        this.clipboardService,
-        this.entityConverter,
-    );
+    readonly canvasStateStore = new CanvasStateStore(this.clipboardService);
     readonly viewportStore = new ViewportStore();
     readonly gestureRecognizer = new GestureRecognizer(this.viewportStore);
     readonly appStateStore = new AppStateStore();

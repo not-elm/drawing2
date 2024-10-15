@@ -1,11 +1,12 @@
 import type { CSSObject } from "@emotion/styled";
 import { MathJax } from "better-react-mathjax";
-import { memo } from "react";
+import { type ReactNode, memo } from "react";
 import { assert } from "../../../lib/assert";
 import { useResizeObserver } from "../../../react/hooks/useResizeObserver";
 import { useStore } from "../../../react/hooks/useStore";
 import { useApp } from "../../../react/useApp";
 import { isEditTextMode } from "../../mode/EditTextModeController";
+import { Colors } from "../../property/Colors";
 import {
     PROPERTY_KEY_TEXT_ALIGNMENT_X,
     type TextAlignment,
@@ -34,8 +35,8 @@ export const TextView = memo(function ShapeView({
                 editing={editing}
                 shapeId={entity.props.id}
                 width={entity.props.rect.width}
-                height={entity.props.rect.height}
                 sizingMode={entity.props.sizingMode}
+                color={Colors[entity.props.colorId]}
                 textAlignment={textAlignment}
                 content={entity.props.content}
             />
@@ -46,17 +47,17 @@ export const TextView = memo(function ShapeView({
 const TextViewInner = memo(function ShapeViewInner({
     shapeId,
     width,
-    height,
     sizingMode,
     textAlignment,
+    color,
     editing,
     content,
 }: {
     shapeId: string;
     width: number;
-    height: number;
     sizingMode: "content" | "fixed";
     textAlignment: TextAlignment;
+    color: string;
     editing: boolean;
     content: string;
 }) {
@@ -76,6 +77,7 @@ const TextViewInner = memo(function ShapeViewInner({
         <div
             ref={containerRef}
             css={{
+                color,
                 position: "absolute",
                 fontSize: 24,
                 pointerEvents: "all",
@@ -97,6 +99,24 @@ const TextViewInner = memo(function ShapeViewInner({
                         width,
                     },
                 }[sizingMode] as CSSObject),
+
+                h1: {
+                    marginTop: "1em",
+                    marginBottom: 0,
+                },
+                h2: {
+                    marginTop: "1em",
+                    marginBottom: 0,
+                },
+                h3: {
+                    marginTop: "1em",
+                    marginBottom: 0,
+                },
+                "h1, h2, h3": {
+                    "&:nth-child(1)": {
+                        marginTop: 0,
+                    },
+                },
             }}
         >
             {editing ? (
@@ -127,7 +147,7 @@ const TextViewInner = memo(function ShapeViewInner({
                     value={content}
                 />
             ) : (
-                <MathJax>{addPostFix(content)}</MathJax>
+                <MathJax>{renderContent(addPostFix(content))}</MathJax>
             )}
         </div>
     );
@@ -140,4 +160,40 @@ function addPostFix(text: string) {
         return text + ZERO_WIDTH_SPACE;
     }
     return text;
+}
+
+function renderContent(text: string): ReactNode {
+    const lines = text.split("\n");
+    const nodes: ReactNode[] = [];
+    const buffer: string[] = [];
+
+    for (const [i, line] of Object.entries(lines)) {
+        if (line.startsWith("###")) {
+            if (buffer.length > 0) {
+                nodes.push(buffer.join("\n"));
+                buffer.length = 0;
+            }
+            nodes.push(<h3 key={i}>{line}</h3>);
+        } else if (line.startsWith("##")) {
+            if (buffer.length > 0) {
+                nodes.push(buffer.join("\n"));
+                buffer.length = 0;
+            }
+            nodes.push(<h2 key={i}>{line}</h2>);
+        } else if (line.startsWith("#")) {
+            if (buffer.length > 0) {
+                nodes.push(buffer.join("\n"));
+                buffer.length = 0;
+            }
+            nodes.push(<h1 key={i}>{line}</h1>);
+        } else {
+            buffer.push(line);
+        }
+    }
+    if (buffer.length > 0) {
+        nodes.push(buffer.join("\n"));
+        buffer.length = 0;
+    }
+
+    return nodes;
 }

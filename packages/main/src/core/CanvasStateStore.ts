@@ -7,13 +7,7 @@ import { isNotNullish } from "../lib/isNullish";
 import type { ClipboardService } from "./ClipboardService";
 import { DependencyCollection } from "./DependencyCollection";
 import type { Entity } from "./Entity";
-import type { EntityConverter } from "./EntityDeserializer";
 import type { Page } from "./Page";
-import {
-    type SerializedPage,
-    deserializePage,
-    serializePage,
-} from "./SerializedPage";
 import { Transaction } from "./Transaction";
 import type { Viewport } from "./Viewport";
 
@@ -37,10 +31,7 @@ export class CanvasState extends dataclass<{
 }
 
 export class CanvasStateStore extends Store<CanvasState> {
-    constructor(
-        private readonly clipboardService: ClipboardService,
-        private readonly entityConverter: EntityConverter,
-    ) {
+    constructor(private readonly clipboardService: ClipboardService) {
         super(
             new CanvasState({
                 page: {
@@ -51,12 +42,6 @@ export class CanvasStateStore extends Store<CanvasState> {
                 selectedEntityIds: [],
             }),
         );
-
-        this.loadFromLocalStorage();
-
-        setInterval(() => {
-            this.saveToLocalStorage();
-        }, 1000);
     }
 
     deleteEntity(entityIds: string[]) {
@@ -339,24 +324,6 @@ export class CanvasStateStore extends Store<CanvasState> {
         // create a new copy of entities in different position
         this.copy();
     }
-
-    private saveToLocalStorage() {
-        const serializedPage = serializePage(this.state.page);
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(serializedPage));
-    }
-
-    private loadFromLocalStorage() {
-        try {
-            const data = localStorage.getItem(LOCAL_STORAGE_KEY);
-            if (data === null) return;
-
-            const serializedPage: SerializedPage = JSON.parse(data);
-            const page = deserializePage(serializedPage, this.entityConverter);
-
-            this.setPage(page);
-            this.unselectAll();
-        } catch {}
-    }
 }
 
 export function fromCanvasCoordinate(
@@ -369,5 +336,3 @@ export function fromCanvasCoordinate(
         canvasY / viewport.scale + viewport.rect.top,
     );
 }
-
-const LOCAL_STORAGE_KEY = "LocalCanvasStateStore.state.page";

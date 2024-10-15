@@ -10,6 +10,7 @@ import { NewPathModeController } from "./mode/NewPathModeController";
 import { NewShapeModeController } from "./mode/NewShapeModeController";
 import { NewTextModeController } from "./mode/NewTextModeController";
 import { SelectModeController } from "./mode/select/SelectModeController";
+import { syncWithLocalStorage } from "./syncWithLocalStorage";
 
 export function createDefaultApp(): App {
     const app = new App();
@@ -82,6 +83,8 @@ export function createDefaultApp(): App {
                 return entity.serialize();
             },
         });
+
+    syncWithLocalStorage(app);
 
     return app;
 }
