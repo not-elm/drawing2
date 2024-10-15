@@ -7,6 +7,7 @@ import { Card } from "../Card";
 import { useApp } from "../useApp";
 
 import { useSelectedPropertyValue } from "./useSelectedPropertyValue";
+import { useVisibleFlag } from "./useVisibleFlag";
 
 const ALIGNMENT_OPTION_X = ["start", "center", "end"] as const;
 const ALIGNMENT_OPTION_Y = [
@@ -41,6 +42,15 @@ export function TextAlignmentPropertySection() {
         app.defaultPropertyStore.set(PROPERTY_KEY_TEXT_ALIGNMENT_X, alignmentX);
         app.defaultPropertyStore.set(PROPERTY_KEY_TEXT_ALIGNMENT_Y, alignmentY);
     };
+
+    const visible = useVisibleFlag({
+        modes: ["new-text"],
+        propertyKeys: [
+            PROPERTY_KEY_TEXT_ALIGNMENT_X,
+            PROPERTY_KEY_TEXT_ALIGNMENT_Y,
+        ],
+    });
+    if (!visible) return null;
 
     return (
         <Card.Section css={{ flexDirection: "row" }}>

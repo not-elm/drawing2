@@ -4,11 +4,17 @@ import {
 } from "../../default/property/SizingMode";
 import { Button } from "../Button";
 import { Card } from "../Card";
+import { useStore } from "../hooks/useStore";
 import { useApp } from "../useApp";
 import { useSelectedPropertyValue } from "./useSelectedPropertyValue";
+import { useVisibleFlag } from "./useVisibleFlag";
 
 export function SizingModePropertySection() {
     const app = useApp();
+    const { mode } = useStore(app.appStateStore);
+    const selectedEntities = app.canvasStateStore
+        .getState()
+        .getSelectedEntities();
     const selectedValue = useSelectedPropertyValue(PROPERTY_KEY_SIZING_MODE);
 
     const handleClick = (sizingMode: SizingMode) => {
@@ -21,6 +27,12 @@ export function SizingModePropertySection() {
         });
         app.defaultPropertyStore.set(PROPERTY_KEY_SIZING_MODE, sizingMode);
     };
+
+    const visible = useVisibleFlag({
+        modes: ["new-text"],
+        propertyKeys: [PROPERTY_KEY_SIZING_MODE],
+    });
+    if (!visible) return null;
 
     return (
         <Card.Section css={{ flexDirection: "column" }}>

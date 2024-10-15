@@ -116,12 +116,12 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                     >
                         <PropertyPanel>
                             <ColorPropertySection />
+                            <TextAlignmentPropertySection />
                             <FillModePropertySection />
                             <StrokeStylePropertySection />
-                            <TextAlignmentPropertySection />
-                            <OrderSection />
-                            <SizingModePropertySection />
                             <StrokeWidthPropertySection />
+                            <SizingModePropertySection />
+                            <OrderSection />
                         </PropertyPanel>
                     </div>
                 </div>

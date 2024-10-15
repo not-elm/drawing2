@@ -15,6 +15,7 @@ const CardSection = styled.div({
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
+    gap: 4,
 });
 
 const defaults = Object.assign(Card, {

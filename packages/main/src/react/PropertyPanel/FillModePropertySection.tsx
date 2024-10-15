@@ -13,6 +13,7 @@ import {
 import { Button } from "../Button";
 import { Card } from "../Card";
 import { useSelectedPropertyValue } from "./useSelectedPropertyValue";
+import { useVisibleFlag } from "./useVisibleFlag";
 
 export function FillModePropertySection() {
     const app = useApp();
@@ -28,6 +29,12 @@ export function FillModePropertySection() {
         });
         app.defaultPropertyStore.set(PROPERTY_KEY_FILL_STYLE, fillStyle);
     };
+
+    const visible = useVisibleFlag({
+        modes: ["new-shape"],
+        propertyKeys: [PROPERTY_KEY_FILL_STYLE],
+    });
+    if (!visible) return null;
 
     return (
         <Card.Section css={{ flexDirection: "row" }}>

@@ -1,8 +1,13 @@
+import {
+    type ColorId,
+    PROPERTY_KEY_COLOR_ID,
+} from "../../default/property/Colors";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../../default/property/StrokeWidth";
 import { Button } from "../Button";
 import { Card } from "../Card";
 import { useApp } from "../useApp";
 import { useSelectedPropertyValue } from "./useSelectedPropertyValue";
+import { useVisibleFlag } from "./useVisibleFlag";
 
 export function StrokeWidthPropertySection() {
     const app = useApp();
@@ -18,6 +23,15 @@ export function StrokeWidthPropertySection() {
         });
         app.defaultPropertyStore.set(PROPERTY_KEY_STROKE_WIDTH, strokeWidth);
     };
+
+    const colorId =
+        useSelectedPropertyValue<ColorId>(PROPERTY_KEY_COLOR_ID) ?? 0;
+
+    const visible = useVisibleFlag({
+        modes: ["new-path", "new-shape"],
+        propertyKeys: [PROPERTY_KEY_STROKE_WIDTH],
+    });
+    if (!visible) return null;
 
     return (
         <Card.Section css={{ flexDirection: "row", gap: 4 }}>

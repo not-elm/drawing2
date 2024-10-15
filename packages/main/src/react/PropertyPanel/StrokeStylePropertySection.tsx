@@ -1,12 +1,17 @@
 import { useApp } from "../useApp";
 
 import {
+    type ColorId,
+    PROPERTY_KEY_COLOR_ID,
+} from "../../default/property/Colors";
+import {
     PROPERTY_KEY_STROKE_STYLE,
     type StrokeStyle,
 } from "../../default/property/StrokeStyle";
 import { Button } from "../Button";
 import { Card } from "../Card";
 import { useSelectedPropertyValue } from "./useSelectedPropertyValue";
+import { useVisibleFlag } from "./useVisibleFlag";
 
 export function StrokeStylePropertySection() {
     const app = useApp();
@@ -23,8 +28,17 @@ export function StrokeStylePropertySection() {
         app.defaultPropertyStore.set(PROPERTY_KEY_STROKE_STYLE, strokeStyle);
     };
 
+    const colorId =
+        useSelectedPropertyValue<ColorId>(PROPERTY_KEY_COLOR_ID) ?? 0;
+
+    const visible = useVisibleFlag({
+        modes: ["new-path", "new-shape"],
+        propertyKeys: [PROPERTY_KEY_STROKE_STYLE],
+    });
+    if (!visible) return null;
+
     return (
-        <Card.Section css={{ flexDirection: "row" }}>
+        <Card.Section>
             <Button
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
@@ -32,7 +46,16 @@ export function StrokeStylePropertySection() {
                 }}
                 aria-selected={selectedValue === "solid"}
             >
-                実線
+                <svg width={66} height={4} css={{ overflow: "visible" }}>
+                    <path
+                        d="M0 2h66"
+                        css={{
+                            stroke: "currentColor",
+                            strokeLinecap: "round",
+                            strokeWidth: 4,
+                        }}
+                    />
+                </svg>
             </Button>
             <Button
                 onPointerDown={(ev) => {
@@ -41,7 +64,17 @@ export function StrokeStylePropertySection() {
                 }}
                 aria-selected={selectedValue === "dashed"}
             >
-                破線
+                <svg width={66} height={4} css={{ overflow: "visible" }}>
+                    <path
+                        d="M0 2h66"
+                        css={{
+                            stroke: "currentColor",
+                            strokeLinecap: "round",
+                            strokeWidth: 4,
+                        }}
+                        stroke-dasharray={"6 6"}
+                    />
+                </svg>
             </Button>
             <Button
                 onPointerDown={(ev) => {
@@ -50,7 +83,17 @@ export function StrokeStylePropertySection() {
                 }}
                 aria-selected={selectedValue === "dotted"}
             >
-                点線
+                <svg width={66} height={4} css={{ overflow: "visible" }}>
+                    <path
+                        d="M0 2h66"
+                        css={{
+                            stroke: "currentColor",
+                            strokeLinecap: "round",
+                            strokeWidth: 4,
+                        }}
+                        stroke-dasharray={"0 8"}
+                    />
+                </svg>
             </Button>
         </Card.Section>
     );

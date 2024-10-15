@@ -1,9 +1,16 @@
 import { Button } from "../Button";
 import { Card } from "../Card";
+import { useStore } from "../hooks/useStore";
 import { useApp } from "../useApp";
 
 export function OrderSection() {
     const app = useApp();
+    const { mode } = useStore(app.appStateStore);
+    const { selectedEntityIds } = useStore(app.canvasStateStore);
+
+    const visible = mode.type === "select" && selectedEntityIds.length > 0;
+
+    if (!visible) return null;
 
     return (
         <Card.Section>
