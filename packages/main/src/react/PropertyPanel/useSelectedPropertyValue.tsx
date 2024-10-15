@@ -1,4 +1,4 @@
-import type { ColorId } from "../../core/model/Colors";
+import type { ColorId } from "../../default/property/Colors";
 import { isNotNullish } from "../../lib/isNullish";
 import { useStore } from "../hooks/useStore";
 import { useApp } from "../useApp";
@@ -13,7 +13,7 @@ export function useSelectedPropertyValue<T = unknown>(
     const values = new Set(
         canvasState
             .getSelectedEntities()
-            .map((entity) => app.handle.getProperty(entity, propertyKey))
+            .map((entity) => entity.getProperty(propertyKey))
             .filter(isNotNullish),
     ) as Set<ColorId>;
 

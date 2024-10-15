@@ -1,4 +1,6 @@
 import styled from "@emotion/styled";
+import { PathEntity } from "../default/entity/PathEntity/PathEntity";
+import { TextEntity } from "../default/entity/TextEntity/TextEntity";
 import { useStore } from "./hooks/useStore";
 import { useApp } from "./useApp";
 
@@ -7,14 +9,14 @@ export function SelectionRect() {
     const appState = useStore(app.appStateStore);
     const viewport = useStore(app.viewportStore);
     const canvasState = useStore(app.canvasStateStore);
-    const selectionRect = canvasState.getSelectionRect(app.handle);
+    const selectionRect = canvasState.getSelectionRect();
     if (selectionRect === null) return null;
 
     const entities = canvasState.getSelectedEntities();
     const isSinglePathMode =
-        entities.length === 1 && entities[0].type === "path";
+        entities.length === 1 && entities[0] instanceof PathEntity;
     const isSingleTextMode =
-        entities.length === 1 && entities[0].type === "text";
+        entities.length === 1 && entities[0] instanceof TextEntity;
 
     if (appState.mode.type === "edit-text") return null;
 
@@ -53,11 +55,11 @@ export function SelectionRect() {
                     />
                 )}
                 {entities.map((entity) => {
-                    const d = app.handle.getOutlinePath(entity, viewport);
+                    const d = entity.getOutlinePath(viewport);
 
                     return (
                         <path
-                            key={entity.id}
+                            key={entity.props.id}
                             css={{
                                 stroke: "var(--color-selection)",
                                 fill: "none",
@@ -70,7 +72,7 @@ export function SelectionRect() {
             </svg>
             {isSinglePathMode &&
                 appState.mode.type === "select" &&
-                app.handle.getNodes(entities[0]).map((node) => (
+                entities[0].getNodes().map((node) => (
                     <ResizeHandle
                         key={node.id}
                         css={{

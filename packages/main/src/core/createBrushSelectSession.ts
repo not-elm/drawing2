@@ -1,13 +1,11 @@
 import { Rect } from "../lib/geo/Rect";
 import type { BrushStore } from "./BrushStore";
 import type { CanvasStateStore } from "./CanvasStateStore";
-import type { EntityHandleMap } from "./EntityHandleMap";
 import type { PointerEventHandlers } from "./PointerEventSession";
 
 export function createBrushSelectSession(
     canvasStateStore: CanvasStateStore,
     brushStore: BrushStore,
-    handle: EntityHandleMap,
 ): PointerEventHandlers {
     const originalSelectedEntityIds =
         canvasStateStore.getState().selectedEntityIds;
@@ -30,8 +28,8 @@ export function createBrushSelectSession(
             for (const entity of Object.values(
                 canvasStateStore.getState().page.entities,
             )) {
-                if (handle.isOverlapWith(entity, rect)) {
-                    selectedEntityIds.add(entity.id);
+                if (entity.isOverlapWith(rect)) {
+                    selectedEntityIds.add(entity.props.id);
                 }
             }
 

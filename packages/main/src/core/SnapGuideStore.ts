@@ -1,5 +1,5 @@
 import { Store } from "../lib/Store";
-import type { SnapGuide } from "./model/SnapEntry";
+import type { SnapGuide } from "./SnapEntry";
 
 interface SnapGuideState {
     guide: SnapGuide | null;

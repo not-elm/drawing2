@@ -1,7 +1,6 @@
-import { assert } from "../../lib/assert";
-import type { Point } from "../../lib/geo/Point";
-import { Transform } from "../../lib/geo/Transform";
-import type { EntityHandleMap } from "../EntityHandleMap";
+import { assert } from "../lib/assert";
+import type { Point } from "../lib/geo/Point";
+import { Transform } from "../lib/geo/Transform";
 import type { Dependency } from "./Dependency";
 import type { DependencyCollection } from "./DependencyCollection";
 import type { Entity } from "./Entity";
@@ -124,7 +123,7 @@ export class Transaction {
         return this;
     }
 
-    commit(handle: EntityHandleMap): Page {
+    commit(): Page {
         const draft: PageDraft = {
             entities: { ...this.page.entities },
             entityIds: [...this.page.entityIds],
@@ -133,7 +132,7 @@ export class Transaction {
         };
 
         for (const command of this.commands) {
-            processCommand(command, draft, handle);
+            processCommand(command, draft);
         }
 
         return {
@@ -151,11 +150,7 @@ interface PageDraft {
     dirtyEntityIds: string[];
 }
 
-function processCommand(
-    command: Command,
-    draft: PageDraft,
-    handle: EntityHandleMap,
-) {
+function processCommand(command: Command, draft: PageDraft) {
     switch (command.type) {
         case "INSERT_ENTITIES": {
             return insertEntities(command, draft);
@@ -167,13 +162,13 @@ function processCommand(
             return deleteEntities(command, draft);
         }
         case "TRANSFORM_ENTITIES": {
-            return transformEntities(command, draft, handle);
+            return transformEntities(command, draft);
         }
         case "SET_POINT_POSITION": {
-            return setPointPosition(command, draft, handle);
+            return setPointPosition(command, draft);
         }
         case "UPDATE_ENTITY_PROPERTY": {
-            return updateEntityProperty(command, draft, handle);
+            return updateEntityProperty(command, draft);
         }
         case "ADD_DEPENDENCIES": {
             return addDependencies(command, draft);
@@ -186,16 +181,16 @@ function processCommand(
 
 function insertEntities(command: InsertEntitiesCommand, draft: PageDraft) {
     for (const entity of command.entities) {
-        draft.entities[entity.id] = entity;
-        draft.entityIds.push(entity.id);
-        draft.dirtyEntityIds.push(entity.id);
+        draft.entities[entity.props.id] = entity;
+        draft.entityIds.push(entity.props.id);
+        draft.dirtyEntityIds.push(entity.props.id);
     }
 }
 
 function replaceEntities(command: ReplaceEntitiesCommand, draft: PageDraft) {
     for (const entity of command.entities) {
-        draft.entities[entity.id] = entity;
-        draft.dirtyEntityIds.push(entity.id);
+        draft.entities[entity.props.id] = entity;
+        draft.dirtyEntityIds.push(entity.props.id);
     }
 }
 
@@ -214,27 +209,21 @@ function deleteEntities(command: DeleteEntitiesCommand, draft: PageDraft) {
 function transformEntities(
     command: TransformEntitiesCommand,
     draft: PageDraft,
-    handle: EntityHandleMap,
 ) {
     for (const entityId of command.entityIds) {
         const entity = draft.entities[entityId];
         assert(entity !== undefined, `Entity not found: ${entityId}`);
 
-        draft.entities[entityId] = handle.transform(entity, command.transform);
+        draft.entities[entityId] = entity.transform(command.transform);
         draft.dirtyEntityIds.push(entityId);
     }
 }
 
-function setPointPosition(
-    command: SetPointPositionCommand,
-    draft: PageDraft,
-    handle: EntityHandleMap,
-) {
+function setPointPosition(command: SetPointPositionCommand, draft: PageDraft) {
     const entity = draft.entities[command.pathId];
     assert(entity !== undefined, `Entity not found: ${command.pathId}`);
 
-    draft.entities[command.pathId] = handle.setNodePosition(
-        entity,
+    draft.entities[command.pathId] = entity.setNodePosition(
         command.nodeId,
         command.point,
     );
@@ -244,14 +233,12 @@ function setPointPosition(
 function updateEntityProperty(
     command: UpdateEntityPropertyCommand,
     draft: PageDraft,
-    handle: EntityHandleMap,
 ) {
     for (const entityId of command.entityIds) {
         const entity = draft.entities[entityId];
         assert(entity !== undefined, `Entity not found: ${entityId}`);
 
-        draft.entities[entityId] = handle.setProperty(
-            entity,
+        draft.entities[entityId] = entity.setProperty(
             command.key,
             command.value,
         );

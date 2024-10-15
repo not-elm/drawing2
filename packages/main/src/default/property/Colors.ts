@@ -29,3 +29,5 @@ export const ColorPaletteBackground = [
 export const ColorPaletteBackgroundMonoColor = "#ffffff";
 
 export type ColorId = number;
+
+export const PROPERTY_KEY_COLOR_ID = "colorId" as const;

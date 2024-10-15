@@ -1,9 +1,9 @@
 import { assert } from "../lib/assert";
 import { adjustAngle } from "../lib/geo/adjustAngle";
 import type { App } from "./App";
+import type { Entity } from "./Entity";
 import type { HistoryManager } from "./HistoryManager";
 import type { PointerEventHandlers } from "./PointerEventSession";
-import type { Entity } from "./model/Entity";
 
 export function createMovePointSession(
     entity: Entity,
@@ -13,8 +13,8 @@ export function createMovePointSession(
 ): PointerEventHandlers {
     historyManager.pause();
 
-    const nodes = app.handle.getNodes(entity);
-    const edges = app.handle.getEdges(entity);
+    const nodes = entity.getNodes();
+    const edges = entity.getEdges();
     const originalNode = nodes.find((node) => node.id === nodeId);
     assert(originalNode !== undefined);
 
@@ -40,7 +40,7 @@ export function createMovePointSession(
             }
 
             app.edit((tx) => {
-                tx.setPointPosition(entity.id, nodeId, newPoint);
+                tx.setPointPosition(entity.props.id, nodeId, newPoint);
             });
         },
         onPointerUp: () => {

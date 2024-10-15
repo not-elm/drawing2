@@ -7,6 +7,7 @@ import { ColorPropertySection } from "./PropertyPanel/ColorPropertySection";
 import { FillModePropertySection } from "./PropertyPanel/FillModePropertySection";
 import { OrderSection } from "./PropertyPanel/OrderSection";
 import { PropertyPanel } from "./PropertyPanel/PropertyPanel";
+import { SizingModePropertySection } from "./PropertyPanel/SizingModePropertySection";
 import { StrokeStylePropertySection } from "./PropertyPanel/StrokeStylePropertySection";
 import { TextAlignmentPropertySection } from "./PropertyPanel/TextAlignmentPropertySection";
 import { ToolBar } from "./ToolBar";
@@ -118,6 +119,7 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                             <StrokeStylePropertySection />
                             <TextAlignmentPropertySection />
                             <OrderSection />
+                            <SizingModePropertySection />
                         </PropertyPanel>
                     </div>
                 </div>

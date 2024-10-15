@@ -1,12 +1,14 @@
 import type { CSSObject } from "@emotion/styled";
 import { MathJax } from "better-react-mathjax";
 import { memo } from "react";
-import { PropertyKey } from "../../../core/model/PropertyKey";
-import type { TextAlignment } from "../../../core/model/TextAlignment";
 import { assert } from "../../../lib/assert";
 import { useResizeObserver } from "../../../react/hooks/useResizeObserver";
 import { useStore } from "../../../react/hooks/useStore";
 import { useApp } from "../../../react/useApp";
+import {
+    PROPERTY_KEY_TEXT_ALIGNMENT_X,
+    type TextAlignment,
+} from "../../property/TextAlignment";
 import type { TextEntity } from "./TextEntity";
 
 export const TextView = memo(function ShapeView({
@@ -15,26 +17,26 @@ export const TextView = memo(function ShapeView({
     const appState = useStore(useApp().appStateStore);
     const editing =
         appState.mode.type === "edit-text" &&
-        appState.mode.entityId === entity.id;
+        appState.mode.entityId === entity.props.id;
 
-    const textAlignment = entity[PropertyKey.TEXT_ALIGNMENT_X];
+    const textAlignment = entity.props[PROPERTY_KEY_TEXT_ALIGNMENT_X];
     assert(textAlignment !== undefined, "Text alignment must not be null");
 
     return (
         <div
             style={{
-                transform: `translate(${entity.rect.left}px, ${entity.rect.top}px)`,
+                transform: `translate(${entity.props.rect.left}px, ${entity.props.rect.top}px)`,
             }}
             css={{ position: "absolute" }}
         >
             <TextViewInner
                 editing={editing}
-                shapeId={entity.id}
-                width={entity.rect.width}
-                height={entity.rect.height}
-                sizingMode={entity.sizingMode}
+                shapeId={entity.props.id}
+                width={entity.props.rect.width}
+                height={entity.props.rect.height}
+                sizingMode={entity.props.sizingMode}
                 textAlignment={textAlignment}
-                content={entity.content}
+                content={entity.props.content}
             />
         </div>
     );

@@ -1,14 +1,15 @@
 import type { App } from "../../core/App";
 import type { CanvasStateStore } from "../../core/CanvasStateStore";
+import type { Entity } from "../../core/Entity";
 import {
     ModeController,
     type PointerDownEvent,
 } from "../../core/ModeController";
-import type { Entity } from "../../core/model/Entity";
-import { PropertyKey } from "../../core/model/PropertyKey";
 import { Rect } from "../../lib/geo/Rect";
 import { randomId } from "../../lib/randomId";
-import type { TextEntity } from "../entity/TextEntity/TextEntity";
+import { TextEntity } from "../entity/TextEntity/TextEntity";
+import { PROPERTY_KEY_COLOR_ID } from "../property/Colors";
+import { PROPERTY_KEY_TEXT_ALIGNMENT_X } from "../property/TextAlignment";
 
 export class NewTextModeController extends ModeController {
     constructor(
@@ -31,30 +32,29 @@ export class NewTextModeController extends ModeController {
 
         this.app.setMode({
             type: "edit-text",
-            entityId: text.id,
+            entityId: text.props.id,
         });
 
         this.canvasStateStore.unselectAll();
-        this.canvasStateStore.select(text.id);
+        this.canvasStateStore.select(text.props.id);
 
         // To leave focus at the new text entity
         data.preventDefault();
     }
 
     private insertNewText(rect: Rect): TextEntity {
-        const text: TextEntity = {
+        const text = new TextEntity({
             id: randomId(),
-            type: "text",
             rect,
             content: "",
-            [PropertyKey.TEXT_ALIGNMENT_X]: this.app.defaultPropertyStore
+            [PROPERTY_KEY_TEXT_ALIGNMENT_X]: this.app.defaultPropertyStore
                 .getState()
-                .getOrDefault(PropertyKey.TEXT_ALIGNMENT_X, "start"),
-            [PropertyKey.COLOR_ID]: this.app.defaultPropertyStore
+                .getOrDefault(PROPERTY_KEY_TEXT_ALIGNMENT_X, "start"),
+            [PROPERTY_KEY_COLOR_ID]: this.app.defaultPropertyStore
                 .getState()
-                .getOrDefault(PropertyKey.COLOR_ID, 0),
+                .getOrDefault(PROPERTY_KEY_COLOR_ID, 0),
             sizingMode: "content",
-        };
+        });
 
         this.app.edit((tx) => {
             tx.insertEntities([text]);

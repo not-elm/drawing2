@@ -2,6 +2,7 @@ import { assert } from "../assert";
 import { dataclass } from "../dataclass";
 import { Line } from "./Line";
 import { Point } from "./Point";
+import type { Transform } from "./Transform";
 
 export class Rect extends dataclass<{
     p0: Point;
@@ -184,5 +185,11 @@ export class Rect extends dataclass<{
             p0: this.p0.translate(dx, dy),
             p1: this.p1.translate(dx, dy),
         });
+    }
+
+    transform(transform: Transform): Rect {
+        const p0 = transform.apply(this.p0);
+        const p1 = transform.apply(this.p1);
+        return new Rect({ p0, p1 });
     }
 }

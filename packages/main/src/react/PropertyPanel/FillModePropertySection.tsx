@@ -1,29 +1,32 @@
-import { PropertyKey } from "../../core/model/PropertyKey";
 import { useApp } from "../useApp";
 
 import {
     type ColorId,
     ColorPaletteBackground,
     Colors,
-} from "../../core/model/Colors";
-import type { FillStyle } from "../../core/model/FillStyle";
+    PROPERTY_KEY_COLOR_ID,
+} from "../../default/property/Colors";
+import {
+    type FillStyle,
+    PROPERTY_KEY_FILL_STYLE,
+} from "../../default/property/FillStyle";
 import { Button } from "../Button";
 import { Card } from "../Card";
 import { useSelectedPropertyValue } from "./useSelectedPropertyValue";
 
 export function FillModePropertySection() {
     const app = useApp();
-    const selectedValue = useSelectedPropertyValue(PropertyKey.FILL_STYLE);
+    const selectedValue = useSelectedPropertyValue(PROPERTY_KEY_FILL_STYLE);
 
     const handleClick = (fillStyle: FillStyle) => {
         app.canvasStateStore.edit((tx) => {
             tx.updateProperty(
                 app.canvasStateStore.getState().selectedEntityIds,
-                PropertyKey.FILL_STYLE,
+                PROPERTY_KEY_FILL_STYLE,
                 fillStyle,
             );
         });
-        app.defaultPropertyStore.set(PropertyKey.FILL_STYLE, fillStyle);
+        app.defaultPropertyStore.set(PROPERTY_KEY_FILL_STYLE, fillStyle);
     };
 
     return (
@@ -62,7 +65,7 @@ function ColorButton({
     onClick: (fillStyle: FillStyle) => void;
 }) {
     const colorId =
-        useSelectedPropertyValue<ColorId>(PropertyKey.COLOR_ID) ?? 0;
+        useSelectedPropertyValue<ColorId>(PROPERTY_KEY_COLOR_ID) ?? 0;
 
     return (
         <Button

@@ -1,12 +1,15 @@
-import { type ColorId, Colors } from "../../core/model/Colors";
-import { PropertyKey } from "../../core/model/PropertyKey";
+import {
+    type ColorId,
+    Colors,
+    PROPERTY_KEY_COLOR_ID,
+} from "../../default/property/Colors";
 import { Button } from "../Button";
 import { Card } from "../Card";
 import { useApp } from "../useApp";
 import { useSelectedPropertyValue } from "./useSelectedPropertyValue";
 
 export function useSelectedColorId() {
-    return useSelectedPropertyValue<ColorId>(PropertyKey.COLOR_ID);
+    return useSelectedPropertyValue<ColorId>(PROPERTY_KEY_COLOR_ID);
 }
 
 export function ColorPropertySection() {
@@ -16,11 +19,11 @@ export function ColorPropertySection() {
         app.canvasStateStore.edit((tx) => {
             tx.updateProperty(
                 app.canvasStateStore.getState().selectedEntityIds,
-                PropertyKey.COLOR_ID,
+                PROPERTY_KEY_COLOR_ID,
                 colorId,
             );
         });
-        app.defaultPropertyStore.set(PropertyKey.COLOR_ID, colorId);
+        app.defaultPropertyStore.set(PROPERTY_KEY_COLOR_ID, colorId);
     };
 
     return (
@@ -28,6 +31,8 @@ export function ColorPropertySection() {
             css={{
                 display: "grid",
                 gap: 4,
+                width: "min-content",
+                alignSelf: "center",
                 gridTemplateColumns: "repeat(4, 1fr)",
                 gridTemplateRows: "repeat(3, 1fr)",
             }}

@@ -1,6 +1,5 @@
-import type { Line } from "../../lib/geo/Line";
-import type { Point } from "../../lib/geo/Point";
-import type { EntityHandleMap } from "../EntityHandleMap";
+import type { Line } from "../lib/geo/Line";
+import type { Point } from "../lib/geo/Point";
 import { type Page, getEntitiesInViewport } from "./Page";
 import type { Viewport } from "./Viewport";
 
@@ -27,7 +26,6 @@ export function computeSnapEntry2D(
     viewport: Viewport,
     point: Point,
     ignoreEntityIds: string[],
-    handle: EntityHandleMap,
     threshold = 16,
 ): SnapEntry2D {
     let bestXPoints: Point[] = [];
@@ -36,11 +34,11 @@ export function computeSnapEntry2D(
     let minXDistance = threshold / viewport.scale;
     let minYDistance = threshold / viewport.scale;
 
-    for (const otherEntity of getEntitiesInViewport(page, viewport, handle)) {
-        if (ignoreEntityIdSet.has(otherEntity.id)) {
+    for (const otherEntity of getEntitiesInViewport(page, viewport)) {
+        if (ignoreEntityIdSet.has(otherEntity.props.id)) {
             continue;
         }
-        const otherBoundingRect = handle.getBoundingRect(otherEntity);
+        const otherBoundingRect = otherEntity.getBoundingRect();
         const otherSnapPoints = [
             otherBoundingRect.topLeft,
             otherBoundingRect.topRight,

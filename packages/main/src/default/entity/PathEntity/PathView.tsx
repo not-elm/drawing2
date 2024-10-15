@@ -1,7 +1,5 @@
 import { memo } from "react";
-import { Colors } from "../../../core/model/Colors";
-
-import { PropertyKey } from "../../../core/model/PropertyKey";
+import { Colors, PROPERTY_KEY_COLOR_ID } from "../../property/Colors";
 import type { PathEntity } from "./PathEntity";
 
 export const STROKE_WIDTH_BASE = 5;
@@ -9,7 +7,7 @@ export const STROKE_WIDTH_BASE = 5;
 export const PathView = memo(function PathView({
     entity,
 }: { entity: PathEntity }) {
-    const nodes = Object.values(entity.nodes);
+    const nodes = Object.values(entity.props.nodes);
     const left = Math.min(...nodes.map((node) => node.point.x));
     const top = Math.min(...nodes.map((node) => node.point.y));
 
@@ -30,7 +28,7 @@ export const PathView = memo(function PathView({
         solid: STROKE_WIDTH_BASE,
         dashed: STROKE_WIDTH_BASE,
         dotted: STROKE_WIDTH_BASE * 1.4,
-    }[entity.strokeStyle];
+    }[entity.props.strokeStyle];
     return (
         <svg
             viewBox="0 0 1 1"
@@ -45,7 +43,7 @@ export const PathView = memo(function PathView({
         >
             <path
                 css={{
-                    stroke: Colors[entity[PropertyKey.COLOR_ID]],
+                    stroke: Colors[entity.props[PROPERTY_KEY_COLOR_ID]],
                     fill: "none",
                 }}
                 d={constructPath(entity)}
@@ -55,7 +53,7 @@ export const PathView = memo(function PathView({
                         solid: undefined,
                         dashed: [2 * strokeWidth, strokeWidth + 5].join(" "),
                         dotted: [0, strokeWidth * (0.5 + 1.2 + 0.5)].join(" "),
-                    }[entity.strokeStyle]
+                    }[entity.props.strokeStyle]
                 }
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -107,15 +105,15 @@ function constructArrowHeadPath(
 }
 
 function constructPath(path: PathEntity): string {
-    const nodes = Object.values(path.nodes);
+    const nodes = Object.values(path.props.nodes);
     const left = Math.min(...nodes.map((node) => node.point.x));
     const top = Math.min(...nodes.map((node) => node.point.y));
 
     let lastNodeId = "(nothing)";
     const commands: string[] = [];
-    for (const [startNodeId, endNodeId] of path.edges) {
-        const startNode = path.nodes[startNodeId];
-        const endNode = path.nodes[endNodeId];
+    for (const [startNodeId, endNodeId] of path.props.edges) {
+        const startNode = path.props.nodes[startNodeId];
+        const endNode = path.props.nodes[endNodeId];
 
         if (startNodeId !== lastNodeId) {
             commands.push(

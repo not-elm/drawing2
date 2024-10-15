@@ -1,11 +1,11 @@
 import type { App } from "../../core/App";
+import type { Entity } from "../../core/Entity";
+import type { Mode } from "../../core/Mode";
 import {
     type ModeChangeEvent,
     ModeController,
     type PointerDownEvent,
 } from "../../core/ModeController";
-import type { Entity } from "../../core/model/Entity";
-import type { Mode } from "../../core/model/Mode";
 import type { SelectModeController } from "./SelectModeController";
 
 export class EditTextModeController extends ModeController {

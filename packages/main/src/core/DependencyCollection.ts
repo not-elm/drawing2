@@ -1,4 +1,4 @@
-import { assert } from "../../lib/assert";
+import { assert } from "../lib/assert";
 import {
     type Dependency,
     type SerializedDependency,

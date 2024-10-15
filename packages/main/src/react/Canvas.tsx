@@ -1,5 +1,5 @@
 import { type WheelEventHandler, useCallback, useEffect } from "react";
-import { getEntitiesInViewport } from "../core/model/Page";
+import { getEntitiesInViewport } from "../core/Page";
 import { BrushRect } from "./BrushRect";
 import { SelectionRect } from "./SelectionRect";
 import { SnapGuideLayer } from "./SnapGuideLayer";
@@ -91,12 +91,10 @@ export function Canvas() {
                     transformOrigin: `${viewport.rect.left}px ${viewport.rect.top}px`,
                 }}
             >
-                {getEntitiesInViewport(page, viewport, app.handle).map(
-                    (entity) => {
-                        const View = app.viewHandle.getViewComponent(entity);
-                        return <View entity={entity} key={entity.id} />;
-                    },
-                )}
+                {getEntitiesInViewport(page, viewport).map((entity) => {
+                    const View = app.getEntityView(entity);
+                    return <View entity={entity} key={entity.props.id} />;
+                })}
                 <BrushRect />
             </div>
 

@@ -1,16 +1,15 @@
 import { assert } from "../lib/assert";
 import { Transform } from "../lib/geo/Transform";
 import { randomId } from "../lib/randomId";
-import type { EntityHandleMap } from "./EntityHandleMap";
 import {
     type Dependency,
     type SerializedDependency,
     deserializeDependency,
     serializeDependency,
-} from "./model/Dependency";
-import type { Entity } from "./model/Entity";
-import type { Page } from "./model/Page";
-import type { SerializedEntity } from "./model/SerializedPage";
+} from "./Dependency";
+import type { Entity } from "./Entity";
+import type { EntityConverter, SerializedEntity } from "./EntityDeserializer";
+import type { Page } from "./Page";
 
 interface ClipboardData {
     entities: SerializedEntity[];
@@ -18,7 +17,7 @@ interface ClipboardData {
 }
 
 export class ClipboardService {
-    constructor(private readonly handle: EntityHandleMap) {}
+    constructor(private readonly entityConverter: EntityConverter) {}
 
     copy(page: Page, entityIds: string[]): Promise<void> {
         const entityIdSet = new Set(entityIds);
@@ -39,9 +38,7 @@ export class ClipboardService {
         );
 
         const data: ClipboardData = {
-            entities: entitiesInOrder.map((entity) =>
-                this.handle.serialize(entity),
-            ),
+            entities: entitiesInOrder.map((entity) => entity.serialize()),
             dependencies: dependencies.map(serializeDependency),
         };
 
@@ -59,18 +56,15 @@ export class ClipboardService {
             const idMap = new Map<string, string>();
 
             const entities = data.entities
-                .map((entity) => this.handle.deserialize(entity))
+                .map((data) => this.entityConverter.deserialize(data))
                 .map((entity) => {
                     // Renew IDs
                     const newId = randomId();
-                    idMap.set(entity.id, newId);
-                    entity.id = newId;
+                    idMap.set(entity.props.id, newId);
+                    entity.props.id = newId;
 
                     // Move entities a little bit to avoid overlapping with copy sources
-                    return this.handle.transform(
-                        entity,
-                        Transform.translate(10, 10),
-                    );
+                    return entity.transform(Transform.translate(10, 10));
                 });
 
             const dependencies = data.dependencies.map(deserializeDependency);

@@ -1,5 +1,7 @@
 import type { App } from "../../core/App";
 import type { CanvasStateStore } from "../../core/CanvasStateStore";
+import { Direction } from "../../core/Direction";
+import type { Entity } from "../../core/Entity";
 import type { GestureRecognizer } from "../../core/GestureRecognizer";
 import type { HistoryManager } from "../../core/HistoryManager";
 import {
@@ -7,16 +9,20 @@ import {
     type PointerDownEvent,
 } from "../../core/ModeController";
 import type { SnapGuideStore } from "../../core/SnapGuideStore";
+import { createScaleTransformHandle } from "../../core/TransformHandle";
 import type { ViewportStore } from "../../core/ViewportStore";
 import { createTransformSession } from "../../core/createTransformSession";
-import { Direction } from "../../core/model/Direction";
-import type { Entity } from "../../core/model/Entity";
-import { PropertyKey } from "../../core/model/PropertyKey";
-import { createScaleTransformHandle } from "../../core/model/TransformHandle";
 import { Rect } from "../../lib/geo/Rect";
 import { getRectanglePath } from "../../lib/geo/path";
 import { randomId } from "../../lib/randomId";
-import type { ShapeEntity } from "../entity/ShapeEntity/ShapeEntity";
+import { ShapeEntity } from "../entity/ShapeEntity/ShapeEntity";
+import { PROPERTY_KEY_COLOR_ID } from "../property/Colors";
+import { PROPERTY_KEY_FILL_STYLE } from "../property/FillStyle";
+import { PROPERTY_KEY_STROKE_STYLE } from "../property/StrokeStyle";
+import {
+    PROPERTY_KEY_TEXT_ALIGNMENT_X,
+    PROPERTY_KEY_TEXT_ALIGNMENT_Y,
+} from "../property/TextAlignment";
 
 export class NewShapeModeController extends ModeController {
     constructor(
@@ -48,7 +54,7 @@ export class NewShapeModeController extends ModeController {
 
         this.app.setMode({ type: "select" });
         this.canvasStateStore.unselectAll();
-        this.canvasStateStore.select(shape.id);
+        this.canvasStateStore.select(shape.props.id);
 
         this.gestureRecognizer.addSessionHandlers(
             data.pointerId,
@@ -59,35 +65,33 @@ export class NewShapeModeController extends ModeController {
                     this.viewportStore,
                     this.snapGuideStore,
                     Direction.bottomRight,
-                    this.app.handle,
                 ),
             ),
         );
     }
 
     private insertNewShape(rect: Rect): ShapeEntity {
-        const shape: ShapeEntity = {
-            type: "shape",
+        const shape = new ShapeEntity({
             id: randomId(),
             rect,
             content: "",
-            [PropertyKey.TEXT_ALIGNMENT_X]: this.app.defaultPropertyStore
+            [PROPERTY_KEY_TEXT_ALIGNMENT_X]: this.app.defaultPropertyStore
                 .getState()
-                .getOrDefault(PropertyKey.TEXT_ALIGNMENT_X, "start"),
-            [PropertyKey.TEXT_ALIGNMENT_Y]: this.app.defaultPropertyStore
+                .getOrDefault(PROPERTY_KEY_TEXT_ALIGNMENT_X, "start"),
+            [PROPERTY_KEY_TEXT_ALIGNMENT_Y]: this.app.defaultPropertyStore
                 .getState()
-                .getOrDefault(PropertyKey.TEXT_ALIGNMENT_Y, "start"),
-            [PropertyKey.COLOR_ID]: this.app.defaultPropertyStore
+                .getOrDefault(PROPERTY_KEY_TEXT_ALIGNMENT_Y, "start"),
+            [PROPERTY_KEY_COLOR_ID]: this.app.defaultPropertyStore
                 .getState()
-                .getOrDefault(PropertyKey.COLOR_ID, 0),
-            [PropertyKey.FILL_STYLE]: this.app.defaultPropertyStore
+                .getOrDefault(PROPERTY_KEY_COLOR_ID, 0),
+            [PROPERTY_KEY_FILL_STYLE]: this.app.defaultPropertyStore
                 .getState()
-                .getOrDefault(PropertyKey.FILL_STYLE, "none"),
-            [PropertyKey.STROKE_STYLE]: this.app.defaultPropertyStore
+                .getOrDefault(PROPERTY_KEY_FILL_STYLE, "none"),
+            [PROPERTY_KEY_STROKE_STYLE]: this.app.defaultPropertyStore
                 .getState()
-                .getOrDefault(PropertyKey.STROKE_STYLE, "solid"),
+                .getOrDefault(PROPERTY_KEY_STROKE_STYLE, "solid"),
             path: getRectanglePath(),
-        };
+        });
 
         this.app.edit((tx) => {
             tx.insertEntities([shape]);

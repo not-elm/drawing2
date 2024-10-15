@@ -1,6 +1,9 @@
 import styled from "@emotion/styled";
 
 const Card = styled.div({
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "stretch",
     background: "#fff",
     border: "1px solid #c0c0c0",
     boxShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",

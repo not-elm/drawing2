@@ -2,37 +2,35 @@ import type { App } from "../../core/App";
 import type { AppStateStore } from "../../core/AppStateStore";
 import type { BrushStore } from "../../core/BrushStore";
 import type { CanvasStateStore } from "../../core/CanvasStateStore";
+import { Direction } from "../../core/Direction";
+import type { Entity } from "../../core/Entity";
 import type { GestureRecognizer } from "../../core/GestureRecognizer";
 import type { HistoryManager } from "../../core/HistoryManager";
 import {
     ModeController,
     type PointerDownEvent,
 } from "../../core/ModeController";
+import type { PathNode } from "../../core/Path";
 import {
     type PointerEventHandlers,
     mergeHandlers,
 } from "../../core/PointerEventSession";
 import type { SnapGuideStore } from "../../core/SnapGuideStore";
+import {
+    createMoveTransformHandle,
+    createScaleTransformHandle,
+} from "../../core/TransformHandle";
 import type { ViewportStore } from "../../core/ViewportStore";
 import { createBrushSelectSession } from "../../core/createBrushSelectSession";
 import { createMovePointSession } from "../../core/createMovePointSession";
 import { createTransformSession } from "../../core/createTransformSession";
-import { Direction } from "../../core/model/Direction";
-import type { Entity } from "../../core/model/Entity";
-import {
-    createMoveTransformHandle,
-    createScaleTransformHandle,
-} from "../../core/model/TransformHandle";
 import { assert } from "../../lib/assert";
 import type { Point } from "../../lib/geo/Point";
 import type { Rect } from "../../lib/geo/Rect";
 import { testHitEntities } from "../../lib/testHitEntities";
-import {
-    type PathEntity,
-    type PathNode,
-    getEdgesFromPath,
-} from "../entity/PathEntity/PathEntity";
-import type { TextEntity } from "../entity/TextEntity/TextEntity";
+import { PathEntity } from "../entity/PathEntity/PathEntity";
+import { TextEntity } from "../entity/TextEntity/TextEntity";
+import { PROPERTY_KEY_SIZING_MODE } from "../property/SizingMode";
 import { EditTextModeController } from "./EditTextModeController";
 import type { NewTextModeController } from "./NewTextModeController";
 
@@ -66,7 +64,7 @@ export class SelectModeController extends ModeController {
             this.canvasStateStore.unselectAll();
         }
 
-        this.canvasStateStore.select(entity.id);
+        this.canvasStateStore.select(entity.props.id);
 
         this.gestureRecognizer.addSessionHandlers(
             data.pointerId,
@@ -77,7 +75,6 @@ export class SelectModeController extends ModeController {
                     this.viewportStore,
                     this.snapGuideStore,
                     data.point,
-                    this.app.handle,
                 ),
             ),
         );
@@ -96,11 +93,7 @@ export class SelectModeController extends ModeController {
 
         this.gestureRecognizer.addSessionHandlers(
             data.pointerId,
-            createBrushSelectSession(
-                this.canvasStateStore,
-                this.brushStore,
-                this.app.handle,
-            ),
+            createBrushSelectSession(this.canvasStateStore, this.brushStore),
         );
     }
 
@@ -176,7 +169,6 @@ export class SelectModeController extends ModeController {
                         this.viewportStore,
                         this.snapGuideStore,
                         Direction.topLeft,
-                        this.app.handle,
                     ),
                 );
                 break;
@@ -189,7 +181,6 @@ export class SelectModeController extends ModeController {
                         this.viewportStore,
                         this.snapGuideStore,
                         Direction.top,
-                        this.app.handle,
                     ),
                 );
                 break;
@@ -202,7 +193,6 @@ export class SelectModeController extends ModeController {
                         this.viewportStore,
                         this.snapGuideStore,
                         Direction.topRight,
-                        this.app.handle,
                     ),
                 );
                 break;
@@ -215,7 +205,6 @@ export class SelectModeController extends ModeController {
                         this.viewportStore,
                         this.snapGuideStore,
                         Direction.left,
-                        this.app.handle,
                     ),
                 );
                 break;
@@ -228,7 +217,6 @@ export class SelectModeController extends ModeController {
                         this.viewportStore,
                         this.snapGuideStore,
                         Direction.right,
-                        this.app.handle,
                     ),
                 );
                 break;
@@ -241,7 +229,6 @@ export class SelectModeController extends ModeController {
                         this.viewportStore,
                         this.snapGuideStore,
                         Direction.bottomLeft,
-                        this.app.handle,
                     ),
                 );
                 break;
@@ -254,7 +241,6 @@ export class SelectModeController extends ModeController {
                         this.viewportStore,
                         this.snapGuideStore,
                         Direction.bottom,
-                        this.app.handle,
                     ),
                 );
                 break;
@@ -267,7 +253,6 @@ export class SelectModeController extends ModeController {
                         this.viewportStore,
                         this.snapGuideStore,
                         Direction.bottomRight,
-                        this.app.handle,
                     ),
                 );
                 break;
@@ -280,7 +265,6 @@ export class SelectModeController extends ModeController {
                         this.viewportStore,
                         this.snapGuideStore,
                         point,
-                        this.app.handle,
                     ),
                 );
                 break;
@@ -302,13 +286,18 @@ export class SelectModeController extends ModeController {
                         this.viewportStore,
                         this.snapGuideStore,
                         point,
-                        this.app.handle,
                     ),
                 );
                 break;
             }
             case "SelectionText.Left": {
-                this.canvasStateStore.setTextEntitySizingMode("fixed");
+                this.canvasStateStore.edit((tx) => {
+                    tx.updateProperty(
+                        this.canvasStateStore.getState().selectedEntityIds,
+                        PROPERTY_KEY_SIZING_MODE,
+                        "fixed",
+                    );
+                });
                 session = createTransformSession(
                     this.historyManager,
                     createScaleTransformHandle(
@@ -316,7 +305,6 @@ export class SelectModeController extends ModeController {
                         this.viewportStore,
                         this.snapGuideStore,
                         Direction.left,
-                        this.app.handle,
                     ),
                 );
                 break;
@@ -329,13 +317,18 @@ export class SelectModeController extends ModeController {
                         this.viewportStore,
                         this.snapGuideStore,
                         point,
-                        this.app.handle,
                     ),
                 );
                 break;
             }
             case "SelectionText.Right": {
-                this.canvasStateStore.setTextEntitySizingMode("fixed");
+                this.canvasStateStore.edit((tx) => {
+                    tx.updateProperty(
+                        this.canvasStateStore.getState().selectedEntityIds,
+                        PROPERTY_KEY_SIZING_MODE,
+                        "fixed",
+                    );
+                });
                 session = createTransformSession(
                     this.historyManager,
                     createScaleTransformHandle(
@@ -343,7 +336,6 @@ export class SelectModeController extends ModeController {
                         this.viewportStore,
                         this.snapGuideStore,
                         Direction.right,
-                        this.app.handle,
                     ),
                 );
                 break;
@@ -360,12 +352,13 @@ export class SelectModeController extends ModeController {
                         this.canvasStateStore.getState().page,
                         data.new,
                         this.viewportStore.getState().scale,
-                        this.app.handle,
                     ).entities.at(0);
 
                     if (data.shiftKey) {
                         if (object !== undefined) {
-                            this.canvasStateStore.unselect(object.target.id);
+                            this.canvasStateStore.unselect(
+                                object.target.props.id,
+                            );
                         }
                     } else {
                         if (object !== undefined) {
@@ -374,16 +367,18 @@ export class SelectModeController extends ModeController {
                                     .selectedEntityIds;
                             if (
                                 selectedEntityIds.length === 1 &&
-                                selectedEntityIds[0] === object.target.id
+                                selectedEntityIds[0] === object.target.props.id
                             ) {
                                 this.app.setMode(
                                     EditTextModeController.createMode(
-                                        object.target.id,
+                                        object.target.props.id,
                                     ),
                                 );
                             } else {
                                 this.canvasStateStore.unselectAll();
-                                this.canvasStateStore.select(object.target.id);
+                                this.canvasStateStore.select(
+                                    object.target.props.id,
+                                );
                             }
                         } else {
                             this.canvasStateStore.unselectAll();
@@ -406,10 +401,10 @@ export class SelectModeController extends ModeController {
             const entity = this.canvasStateStore
                 .getState()
                 .getSelectedEntities()[0];
-            assert(entity.type === "path", "Selected entity is not path");
+            assert(entity instanceof PathEntity, "Selected entity is not path");
             const pathEntity = entity as PathEntity;
 
-            for (const node of Object.values(pathEntity.nodes)) {
+            for (const node of Object.values(pathEntity.props.nodes)) {
                 if (point.getDistance(node.point).distance < marginInCanvas) {
                     return {
                         type: "SelectionPath.Node",
@@ -419,7 +414,7 @@ export class SelectModeController extends ModeController {
                 }
             }
 
-            for (const edge of getEdgesFromPath(pathEntity)) {
+            for (const edge of pathEntity.getOutline()) {
                 if (edge.getDistance(point).distance < marginInCanvas) {
                     {
                         return { type: "SelectionPath.Edge", path: pathEntity };
@@ -432,18 +427,18 @@ export class SelectModeController extends ModeController {
             const entity = this.canvasStateStore
                 .getState()
                 .getSelectedEntities()[0];
-            assert(entity.type === "text", "Selected entity is not text");
+            assert(entity instanceof TextEntity, "Selected entity is not text");
             const textEntity = entity as TextEntity;
 
             const hitAreaX = testHitWithRange(
                 point.x,
-                textEntity.rect.left,
-                textEntity.rect.right,
+                textEntity.props.rect.left,
+                textEntity.props.rect.right,
                 marginInCanvas,
             );
             if (
-                textEntity.rect.top - marginInCanvas < point.y &&
-                point.y < textEntity.rect.bottom + marginInCanvas
+                textEntity.props.rect.top - marginInCanvas < point.y &&
+                point.y < textEntity.props.rect.bottom + marginInCanvas
             ) {
                 switch (hitAreaX) {
                     case "start": {
@@ -468,7 +463,7 @@ export class SelectModeController extends ModeController {
         if (selectionType === "rect") {
             const selectionRect = this.canvasStateStore
                 .getState()
-                .getSelectionRect(this.app.handle);
+                .getSelectionRect();
             assert(selectionRect !== null, "SelectionRect must not be null");
             const hitAreaX = testHitWithRange(
                 point.x,
@@ -568,14 +563,14 @@ export class SelectModeController extends ModeController {
 
         if (
             selectedEntities.length === 1 &&
-            selectedEntities[0].type === "path"
+            selectedEntities[0] instanceof PathEntity
         ) {
             return "path";
         }
 
         if (
             selectedEntities.length === 1 &&
-            selectedEntities[0].type === "text"
+            selectedEntities[0] instanceof TextEntity
         ) {
             return "text";
         }

@@ -1,17 +1,27 @@
 import { MathJax } from "better-react-mathjax";
 import { memo } from "react";
+import { useStore } from "../../../react/hooks/useStore";
+import { useApp } from "../../../react/useApp";
 import {
     type ColorId,
     ColorPaletteBackground,
     ColorPaletteBackgroundMonoColor,
     Colors,
-} from "../../../core/model/Colors";
-import type { FillStyle } from "../../../core/model/FillStyle";
-import { PropertyKey } from "../../../core/model/PropertyKey";
-import type { StrokeStyle } from "../../../core/model/StrokeStyle";
-import type { TextAlignment } from "../../../core/model/TextAlignment";
-import { useStore } from "../../../react/hooks/useStore";
-import { useApp } from "../../../react/useApp";
+    PROPERTY_KEY_COLOR_ID,
+} from "../../property/Colors";
+import {
+    type FillStyle,
+    PROPERTY_KEY_FILL_STYLE,
+} from "../../property/FillStyle";
+import {
+    PROPERTY_KEY_STROKE_STYLE,
+    type StrokeStyle,
+} from "../../property/StrokeStyle";
+import {
+    PROPERTY_KEY_TEXT_ALIGNMENT_X,
+    PROPERTY_KEY_TEXT_ALIGNMENT_Y,
+    type TextAlignment,
+} from "../../property/TextAlignment";
 import { STROKE_WIDTH_BASE } from "../PathEntity/PathView";
 import type { ShapeEntity } from "./ShapeEntity";
 
@@ -22,27 +32,27 @@ export const ShapeView = memo(function ShapeView({
     const appState = useStore(app.appStateStore);
     const isLabelEditing =
         appState.mode.type === "edit-text" &&
-        appState.mode.entityId === entity.id;
+        appState.mode.entityId === entity.props.id;
 
     return (
         <div
             style={{
-                transform: `translate(${entity.rect.left}px, ${entity.rect.top}px)`,
+                transform: `translate(${entity.props.rect.left}px, ${entity.props.rect.top}px)`,
             }}
             css={{ position: "absolute" }}
         >
             <ShapeViewInner
                 isLabelEditing={isLabelEditing}
-                shapeId={entity.id}
-                width={entity.rect.width}
-                height={entity.rect.height}
-                path={entity.path}
-                colorId={entity[PropertyKey.COLOR_ID]}
-                fillStyle={entity[PropertyKey.FILL_STYLE]}
-                textAlignX={entity[PropertyKey.TEXT_ALIGNMENT_X]}
-                textAlignY={entity[PropertyKey.TEXT_ALIGNMENT_Y]}
-                shapeLabel={entity.content}
-                strokeStyle={entity.strokeStyle}
+                shapeId={entity.props.id}
+                width={entity.props.rect.width}
+                height={entity.props.rect.height}
+                path={entity.props.path}
+                colorId={entity.props[PROPERTY_KEY_COLOR_ID]}
+                textAlignX={entity.props[PROPERTY_KEY_TEXT_ALIGNMENT_X]}
+                textAlignY={entity.props[PROPERTY_KEY_TEXT_ALIGNMENT_Y]}
+                fillStyle={entity.props[PROPERTY_KEY_FILL_STYLE]}
+                strokeStyle={entity.props[PROPERTY_KEY_STROKE_STYLE]}
+                shapeLabel={entity.props.content}
             />
         </div>
     );

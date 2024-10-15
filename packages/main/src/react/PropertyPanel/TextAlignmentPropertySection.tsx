@@ -1,5 +1,8 @@
-import { PropertyKey } from "../../core/model/PropertyKey";
-import type { TextAlignment } from "../../core/model/TextAlignment";
+import {
+    PROPERTY_KEY_TEXT_ALIGNMENT_X,
+    PROPERTY_KEY_TEXT_ALIGNMENT_Y,
+    type TextAlignment,
+} from "../../default/property/TextAlignment";
 import { Card } from "../Card";
 import { useApp } from "../useApp";
 
@@ -16,9 +19,9 @@ const ALIGNMENT_OPTION_Y = [
 
 export function TextAlignmentPropertySection() {
     const app = useApp();
-    const selectedX = useSelectedPropertyValue(PropertyKey.TEXT_ALIGNMENT_X);
+    const selectedX = useSelectedPropertyValue(PROPERTY_KEY_TEXT_ALIGNMENT_X);
     const selectedY =
-        useSelectedPropertyValue(PropertyKey.TEXT_ALIGNMENT_Y) ?? "center";
+        useSelectedPropertyValue(PROPERTY_KEY_TEXT_ALIGNMENT_Y) ?? "center";
 
     const handleClick = (
         alignmentX: TextAlignment,
@@ -27,16 +30,16 @@ export function TextAlignmentPropertySection() {
         app.canvasStateStore.edit((tx) => {
             tx.updateProperty(
                 app.canvasStateStore.getState().selectedEntityIds,
-                PropertyKey.TEXT_ALIGNMENT_X,
+                PROPERTY_KEY_TEXT_ALIGNMENT_X,
                 alignmentX,
             ).updateProperty(
                 app.canvasStateStore.getState().selectedEntityIds,
-                PropertyKey.TEXT_ALIGNMENT_Y,
+                PROPERTY_KEY_TEXT_ALIGNMENT_Y,
                 alignmentY,
             );
         });
-        app.defaultPropertyStore.set(PropertyKey.TEXT_ALIGNMENT_X, alignmentX);
-        app.defaultPropertyStore.set(PropertyKey.TEXT_ALIGNMENT_Y, alignmentY);
+        app.defaultPropertyStore.set(PROPERTY_KEY_TEXT_ALIGNMENT_X, alignmentX);
+        app.defaultPropertyStore.set(PROPERTY_KEY_TEXT_ALIGNMENT_Y, alignmentY);
     };
 
     return (

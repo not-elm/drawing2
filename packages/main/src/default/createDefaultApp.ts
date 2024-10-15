@@ -1,10 +1,10 @@
 import { App } from "../core/App";
-import { PathEntityHandle } from "./entity/PathEntity/PathEntityHandle";
-import { PathEntityViewHandle } from "./entity/PathEntity/PathEntityViewHandle";
-import { ShapeEntityHandle } from "./entity/ShapeEntity/ShapeEntityHandle";
-import { ShapeEntityViewHandle } from "./entity/ShapeEntity/ShapeEntityViewHandle";
-import { TextEntityHandle } from "./entity/TextEntity/TextEntityHandle";
-import { TextEntityViewHandle } from "./entity/TextEntity/TextEntityViewHandle";
+import { PathEntity } from "./entity/PathEntity/PathEntity";
+import { PathView } from "./entity/PathEntity/PathView";
+import { ShapeEntity } from "./entity/ShapeEntity/ShapeEntity";
+import { ShapeView } from "./entity/ShapeEntity/ShapeView";
+import { TextEntity } from "./entity/TextEntity/TextEntity";
+import { TextView } from "./entity/TextEntity/TextView";
 import { EditTextModeController } from "./mode/EditTextModeController";
 import { NewPathModeController } from "./mode/NewPathModeController";
 import { NewShapeModeController } from "./mode/NewShapeModeController";
@@ -14,10 +14,9 @@ import { SelectModeController } from "./mode/SelectModeController";
 export function createDefaultApp(): App {
     const app = new App();
 
-    app.viewHandle
-        .register(new PathEntityViewHandle())
-        .register(new ShapeEntityViewHandle())
-        .register(new TextEntityViewHandle());
+    app.registerEntityView(PathEntity, PathView)
+        .registerEntityView(ShapeEntity, ShapeView)
+        .registerEntityView(TextEntity, TextView);
 
     const newTextModeController = new NewTextModeController(
         app,
@@ -60,9 +59,30 @@ export function createDefaultApp(): App {
         .addModeController(
             new EditTextModeController(app, selectModeController),
         )
-        .registerEntityHandle(new PathEntityHandle())
-        .registerEntityHandle(new ShapeEntityHandle())
-        .registerEntityHandle(new TextEntityHandle());
+        .registerEntityConverter("path", {
+            deserialize(data) {
+                return PathEntity.deserialize(data);
+            },
+            serialize(entity) {
+                return entity.serialize();
+            },
+        })
+        .registerEntityConverter("shape", {
+            deserialize(data) {
+                return ShapeEntity.deserialize(data);
+            },
+            serialize(entity) {
+                return entity.serialize();
+            },
+        })
+        .registerEntityConverter("text", {
+            deserialize(data) {
+                return TextEntity.deserialize(data);
+            },
+            serialize(entity) {
+                return entity.serialize();
+            },
+        });
 
     return app;
 }

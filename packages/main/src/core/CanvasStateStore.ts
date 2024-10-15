@@ -1,24 +1,45 @@
 import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
+import { dataclass } from "../lib/dataclass";
 import { Point } from "../lib/geo/Point";
+import { Rect } from "../lib/geo/Rect";
+import { isNotNullish } from "../lib/isNullish";
 import type { ClipboardService } from "./ClipboardService";
-import type { EntityHandleMap } from "./EntityHandleMap";
-import { CanvasState } from "./model/CanvasState";
-import { DependencyCollection } from "./model/DependencyCollection";
-import type { Page } from "./model/Page";
+import { DependencyCollection } from "./DependencyCollection";
+import type { Entity } from "./Entity";
+import type { EntityConverter } from "./EntityDeserializer";
+import type { Page } from "./Page";
 import {
     type SerializedPage,
     deserializePage,
     serializePage,
-} from "./model/SerializedPage";
-import type { TextEntitySizingMode } from "./model/TextEntitySizingMode";
-import { Transaction } from "./model/Transaction";
-import type { Viewport } from "./model/Viewport";
+} from "./SerializedPage";
+import { Transaction } from "./Transaction";
+import type { Viewport } from "./Viewport";
+
+export class CanvasState extends dataclass<{
+    readonly page: Page;
+    readonly selectedEntityIds: string[];
+}>() {
+    getSelectionRect(): Rect | null {
+        const rects = this.getSelectedEntities().map((entity) =>
+            entity.getBoundingRect(),
+        );
+        if (rects.length === 0) return null;
+        return Rect.union(rects);
+    }
+
+    getSelectedEntities(): Entity[] {
+        return [...this.selectedEntityIds]
+            .map((id) => this.page.entities[id])
+            .filter(isNotNullish);
+    }
+}
 
 export class CanvasStateStore extends Store<CanvasState> {
     constructor(
-        private readonly handle: EntityHandleMap,
         private readonly clipboardService: ClipboardService,
+        private readonly entityConverter: EntityConverter,
     ) {
         super(
             new CanvasState({
@@ -51,33 +72,21 @@ export class CanvasStateStore extends Store<CanvasState> {
         const [id] = newEntityIds.splice(currentIndex, 1);
         newEntityIds.splice(newIndex, 0, id);
 
-        this.setState(
-            this.state.setPage({
-                ...this.state.page,
-                entityIds: newEntityIds,
-            }),
-        );
+        this.setPage({
+            ...this.state.page,
+            entityIds: newEntityIds,
+        });
     }
 
     edit(updater: (tx: Transaction) => void) {
         const tx = new Transaction(this.state.page);
         updater(tx);
-        this.setPage(tx.commit(this.handle));
+        this.setPage(tx.commit());
     }
 
     setContent(content: string) {
         this.edit((tx) => {
             tx.updateProperty(this.state.selectedEntityIds, "content", content);
-        });
-    }
-
-    setTextEntitySizingMode(sizingMode: TextEntitySizingMode) {
-        this.edit((tx) => {
-            tx.updateProperty(
-                this.state.selectedEntityIds,
-                "sizingMode",
-                sizingMode,
-            );
         });
     }
 
@@ -215,7 +224,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 
             if (otherEntity === undefined) continue;
 
-            if (this.handle.isOverlapWithEntity(refEntity, otherEntity)) {
+            if (refEntity.isOverlapWithEntity(otherEntity)) {
                 return { entityId: entityId, globalIndex };
             }
         }
@@ -250,7 +259,7 @@ export class CanvasStateStore extends Store<CanvasState> {
 
             if (otherEntity === undefined) continue;
 
-            if (this.handle.isOverlapWithEntity(refEntity, otherEntity)) {
+            if (refEntity.isOverlapWithEntity(otherEntity)) {
                 return { entityId: entityId, globalIndex };
             }
         }
@@ -259,27 +268,49 @@ export class CanvasStateStore extends Store<CanvasState> {
     }
 
     setPage(page: Page) {
-        this.setState(this.state.setPage(page));
+        this.setState(this.state.copy({ page }));
     }
 
     select(id: string) {
-        this.setState(this.state.select(id));
+        if (this.state.selectedEntityIds.includes(id)) {
+            return this;
+        }
+
+        return this.setState(
+            this.state.copy({
+                selectedEntityIds: [...this.state.selectedEntityIds, id].filter(
+                    (id) => id in this.state.page.entities,
+                ),
+            }),
+        );
     }
 
     selectAll() {
-        this.setState(this.state.selectAll());
+        this.setState(
+            this.state.copy({
+                selectedEntityIds: this.state.page.entityIds,
+            }),
+        );
     }
 
     unselect(id: string) {
-        this.setState(this.state.unselect(id));
+        this.state.copy({
+            selectedEntityIds: this.state.selectedEntityIds
+                .filter((i) => i !== id)
+                .filter((id) => id in this.state.page.entities),
+        });
     }
 
     unselectAll() {
-        this.setState(this.state.unselectAll());
+        this.setState(
+            this.state.copy({
+                selectedEntityIds: [],
+            }),
+        );
     }
 
     setSelectedEntityIds(ids: string[]) {
-        this.setState(this.state.setSelectedEntityIds(ids));
+        this.setState(this.state.copy({ selectedEntityIds: ids }));
     }
 
     copy() {
@@ -302,7 +333,7 @@ export class CanvasStateStore extends Store<CanvasState> {
         this.edit((tx) => {
             tx.insertEntities(entities).addDependencies(dependencies);
         });
-        this.setSelectedEntityIds(entities.map((entity) => entity.id));
+        this.setSelectedEntityIds(entities.map((entity) => entity.props.id));
 
         // Copy pasted entities so that next paste operation will
         // create a new copy of entities in different position
@@ -310,7 +341,7 @@ export class CanvasStateStore extends Store<CanvasState> {
     }
 
     private saveToLocalStorage() {
-        const serializedPage = serializePage(this.state.page, this.handle);
+        const serializedPage = serializePage(this.state.page);
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(serializedPage));
     }
 
@@ -320,9 +351,10 @@ export class CanvasStateStore extends Store<CanvasState> {
             if (data === null) return;
 
             const serializedPage: SerializedPage = JSON.parse(data);
-            const page = deserializePage(serializedPage, this.handle);
+            const page = deserializePage(serializedPage, this.entityConverter);
 
-            this.setState(this.state.setPage(page).unselectAll());
+            this.setPage(page);
+            this.unselectAll();
         } catch {}
     }
 }

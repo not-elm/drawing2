@@ -1,4 +1,4 @@
-import type { Rect } from "../../lib/geo/Rect";
+import type { Rect } from "../lib/geo/Rect";
 
 export interface Viewport {
     rect: Rect;

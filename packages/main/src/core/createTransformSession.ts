@@ -1,6 +1,6 @@
 import type { HistoryManager } from "./HistoryManager";
 import type { PointerEventHandlers } from "./PointerEventSession";
-import type { TransformHandle } from "./model/TransformHandle";
+import type { TransformHandle } from "./TransformHandle";
 
 export function createTransformSession(
     historyManager: HistoryManager,

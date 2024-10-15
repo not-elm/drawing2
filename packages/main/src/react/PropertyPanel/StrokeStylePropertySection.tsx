@@ -1,24 +1,26 @@
-import { PropertyKey } from "../../core/model/PropertyKey";
 import { useApp } from "../useApp";
 
-import type { StrokeStyle } from "../../core/model/StrokeStyle";
+import {
+    PROPERTY_KEY_STROKE_STYLE,
+    type StrokeStyle,
+} from "../../default/property/StrokeStyle";
 import { Button } from "../Button";
 import { Card } from "../Card";
 import { useSelectedPropertyValue } from "./useSelectedPropertyValue";
 
 export function StrokeStylePropertySection() {
     const app = useApp();
-    const selectedValue = useSelectedPropertyValue(PropertyKey.STROKE_STYLE);
+    const selectedValue = useSelectedPropertyValue(PROPERTY_KEY_STROKE_STYLE);
 
     const handleClick = (strokeStyle: StrokeStyle) => {
         app.canvasStateStore.edit((tx) => {
             tx.updateProperty(
                 app.canvasStateStore.getState().selectedEntityIds,
-                PropertyKey.STROKE_STYLE,
+                PROPERTY_KEY_STROKE_STYLE,
                 strokeStyle,
             );
         });
-        app.defaultPropertyStore.set(PropertyKey.STROKE_STYLE, strokeStyle);
+        app.defaultPropertyStore.set(PROPERTY_KEY_STROKE_STYLE, strokeStyle);
     };
 
     return (
