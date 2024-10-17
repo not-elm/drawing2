@@ -11,6 +11,7 @@ import { SizingModePropertySection } from "./PropertyPanel/SizingModePropertySec
 import { StrokeStylePropertySection } from "./PropertyPanel/StrokeStylePropertySection";
 import { StrokeWidthPropertySection } from "./PropertyPanel/StrokeWidthPropertySection";
 import { TextAlignmentPropertySection } from "./PropertyPanel/TextAlignmentPropertySection";
+import { StatusBar } from "./StatusBar";
 import { ToolBar } from "./ToolBar";
 import { AppProvider } from "./useApp";
 
@@ -126,7 +127,8 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                     </div>
                 </div>
             </MathJaxContext>
-            ,
+
+            <StatusBar />
         </AppProvider>
     );
 }

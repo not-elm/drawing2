@@ -28,17 +28,14 @@ export function TextAlignmentPropertySection() {
         alignmentX: TextAlignment,
         alignmentY: TextAlignment,
     ) => {
-        app.canvasStateStore.edit((tx) => {
-            tx.updateProperty(
-                app.canvasStateStore.getState().selectedEntityIds,
-                PROPERTY_KEY_TEXT_ALIGNMENT_X,
-                alignmentX,
-            ).updateProperty(
-                app.canvasStateStore.getState().selectedEntityIds,
-                PROPERTY_KEY_TEXT_ALIGNMENT_Y,
-                alignmentY,
-            );
-        });
+        app.canvasStateStore.updateProperty(
+            PROPERTY_KEY_TEXT_ALIGNMENT_X,
+            alignmentX,
+        );
+        app.canvasStateStore.updateProperty(
+            PROPERTY_KEY_TEXT_ALIGNMENT_Y,
+            alignmentY,
+        );
         app.defaultPropertyStore.set(PROPERTY_KEY_TEXT_ALIGNMENT_X, alignmentX);
         app.defaultPropertyStore.set(PROPERTY_KEY_TEXT_ALIGNMENT_Y, alignmentY);
     };

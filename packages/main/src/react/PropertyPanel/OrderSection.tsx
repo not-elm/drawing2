@@ -8,7 +8,7 @@ export function OrderSection() {
     const { mode } = useStore(app.appStateStore);
     const { selectedEntityIds } = useStore(app.canvasStateStore);
 
-    const visible = mode.type === "select" && selectedEntityIds.length > 0;
+    const visible = mode.type === "select" && selectedEntityIds.size > 0;
 
     if (!visible) return null;
 

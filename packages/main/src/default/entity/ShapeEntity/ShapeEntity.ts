@@ -1,7 +1,9 @@
-import { Entity } from "../../../core/Entity";
+import type { App } from "../../../core/App";
+import { Entity, type EntityTapEvent } from "../../../core/Entity";
 import type { JSONObject } from "../../../core/JSONObject";
 import { Rect } from "../../../lib/geo/Rect";
-import type { Transform } from "../../../lib/geo/Transform";
+import type { TransformMatrix } from "../../../lib/geo/TransformMatrix";
+import { EditTextModeController } from "../../mode/EditTextModeController";
 import { type ColorId, PROPERTY_KEY_COLOR_ID } from "../../property/Colors";
 import {
     type FillStyle,
@@ -21,7 +23,7 @@ import {
 export class ShapeEntity extends Entity<{
     id: string;
     rect: Rect;
-    content: string;
+    [PROPERTY_KEY_CONTENT]: string;
     [PROPERTY_KEY_TEXT_ALIGNMENT_X]: TextAlignment;
     [PROPERTY_KEY_TEXT_ALIGNMENT_Y]: TextAlignment;
     [PROPERTY_KEY_COLOR_ID]: ColorId;
@@ -36,8 +38,8 @@ export class ShapeEntity extends Entity<{
         return this.props.rect;
     }
 
-    transform(transform: Transform) {
-        return this.copy({ rect: this.props.rect.transform(transform) });
+    transform(transform: TransformMatrix) {
+        return this.copy({ rect: transform.apply(this.props.rect) });
     }
 
     serialize(): SerializedShapeEntity {
@@ -80,6 +82,12 @@ export class ShapeEntity extends Entity<{
             path: serialized.path,
         });
     }
+
+    onTap(app: App, ev: EntityTapEvent) {
+        if (ev.selectedOnlyThisEntity) {
+            app.setMode(EditTextModeController.createMode(this.props.id));
+        }
+    }
 }
 
 interface SerializedShapeEntity extends JSONObject {
@@ -98,3 +106,5 @@ interface SerializedShapeEntity extends JSONObject {
     strokeWidth: number;
     path: number[][];
 }
+
+export const PROPERTY_KEY_CONTENT = "content";

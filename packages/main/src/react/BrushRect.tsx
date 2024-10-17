@@ -1,4 +1,4 @@
-import { SelectModeController } from "../default/mode/select/SelectModeController";
+import { SelectModeController } from "../core/SelectModeController";
 import { useStore } from "./hooks/useStore";
 import { useApp } from "./useApp";
 

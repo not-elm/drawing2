@@ -1,21 +1,17 @@
 import type { Line } from "../lib/geo/Line";
 import type { Point } from "../lib/geo/Point";
 import type { Rect } from "../lib/geo/Rect";
-import { Transform } from "../lib/geo/Transform";
+import type { TransformMatrix } from "../lib/geo/TransformMatrix";
 import type { App } from "./App";
-import type { SerializedEntity } from "./EntityDeserializer";
+import type { SerializedEntity } from "./EntityConverter";
 import type { JSONObject } from "./JSONObject";
+import type { CanvasPointerEvent } from "./ModeController";
 import type { PathEdge, PathNode } from "./Path";
-import type { Viewport } from "./Viewport";
 
 interface Props {
     id: string;
     [key: string]: unknown;
 }
-
-export type EntityPropsOf<E extends Entity> = E extends Entity<infer P>
-    ? P
-    : never;
 
 export abstract class Entity<P extends Props = Props> {
     constructor(readonly props: P) {}
@@ -29,30 +25,11 @@ export abstract class Entity<P extends Props = Props> {
         return new (this as any).constructor({ ...this.props, ...props });
     }
 
-    getOutlinePath(viewport: Viewport): string {
-        const rect = this.getBoundingRect();
-
-        const transform = Transform.translate(
-            -viewport.rect.left,
-            -viewport.rect.top,
-        ).scale(viewport.rect.topLeft, 0, 0);
-
-        return `M${[
-            rect.topLeft,
-            rect.topRight,
-            rect.bottomRight,
-            rect.bottomLeft,
-        ]
-            .map((point) => transform.apply(point))
-            .map((canvasPoint) => `${canvasPoint.x},${canvasPoint.y}`)
-            .join(", L")} Z`;
-    }
-
     serialize(this: this): SerializedEntity {
         return this as unknown as SerializedEntity;
     }
 
-    transform(transform: Transform): this {
+    transform(transform: TransformMatrix): this {
         return this;
     }
 
@@ -61,17 +38,21 @@ export abstract class Entity<P extends Props = Props> {
     }
 
     setProperty(propertyKey: string, value: unknown): this {
-        if (!this.isPropertySupported(propertyKey)) return this;
+        // if (!this.isPropertySupported(propertyKey)) return this;
 
         return this.copy({ [propertyKey]: value } as Partial<P>);
     }
 
-    getProperty<T = unknown>(propertyKey: string): T | undefined {
-        return this.props[propertyKey] as T | undefined;
+    getProperty<T = unknown>(propertyKey: string, defaultValue: T): T {
+        return (this.props[propertyKey] as T | undefined) ?? defaultValue;
     }
 
     getNodes(this: this): PathNode[] {
         return [];
+    }
+
+    getNodeById(this: this, nodeId: string): PathNode | undefined {
+        return this.getNodes().find((node) => node.id === nodeId);
     }
 
     getEdges(this: this): PathEdge[] {
@@ -130,18 +111,31 @@ export abstract class Entity<P extends Props = Props> {
         return serialized as unknown as Entity;
     }
 
-    static onViewSizeChange(
-        app: App,
-        entity: Entity,
-        width: number,
-        height: number,
-    ): void {}
+    /**
+     * Called when this entity is tapped. This event is called only in select mode.
+     */
+    onTap(app: App, ev: EntityTapEvent): void {}
+
+    /**
+     *  Called when text edit in this entity is started
+     */
+    onTextEditStart(app: App): void {}
+
+    /**
+     *  Called when text edit in this entity is ended
+     */
+    onTextEditEnd(app: App): void {}
+
+    /**
+     *  Called when entity view is resized by browser's layout engine. This
+     *  event is not called when this entity is resized by user interaction.
+     */
+    onViewResize(app: App, width: number, height: number): void {}
 }
 
-export interface EntityConstructor<E extends Entity = Entity> {
-    new (props: EntityPropsOf<E>): E;
-
-    initialize(app: App): void;
-
-    onViewSizeChange(app: App, entity: E, width: number, height: number): void;
+export interface EntityTapEvent extends CanvasPointerEvent {
+    /**
+     * True if only this entity is already selected.
+     */
+    selectedOnlyThisEntity: boolean;
 }

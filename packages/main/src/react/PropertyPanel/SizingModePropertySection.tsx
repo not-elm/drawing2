@@ -4,27 +4,19 @@ import {
 } from "../../default/property/SizingMode";
 import { Button } from "../Button";
 import { Card } from "../Card";
-import { useStore } from "../hooks/useStore";
 import { useApp } from "../useApp";
 import { useSelectedPropertyValue } from "./useSelectedPropertyValue";
 import { useVisibleFlag } from "./useVisibleFlag";
 
 export function SizingModePropertySection() {
     const app = useApp();
-    const { mode } = useStore(app.appStateStore);
-    const selectedEntities = app.canvasStateStore
-        .getState()
-        .getSelectedEntities();
     const selectedValue = useSelectedPropertyValue(PROPERTY_KEY_SIZING_MODE);
 
     const handleClick = (sizingMode: SizingMode) => {
-        app.canvasStateStore.edit((tx) => {
-            tx.updateProperty(
-                app.canvasStateStore.getState().selectedEntityIds,
-                PROPERTY_KEY_SIZING_MODE,
-                sizingMode,
-            );
-        });
+        app.canvasStateStore.updateProperty(
+            PROPERTY_KEY_SIZING_MODE,
+            sizingMode,
+        );
         app.defaultPropertyStore.set(PROPERTY_KEY_SIZING_MODE, sizingMode);
     };
 

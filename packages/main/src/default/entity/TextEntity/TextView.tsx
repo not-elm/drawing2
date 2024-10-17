@@ -11,6 +11,7 @@ import {
     PROPERTY_KEY_TEXT_ALIGNMENT_X,
     type TextAlignment,
 } from "../../property/TextAlignment";
+import { PROPERTY_KEY_CONTENT } from "../ShapeEntity/ShapeEntity";
 import type { TextEntity } from "./TextEntity";
 
 export const TextView = memo(function ShapeView({
@@ -66,7 +67,7 @@ const TextViewInner = memo(function ShapeViewInner({
     const containerRef = useResizeObserver((entry) => {
         // ResizeObserver is not affected by CSS transform.
         // So we don't need to care about the viewport scaling.
-        app.handleViewSizeChange(
+        app.handleEntityResize(
             shapeId,
             entry.contentRect.width,
             entry.contentRect.height,
@@ -103,17 +104,21 @@ const TextViewInner = memo(function ShapeViewInner({
                 h1: {
                     marginTop: "1em",
                     marginBottom: 0,
+                    "&:first-child": {
+                        marginTop: 0,
+                    },
                 },
                 h2: {
                     marginTop: "1em",
                     marginBottom: 0,
+                    "&:first-child": {
+                        marginTop: 0,
+                    },
                 },
                 h3: {
                     marginTop: "1em",
                     marginBottom: 0,
-                },
-                "h1, h2, h3": {
-                    "&:nth-child(1)": {
+                    "&:first-child": {
                         marginTop: 0,
                     },
                 },
@@ -124,6 +129,7 @@ const TextViewInner = memo(function ShapeViewInner({
                     autoFocus={true}
                     autoComplete="off"
                     css={{
+                        display: "block",
                         fieldSizing: "content",
                         border: "none",
                         background: "none",
@@ -141,7 +147,10 @@ const TextViewInner = memo(function ShapeViewInner({
                         ev.target.setSelectionRange(0, ev.target.value.length);
                     }}
                     onChange={(ev) =>
-                        app.canvasStateStore.setContent(ev.target.value)
+                        app.canvasStateStore.updateProperty(
+                            PROPERTY_KEY_CONTENT,
+                            ev.target.value,
+                        )
                     }
                     onPointerDown={(ev) => ev.stopPropagation()}
                     value={content}

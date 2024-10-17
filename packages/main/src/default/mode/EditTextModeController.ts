@@ -1,30 +1,18 @@
 import type { App } from "../../core/App";
-import type { Entity } from "../../core/Entity";
 import {
+    type CanvasPointerEvent,
     type Mode,
     type ModeChangeEvent,
     ModeController,
-    type PointerDownEvent,
 } from "../../core/ModeController";
-import type { SelectModeController } from "./select/SelectModeController";
+import { assert } from "../../lib/assert";
 
 export class EditTextModeController extends ModeController {
-    constructor(
-        private readonly app: App,
-        private readonly selectModeController: SelectModeController,
-    ) {
-        super();
-    }
-
     static createMode(entityId: string): Mode {
         return { type: "edit-text", entityId };
     }
 
-    getType() {
-        return "edit-text";
-    }
-
-    onBeforeEnterMode(ev: ModeChangeEvent) {
+    onBeforeEnterMode(app: App, ev: ModeChangeEvent) {
         if (
             ev.oldMode.type === "edit-text" &&
             ev.newMode.type === "edit-text" &&
@@ -32,16 +20,37 @@ export class EditTextModeController extends ModeController {
         ) {
             ev.abort();
         }
+        app.historyManager.pause();
     }
 
-    onEntityPointerDown(data: PointerDownEvent, entity: Entity) {
-        this.app.setMode({ type: "select" });
-        this.selectModeController.onEntityPointerDown(data, entity);
+    onAfterEnterMode(app: App, ev: ModeChangeEvent) {
+        const newMode = ev.newMode;
+        assert(isEditTextMode(newMode));
+
+        const entity = app.canvasStateStore
+            .getState()
+            .page.entities.get(newMode.entityId);
+        assert(entity !== undefined, `Entity ${newMode.entityId} not found`);
+
+        entity.onTextEditStart(app);
     }
 
-    onCanvasPointerDown(data: PointerDownEvent): void {
-        this.app.setMode({ type: "select" });
-        this.selectModeController.onCanvasPointerDown(data);
+    onBeforeExitMode(app: App, ev: ModeChangeEvent) {
+        const oldMode = ev.oldMode;
+        assert(isEditTextMode(oldMode));
+
+        const entity = app.canvasStateStore
+            .getState()
+            .page.entities.get(oldMode.entityId);
+        assert(entity !== undefined, `Entity ${oldMode.entityId} not found`);
+
+        app.historyManager.resume();
+        entity.onTextEditEnd(app);
+    }
+
+    onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
+        app.setMode({ type: "select" });
+        app.getModeController().onCanvasPointerDown(app, ev);
     }
 }
 

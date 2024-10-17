@@ -2,7 +2,6 @@ import { assert } from "../assert";
 import { dataclass } from "../dataclass";
 import { Line } from "./Line";
 import { Point } from "./Point";
-import type { Transform } from "./Transform";
 
 export class Rect extends dataclass<{
     p0: Point;
@@ -118,6 +117,10 @@ export class Rect extends dataclass<{
         });
     }
 
+    equals(other: Rect): boolean {
+        return this.p0.equals(other.p0) && this.p1.equals(other.p1);
+    }
+
     isOverlappedWith(other: Rect | Line | Point): boolean {
         if (other instanceof Rect) {
             return (
@@ -178,22 +181,5 @@ export class Rect extends dataclass<{
         return [this.topEdge, this.rightEdge, this.bottomEdge, this.leftEdge]
             .map((edge) => edge.getDistance(point))
             .sort((a, b) => a.distance - b.distance)[0];
-    }
-
-    translate(dx: number, dy: number): Rect {
-        return new Rect({
-            p0: this.p0.translate(dx, dy),
-            p1: this.p1.translate(dx, dy),
-        });
-    }
-
-    transform(transform: Transform): Rect {
-        const q0 = transform.apply(this.p0);
-        const q1 = transform.apply(this.p1);
-
-        const p0 = new Point(Math.min(q0.x, q1.x), Math.min(q0.y, q1.y));
-        const p1 = new Point(Math.max(q0.x, q1.x), Math.max(q0.y, q1.y));
-
-        return new Rect({ p0, p1 });
     }
 }

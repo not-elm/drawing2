@@ -1,78 +1,64 @@
 import type { ComponentType } from "react";
-import { SnapGuideStore } from "../default/mode/select/SnapGuideStore";
-import { EventEmitter } from "../lib/EventEmitter";
 import { assert } from "../lib/assert";
-import { testHitEntities } from "../lib/testHitEntities";
+import { Point } from "../lib/geo/Point";
 import { AppStateStore } from "./AppStateStore";
-import { CanvasStateStore, fromCanvasCoordinate } from "./CanvasStateStore";
+import { CanvasStateStore } from "./CanvasStateStore";
 import { ClipboardService } from "./ClipboardService";
 import { DefaultPropertyStore } from "./DefaultPropertyStore";
-import type { Entity, EntityConstructor } from "./Entity";
-import { type EntityConverter, EntityConverterMap } from "./EntityDeserializer";
+import type { Entity } from "./Entity";
+import { type EntityConverter, EntityConverterMap } from "./EntityConverter";
 import { GestureRecognizer } from "./GestureRecognizer";
 import { HistoryManager } from "./HistoryManager";
-import type {
-    Mode,
-    ModeChangeEvent,
-    ModeController,
-    PointerDownEvent,
-} from "./ModeController";
-import { Transaction } from "./Transaction";
+import type { Mode, ModeChangeEvent, ModeController } from "./ModeController";
+import { SelectModeController } from "./SelectModeController";
+import { SnapGuideStore } from "./SnapGuideStore";
 import { ViewportStore } from "./ViewportStore";
 
-export class App extends EventEmitter<{
-    beforeExitMode: (ev: ModeChangeEvent) => void;
-    afterEnterMode: (ev: ModeChangeEvent) => void;
-}> {
+export class App {
     readonly entityConverter = new EntityConverterMap();
     readonly clipboardService = new ClipboardService(this.entityConverter);
     readonly canvasStateStore = new CanvasStateStore(this.clipboardService);
     readonly viewportStore = new ViewportStore();
-    readonly gestureRecognizer = new GestureRecognizer(this.viewportStore);
+    readonly gestureRecognizer = new GestureRecognizer(this);
     readonly appStateStore = new AppStateStore();
     readonly historyManager = new HistoryManager(this.canvasStateStore);
     readonly defaultPropertyStore = new DefaultPropertyStore();
     private readonly modeControllers = new Map<string, ModeController>();
     private readonly entityViewMap = new Map<
-        EntityConstructor<Entity>,
+        string,
         ComponentType<{ entity: Entity }>
     >();
+    private readonly defaultModeController = new SelectModeController();
 
     // TODO: Move to SelectMode package
     readonly snapGuideStore = new SnapGuideStore();
 
-    addModeController(controller: ModeController): this {
+    constructor() {
+        this.addModeController("select", this.defaultModeController);
+    }
+
+    addModeController(type: string, controller: ModeController): this {
         assert(
-            !this.modeControllers.has(controller.getType()),
-            `Mode ${controller.getType()} is already registered`,
+            !this.modeControllers.has(type),
+            `Mode ${type} is already registered`,
         );
-        this.modeControllers.set(controller.getType(), controller);
+        this.modeControllers.set(type, controller);
         return this;
     }
 
     getModeController(): ModeController {
-        return this.getModeControllerByType(
-            this.appStateStore.getState().mode.type,
+        return (
+            this.getModeControllerByType(
+                this.appStateStore.getState().mode.type,
+            ) ?? this.defaultModeController
         );
     }
 
-    getModeControllerByType(type: string): ModeController {
-        const modeController = this.modeControllers.get(type);
-        assert(
-            modeController !== undefined,
-            `Mode controller for ${
-                this.appStateStore.getState().mode.type
-            } is not found`,
-        );
-
-        return modeController;
+    getModeControllerByType(type: string): ModeController | null {
+        return this.modeControllers.get(type) ?? null;
     }
 
     setMode(newMode: Mode) {
-        assert(
-            this.modeControllers.has(newMode.type),
-            `Mode ${newMode.type} is not found`,
-        );
         let aborted = false;
         const ev: ModeChangeEvent = {
             oldMode: this.appStateStore.getState().mode,
@@ -84,11 +70,14 @@ export class App extends EventEmitter<{
 
         const oldModeController = this.getModeController();
         const newModeController = this.getModeControllerByType(newMode.type);
+        if (newModeController === null) {
+            return;
+        }
 
-        newModeController.onBeforeEnterMode(ev);
+        newModeController.onBeforeEnterMode(this, ev);
         if (aborted) return;
 
-        oldModeController.onBeforeExitMode(ev);
+        oldModeController.onBeforeExitMode(this, ev);
         if (aborted) return;
 
         this.appStateStore.setMode(newMode);
@@ -96,9 +85,9 @@ export class App extends EventEmitter<{
             throw new Error("Abort is called after mode change");
         };
 
-        oldModeController.onAfterExitMode(ev);
+        oldModeController.onAfterExitMode(this, ev);
 
-        newModeController.onAfterEnterMode(ev);
+        newModeController.onAfterEnterMode(this, ev);
     }
 
     registerEntityConverter<T extends string>(
@@ -110,20 +99,18 @@ export class App extends EventEmitter<{
     }
 
     registerEntityView<E extends Entity>(
-        entityConstructor: EntityConstructor<E>,
+        type: string,
         component: ComponentType<{ entity: E }>,
     ): this {
         this.entityViewMap.set(
-            entityConstructor,
+            type,
             component as ComponentType<{ entity: Entity }>,
         );
         return this;
     }
 
     getEntityView<E extends Entity>(entity: E): ComponentType<{ entity: E }> {
-        const view = this.entityViewMap.get(
-            entity.constructor as EntityConstructor,
-        );
+        const view = this.entityViewMap.get(entity.type);
         assert(
             view !== undefined,
             `No view found for entity type ${entity.constructor.name}`,
@@ -131,66 +118,49 @@ export class App extends EventEmitter<{
         return view as ComponentType<{ entity: E }>;
     }
 
-    edit(updater: (tx: Transaction) => void) {
-        const tx = new Transaction(this.canvasStateStore.getState().page);
-        updater(tx);
-        this.canvasStateStore.setPage(tx.commit());
-    }
-
-    handleMouseDown(ev: PointerEvent) {
+    handlePointerDown(ev: PointerEvent) {
         this.gestureRecognizer.handlePointerDown(ev);
 
-        const point = fromCanvasCoordinate(
-            ev.clientX,
-            ev.clientY,
-            this.viewportStore.getState(),
-        );
-        const data: PointerDownEvent = {
+        this.getModeController().onCanvasPointerDown(this, {
             pointerId: ev.pointerId,
-            point,
+            point: this.viewportStore
+                .getState()
+                .fromCanvasCoordinateTransform.apply(
+                    new Point(ev.clientX, ev.clientY),
+                ),
             shiftKey: ev.shiftKey,
+            metaKey: ev.metaKey,
+            ctrlKey: ev.ctrlKey,
             preventDefault: () => ev.preventDefault(),
-        };
-
-        const hitResult = testHitEntities(
-            this.canvasStateStore.getState().page,
-            point,
-            this.viewportStore.getState().scale,
-        );
-        const result = hitResult.entities.at(0);
-        if (result !== undefined) {
-            this.getModeController().onEntityPointerDown(data, result.target);
-            return;
-        }
-
-        this.getModeController().onCanvasPointerDown(data);
+        });
     }
 
-    handleMouseMove(ev: PointerEvent) {
+    handlePointerMove(ev: PointerEvent) {
         this.gestureRecognizer.handlePointerMove(ev);
 
-        const point = fromCanvasCoordinate(
-            ev.clientX,
-            ev.clientY,
-            this.viewportStore.getState(),
-        );
-        this.getModeController().onMouseMove(point);
+        const point = this.viewportStore
+            .getState()
+            .fromCanvasCoordinateTransform.apply(
+                new Point(ev.clientX, ev.clientY),
+            );
+        this.getModeController().onMouseMove(this, point);
     }
 
-    handleMouseUp(ev: PointerEvent) {
+    handlePointerUp(ev: PointerEvent) {
         this.gestureRecognizer.handlePointerUp(ev);
     }
 
     handleDoubleClick(ev: MouseEvent) {
-        const point = fromCanvasCoordinate(
-            ev.clientX,
-            ev.clientY,
-            this.viewportStore.getState(),
-        );
-        this.getModeController().onCanvasDoubleClick({
-            point,
-            shiftKey: ev.shiftKey,
+        this.getModeController().onCanvasDoubleClick(this, {
             pointerId: -1,
+            point: this.viewportStore
+                .getState()
+                .fromCanvasCoordinateTransform.apply(
+                    new Point(ev.clientX, ev.clientY),
+                ),
+            shiftKey: ev.shiftKey,
+            metaKey: ev.metaKey,
+            ctrlKey: ev.ctrlKey,
             preventDefault: () => ev.preventDefault(),
         });
     }
@@ -338,15 +308,12 @@ export class App extends EventEmitter<{
         return false;
     }
 
-    handleViewSizeChange(entityId: string, width: number, height: number) {
-        const entity = this.canvasStateStore.getState().page.entities[entityId];
+    handleEntityResize(entityId: string, width: number, height: number) {
+        const entity = this.canvasStateStore
+            .getState()
+            .page.entities.get(entityId);
         assert(entity !== undefined, `Entity ${entityId} is not found`);
 
-        (entity.constructor as EntityConstructor).onViewSizeChange(
-            this,
-            entity,
-            width,
-            height,
-        );
+        entity.onViewResize(this, width, height);
     }
 }

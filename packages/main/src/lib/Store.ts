@@ -21,7 +21,7 @@ export class Store<T> implements StateProvider<Store<T>> {
         this.callbacks.delete(callback);
     }
 
-    setState(newState: T) {
+    protected setState(newState: T) {
         this.state = newState;
         for (const callback of this.callbacks) {
             callback(newState);

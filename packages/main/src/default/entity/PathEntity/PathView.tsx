@@ -1,4 +1,6 @@
 import { memo } from "react";
+import { identity } from "../../../lib/geo/TransformMatrix";
+import { convertGeometryToPathDefinition } from "../../../react/SelectionRect";
 import { Colors, PROPERTY_KEY_COLOR_ID } from "../../property/Colors";
 import type { PathEntity } from "./PathEntity";
 
@@ -7,9 +9,7 @@ export const STROKE_WIDTH_BASE = 5;
 export const PathView = memo(function PathView({
     entity,
 }: { entity: PathEntity }) {
-    const nodes = Object.values(entity.props.nodes);
-    const left = Math.min(...nodes.map((node) => node.point.x));
-    const top = Math.min(...nodes.map((node) => node.point.y));
+    const rect = entity.getBoundingRect();
 
     // const arrowHeadPath1 = constructArrowHeadPath(
     //     x1 - left,
@@ -39,8 +39,8 @@ export const PathView = memo(function PathView({
             height={1}
             css={{
                 position: "absolute",
-                top,
-                left,
+                top: rect.top,
+                left: rect.left,
                 overflow: "visible",
             }}
         >
@@ -49,7 +49,11 @@ export const PathView = memo(function PathView({
                     stroke: Colors[entity.props[PROPERTY_KEY_COLOR_ID]],
                     fill: "none",
                 }}
-                d={constructPath(entity)}
+                d={convertGeometryToPathDefinition(
+                    entity.getOutline(),
+                    rect.topLeft,
+                    identity(),
+                )}
                 strokeWidth={strokeWidth}
                 strokeDasharray={
                     {
@@ -105,28 +109,4 @@ function constructArrowHeadPath(
     const q2y = y1 + vx * sinR + vy * cosR;
 
     return [`M${q1x} ${q1y}`, `L${x1} ${y1}`, `L${q2x} ${q2y}`].join(" ");
-}
-
-function constructPath(path: PathEntity): string {
-    const nodes = Object.values(path.props.nodes);
-    const left = Math.min(...nodes.map((node) => node.point.x));
-    const top = Math.min(...nodes.map((node) => node.point.y));
-
-    let lastNodeId = "(nothing)";
-    const commands: string[] = [];
-    for (const [startNodeId, endNodeId] of path.props.edges) {
-        const startNode = path.props.nodes[startNodeId];
-        const endNode = path.props.nodes[endNodeId];
-
-        if (startNodeId !== lastNodeId) {
-            commands.push(
-                `M${startNode.point.x - left} ${startNode.point.y - top}`,
-            );
-        }
-        commands.push(`L${endNode.point.x - left} ${endNode.point.y - top}`);
-
-        lastNodeId = endNodeId;
-    }
-
-    return commands.join(" ");
 }

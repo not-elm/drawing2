@@ -1,100 +1,144 @@
-import type { StateProvider } from "../lib/Store";
 import { assert } from "../lib/assert";
-import { fromCanvasCoordinate } from "./CanvasStateStore";
-import type {
-    PointerEventHandlers,
-    PointerEventSession,
-    PointerEventSessionData,
-} from "./PointerEventSession";
-import type { ViewportStore } from "./ViewportStore";
+import { Point } from "../lib/geo/Point";
+import type { App } from "./App";
+import type { CanvasPointerEvent } from "./ModeController";
 
 const THRESHOLD_CLICK_DURATION_IN_MILLI = 200;
 
 export class GestureRecognizer {
-    constructor(
-        private readonly viewportProvider: StateProvider<ViewportStore>,
-    ) {}
+    constructor(private readonly app: App) {}
 
     private readonly sessions = new Map<number, PointerEventSession>();
 
-    handlePointerDown(ev: PointerEvent) {
-        const point = fromCanvasCoordinate(
-            ev.clientX,
-            ev.clientY,
-            this.viewportProvider.getState(),
-        );
-        const timestamp = performance.now();
-        const data: PointerEventSessionData = {
-            startAt: timestamp,
-            endAt: timestamp,
-            isShortClick: false,
-            start: point,
-            last: point,
-            new: point,
-            shiftKey: ev.shiftKey,
-            ctrlKey: ev.ctrlKey,
-            metaKey: ev.metaKey,
-        };
+    handlePointerDown(nativeEv: PointerEvent) {
+        const point = this.app.viewportStore
+            .getState()
+            .fromCanvasCoordinateTransform.apply(
+                new Point(nativeEv.clientX, nativeEv.clientY),
+            );
 
-        this.sessions.set(ev.pointerId, {
-            pointerId: ev.pointerId,
-            data,
-            handlers: null,
+        const timestamp = performance.now();
+
+        this.sessions.set(nativeEv.pointerId, {
+            pointerId: nativeEv.pointerId,
+            startAt: timestamp,
+            startPoint: point,
+            lastPoint: point,
+            pointerMoveHandlers: new Set(),
+            pointerUpHandlers: new Set(),
         });
     }
 
-    handlePointerMove(ev: PointerEvent) {
-        const session = this.sessions.get(ev.pointerId);
+    handlePointerMove(nativeEv: PointerEvent) {
+        const session = this.sessions.get(nativeEv.pointerId);
         if (session === undefined) return;
 
-        const point = fromCanvasCoordinate(
-            ev.clientX,
-            ev.clientY,
-            this.viewportProvider.getState(),
-        );
+        const point = this.app.viewportStore
+            .getState()
+            .fromCanvasCoordinateTransform.apply(
+                new Point(nativeEv.clientX, nativeEv.clientY),
+            );
 
-        const newData = { ...session.data };
-        newData.new = point;
-        newData.shiftKey = ev.shiftKey;
-        newData.ctrlKey = ev.ctrlKey;
-        newData.metaKey = ev.metaKey;
-        session.handlers?.onPointerMove?.(newData);
-        newData.last = point;
+        for (const handler of session.pointerMoveHandlers) {
+            handler(this.app, {
+                point,
+                pointerId: nativeEv.pointerId,
+                shiftKey: nativeEv.shiftKey,
+                ctrlKey: nativeEv.ctrlKey,
+                metaKey: nativeEv.metaKey,
+                preventDefault: (): void => {
+                    throw new Error("Function not implemented.");
+                },
+                startPoint: session.startPoint,
+                lastPoint: session.lastPoint,
+            });
+        }
 
-        session.data = newData;
+        session.lastPoint = point;
     }
 
-    handlePointerUp(ev: PointerEvent) {
-        const session = this.sessions.get(ev.pointerId);
+    handlePointerUp(nativeEv: PointerEvent) {
+        const session = this.sessions.get(nativeEv.pointerId);
         if (session === undefined) return;
 
-        const point = fromCanvasCoordinate(
-            ev.clientX,
-            ev.clientY,
-            this.viewportProvider.getState(),
-        );
+        const point = this.app.viewportStore
+            .getState()
+            .fromCanvasCoordinateTransform.apply(
+                new Point(nativeEv.clientX, nativeEv.clientY),
+            );
 
-        const newData = { ...session.data };
-        newData.new = point;
-        newData.shiftKey = ev.shiftKey;
-        newData.ctrlKey = ev.ctrlKey;
-        newData.metaKey = ev.metaKey;
-        newData.endAt = performance.now();
-        newData.isShortClick =
-            newData.endAt - newData.startAt < THRESHOLD_CLICK_DURATION_IN_MILLI;
-        session.handlers?.onPointerUp?.(newData);
+        const endAt = performance.now();
+        for (const handler of session.pointerUpHandlers) {
+            handler(this.app, {
+                point,
+                pointerId: nativeEv.pointerId,
+                shiftKey: nativeEv.shiftKey,
+                ctrlKey: nativeEv.ctrlKey,
+                metaKey: nativeEv.metaKey,
+                preventDefault: (): void => {
+                    throw new Error("Function not implemented.");
+                },
+                startPoint: session.startPoint,
+                lastPoint: session.lastPoint,
+                isTap:
+                    endAt - session.startAt < THRESHOLD_CLICK_DURATION_IN_MILLI,
+            });
+        }
 
-        this.sessions.delete(ev.pointerId);
+        this.sessions.delete(nativeEv.pointerId);
     }
 
-    addSessionHandlers(pointerId: number, handlers: PointerEventHandlers) {
+    addPointerMoveHandler(
+        pointerId: number,
+        handler: (app: App, ev: CanvasPointerMoveEvent) => void,
+    ): this {
         const session = this.sessions.get(pointerId);
         assert(
             session !== undefined,
             `Pointer session ${pointerId} is not found`,
         );
 
-        handlers.onPointerDown?.(session.data);
-        this.sessions.set(pointerId, { ...session, handlers });
+        session.pointerMoveHandlers.add(handler);
+        return this;
     }
+
+    addPointerUpHandler(
+        pointerId: number,
+        handler: (app: App, ev: CanvasPointerUpEvent) => void,
+    ): this {
+        const session = this.sessions.get(pointerId);
+        assert(
+            session !== undefined,
+            `Pointer session ${pointerId} is not found`,
+        );
+
+        session.pointerUpHandlers.add(handler);
+        return this;
+    }
+}
+
+export interface CanvasPointerMoveEvent extends CanvasPointerEvent {
+    startPoint: Point;
+    lastPoint: Point;
+}
+
+export interface CanvasPointerUpEvent extends CanvasPointerEvent {
+    startPoint: Point;
+    lastPoint: Point;
+
+    /**
+     * A flag that is set to true if the this pointer up event is
+     * classified as a "Tap," meaning the touch was brief and
+     * involved minimal movement.
+     */
+    isTap: boolean;
+}
+
+interface PointerEventSession {
+    pointerId: number;
+    startAt: number;
+    startPoint: Point;
+    lastPoint: Point;
+    pointerMoveHandlers: Set<(app: App, ev: CanvasPointerMoveEvent) => void>;
+    pointerUpHandlers: Set<(app: App, ev: CanvasPointerUpEvent) => void>;
 }

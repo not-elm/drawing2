@@ -1,4 +1,4 @@
-import { Store } from "../../../lib/Store";
+import { Store } from "../lib/Store";
 import type { SnapGuide } from "./SnapEntry";
 
 interface SnapGuideState {
@@ -14,5 +14,9 @@ export class SnapGuideStore extends Store<SnapGuideState> {
 
     setSnapGuide(guide: SnapGuide | null) {
         this.setState({ guide });
+    }
+
+    clear() {
+        this.setSnapGuide(null);
     }
 }

@@ -1,45 +1,28 @@
 import { Store } from "../lib/Store";
-import { dataclass } from "../lib/dataclass";
 import { Point } from "../lib/geo/Point";
 import { Rect } from "../lib/geo/Rect";
-import { Transform } from "../lib/geo/Transform";
+import { scale, translate } from "../lib/geo/TransformMatrix";
+import { Viewport } from "./Viewport";
 
-class ViewportState extends dataclass<{
-    rect: Rect;
-    scale: number;
-}>() {}
-
-export class ViewportStore extends Store<ViewportState> {
+export class ViewportStore extends Store<Viewport> {
     constructor(
         // private readonly restoreViewportService: RestoreViewportService,
     ) {
-        super(
-            new ViewportState({
-                rect: Rect.of(0, 0, 0, 0),
-                scale: 1,
-            }),
-        );
-
-        this.addListener(() => {
-            document.title = `x: ${this.state.rect.left.toFixed(
-                0,
-            )}, y: ${this.state.rect.top.toFixed(
-                0,
-            )}, scale: ${this.state.scale.toFixed(2)}`;
-        });
+        super(new Viewport(Rect.of(0, 0, 1, 1), 1));
     }
 
     movePosition(deltaCanvasX: number, deltaCanvasY: number) {
         this.setState(
-            this.state.copy({
-                rect: this.state.rect.translate(deltaCanvasX, deltaCanvasY),
-            }),
+            new Viewport(
+                translate(deltaCanvasX, deltaCanvasY).apply(this.state.rect),
+                this.state.scale,
+            ),
         );
         // this.restoreViewportService.save(this.state);
     }
 
     setScale(newScale: number, centerCanvasX: number, centerCanvasY: number) {
-        const transform = Transform.scale(
+        const transform = scale(
             new Point(
                 centerCanvasX / this.state.scale,
                 centerCanvasY / this.state.scale,
@@ -54,24 +37,20 @@ export class ViewportStore extends Store<ViewportState> {
         const p0 = transform.apply(this.state.rect.p0);
         const p1 = transform.apply(this.state.rect.p1);
 
-        this.setState(
-            this.state.copy({
-                rect: new Rect({ p0, p1 }),
-                scale: newScale,
-            }),
-        );
+        this.setState(new Viewport(new Rect({ p0, p1 }), newScale));
         // this.restoreViewportService.save(this.state);
     }
 
     setViewportSize(canvasWidth: number, canvasHeight: number) {
         this.setState(
-            this.state.copy({
-                rect: Rect.fromSize(
+            new Viewport(
+                Rect.fromSize(
                     this.state.rect.topLeft,
                     canvasWidth / this.state.scale,
                     canvasHeight / this.state.scale,
                 ),
-            }),
+                this.state.scale,
+            ),
         );
         // this.restoreViewportService.save(this.state);
     }

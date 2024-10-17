@@ -1,9 +1,7 @@
 import type { App } from "../../core/App";
-import type { CanvasStateStore } from "../../core/CanvasStateStore";
-import type { Entity } from "../../core/Entity";
 import {
+    type CanvasPointerEvent,
     ModeController,
-    type PointerDownEvent,
 } from "../../core/ModeController";
 import { Rect } from "../../lib/geo/Rect";
 import { randomId } from "../../lib/randomId";
@@ -12,52 +10,38 @@ import { PROPERTY_KEY_COLOR_ID } from "../property/Colors";
 import { PROPERTY_KEY_TEXT_ALIGNMENT_X } from "../property/TextAlignment";
 
 export class NewTextModeController extends ModeController {
-    constructor(
-        private readonly app: App,
-        private readonly canvasStateStore: CanvasStateStore,
-    ) {
-        super();
-    }
+    onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
+        app.historyManager.pause();
+        const text = this.insertNewText(app, Rect.fromSize(ev.point, 1, 1));
 
-    getType() {
-        return "new-text";
-    }
-
-    onEntityPointerDown(data: PointerDownEvent, entity: Entity) {
-        this.onCanvasPointerDown(data);
-    }
-
-    onCanvasPointerDown(data: PointerDownEvent): void {
-        const text = this.insertNewText(Rect.fromSize(data.point, 1, 1));
-
-        this.app.setMode({
+        app.setMode({
             type: "edit-text",
             entityId: text.props.id,
         });
 
-        this.canvasStateStore.unselectAll();
-        this.canvasStateStore.select(text.props.id);
+        app.canvasStateStore.unselectAll();
+        app.canvasStateStore.select(text.props.id);
 
         // To leave focus at the new text entity
-        data.preventDefault();
+        ev.preventDefault();
     }
 
-    private insertNewText(rect: Rect): TextEntity {
+    private insertNewText(app: App, rect: Rect): TextEntity {
         const text = new TextEntity({
             id: randomId(),
             rect,
             content: "",
-            [PROPERTY_KEY_TEXT_ALIGNMENT_X]: this.app.defaultPropertyStore
+            [PROPERTY_KEY_TEXT_ALIGNMENT_X]: app.defaultPropertyStore
                 .getState()
                 .getOrDefault(PROPERTY_KEY_TEXT_ALIGNMENT_X, "start"),
-            [PROPERTY_KEY_COLOR_ID]: this.app.defaultPropertyStore
+            [PROPERTY_KEY_COLOR_ID]: app.defaultPropertyStore
                 .getState()
                 .getOrDefault(PROPERTY_KEY_COLOR_ID, 0),
             sizingMode: "content",
         });
 
-        this.app.edit((tx) => {
-            tx.insertEntities([text]);
+        app.canvasStateStore.edit((draft) => {
+            draft.setEntity(text);
         });
         return text;
     }

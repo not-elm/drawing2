@@ -25,7 +25,7 @@ import {
     type TextAlignment,
 } from "../../property/TextAlignment";
 import { STROKE_WIDTH_BASE } from "../PathEntity/PathView";
-import type { ShapeEntity } from "./ShapeEntity";
+import { PROPERTY_KEY_CONTENT, type ShapeEntity } from "./ShapeEntity";
 
 export const ShapeView = memo(function ShapeView({
     entity,
@@ -213,7 +213,10 @@ const ShapeViewInner = memo(function ShapeViewInner({
                             );
                         }}
                         onChange={(ev) =>
-                            app.canvasStateStore.setContent(ev.target.value)
+                            app.canvasStateStore.updateProperty(
+                                PROPERTY_KEY_CONTENT,
+                                ev.target.value,
+                            )
                         }
                         onPointerDown={(ev) => ev.stopPropagation()}
                         value={shapeLabel}

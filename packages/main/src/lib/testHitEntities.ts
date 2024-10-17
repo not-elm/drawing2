@@ -14,7 +14,7 @@ interface HitTestResultEntry<T> {
      * Hit point on the target entity. If margin is 0,
      * this should be exactly same as the input point.
      */
-    point: { x: number; y: number };
+    point: Point;
     distance: number;
     zIndex: number;
 }
@@ -29,7 +29,7 @@ export function testHitEntities(
     const entities: HitTestResultEntry<Entity>[] = [];
 
     for (const [zIndex, entityId] of page.entityIds.entries()) {
-        const entity = page.entities[entityId];
+        const entity = page.entities.get(entityId);
         assert(entity !== undefined, `Entity not found: ${entityId}`);
 
         const { point: hitPoint, distance } = entity.getDistance(point);

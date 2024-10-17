@@ -20,13 +20,7 @@ export function FillModePropertySection() {
     const selectedValue = useSelectedPropertyValue(PROPERTY_KEY_FILL_STYLE);
 
     const handleClick = (fillStyle: FillStyle) => {
-        app.canvasStateStore.edit((tx) => {
-            tx.updateProperty(
-                app.canvasStateStore.getState().selectedEntityIds,
-                PROPERTY_KEY_FILL_STYLE,
-                fillStyle,
-            );
-        });
+        app.canvasStateStore.updateProperty(PROPERTY_KEY_FILL_STYLE, fillStyle);
         app.defaultPropertyStore.set(PROPERTY_KEY_FILL_STYLE, fillStyle);
     };
 

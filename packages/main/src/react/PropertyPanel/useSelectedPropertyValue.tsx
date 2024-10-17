@@ -13,7 +13,9 @@ export function useSelectedPropertyValue<T = unknown>(
     const values = new Set(
         canvasState
             .getSelectedEntities()
-            .map((entity) => entity.getProperty(propertyKey))
+            .map((entity) =>
+                entity.getProperty<T | undefined>(propertyKey, undefined),
+            )
             .filter(isNotNullish),
     ) as Set<ColorId>;
 

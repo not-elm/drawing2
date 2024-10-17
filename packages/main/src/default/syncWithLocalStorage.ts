@@ -1,11 +1,6 @@
 import type { App } from "../core/App";
-import type { EntityConverter } from "../core/EntityDeserializer";
-import type { Page } from "../core/Page";
-import {
-    type SerializedPage,
-    deserializePage,
-    serializePage,
-} from "../core/SerializedPage";
+import type { EntityConverter } from "../core/EntityConverter";
+import { Page, type SerializedPage } from "../core/Page";
 
 const DEBOUNCE_INTERVAL_IN_MS = 1000;
 
@@ -19,9 +14,9 @@ export function syncWithLocalStorage(app: App) {
         }
 
         debounceTimerId = setTimeout(() => {
-            const serializedPage = serializePage(
-                app.canvasStateStore.getState().page,
-            );
+            const serializedPage = app.canvasStateStore
+                .getState()
+                .page.serialize();
             localStorage.setItem(
                 LOCAL_STORAGE_KEY,
                 JSON.stringify(serializedPage),
@@ -43,7 +38,7 @@ function loadFromLocalStorage(entityConverter: EntityConverter): Page | null {
         if (data === null) return null;
 
         const serializedPage: SerializedPage = JSON.parse(data);
-        const page = deserializePage(serializedPage, entityConverter);
+        const page = Page.deserialize(serializedPage, entityConverter);
 
         return page;
     } catch (e) {

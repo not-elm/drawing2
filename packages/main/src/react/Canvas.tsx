@@ -1,5 +1,4 @@
 import { type WheelEventHandler, useCallback, useEffect } from "react";
-import { getEntitiesInViewport } from "../core/Page";
 import { BrushRect } from "./BrushRect";
 import { SelectionRect } from "./SelectionRect";
 import { SnapGuideLayer } from "./SnapGuideLayer";
@@ -16,12 +15,12 @@ export function Canvas() {
     useEffect(() => {
         function handlePointerMove(ev: PointerEvent) {
             ev.stopPropagation();
-            app.handleMouseMove(ev);
+            app.handlePointerMove(ev);
         }
 
         function handlePointerUp(ev: PointerEvent) {
             ev.stopPropagation();
-            app.handleMouseUp(ev);
+            app.handlePointerUp(ev);
         }
 
         window.addEventListener("pointermove", handlePointerMove);
@@ -51,7 +50,6 @@ export function Canvas() {
         [app, viewport.scale],
     );
 
-    const scale = viewport.scale;
     const resizeObserverRef = useResizeObserver((entry) => {
         app.viewportStore.setViewportSize(
             entry.contentRect.width,
@@ -76,7 +74,7 @@ export function Canvas() {
             onWheel={handleWheel}
             onPointerDown={(ev) => {
                 ev.stopPropagation();
-                app.handleMouseDown(ev.nativeEvent);
+                app.handlePointerDown(ev.nativeEvent);
             }}
             onDoubleClick={(ev) => {
                 ev.stopPropagation();
@@ -87,11 +85,11 @@ export function Canvas() {
                 css={{
                     position: "relative",
                     transform: `translate(${-viewport.rect.left}px, ${-viewport
-                        .rect.top}px) scale(${scale})`,
+                        .rect.top}px) scale(${viewport.scale})`,
                     transformOrigin: `${viewport.rect.left}px ${viewport.rect.top}px`,
                 }}
             >
-                {getEntitiesInViewport(page, viewport).map((entity) => {
+                {page.getEntitiesInRect(viewport.rect).map((entity) => {
                     const View = app.getEntityView(entity);
                     return <View entity={entity} key={entity.props.id} />;
                 })}

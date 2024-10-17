@@ -1,9 +1,10 @@
 import type { App } from "../../../core/App";
-import { Entity } from "../../../core/Entity";
-import type { SerializedEntity } from "../../../core/EntityDeserializer";
+import { Entity, type EntityTapEvent } from "../../../core/Entity";
+import type { SerializedEntity } from "../../../core/EntityConverter";
 import type { JSONObject } from "../../../core/JSONObject";
 import { Rect } from "../../../lib/geo/Rect";
-import type { Transform } from "../../../lib/geo/Transform";
+import type { TransformMatrix } from "../../../lib/geo/TransformMatrix";
+import { EditTextModeController } from "../../mode/EditTextModeController";
 import { type ColorId, PROPERTY_KEY_COLOR_ID } from "../../property/Colors";
 import {
     PROPERTY_KEY_SIZING_MODE,
@@ -13,6 +14,7 @@ import {
     PROPERTY_KEY_TEXT_ALIGNMENT_X,
     type TextAlignment,
 } from "../../property/TextAlignment";
+import { PROPERTY_KEY_CONTENT } from "../ShapeEntity/ShapeEntity";
 
 export class TextEntity extends Entity<{
     id: string;
@@ -21,16 +23,31 @@ export class TextEntity extends Entity<{
     [PROPERTY_KEY_SIZING_MODE]: SizingMode;
     [PROPERTY_KEY_TEXT_ALIGNMENT_X]: TextAlignment;
     [PROPERTY_KEY_COLOR_ID]: ColorId;
-    content: string;
+    [PROPERTY_KEY_CONTENT]: string;
 }> {
     readonly type = "text";
 
     getBoundingRect(): Rect {
-        return this.props.rect;
+        return Rect.of(
+            this.props.rect.left - 5,
+            this.props.rect.top - 5,
+            this.props.rect.width + 10,
+            this.props.rect.height + 10,
+        );
     }
 
-    transform(transform: Transform) {
-        return this.copy({ rect: this.props.rect.transform(transform) });
+    transform(transform: TransformMatrix) {
+        const oldRect = this.props.rect;
+        const newRect = transform.apply(this.props.rect);
+        const newSizingMode =
+            newRect.width !== oldRect.width || newRect.height !== oldRect.height
+                ? "fixed"
+                : this.props[PROPERTY_KEY_SIZING_MODE];
+
+        return this.copy({
+            rect: newRect,
+            [PROPERTY_KEY_SIZING_MODE]: newSizingMode,
+        });
     }
 
     serialize(): SerializedEntity {
@@ -45,28 +62,6 @@ export class TextEntity extends Entity<{
             textAlignment: this.props[PROPERTY_KEY_TEXT_ALIGNMENT_X],
             content: this.props.content,
         } satisfies SerializedTextEntity;
-    }
-
-    static onViewSizeChange(
-        app: App,
-        entity: TextEntity,
-        width: number,
-        height: number,
-    ) {
-        const newWidth =
-            entity.props.sizingMode === "content"
-                ? width
-                : entity.props.rect.width;
-        const newHeight = height;
-
-        app.edit((tx) => {
-            tx.scaleEntities(
-                [entity.props.id],
-                entity.props.rect.topLeft,
-                newWidth / entity.props.rect.width,
-                newHeight / entity.props.rect.height,
-            );
-        });
     }
 
     static deserialize(data: JSONObject): TextEntity {
@@ -85,6 +80,31 @@ export class TextEntity extends Entity<{
             [PROPERTY_KEY_COLOR_ID]: 0,
             content: serialized.content,
         });
+    }
+
+    onTap(app: App, ev: EntityTapEvent) {
+        if (ev.selectedOnlyThisEntity) {
+            app.setMode(EditTextModeController.createMode(this.props.id));
+        }
+    }
+
+    onTextEditEnd(app: App) {
+        if (this.props.content === "") {
+            app.canvasStateStore.edit((draft) =>
+                draft.deleteEntity(this.props.id),
+            );
+        }
+    }
+
+    onViewResize(app: App, width: number, height: number) {
+        const newWidth =
+            this.props.sizingMode === "content" ? width : this.props.rect.width;
+        const newHeight = height;
+
+        app.canvasStateStore.updateProperty(
+            "rect",
+            Rect.fromSize(this.props.rect.topLeft, newWidth, newHeight),
+        );
     }
 }
 

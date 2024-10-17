@@ -16,13 +16,7 @@ export function ColorPropertySection() {
     const app = useApp();
     const selectedColorId = useSelectedColorId();
     const handleClick = (colorId: ColorId) => {
-        app.canvasStateStore.edit((tx) => {
-            tx.updateProperty(
-                app.canvasStateStore.getState().selectedEntityIds,
-                PROPERTY_KEY_COLOR_ID,
-                colorId,
-            );
-        });
+        app.canvasStateStore.updateProperty(PROPERTY_KEY_COLOR_ID, colorId);
         app.defaultPropertyStore.set(PROPERTY_KEY_COLOR_ID, colorId);
     };
 

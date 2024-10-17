@@ -1,17 +1,12 @@
 import type { App } from "../../core/App";
-import type { CanvasStateStore } from "../../core/CanvasStateStore";
-import { Direction } from "../../core/Direction";
-import type { Entity } from "../../core/Entity";
-import type { GestureRecognizer } from "../../core/GestureRecognizer";
-import type { HistoryManager } from "../../core/HistoryManager";
 import {
+    type CanvasPointerEvent,
     ModeController,
-    type PointerDownEvent,
 } from "../../core/ModeController";
-import { createScaleTransformHandle } from "../../core/TransformHandle";
-import type { ViewportStore } from "../../core/ViewportStore";
-import { createTransformSession } from "../../core/createTransformSession";
+import { ScaleSelectionTransformController } from "../../core/SelectionTransformController";
+import { setupSelectionTransformPointerEventHandlers } from "../../core/setupSelectionTransformPointerEventHandlers";
 import { Rect } from "../../lib/geo/Rect";
+import { translate } from "../../lib/geo/TransformMatrix";
 import { getRectanglePath } from "../../lib/geo/path";
 import { randomId } from "../../lib/randomId";
 import { ShapeEntity } from "../entity/ShapeEntity/ShapeEntity";
@@ -23,82 +18,60 @@ import {
     PROPERTY_KEY_TEXT_ALIGNMENT_X,
     PROPERTY_KEY_TEXT_ALIGNMENT_Y,
 } from "../property/TextAlignment";
-import type { SnapGuideStore } from "./select/SnapGuideStore";
 
 export class NewShapeModeController extends ModeController {
-    constructor(
-        private readonly canvasStateStore: CanvasStateStore,
-        private readonly app: App,
-        private readonly historyManager: HistoryManager,
-        private readonly viewportStore: ViewportStore,
-        private readonly snapGuideStore: SnapGuideStore,
-        private readonly gestureRecognizer: GestureRecognizer,
-    ) {
-        super();
-    }
+    onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
+        const p0 = ev.point;
+        const p1 = translate(1, 1).apply(ev.point);
 
-    getType() {
-        return "new-shape";
-    }
+        app.historyManager.pause();
+        const shape = this.insertNewShape(app, new Rect({ p0, p1 }));
 
-    onEntityPointerDown(data: PointerDownEvent, entity: Entity) {
-        this.onCanvasPointerDown(data);
-    }
+        app.setMode({ type: "select" });
+        app.canvasStateStore.unselectAll();
+        app.canvasStateStore.select(shape.props.id);
 
-    onCanvasPointerDown(data: PointerDownEvent): void {
-        const shape = this.insertNewShape(
-            new Rect({
-                p0: data.point,
-                p1: data.point.translate(1, 1),
-            }),
-        );
-
-        this.app.setMode({ type: "select" });
-        this.canvasStateStore.unselectAll();
-        this.canvasStateStore.select(shape.props.id);
-
-        this.gestureRecognizer.addSessionHandlers(
-            data.pointerId,
-            createTransformSession(
-                this.historyManager,
-                createScaleTransformHandle(
-                    this.canvasStateStore,
-                    this.viewportStore,
-                    this.snapGuideStore,
-                    Direction.bottomRight,
-                ),
+        setupSelectionTransformPointerEventHandlers(
+            app,
+            ev,
+            new ScaleSelectionTransformController(
+                app,
+                p1,
+                p0,
+                "right",
+                "bottom",
             ),
         );
     }
 
-    private insertNewShape(rect: Rect): ShapeEntity {
+    private insertNewShape(app: App, rect: Rect): ShapeEntity {
         const shape = new ShapeEntity({
             id: randomId(),
             rect,
             content: "",
-            [PROPERTY_KEY_TEXT_ALIGNMENT_X]: this.app.defaultPropertyStore
+            [PROPERTY_KEY_TEXT_ALIGNMENT_X]: app.defaultPropertyStore
                 .getState()
                 .getOrDefault(PROPERTY_KEY_TEXT_ALIGNMENT_X, "center"),
-            [PROPERTY_KEY_TEXT_ALIGNMENT_Y]: this.app.defaultPropertyStore
+            [PROPERTY_KEY_TEXT_ALIGNMENT_Y]: app.defaultPropertyStore
                 .getState()
                 .getOrDefault(PROPERTY_KEY_TEXT_ALIGNMENT_Y, "center"),
-            [PROPERTY_KEY_COLOR_ID]: this.app.defaultPropertyStore
+            [PROPERTY_KEY_COLOR_ID]: app.defaultPropertyStore
                 .getState()
                 .getOrDefault(PROPERTY_KEY_COLOR_ID, 0),
-            [PROPERTY_KEY_FILL_STYLE]: this.app.defaultPropertyStore
+            [PROPERTY_KEY_FILL_STYLE]: app.defaultPropertyStore
                 .getState()
                 .getOrDefault(PROPERTY_KEY_FILL_STYLE, "none"),
-            [PROPERTY_KEY_STROKE_STYLE]: this.app.defaultPropertyStore
+            [PROPERTY_KEY_STROKE_STYLE]: app.defaultPropertyStore
                 .getState()
                 .getOrDefault(PROPERTY_KEY_STROKE_STYLE, "solid"),
-            [PROPERTY_KEY_STROKE_WIDTH]: this.app.defaultPropertyStore
+            [PROPERTY_KEY_STROKE_WIDTH]: app.defaultPropertyStore
                 .getState()
                 .getOrDefault(PROPERTY_KEY_STROKE_WIDTH, 2),
             path: getRectanglePath(),
         });
 
-        this.app.edit((tx) => {
-            tx.insertEntities([shape]);
+        app.canvasStateStore.edit((draft) => {
+            draft.setEntity(shape);
         });
         return shape;
     }

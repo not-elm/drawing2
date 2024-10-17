@@ -1,15 +1,10 @@
-import { useApp } from "../useApp";
-
-import {
-    type ColorId,
-    PROPERTY_KEY_COLOR_ID,
-} from "../../default/property/Colors";
 import {
     PROPERTY_KEY_STROKE_STYLE,
     type StrokeStyle,
 } from "../../default/property/StrokeStyle";
 import { Button } from "../Button";
 import { Card } from "../Card";
+import { useApp } from "../useApp";
 import { useSelectedPropertyValue } from "./useSelectedPropertyValue";
 import { useVisibleFlag } from "./useVisibleFlag";
 
@@ -18,18 +13,12 @@ export function StrokeStylePropertySection() {
     const selectedValue = useSelectedPropertyValue(PROPERTY_KEY_STROKE_STYLE);
 
     const handleClick = (strokeStyle: StrokeStyle) => {
-        app.canvasStateStore.edit((tx) => {
-            tx.updateProperty(
-                app.canvasStateStore.getState().selectedEntityIds,
-                PROPERTY_KEY_STROKE_STYLE,
-                strokeStyle,
-            );
-        });
+        app.canvasStateStore.updateProperty(
+            PROPERTY_KEY_STROKE_STYLE,
+            strokeStyle,
+        );
         app.defaultPropertyStore.set(PROPERTY_KEY_STROKE_STYLE, strokeStyle);
     };
-
-    const colorId =
-        useSelectedPropertyValue<ColorId>(PROPERTY_KEY_COLOR_ID) ?? 0;
 
     const visible = useVisibleFlag({
         modes: ["new-path", "new-shape"],
@@ -72,7 +61,7 @@ export function StrokeStylePropertySection() {
                             strokeLinecap: "round",
                             strokeWidth: 4,
                         }}
-                        stroke-dasharray={"6 6"}
+                        strokeDasharray={"6 6"}
                     />
                 </svg>
             </Button>
@@ -91,7 +80,7 @@ export function StrokeStylePropertySection() {
                             strokeLinecap: "round",
                             strokeWidth: 4,
                         }}
-                        stroke-dasharray={"0 8"}
+                        strokeDasharray={"0 8"}
                     />
                 </svg>
             </Button>

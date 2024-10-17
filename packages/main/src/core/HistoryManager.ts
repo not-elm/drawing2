@@ -23,6 +23,7 @@ export class HistoryManager {
     }
 
     pause() {
+        if (this.paused) return;
         this.paused = true;
 
         // Current state won't be saved since history manager is going to be paused.
@@ -31,6 +32,7 @@ export class HistoryManager {
     }
 
     resume() {
+        if (!this.paused) return;
         this.paused = false;
 
         // No change happened while paused. The state we stored beforehand in pause()

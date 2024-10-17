@@ -7,6 +7,10 @@ export class Point {
         public readonly y: number,
     ) {}
 
+    equals(other: Point): boolean {
+        return this.x === other.x && this.y === other.y;
+    }
+
     getDistance(other: Point): { distance: number; point: Point } {
         return {
             point: this,
@@ -23,9 +27,5 @@ export class Point {
         }
 
         return other.x === this.x && other.y === this.y;
-    }
-
-    translate(dx: number, dy: number): Point {
-        return new Point(this.x + dx, this.y + dy);
     }
 }

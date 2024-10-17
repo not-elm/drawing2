@@ -1,7 +1,3 @@
-import {
-    type ColorId,
-    PROPERTY_KEY_COLOR_ID,
-} from "../../default/property/Colors";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../../default/property/StrokeWidth";
 import { Button } from "../Button";
 import { Card } from "../Card";
@@ -14,18 +10,12 @@ export function StrokeWidthPropertySection() {
     const selectedValue = useSelectedPropertyValue(PROPERTY_KEY_STROKE_WIDTH);
 
     const handleClick = (strokeWidth: number) => {
-        app.canvasStateStore.edit((tx) => {
-            tx.updateProperty(
-                app.canvasStateStore.getState().selectedEntityIds,
-                PROPERTY_KEY_STROKE_WIDTH,
-                strokeWidth,
-            );
-        });
+        app.canvasStateStore.updateProperty(
+            PROPERTY_KEY_STROKE_WIDTH,
+            strokeWidth,
+        );
         app.defaultPropertyStore.set(PROPERTY_KEY_STROKE_WIDTH, strokeWidth);
     };
-
-    const colorId =
-        useSelectedPropertyValue<ColorId>(PROPERTY_KEY_COLOR_ID) ?? 0;
 
     const visible = useVisibleFlag({
         modes: ["new-path", "new-shape"],

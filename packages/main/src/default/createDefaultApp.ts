@@ -9,56 +9,16 @@ import { EditTextModeController } from "./mode/EditTextModeController";
 import { NewPathModeController } from "./mode/NewPathModeController";
 import { NewShapeModeController } from "./mode/NewShapeModeController";
 import { NewTextModeController } from "./mode/NewTextModeController";
-import { SelectModeController } from "./mode/select/SelectModeController";
 import { syncWithLocalStorage } from "./syncWithLocalStorage";
 
 export function createDefaultApp(): App {
     const app = new App();
 
-    app.registerEntityView(PathEntity, PathView)
-        .registerEntityView(ShapeEntity, ShapeView)
-        .registerEntityView(TextEntity, TextView);
-
-    const newTextModeController = new NewTextModeController(
-        app,
-        app.canvasStateStore,
-    );
-
-    const selectModeController = new SelectModeController(
-        app.canvasStateStore,
-        app.gestureRecognizer,
-        app.historyManager,
-        app.viewportStore,
-        app.snapGuideStore,
-        app.appStateStore,
-        app,
-        newTextModeController,
-    );
-
-    app.addModeController(selectModeController)
-        .addModeController(
-            new NewShapeModeController(
-                app.canvasStateStore,
-                app,
-                app.historyManager,
-                app.viewportStore,
-                app.snapGuideStore,
-                app.gestureRecognizer,
-            ),
-        )
-        .addModeController(
-            new NewPathModeController(
-                app.canvasStateStore,
-                app.appStateStore,
-                app,
-                app.historyManager,
-                app.gestureRecognizer,
-            ),
-        )
-        .addModeController(newTextModeController)
-        .addModeController(
-            new EditTextModeController(app, selectModeController),
-        )
+    app.addModeController("new-shape", new NewShapeModeController())
+        .addModeController("new-path", new NewPathModeController())
+        .addModeController("new-text", new NewTextModeController())
+        .addModeController("edit-text", new EditTextModeController())
+        .registerEntityView("path", PathView)
         .registerEntityConverter("path", {
             deserialize(data) {
                 return PathEntity.deserialize(data);
@@ -67,6 +27,7 @@ export function createDefaultApp(): App {
                 return entity.serialize();
             },
         })
+        .registerEntityView("shape", ShapeView)
         .registerEntityConverter("shape", {
             deserialize(data) {
                 return ShapeEntity.deserialize(data);
@@ -75,6 +36,7 @@ export function createDefaultApp(): App {
                 return entity.serialize();
             },
         })
+        .registerEntityView("text", TextView)
         .registerEntityConverter("text", {
             deserialize(data) {
                 return TextEntity.deserialize(data);

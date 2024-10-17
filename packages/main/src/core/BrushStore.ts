@@ -1,5 +1,5 @@
-import { Store } from "../../../lib/Store";
-import { Rect } from "../../../lib/geo/Rect";
+import { Store } from "../lib/Store";
+import { Rect } from "../lib/geo/Rect";
 
 export class BrushStore extends Store<{
     active: boolean;
