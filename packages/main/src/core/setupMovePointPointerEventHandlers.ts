@@ -1,7 +1,7 @@
+import { registerLinkToRect } from "../default/mode/NewPathModeController";
 import { assert } from "../lib/assert";
 import { translate } from "../lib/geo/TransformMatrix";
 import { adjustAngle } from "../lib/geo/adjustAngle";
-import { randomId } from "../lib/randomId";
 import { testHitEntities } from "../lib/testHitEntities";
 import type { App } from "./App";
 import type { Entity } from "./Entity";
@@ -63,18 +63,8 @@ export function setupMovePointPointerEventHandlers(
             );
             if (hit.entities.length > 0) {
                 const { target } = hit.entities[0];
-                if (target.props.id !== entity.props.id) {
-                    app.canvasStateStore.edit((draft) =>
-                        draft.addLink(
-                            new LinkToRect(
-                                randomId(),
-                                entity.props.id,
-                                nodeId,
-                                target.props.id,
-                            ),
-                        ),
-                    );
-                }
+
+                registerLinkToRect(app, entity, originalNode, target);
             }
 
             app.historyManager.resume();

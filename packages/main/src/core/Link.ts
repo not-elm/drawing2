@@ -22,6 +22,8 @@ export abstract class Link {
     abstract apply(draft: PageDraft): void;
 
     abstract serialize(): SerializedLink;
+
+    onAdded(draft: PageDraft): void {}
 }
 
 export interface SerializedLink extends JSONObject {
@@ -225,8 +227,9 @@ export class LinkToRect extends Link {
 }
 
 export class LinkToEdge extends Link {
+    private static MAX_MARGIN = 30;
+
     private lastRect = Rect.of(0, 0, 1, 1);
-    private r = 0.5;
 
     constructor(
         id: string,
@@ -234,6 +237,8 @@ export class LinkToEdge extends Link {
         public readonly pathId: string,
         public readonly p1Id: string,
         public readonly p2Id: string,
+        public r = 0.5,
+        public distance = 0,
     ) {
         super(id);
     }
@@ -263,19 +268,7 @@ export class LinkToEdge extends Link {
         );
 
         if (!this.lastRect.equals(entity.getBoundingRect())) {
-            // recompute r
-            const { point: linkPoint } = new Line({
-                p1: p1.point,
-                p2: p2.point,
-            }).getDistance(entity.getBoundingRect().center);
-            const dx = p2.point.x - p1.point.x;
-            const dy = p2.point.y - p1.point.y;
-
-            if (Math.abs(dx) > Math.abs(dy)) {
-                this.r = (linkPoint.x - p1.point.x) / dx;
-            } else {
-                this.r = (linkPoint.y - p1.point.y) / dy;
-            }
+            this.update(draft);
         }
 
         const norm = Math.hypot(
@@ -292,11 +285,9 @@ export class LinkToEdge extends Link {
         const py = vx;
 
         const rect = entity.getBoundingRect();
-        const distance =
-            Math.abs((rect.width / 2) * px) + Math.abs((rect.height / 2) * py);
 
-        const x = p1.point.x + vx * norm * this.r + px * distance;
-        const y = p1.point.y + vy * norm * this.r + py * distance;
+        const x = p1.point.x + vx * norm * this.r + px * this.distance;
+        const y = p1.point.y + vy * norm * this.r + py * this.distance;
 
         const newEntity = entity.transform(
             translate(x - rect.center.x, y - rect.center.y),
@@ -314,6 +305,8 @@ export class LinkToEdge extends Link {
             pathId: this.pathId,
             p1Id: this.p1Id,
             p2Id: this.p2Id,
+            r: this.r,
+            distance: this.distance,
         };
     }
 
@@ -324,7 +317,58 @@ export class LinkToEdge extends Link {
             data.pathId,
             data.p1Id,
             data.p2Id,
+            data.r,
+            data.distance,
         );
+    }
+
+    private update(draft: PageDraft): void {
+        const entity = draft.getEntity(this.entityId);
+        const rect = entity.getBoundingRect();
+
+        const path = draft.getEntity(this.pathId);
+        assert(
+            path instanceof PathEntity,
+            `Entity is not a path: ${this.pathId}`,
+        );
+
+        const p1 = path.getNodeById(this.p1Id);
+        assert(
+            p1 !== undefined,
+            `Node not found: ${this.p1Id} in ${path.props.id}`,
+        );
+
+        const p2 = path.getNodeById(this.p2Id);
+        assert(
+            p2 !== undefined,
+            `Node not found: ${this.p2Id} in ${path.props.id}`,
+        );
+
+        const { point: linkPoint } = new Line({
+            p1: p1.point,
+            p2: p2.point,
+        }).getDistance(entity.getBoundingRect().center);
+        const dx = p2.point.x - p1.point.x;
+        const dy = p2.point.y - p1.point.y;
+        const norm = Math.hypot(dx, dy);
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+            this.r = (linkPoint.x - p1.point.x) / dx;
+        } else {
+            this.r = (linkPoint.y - p1.point.y) / dy;
+        }
+
+        const dx2 = linkPoint.x - entity.getBoundingRect().center.x;
+        const dy2 = linkPoint.y - entity.getBoundingRect().center.y;
+
+        const maxDistance =
+            LinkToEdge.MAX_MARGIN + Math.hypot(rect.width, rect.height) / 2;
+
+        this.distance = Math.max(
+            -maxDistance,
+            Math.min((dx2 * dy - dy2 * dx) / norm, maxDistance),
+        );
+        this.lastRect = rect;
     }
 }
 
@@ -333,6 +377,8 @@ interface SerializedLinkToEdge extends SerializedLink {
     pathId: string;
     p1Id: string;
     p2Id: string;
+    r: number;
+    distance: number;
 }
 
 interface SerializedLinkToRect extends SerializedLink {

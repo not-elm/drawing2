@@ -1,9 +1,11 @@
 import type { App } from "../../core/App";
-import { LinkToRect } from "../../core/Link";
+import type { Entity } from "../../core/Entity";
+import { LinkToEdge, LinkToRect } from "../../core/Link";
 import {
     type CanvasPointerEvent,
     ModeController,
 } from "../../core/ModeController";
+import type { Page } from "../../core/Page";
 import type { PathNode } from "../../core/Path";
 import { setupMovePointPointerEventHandlers } from "../../core/setupMovePointPointerEventHandlers";
 import { Line } from "../../lib/geo/Line";
@@ -34,15 +36,11 @@ export class NewPathModeController extends ModeController {
 
         if (hit.entities.length > 0) {
             const { target } = hit.entities[0];
-            app.canvasStateStore.edit((draft) =>
-                draft.addLink(
-                    new LinkToRect(
-                        randomId(),
-                        pathEntity.props.id,
-                        pathEntity.getNodes()[0].id,
-                        target.props.id,
-                    ),
-                ),
+            registerLinkToRect(
+                app,
+                pathEntity,
+                pathEntity.getNodes()[0],
+                target,
             );
         }
 
@@ -90,4 +88,38 @@ export class NewPathModeController extends ModeController {
         });
         return pathEntity;
     }
+}
+
+export function registerLinkToRect(
+    app: App,
+    nodeOwner: Entity,
+    node: PathNode,
+    target: Entity,
+) {
+    if (nodeOwner.props.id === target.props.id) {
+        return;
+    }
+    if (isOwnedLabel(app.canvasStateStore.getState().page, nodeOwner, target)) {
+        return;
+    }
+
+    app.canvasStateStore.edit((draft) =>
+        draft.addLink(
+            new LinkToRect(
+                randomId(),
+                nodeOwner.props.id,
+                node.id,
+                target.props.id,
+            ),
+        ),
+    );
+}
+
+function isOwnedLabel(page: Page, nodeOwner: Entity, label: Entity): boolean {
+    return page.links
+        .getByEntityId(nodeOwner.props.id)
+        .some(
+            (link) =>
+                link instanceof LinkToEdge && link.entityId === label.props.id,
+        );
 }
