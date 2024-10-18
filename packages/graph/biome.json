@@ -1,0 +1,29 @@
+{
+    "formatter": {
+        "indentStyle": "space",
+        "indentWidth": 4,
+        "formatWithErrors": true
+    },
+    "linter": {
+        "rules": {
+            "complexity": {
+                "noBannedTypes": "off",
+                "noStaticOnlyClass": "off",
+                "noUselessLoneBlockStatements": "off"
+            },
+            "a11y": {
+                "noSvgWithoutTitle": "off",
+                "useKeyWithClickEvents": "off",
+                "noAutofocus": "off"
+            },
+            "style": {
+                "noParameterAssign": "off",
+                "noUselessElse": "off"
+            },
+            "suspicious": {
+                "noArrayIndexKey": "off",
+                "noAssignInExpressions": "off"
+            }
+        }
+    }
+}
