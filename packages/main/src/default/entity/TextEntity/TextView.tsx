@@ -11,7 +11,7 @@ import {
     PROPERTY_KEY_TEXT_ALIGNMENT_X,
     type TextAlignment,
 } from "../../property/TextAlignment";
-import { PROPERTY_KEY_CONTENT } from "../ShapeEntity/ShapeEntity";
+import { PROPERTY_KEY_CONTENT } from "../PathEntity/ShapeEntity";
 import type { TextEntity } from "./TextEntity";
 
 export const TextView = memo(function ShapeView({

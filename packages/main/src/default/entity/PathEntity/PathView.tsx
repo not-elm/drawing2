@@ -1,37 +1,83 @@
 import { memo } from "react";
+import type { Entity } from "../../../core/Entity";
+import type { Line } from "../../../lib/geo/Line";
+import { Point } from "../../../lib/geo/Point";
+import type { Rect } from "../../../lib/geo/Rect";
 import { identity } from "../../../lib/geo/TransformMatrix";
 import { convertGeometryToPathDefinition } from "../../../react/SelectionRect";
-import { Colors, PROPERTY_KEY_COLOR_ID } from "../../property/Colors";
-import type { PathEntity } from "./PathEntity";
+import {
+    type ColorId,
+    ColorPaletteBackground,
+    ColorPaletteBackgroundMonoColor,
+    Colors,
+    PROPERTY_KEY_COLOR_ID,
+} from "../../property/Colors";
+import {
+    type FillStyle,
+    PROPERTY_KEY_FILL_STYLE,
+} from "../../property/FillStyle";
+import {
+    PROPERTY_KEY_STROKE_STYLE,
+    type StrokeStyle,
+} from "../../property/StrokeStyle";
+import { PROPERTY_KEY_STROKE_WIDTH } from "../../property/StrokeWidth";
 
 export const STROKE_WIDTH_BASE = 5;
 
-export const PathView = memo(function PathView({
+export const PathView = memo(function ShapeView({
     entity,
-}: { entity: PathEntity }) {
+}: { entity: Entity }) {
     const rect = entity.getBoundingRect();
 
-    // const arrowHeadPath1 = constructArrowHeadPath(
-    //     x1 - left,
-    //     y1 - top,
-    //     x2 - left,
-    //     y2 - top,
-    // );
-    // const arrowHeadPath2 = constructArrowHeadPath(
-    //     x2 - left,
-    //     y2 - top,
-    //     x1 - left,
-    //     y1 - top,
-    // );
+    return (
+        <div
+            style={{
+                transform: `translate(${rect.left}px, ${rect.top}px)`,
+            }}
+            css={{ position: "absolute" }}
+        >
+            <PathViewInner
+                colorId={entity.getProperty(PROPERTY_KEY_COLOR_ID, 0)}
+                strokeStyle={entity.getProperty(
+                    PROPERTY_KEY_STROKE_STYLE,
+                    "solid",
+                )}
+                strokeWidth={entity.getProperty(PROPERTY_KEY_STROKE_WIDTH, 2)}
+                fillStyle={entity.getProperty(PROPERTY_KEY_FILL_STYLE, "none")}
+                outline={entity.getOutline()}
+                top={rect.top}
+                left={rect.left}
+            />
+        </div>
+    );
+});
 
-    const strokeWidth =
+export const PathViewInner = memo(function PathViewInner({
+    colorId,
+    strokeStyle,
+    strokeWidth,
+    fillStyle,
+    outline,
+    top,
+    left,
+}: {
+    colorId: ColorId;
+    strokeStyle: StrokeStyle;
+    strokeWidth: number;
+    fillStyle: FillStyle;
+    outline: (Rect | Line | Point)[];
+    top: number;
+    left: number;
+}) {
+    const strokeWidth2 =
         ({
             solid: STROKE_WIDTH_BASE,
             dashed: STROKE_WIDTH_BASE,
             dotted: STROKE_WIDTH_BASE * 1.4,
-        }[entity.props.strokeStyle] *
-            entity.props.strokeWidth) /
+        }[strokeStyle] *
+            strokeWidth) /
         2;
+
     return (
         <svg
             viewBox="0 0 1 1"
@@ -39,50 +85,37 @@ export const PathView = memo(function PathView({
             height={1}
             css={{
                 position: "absolute",
-                top: rect.top,
-                left: rect.left,
                 overflow: "visible",
+                inset: 0,
             }}
         >
             <path
-                css={{
-                    stroke: Colors[entity.props[PROPERTY_KEY_COLOR_ID]],
-                    fill: "none",
-                }}
                 d={convertGeometryToPathDefinition(
-                    entity.getOutline(),
-                    rect.topLeft,
+                    outline,
+                    new Point(left, top),
                     identity(),
                 )}
-                strokeWidth={strokeWidth}
+                css={{
+                    stroke: Colors[colorId],
+                    strokeLinejoin: "round",
+                    strokeLinecap: "round",
+                    ...{
+                        none: { fill: "none" },
+                        mono: { fill: ColorPaletteBackgroundMonoColor },
+                        color: {
+                            fill: ColorPaletteBackground[colorId],
+                        },
+                    }[fillStyle],
+                }}
+                strokeWidth={strokeWidth2}
                 strokeDasharray={
                     {
                         solid: undefined,
                         dashed: [2 * strokeWidth, strokeWidth + 5].join(" "),
                         dotted: [0, strokeWidth * (0.5 + 1.2 + 0.5)].join(" "),
-                    }[entity.props.strokeStyle]
+                    }[strokeStyle]
                 }
-                strokeLinecap="round"
-                strokeLinejoin="round"
             />
-            {/*{entity.endType1 === "arrow" && arrowHeadPath1 && (*/}
-            {/*    <path*/}
-            {/*        css={{ stroke: Colors[entity.colorId], fill: "none" }}*/}
-            {/*        d={arrowHeadPath1}*/}
-            {/*        strokeWidth={strokeWidth}*/}
-            {/*        strokeLinecap="round"*/}
-            {/*        strokeLinejoin="round"*/}
-            {/*    />*/}
-            {/*)}*/}
-            {/*{entity.endType2 === "arrow" && arrowHeadPath2 && (*/}
-            {/*    <path*/}
-            {/*        css={{ stroke: Colors[entity.colorId], fill: "none" }}*/}
-            {/*        d={arrowHeadPath2}*/}
-            {/*        strokeWidth={strokeWidth}*/}
-            {/*        strokeLinecap="round"*/}
-            {/*        strokeLinejoin="round"*/}
-            {/*    />*/}
-            {/*)}*/}
         </svg>
     );
 });

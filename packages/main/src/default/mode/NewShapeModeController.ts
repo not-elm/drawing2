@@ -9,15 +9,11 @@ import { Rect } from "../../lib/geo/Rect";
 import { translate } from "../../lib/geo/TransformMatrix";
 import { getRectanglePath } from "../../lib/geo/path";
 import { randomId } from "../../lib/randomId";
-import { ShapeEntity } from "../entity/ShapeEntity/ShapeEntity";
+import { ShapeEntity } from "../entity/PathEntity/ShapeEntity";
 import { PROPERTY_KEY_COLOR_ID } from "../property/Colors";
 import { PROPERTY_KEY_FILL_STYLE } from "../property/FillStyle";
 import { PROPERTY_KEY_STROKE_STYLE } from "../property/StrokeStyle";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../property/StrokeWidth";
-import {
-    PROPERTY_KEY_TEXT_ALIGNMENT_X,
-    PROPERTY_KEY_TEXT_ALIGNMENT_Y,
-} from "../property/TextAlignment";
 
 export class NewShapeModeController extends ModeController {
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
@@ -48,13 +44,6 @@ export class NewShapeModeController extends ModeController {
         const shape = new ShapeEntity({
             id: randomId(),
             rect,
-            content: "",
-            [PROPERTY_KEY_TEXT_ALIGNMENT_X]: app.defaultPropertyStore
-                .getState()
-                .getOrDefault(PROPERTY_KEY_TEXT_ALIGNMENT_X, "center"),
-            [PROPERTY_KEY_TEXT_ALIGNMENT_Y]: app.defaultPropertyStore
-                .getState()
-                .getOrDefault(PROPERTY_KEY_TEXT_ALIGNMENT_Y, "center"),
             [PROPERTY_KEY_COLOR_ID]: app.defaultPropertyStore
                 .getState()
                 .getOrDefault(PROPERTY_KEY_COLOR_ID, 0),

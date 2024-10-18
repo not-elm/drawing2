@@ -1,8 +1,7 @@
 import { App } from "../core/App";
 import { PathEntity } from "./entity/PathEntity/PathEntity";
 import { PathView } from "./entity/PathEntity/PathView";
-import { ShapeEntity } from "./entity/ShapeEntity/ShapeEntity";
-import { ShapeView } from "./entity/ShapeEntity/ShapeView";
+import { ShapeEntity } from "./entity/PathEntity/ShapeEntity";
 import { TextEntity } from "./entity/TextEntity/TextEntity";
 import { TextView } from "./entity/TextEntity/TextView";
 import { EditTextModeController } from "./mode/EditTextModeController";
@@ -27,7 +26,7 @@ export function createDefaultApp(): App {
                 return entity.serialize();
             },
         })
-        .registerEntityView("shape", ShapeView)
+        .registerEntityView("shape", PathView)
         .registerEntityConverter("shape", {
             deserialize(data) {
                 return ShapeEntity.deserialize(data);

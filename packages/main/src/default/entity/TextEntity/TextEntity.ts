@@ -14,7 +14,7 @@ import {
     PROPERTY_KEY_TEXT_ALIGNMENT_X,
     type TextAlignment,
 } from "../../property/TextAlignment";
-import { PROPERTY_KEY_CONTENT } from "../ShapeEntity/ShapeEntity";
+import { PROPERTY_KEY_CONTENT } from "../PathEntity/ShapeEntity";
 
 export class TextEntity extends Entity<{
     id: string;
@@ -29,10 +29,10 @@ export class TextEntity extends Entity<{
 
     getBoundingRect(): Rect {
         return Rect.of(
-            this.props.rect.left - 5,
-            this.props.rect.top - 5,
-            this.props.rect.width + 10,
-            this.props.rect.height + 10,
+            this.props.rect.left,
+            this.props.rect.top,
+            this.props.rect.width,
+            this.props.rect.height,
         );
     }
 

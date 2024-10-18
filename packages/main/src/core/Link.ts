@@ -225,6 +225,13 @@ export class LinkToRect extends Link {
         );
     }
 }
+interface SerializedLinkToRect extends SerializedLink {
+    pathId: string;
+    nodeId: string;
+    rectEntityId: string;
+    // rx: number;
+    // ry: number;
+}
 
 export class LinkToEdge extends Link {
     private static MAX_MARGIN = 30;
@@ -371,7 +378,6 @@ export class LinkToEdge extends Link {
         this.lastRect = rect;
     }
 }
-
 interface SerializedLinkToEdge extends SerializedLink {
     entityId: string;
     pathId: string;
@@ -379,12 +385,4 @@ interface SerializedLinkToEdge extends SerializedLink {
     p2Id: string;
     r: number;
     distance: number;
-}
-
-interface SerializedLinkToRect extends SerializedLink {
-    pathId: string;
-    nodeId: string;
-    rectEntityId: string;
-    // rx: number;
-    // ry: number;
 }
