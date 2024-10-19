@@ -11,7 +11,7 @@ interface AppState {
 export class AppStateStore extends Store<AppState> {
     constructor() {
         super({
-            mode: { type: "select" },
+            mode: { type: "select-entity" },
             cursor: "default",
         });
     }

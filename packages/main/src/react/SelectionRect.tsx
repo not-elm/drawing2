@@ -18,7 +18,7 @@ export function SelectionRect() {
     const entities = canvasState.getSelectedEntities();
     const rect = viewport.transform.apply(selectionRect);
 
-    if (appState.mode.type !== "select") return null;
+    if (appState.mode.type !== "select-entity") return null;
 
     return (
         <div

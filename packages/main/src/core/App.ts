@@ -5,13 +5,13 @@ import { AppStateStore } from "./AppStateStore";
 import { CanvasStateStore } from "./CanvasStateStore";
 import { ClipboardService } from "./ClipboardService";
 import { DefaultPropertyStore } from "./DefaultPropertyStore";
-import { EditPathModeController } from "./EditPathModeController";
 import type { Entity } from "./Entity";
 import { type EntityConverter, EntityConverterMap } from "./EntityConverter";
 import { GestureRecognizer } from "./GestureRecognizer";
 import { HistoryManager } from "./HistoryManager";
 import type { Mode, ModeChangeEvent, ModeController } from "./ModeController";
-import { SelectModeController } from "./SelectModeController";
+import { SelectEntityModeController } from "./SelectEntityModeController";
+import { SelectPathModeController } from "./SelectPathModeController";
 import { SnapGuideStore } from "./SnapGuideStore";
 import { ViewportStore } from "./ViewportStore";
 
@@ -29,14 +29,14 @@ export class App {
         string,
         ComponentType<{ entity: Entity }>
     >();
-    private readonly defaultModeController = new SelectModeController();
+    private readonly defaultModeController = new SelectEntityModeController();
 
     // TODO: Move to SelectMode package
     readonly snapGuideStore = new SnapGuideStore();
 
     constructor() {
-        this.addModeController("select", this.defaultModeController);
-        this.addModeController("edit-path", new EditPathModeController());
+        this.addModeController("select-entity", this.defaultModeController);
+        this.addModeController("select-path", new SelectPathModeController());
     }
 
     addModeController(type: string, controller: ModeController): App {
@@ -189,9 +189,9 @@ export class App {
                     case "new-path":
                     case "new-shape":
                     case "new-text":
-                    case "select": {
+                    case "select-entity": {
                         if (modifiers.metaKey || modifiers.ctrlKey) {
-                            this.setMode({ type: "select" });
+                            this.setMode({ type: "select-entity" });
                             this.canvasStateStore.selectAll();
                             return true;
                         } else {
@@ -205,7 +205,7 @@ export class App {
                 switch (this.appStateStore.getState().mode.type) {
                     case "new-path":
                     case "new-text":
-                    case "select": {
+                    case "select-entity": {
                         this.setMode({ type: "new-shape" });
                         return true;
                     }
@@ -216,7 +216,7 @@ export class App {
                 switch (this.appStateStore.getState().mode.type) {
                     case "new-shape":
                     case "new-path":
-                    case "select": {
+                    case "select-entity": {
                         this.setMode({ type: "new-text" });
                         return true;
                     }
@@ -226,7 +226,7 @@ export class App {
             case "l": {
                 switch (this.appStateStore.getState().mode.type) {
                     case "new-shape":
-                    case "select": {
+                    case "select-entity": {
                         this.setMode({ type: "new-path" });
                         return true;
                     }
@@ -237,7 +237,7 @@ export class App {
                 switch (this.appStateStore.getState().mode.type) {
                     case "new-path":
                     case "new-shape":
-                    case "select": {
+                    case "select-entity": {
                         if (modifiers.metaKey || modifiers.ctrlKey) {
                             if (modifiers.shiftKey) {
                                 this.historyManager.redo();
@@ -252,7 +252,7 @@ export class App {
             }
             case "x": {
                 switch (this.appStateStore.getState().mode.type) {
-                    case "select": {
+                    case "select-entity": {
                         if (modifiers.metaKey || modifiers.ctrlKey) {
                             this.canvasStateStore.cut();
                         }
@@ -263,7 +263,7 @@ export class App {
             }
             case "c": {
                 switch (this.appStateStore.getState().mode.type) {
-                    case "select": {
+                    case "select-entity": {
                         if (modifiers.metaKey || modifiers.ctrlKey) {
                             this.canvasStateStore.copy();
                         }
@@ -274,7 +274,7 @@ export class App {
             }
             case "v": {
                 switch (this.appStateStore.getState().mode.type) {
-                    case "select": {
+                    case "select-entity": {
                         if (modifiers.metaKey || modifiers.ctrlKey) {
                             this.canvasStateStore.paste();
                         }
@@ -285,12 +285,12 @@ export class App {
             }
             case "Escape": {
                 switch (this.appStateStore.getState().mode.type) {
-                    case "select": {
+                    case "select-entity": {
                         this.canvasStateStore.unselectAll();
                         return true;
                     }
                     default: {
-                        this.setMode({ type: "select" });
+                        this.setMode({ type: "select-entity" });
                         return true;
                     }
                 }
@@ -298,7 +298,7 @@ export class App {
             case "Delete":
             case "Backspace": {
                 switch (this.appStateStore.getState().mode.type) {
-                    case "select": {
+                    case "select-entity": {
                         this.canvasStateStore.deleteSelectedEntities();
                         return true;
                     }

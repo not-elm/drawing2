@@ -24,7 +24,7 @@ export class NewShapeModeController extends ModeController {
         app.historyManager.pause();
         const shape = this.insertNewShape(app, new Rect({ p0, p1 }));
 
-        app.setMode({ type: "select" });
+        app.setMode({ type: "select-entity" });
         app.canvasStateStore.unselectAll();
         app.canvasStateStore.select(shape.props.id);
 

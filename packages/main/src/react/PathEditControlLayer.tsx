@@ -1,4 +1,4 @@
-import { isEditPathMode } from "../core/EditPathModeController";
+import { isSelectPathMode } from "../core/SelectPathModeController";
 import { assert } from "../lib/assert";
 import { useStore } from "./hooks/useStore";
 import { useApp } from "./useApp";
@@ -8,7 +8,7 @@ export function PathEditControlLayer() {
     const appState = useStore(app.appStateStore);
     const canvasState = useStore(app.canvasStateStore);
     const viewport = useStore(app.viewportStore);
-    if (!isEditPathMode(appState.mode)) return null;
+    if (!isSelectPathMode(appState.mode)) return null;
 
     const entityId = appState.mode.entityId;
     const entity = canvasState.page.entities.get(entityId);

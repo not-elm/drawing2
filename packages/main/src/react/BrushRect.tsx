@@ -1,4 +1,4 @@
-import { SelectModeController } from "../core/SelectModeController";
+import { SelectEntityModeController } from "../core/SelectEntityModeController";
 import { useStore } from "./hooks/useStore";
 import { useApp } from "./useApp";
 
@@ -6,7 +6,7 @@ export function BrushRect() {
     const app = useApp();
     const modeController = app.getModeController();
 
-    if (!(modeController instanceof SelectModeController)) return null;
+    if (!(modeController instanceof SelectEntityModeController)) return null;
 
     return <BrushRectInner selectModeController={modeController} />;
 }
@@ -14,7 +14,7 @@ export function BrushRect() {
 function BrushRectInner({
     selectModeController,
 }: {
-    selectModeController: SelectModeController;
+    selectModeController: SelectEntityModeController;
 }) {
     const { active, rect } = useStore(selectModeController.brushStore);
     if (!active) {

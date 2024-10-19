@@ -12,7 +12,7 @@ import {
 import { setupBrushSelectPointerEventHandlers } from "./setupBrushSelectPointerEventHandlers";
 import { setupSelectionTransformPointerEventHandlers } from "./setupSelectionTransformPointerEventHandlers";
 
-export class SelectModeController extends ModeController {
+export class SelectEntityModeController extends ModeController {
     readonly brushStore = new BrushStore();
 
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {

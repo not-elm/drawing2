@@ -49,7 +49,7 @@ export class EditTextModeController extends ModeController {
     }
 
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
-        app.setMode({ type: "select" });
+        app.setMode({ type: "select-entity" });
         app.getModeController().onCanvasPointerDown(app, ev);
     }
 }

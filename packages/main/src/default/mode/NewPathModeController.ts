@@ -45,7 +45,7 @@ export class NewPathModeController extends ModeController {
             );
         }
 
-        app.setMode({ type: "select" });
+        app.setMode({ type: "select-entity" });
         app.canvasStateStore.unselectAll();
         app.canvasStateStore.select(pathEntity.props.id);
 
