@@ -1,15 +1,16 @@
 import type { App } from "../../core/App";
+import type { Entity } from "../../core/Entity";
 import {
     type CanvasPointerEvent,
     ModeController,
 } from "../../core/ModeController";
+import type { PathNode } from "../../core/Path";
 import { ScaleSelectionTransformController } from "../../core/SelectionTransformController";
 import { setupSelectionTransformPointerEventHandlers } from "../../core/setupSelectionTransformPointerEventHandlers";
 import { Rect } from "../../lib/geo/Rect";
 import { translate } from "../../lib/geo/TransformMatrix";
-import { getRectanglePath } from "../../lib/geo/path";
 import { randomId } from "../../lib/randomId";
-import { ShapeEntity } from "../entity/PathEntity/ShapeEntity";
+import { PathEntity } from "../entity/PathEntity/PathEntity";
 import { PROPERTY_KEY_COLOR_ID } from "../property/Colors";
 import { PROPERTY_KEY_FILL_STYLE } from "../property/FillStyle";
 import { PROPERTY_KEY_STROKE_STYLE } from "../property/StrokeStyle";
@@ -40,23 +41,38 @@ export class NewShapeModeController extends ModeController {
         );
     }
 
-    private insertNewShape(app: App, rect: Rect): ShapeEntity {
-        const shape = new ShapeEntity({
+    private insertNewShape(app: App, rect: Rect): Entity {
+        const topLeftNode = { id: randomId(), point: rect.topLeft };
+        const topRightNode = { id: randomId(), point: rect.topRight };
+        const bottomRightNode = { id: randomId(), point: rect.bottomRight };
+        const bottomLeftNode = { id: randomId(), point: rect.bottomLeft };
+        const nodes = new Map<string, PathNode>();
+        nodes.set(topLeftNode.id, topLeftNode);
+        nodes.set(topRightNode.id, topRightNode);
+        nodes.set(bottomRightNode.id, bottomRightNode);
+        nodes.set(bottomLeftNode.id, bottomLeftNode);
+
+        const shape = new PathEntity({
             id: randomId(),
-            rect,
+            nodes,
+            edges: [
+                [topLeftNode.id, topRightNode.id],
+                [topRightNode.id, bottomRightNode.id],
+                [bottomRightNode.id, bottomLeftNode.id],
+                [bottomLeftNode.id, topLeftNode.id],
+            ],
             [PROPERTY_KEY_COLOR_ID]: app.defaultPropertyStore
                 .getState()
                 .getOrDefault(PROPERTY_KEY_COLOR_ID, 0),
-            [PROPERTY_KEY_FILL_STYLE]: app.defaultPropertyStore
-                .getState()
-                .getOrDefault(PROPERTY_KEY_FILL_STYLE, "none"),
             [PROPERTY_KEY_STROKE_STYLE]: app.defaultPropertyStore
                 .getState()
                 .getOrDefault(PROPERTY_KEY_STROKE_STYLE, "solid"),
             [PROPERTY_KEY_STROKE_WIDTH]: app.defaultPropertyStore
                 .getState()
                 .getOrDefault(PROPERTY_KEY_STROKE_WIDTH, 2),
-            path: getRectanglePath(),
+            [PROPERTY_KEY_FILL_STYLE]: app.defaultPropertyStore
+                .getState()
+                .getOrDefault(PROPERTY_KEY_FILL_STYLE, "none"),
         });
 
         app.canvasStateStore.edit((draft) => {

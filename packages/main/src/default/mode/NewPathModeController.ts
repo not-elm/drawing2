@@ -14,6 +14,7 @@ import { randomId } from "../../lib/randomId";
 import { testHitEntities } from "../../lib/testHitEntities";
 import { PathEntity } from "../entity/PathEntity/PathEntity";
 import { PROPERTY_KEY_COLOR_ID } from "../property/Colors";
+import { PROPERTY_KEY_FILL_STYLE } from "../property/FillStyle";
 import { PROPERTY_KEY_STROKE_STYLE } from "../property/StrokeStyle";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../property/StrokeWidth";
 
@@ -81,6 +82,9 @@ export class NewPathModeController extends ModeController {
             [PROPERTY_KEY_STROKE_WIDTH]: app.defaultPropertyStore
                 .getState()
                 .getOrDefault(PROPERTY_KEY_STROKE_WIDTH, 2),
+            [PROPERTY_KEY_FILL_STYLE]: app.defaultPropertyStore
+                .getState()
+                .getOrDefault(PROPERTY_KEY_FILL_STYLE, "none"),
         });
 
         app.canvasStateStore.edit((draft) => {

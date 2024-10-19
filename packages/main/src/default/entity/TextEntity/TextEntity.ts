@@ -14,7 +14,8 @@ import {
     PROPERTY_KEY_TEXT_ALIGNMENT_X,
     type TextAlignment,
 } from "../../property/TextAlignment";
-import { PROPERTY_KEY_CONTENT } from "../PathEntity/ShapeEntity";
+
+export const PROPERTY_KEY_CONTENT = "content";
 
 export class TextEntity extends Entity<{
     id: string;

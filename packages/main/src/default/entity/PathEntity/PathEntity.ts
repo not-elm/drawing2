@@ -12,6 +12,10 @@ import type { TransformMatrix } from "../../../lib/geo/TransformMatrix";
 import { randomId } from "../../../lib/randomId";
 import { EditTextModeController } from "../../mode/EditTextModeController";
 import { type ColorId, PROPERTY_KEY_COLOR_ID } from "../../property/Colors";
+import {
+    type FillStyle,
+    PROPERTY_KEY_FILL_STYLE,
+} from "../../property/FillStyle";
 import { PROPERTY_KEY_SIZING_MODE } from "../../property/SizingMode";
 import {
     PROPERTY_KEY_STROKE_STYLE,
@@ -25,9 +29,10 @@ export class PathEntity extends Entity<{
     id: string;
     nodes: Map<string, PathNode>;
     edges: [string, string][];
-    [PROPERTY_KEY_STROKE_STYLE]: StrokeStyle;
     [PROPERTY_KEY_COLOR_ID]: ColorId;
+    [PROPERTY_KEY_STROKE_STYLE]: StrokeStyle;
     [PROPERTY_KEY_STROKE_WIDTH]: number;
+    [PROPERTY_KEY_FILL_STYLE]: FillStyle;
 }> {
     readonly type = "path";
 
@@ -123,6 +128,7 @@ export class PathEntity extends Entity<{
             colorId: this.props.colorId,
             strokeStyle: this.props.strokeStyle,
             strokeWidth: this.props.strokeWidth,
+            fillStyle: this.props.fillStyle,
         } satisfies SerializedPathEntity;
     }
 
@@ -172,6 +178,7 @@ export class PathEntity extends Entity<{
             [PROPERTY_KEY_COLOR_ID]: serialized.colorId,
             [PROPERTY_KEY_STROKE_STYLE]: serialized.strokeStyle,
             [PROPERTY_KEY_STROKE_WIDTH]: serialized.strokeWidth,
+            [PROPERTY_KEY_FILL_STYLE]: serialized.fillStyle,
         });
     }
 
@@ -221,4 +228,5 @@ interface SerializedPathEntity extends JSONObject {
     colorId: ColorId;
     strokeStyle: StrokeStyle;
     strokeWidth: number;
+    fillStyle: FillStyle;
 }
