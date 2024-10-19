@@ -7,7 +7,6 @@ import {
     ModeController,
 } from "../../core/ModeController";
 import type { Page } from "../../core/Page";
-import type { PathNode } from "../../core/Path";
 import { setupMovePointPointerEventHandlers } from "../../core/setupMovePointPointerEventHandlers";
 import { Line } from "../../lib/geo/Line";
 import { translate } from "../../lib/geo/TransformMatrix";
@@ -93,7 +92,7 @@ export class NewPathModeController extends ModeController {
 export function registerLinkToRect(
     app: App,
     nodeOwner: Entity,
-    node: PathNode,
+    node: GraphNode,
     target: Entity,
 ) {
     if (nodeOwner.props.id === target.props.id) {

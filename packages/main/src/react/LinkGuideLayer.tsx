@@ -43,8 +43,8 @@ export function LinkToEdgeGuide({ link }: { link: LinkToEdge }) {
     const p2 = path.getNodeById(link.p2Id);
     assert(p2 !== undefined, `Node ${link.p2Id} not found`);
 
-    const linkPointX = p1.point.x * (1 - link.r) + p2.point.x * link.r;
-    const linkPointY = p1.point.y * (1 - link.r) + p2.point.y * link.r;
+    const linkPointX = p1.x * (1 - link.r) + p2.x * link.r;
+    const linkPointY = p1.y * (1 - link.r) + p2.y * link.r;
 
     const left = linkPointX;
     const top = linkPointY;

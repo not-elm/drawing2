@@ -4,9 +4,9 @@ import type { Rect } from "../lib/geo/Rect";
 import type { TransformMatrix } from "../lib/geo/TransformMatrix";
 import type { App } from "./App";
 import type { SerializedEntity } from "./EntityConverter";
+import type { GraphEdge, GraphNode } from "./Graph";
 import type { JSONObject } from "./JSONObject";
 import type { CanvasPointerEvent } from "./ModeController";
-import type { PathEdge, PathNode } from "./Path";
 
 export interface EntityProps {
     id: string;
@@ -38,15 +38,15 @@ export abstract class Entity<P extends EntityProps = EntityProps> {
         return (this.props[propertyKey] as T | undefined) ?? defaultValue;
     }
 
-    getNodes(): PathNode[] {
+    getNodes(): GraphNode[] {
         return [];
     }
 
-    getNodeById(nodeId: string): PathNode | undefined {
+    getNodeById(nodeId: string): GraphNode | undefined {
         return this.getNodes().find((node) => node.id === nodeId);
     }
 
-    getEdges(): PathEdge[] {
+    getEdges(): GraphEdge[] {
         return [];
     }
 

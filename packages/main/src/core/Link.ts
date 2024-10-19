@@ -183,9 +183,9 @@ export class LinkToRect extends Link {
             return;
         }
 
-        if (!this.lastPoint.equals(node.point)) {
-            this.rx = (node.point.x - rect.left) / rect.width;
-            this.ry = (node.point.y - rect.top) / rect.height;
+        if (!this.lastPoint.equals(node)) {
+            this.rx = (node.x - rect.left) / rect.width;
+            this.ry = (node.y - rect.top) / rect.height;
 
             if (this.rx < 0 || this.rx > 1 || this.ry < 0 || this.ry > 1) {
                 draft.deleteLink(this.id);
@@ -197,7 +197,7 @@ export class LinkToRect extends Link {
         const y = rect.top + rect.height * this.ry;
 
         draft.setPointPosition(this.pathId, this.nodeId, new Point(x, y));
-        this.lastPoint = node.point;
+        this.lastPoint = node;
     }
 
     serialize(): SerializedLink {
@@ -270,14 +270,11 @@ export class LinkToEdge extends Link {
             `Node not found: ${this.p2Id} in ${path.props.id}`,
         );
 
-        const norm = Math.hypot(
-            p2.point.x - p1.point.x,
-            p2.point.y - p1.point.y,
-        );
+        const norm = Math.hypot(p2.x - p1.x, p2.y - p1.y);
 
         // unit vector from p1 to p2
-        const vx = (p2.point.x - p1.point.x) / norm;
-        const vy = (p2.point.y - p1.point.y) / norm;
+        const vx = (p2.x - p1.x) / norm;
+        const vy = (p2.y - p1.y) / norm;
 
         // projection vector (rotate v by 90 deg)
         const px = -vy;
@@ -285,8 +282,8 @@ export class LinkToEdge extends Link {
 
         const rect = entity.getBoundingRect();
 
-        const x = p1.point.x + vx * norm * this.r + px * this.distance;
-        const y = p1.point.y + vy * norm * this.r + py * this.distance;
+        const x = p1.x + vx * norm * this.r + px * this.distance;
+        const y = p1.y + vy * norm * this.r + py * this.distance;
 
         const newEntity = entity.transform(
             translate(x - rect.center.x, y - rect.center.y),

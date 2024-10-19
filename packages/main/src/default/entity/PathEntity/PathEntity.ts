@@ -6,9 +6,8 @@ import {
     type EntityTapEvent,
 } from "../../../core/Entity";
 import type { SerializedEntity } from "../../../core/EntityConverter";
-import { Graph, GraphNode } from "../../../core/Graph";
+import { Graph, type GraphEdge, GraphNode } from "../../../core/Graph";
 import type { JSONObject } from "../../../core/JSONObject";
-import type { PathEdge, PathNode } from "../../../core/Path";
 import { assert } from "../../../lib/assert";
 import { Line } from "../../../lib/geo/Line";
 import { Point } from "../../../lib/geo/Point";
@@ -83,41 +82,23 @@ export class PathEntity extends Entity<Props> {
         return new PathEntity(this.props, graph);
     }
 
-    getNodes(): PathNode[] {
-        return [...this.graph.nodes.values()].map((graphNode) => ({
-            id: graphNode.id,
-            point: new Point(graphNode.x, graphNode.y),
-        }));
+    getNodes(): GraphNode[] {
+        return [...this.graph.nodes.values()];
     }
 
-    getNodeById(nodeId: string): PathNode | undefined {
-        const graphNode = this.graph.nodes.get(nodeId);
-        if (graphNode === undefined) return undefined;
-
-        return {
-            id: graphNode.id,
-            point: new Point(graphNode.x, graphNode.y),
-        };
+    getNodeById(nodeId: string): GraphNode | undefined {
+        return this.graph.nodes.get(nodeId);
     }
 
-    getEdges(): PathEdge[] {
+    getEdges(): GraphEdge[] {
         const nodes = this.graph.getOutline();
 
-        const edges: PathEdge[] = [];
+        const edges: GraphEdge[] = [];
         for (let i = 0; i < nodes.length; i++) {
             const startNode = nodes[i];
             const endNode = nodes[i === nodes.length - 1 ? 0 : i + 1];
 
-            edges.push([
-                {
-                    id: startNode.id,
-                    point: new Point(startNode.x, startNode.y),
-                },
-                {
-                    id: endNode.id,
-                    point: new Point(endNode.x, endNode.y),
-                },
-            ]);
+            edges.push([startNode, endNode]);
         }
         return edges;
     }

@@ -28,13 +28,6 @@ export class CanvasState extends dataclass<{
             return entity;
         });
     }
-
-    isSelectedOnly(entityId: string): boolean {
-        return (
-            this.selectedEntityIds.size === 1 &&
-            this.selectedEntityIds.has(entityId)
-        );
-    }
 }
 
 export class CanvasStateStore extends Store<CanvasState> {

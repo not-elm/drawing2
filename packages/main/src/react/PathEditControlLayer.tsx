@@ -27,8 +27,8 @@ export function PathEditControlLayer() {
             }}
         >
             {entity.getEdges().map(([node1, node2]) => {
-                const p1 = viewport.transform.apply(node1.point);
-                const p2 = viewport.transform.apply(node2.point);
+                const p1 = viewport.transform.apply(node1);
+                const p2 = viewport.transform.apply(node2);
                 return (
                     <line
                         key={`${node1.id}-${node2.id}`}
@@ -44,7 +44,7 @@ export function PathEditControlLayer() {
                 );
             })}
             {entity.getNodes().map((node) => {
-                const point = viewport.transform.apply(node.point);
+                const point = viewport.transform.apply(node);
                 return (
                     <circle
                         key={node.id}

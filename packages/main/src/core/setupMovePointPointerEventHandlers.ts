@@ -40,15 +40,10 @@ export function setupMovePointPointerEventHandlers(
             let newPoint = translate(
                 ev.point.x - ev.startPoint.x,
                 ev.point.y - ev.startPoint.y,
-            ).apply(originalNode.point);
+            ).apply(originalNode);
 
             if (ev.shiftKey && otherNode !== undefined) {
-                newPoint = adjustAngle(
-                    otherNode.point,
-                    newPoint,
-                    0,
-                    Math.PI / 12,
-                );
+                newPoint = adjustAngle(otherNode, newPoint, 0, Math.PI / 12);
             }
 
             app.canvasStateStore.edit((draft) => {
