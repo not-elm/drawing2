@@ -22,8 +22,6 @@ export abstract class Link {
     abstract apply(draft: PageDraft): void;
 
     abstract serialize(): SerializedLink;
-
-    onAdded(draft: PageDraft): void {}
 }
 
 export interface SerializedLink extends JSONObject {
@@ -242,8 +240,8 @@ export class LinkToEdge extends Link {
         id: string,
         public readonly entityId: string,
         public readonly pathId: string,
-        public readonly p1Id: string,
-        public readonly p2Id: string,
+        public p1Id: string,
+        public p2Id: string,
         public r = 0.5,
         public distance = 0,
     ) {
@@ -255,12 +253,10 @@ export class LinkToEdge extends Link {
     }
 
     apply(draft: PageDraft): void {
+        this.updateParameter(draft);
+
         const entity = draft.getEntity(this.entityId);
         const path = draft.getEntity(this.pathId);
-        assert(
-            path instanceof PathEntity,
-            `Entity is not a path: ${this.pathId}`,
-        );
 
         const p1 = path.getNodeById(this.p1Id);
         assert(
@@ -273,10 +269,6 @@ export class LinkToEdge extends Link {
             p2 !== undefined,
             `Node not found: ${this.p2Id} in ${path.props.id}`,
         );
-
-        if (!this.lastRect.equals(entity.getBoundingRect())) {
-            this.update(draft);
-        }
 
         const norm = Math.hypot(
             p2.point.x - p1.point.x,
@@ -329,9 +321,10 @@ export class LinkToEdge extends Link {
         );
     }
 
-    private update(draft: PageDraft): void {
+    private updateParameter(draft: PageDraft): void {
         const entity = draft.getEntity(this.entityId);
         const rect = entity.getBoundingRect();
+        if (this.lastRect.equals(rect)) return;
 
         const path = draft.getEntity(this.pathId);
         assert(
@@ -339,38 +332,45 @@ export class LinkToEdge extends Link {
             `Entity is not a path: ${this.pathId}`,
         );
 
-        const p1 = path.getNodeById(this.p1Id);
-        assert(
-            p1 !== undefined,
-            `Node not found: ${this.p1Id} in ${path.props.id}`,
+        const outline = path.graph.getOutline();
+        if (outline.length === 0) return;
+
+        const entries = [];
+        for (let i = 0; i < outline.length; i++) {
+            const p1 = outline[i];
+            const p2 = outline[i === outline.length - 1 ? 0 : i + 1];
+            const hitEntry = new Line({
+                p1: new Point(p1.x, p1.y),
+                p2: new Point(p2.x, p2.y),
+            }).getDistance(rect.center);
+
+            entries.push({ hitEntry, p1, p2 });
+        }
+        const bestEntry = entries.reduce((a, b) =>
+            a.hitEntry.distance < b.hitEntry.distance ? a : b,
         );
 
-        const p2 = path.getNodeById(this.p2Id);
-        assert(
-            p2 !== undefined,
-            `Node not found: ${this.p2Id} in ${path.props.id}`,
-        );
+        const p1 = bestEntry.p1;
+        const p2 = bestEntry.p2;
+        const linkPoint = bestEntry.hitEntry.point;
 
-        const { point: linkPoint } = new Line({
-            p1: p1.point,
-            p2: p2.point,
-        }).getDistance(entity.getBoundingRect().center);
-        const dx = p2.point.x - p1.point.x;
-        const dy = p2.point.y - p1.point.y;
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
         const norm = Math.hypot(dx, dy);
-
         if (Math.abs(dx) > Math.abs(dy)) {
-            this.r = (linkPoint.x - p1.point.x) / dx;
+            this.r = (linkPoint.x - p1.x) / dx;
         } else {
-            this.r = (linkPoint.y - p1.point.y) / dy;
+            this.r = (linkPoint.y - p1.y) / dy;
         }
 
-        const dx2 = linkPoint.x - entity.getBoundingRect().center.x;
-        const dy2 = linkPoint.y - entity.getBoundingRect().center.y;
+        const dx2 = linkPoint.x - rect.center.x;
+        const dy2 = linkPoint.y - rect.center.y;
 
         const maxDistance =
             LinkToEdge.MAX_MARGIN + Math.hypot(rect.width, rect.height) / 2;
 
+        this.p1Id = p1.id;
+        this.p2Id = p2.id;
         this.distance = Math.max(
             -maxDistance,
             Math.min((dx2 * dy - dy2 * dx) / norm, maxDistance),

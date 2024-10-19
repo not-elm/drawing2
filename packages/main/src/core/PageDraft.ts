@@ -159,11 +159,6 @@ export class PageDraft extends PageDraftCore {
         this.sendBackwardOf(entityIds, 0);
     }
 
-    addLink(link: Link): void {
-        super.addLink(link);
-        link.onAdded(this);
-    }
-
     addLinks(links: Link[]): void {
         for (const link of links) {
             this.addLink(link);

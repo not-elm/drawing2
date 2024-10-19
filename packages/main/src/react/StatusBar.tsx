@@ -27,6 +27,7 @@ export function monitorFPS() {
 
 export function StatusBar() {
     const app = useApp();
+    const appState = useStore(app.appStateStore);
     const viewportRef = useRef<StateOf<ViewportStore>>(null as never);
     viewportRef.current = useStore(app.viewportStore);
 
@@ -58,6 +59,7 @@ export function StatusBar() {
                 )}, y:${viewport.rect.top.toFixed(0)}), ${(
                     viewport.scale * 100
                 ).toFixed(0)}%`,
+                `Mode: ${JSON.stringify(appState.mode)}`,
                 `FPS: ${fps}`,
             ].join("\n");
         }, 200);
@@ -65,7 +67,7 @@ export function StatusBar() {
         return () => {
             clearInterval(timerId);
         };
-    }, []);
+    }, [appState]);
 
     useEffect(() => {
         const dom = document.createElement("div");

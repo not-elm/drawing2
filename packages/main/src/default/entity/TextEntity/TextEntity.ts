@@ -94,7 +94,10 @@ export class TextEntity extends Entity<{
     }
 
     onTap(app: App, ev: EntityTapEvent) {
-        if (ev.selectedOnlyThisEntity) {
+        if (
+            ev.previousSelectedEntities.size === 1 &&
+            ev.previousSelectedEntities.has(this.props.id)
+        ) {
             app.setMode(EditTextModeController.createMode(this.props.id));
         }
     }

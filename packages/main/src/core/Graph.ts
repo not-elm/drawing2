@@ -144,8 +144,8 @@ export class Graph {
         const node = this.nodes.get(nodeId);
         assert(node !== undefined, `Node ${nodeId} is not found.`);
 
-        node.x = x;
-        node.y = y;
+        const newNode = new GraphNode(nodeId, x, y);
+        this.nodes.set(nodeId, newNode);
 
         this.normalized = false;
         return this;

@@ -1,6 +1,7 @@
 import { type WheelEventHandler, useCallback, useEffect } from "react";
 import { BrushRect } from "./BrushRect";
 import { LinkGuideLayer } from "./LinkGuideLayer";
+import { PathEditControlLayer } from "./PathEditControlLayer";
 import { SelectionRect } from "./SelectionRect";
 import { SnapGuideLayer } from "./SnapGuideLayer";
 import { useResizeObserver } from "./hooks/useResizeObserver";
@@ -100,6 +101,7 @@ export function Canvas() {
             <SelectionRect />
             <LinkGuideLayer />
             <SnapGuideLayer />
+            <PathEditControlLayer />
         </div>
     );
 }

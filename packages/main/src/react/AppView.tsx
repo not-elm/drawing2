@@ -127,7 +127,6 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                     </div>
                 </div>
             </MathJaxContext>
-
             <StatusBar />
         </AppProvider>
     );

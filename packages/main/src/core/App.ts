@@ -5,6 +5,7 @@ import { AppStateStore } from "./AppStateStore";
 import { CanvasStateStore } from "./CanvasStateStore";
 import { ClipboardService } from "./ClipboardService";
 import { DefaultPropertyStore } from "./DefaultPropertyStore";
+import { EditPathModeController } from "./EditPathModeController";
 import type { Entity } from "./Entity";
 import { type EntityConverter, EntityConverterMap } from "./EntityConverter";
 import { GestureRecognizer } from "./GestureRecognizer";
@@ -35,6 +36,7 @@ export class App {
 
     constructor() {
         this.addModeController("select", this.defaultModeController);
+        this.addModeController("edit-path", new EditPathModeController());
     }
 
     addModeController(type: string, controller: ModeController): App {

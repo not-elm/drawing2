@@ -1,20 +1,15 @@
-import { PathEntity } from "../default/entity/PathEntity/PathEntity";
-import { TextEntity } from "../default/entity/TextEntity/TextEntity";
-import { assert } from "../lib/assert";
-import { Point } from "../lib/geo/Point";
+import type { Point } from "../lib/geo/Point";
 import type { Rect } from "../lib/geo/Rect";
 import { testHitEntities } from "../lib/testHitEntities";
 import type { App } from "./App";
 import { BrushStore } from "./BrushStore";
 import type { Entity } from "./Entity";
 import { type CanvasPointerEvent, ModeController } from "./ModeController";
-import type { PathNode } from "./Path";
 import {
     ScaleSelectionTransformController,
     TranslateSelectionTransformController,
 } from "./SelectionTransformController";
 import { setupBrushSelectPointerEventHandlers } from "./setupBrushSelectPointerEventHandlers";
-import { setupMovePointPointerEventHandlers } from "./setupMovePointPointerEventHandlers";
 import { setupSelectionTransformPointerEventHandlers } from "./setupSelectionTransformPointerEventHandlers";
 
 export class SelectModeController extends ModeController {
@@ -79,21 +74,6 @@ export class SelectModeController extends ModeController {
                 case "SelectionRect.BottomRightHandle":
                     app.appStateStore.setCursor("nwse-resize");
                     break;
-                case "SelectionPath.Node":
-                    app.appStateStore.setCursor("grab");
-                    break;
-                case "SelectionPath.Edge":
-                    app.appStateStore.setCursor("default");
-                    break;
-                case "SelectionText.Left":
-                    app.appStateStore.setCursor("ew-resize");
-                    break;
-                case "SelectionText.Center":
-                    app.appStateStore.setCursor("default");
-                    break;
-                case "SelectionText.Right":
-                    app.appStateStore.setCursor("ew-resize");
-                    break;
             }
         } else {
             app.appStateStore.setCursor("default");
@@ -108,9 +88,12 @@ export class SelectModeController extends ModeController {
         ).entities.at(0);
 
         if (hitEntity !== undefined) {
-            const selectedOnlyThisEntity = app.canvasStateStore
-                .getState()
-                .isSelectedOnly(hitEntity.target.props.id);
+            const previousSelectedEntities =
+                app.canvasStateStore.getState().selectedEntityIds;
+
+            const selectedOnlyThisEntity =
+                previousSelectedEntities.size === 1 &&
+                previousSelectedEntities.has(hitEntity.target.props.id);
 
             if (ev.shiftKey) {
                 app.canvasStateStore.unselect(hitEntity.target.props.id);
@@ -121,7 +104,7 @@ export class SelectModeController extends ModeController {
                 }
             }
 
-            hitEntity.target.onTap(app, { ...ev, selectedOnlyThisEntity });
+            hitEntity.target.onTap(app, { ...ev, previousSelectedEntities });
         } else {
             if (!ev.shiftKey) app.canvasStateStore.unselectAll();
         }
@@ -132,9 +115,8 @@ export class SelectModeController extends ModeController {
         ev: CanvasPointerEvent,
         entity: Entity,
     ) {
-        const selectedOnlyThisEntity = app.canvasStateStore
-            .getState()
-            .isSelectedOnly(entity.props.id);
+        const previousSelectedEntities =
+            app.canvasStateStore.getState().selectedEntityIds;
 
         if (!ev.shiftKey) app.canvasStateStore.unselectAll();
         app.canvasStateStore.select(entity.props.id);
@@ -146,7 +128,7 @@ export class SelectModeController extends ModeController {
         );
         app.gestureRecognizer.addPointerUpHandler(ev.pointerId, (app, ev) => {
             if (ev.isTap) {
-                entity.onTap(app, { ...ev, selectedOnlyThisEntity });
+                entity.onTap(app, { ...ev, previousSelectedEntities });
             }
         });
     }
@@ -277,59 +259,6 @@ export class SelectModeController extends ModeController {
                 );
                 break;
             }
-            case "SelectionPath.Node": {
-                setupMovePointPointerEventHandlers(
-                    app,
-                    ev,
-                    selectionHandle.path,
-                    selectionHandle.node.id,
-                );
-                break;
-            }
-            case "SelectionPath.Edge": {
-                setupSelectionTransformPointerEventHandlers(
-                    app,
-                    ev,
-                    new TranslateSelectionTransformController(app, ev.point),
-                );
-                break;
-            }
-            case "SelectionText.Left": {
-                setupSelectionTransformPointerEventHandlers(
-                    app,
-                    ev,
-                    new ScaleSelectionTransformController(
-                        app,
-                        ev.point,
-                        selectionHandle.text.getBoundingRect().centerRight,
-                        "left",
-                        "center",
-                    ),
-                );
-                break;
-            }
-            case "SelectionText.Center": {
-                setupSelectionTransformPointerEventHandlers(
-                    app,
-                    ev,
-                    new TranslateSelectionTransformController(app, ev.point),
-                );
-                break;
-            }
-            case "SelectionText.Right": {
-                setupSelectionTransformPointerEventHandlers(
-                    app,
-                    ev,
-                    new ScaleSelectionTransformController(
-                        app,
-                        ev.point,
-                        selectionHandle.text.getBoundingRect().centerLeft,
-                        "right",
-                        "center",
-                    ),
-                );
-                break;
-            }
         }
 
         app.gestureRecognizer.addPointerUpHandler(ev.pointerId, (app, ev) => {
@@ -346,197 +275,99 @@ export class SelectModeController extends ModeController {
     ): SelectionHandleType | null {
         const marginInCanvas = margin / app.viewportStore.getState().scale;
 
-        const selectionType = this.getSelectionType(app);
+        const selectionRect = app.canvasStateStore
+            .getState()
+            .getSelectionRect();
+        if (selectionRect === null) return null;
 
-        if (selectionType === "path") {
-            const entity = app.canvasStateStore
-                .getState()
-                .getSelectedEntities()[0];
-            assert(entity instanceof PathEntity, "Selected entity is not path");
-            const pathEntity = entity as PathEntity;
+        const hitAreaX = testHitWithRange(
+            point.x,
+            selectionRect.left,
+            selectionRect.right,
+            marginInCanvas,
+        );
+        const hitAreaY = testHitWithRange(
+            point.y,
+            selectionRect.top,
+            selectionRect.bottom,
+            marginInCanvas,
+        );
 
-            for (const node of pathEntity.graph.nodes.values()) {
-                if (
-                    point.getDistance(new Point(node.x, node.y)).distance <
-                    marginInCanvas
-                ) {
-                    return {
-                        type: "SelectionPath.Node",
-                        path: pathEntity,
-                        node: {
-                            id: node.id,
-                            point: new Point(node.x, node.y),
-                        },
-                    };
-                }
-            }
-
-            for (const edge of pathEntity.getOutline()) {
-                if (edge.getDistance(point).distance < marginInCanvas) {
-                    {
-                        return { type: "SelectionPath.Edge", path: pathEntity };
-                    }
-                }
-            }
-        }
-
-        if (selectionType === "text") {
-            const entity = app.canvasStateStore
-                .getState()
-                .getSelectedEntities()[0];
-            assert(entity instanceof TextEntity, "Selected entity is not text");
-            const textEntity = entity as TextEntity;
-
-            const hitAreaX = testHitWithRange(
-                point.x,
-                textEntity.props.rect.left,
-                textEntity.props.rect.right,
-                marginInCanvas,
-            );
-            if (
-                textEntity.props.rect.top - marginInCanvas < point.y &&
-                point.y < textEntity.props.rect.bottom + marginInCanvas
-            ) {
-                switch (hitAreaX) {
+        switch (hitAreaX) {
+            case "start": {
+                switch (hitAreaY) {
                     case "start": {
-                        return { type: "SelectionText.Left", text: textEntity };
+                        return {
+                            type: "SelectionRect.TopLeftHandle",
+                            selectionRect,
+                        };
                     }
                     case "middle": {
                         return {
-                            type: "SelectionText.Center",
-                            text: textEntity,
+                            type: "SelectionRect.LeftHandle",
+                            selectionRect,
                         };
                     }
                     case "end": {
                         return {
-                            type: "SelectionText.Right",
-                            text: textEntity,
+                            type: "SelectionRect.BottomLeftHandle",
+                            selectionRect,
                         };
                     }
                 }
+                break;
             }
-        }
-
-        if (selectionType === "rect") {
-            const selectionRect = app.canvasStateStore
-                .getState()
-                .getSelectionRect();
-            assert(selectionRect !== null, "SelectionRect must not be null");
-            const hitAreaX = testHitWithRange(
-                point.x,
-                selectionRect.left,
-                selectionRect.right,
-                marginInCanvas,
-            );
-            const hitAreaY = testHitWithRange(
-                point.y,
-                selectionRect.top,
-                selectionRect.bottom,
-                marginInCanvas,
-            );
-
-            switch (hitAreaX) {
-                case "start": {
-                    switch (hitAreaY) {
-                        case "start": {
-                            return {
-                                type: "SelectionRect.TopLeftHandle",
-                                selectionRect,
-                            };
-                        }
-                        case "middle": {
-                            return {
-                                type: "SelectionRect.LeftHandle",
-                                selectionRect,
-                            };
-                        }
-                        case "end": {
-                            return {
-                                type: "SelectionRect.BottomLeftHandle",
-                                selectionRect,
-                            };
-                        }
+            case "middle": {
+                switch (hitAreaY) {
+                    case "start": {
+                        return {
+                            type: "SelectionRect.TopHandle",
+                            selectionRect,
+                        };
                     }
-                    break;
-                }
-                case "middle": {
-                    switch (hitAreaY) {
-                        case "start": {
-                            return {
-                                type: "SelectionRect.TopHandle",
-                                selectionRect,
-                            };
-                        }
-                        case "middle": {
-                            return {
-                                type: "SelectionRect.CenterHandle",
-                                selectionRect,
-                            };
-                        }
-                        case "end": {
-                            return {
-                                type: "SelectionRect.BottomHandle",
-                                selectionRect,
-                            };
-                        }
+                    case "middle": {
+                        return {
+                            type: "SelectionRect.CenterHandle",
+                            selectionRect,
+                        };
                     }
-                    break;
-                }
-                case "end": {
-                    switch (hitAreaY) {
-                        case "start": {
-                            return {
-                                type: "SelectionRect.TopRightHandle",
-                                selectionRect,
-                            };
-                        }
-                        case "middle": {
-                            return {
-                                type: "SelectionRect.RightHandle",
-                                selectionRect,
-                            };
-                        }
-                        case "end": {
-                            return {
-                                type: "SelectionRect.BottomRightHandle",
-                                selectionRect,
-                            };
-                        }
+                    case "end": {
+                        return {
+                            type: "SelectionRect.BottomHandle",
+                            selectionRect,
+                        };
                     }
-                    break;
                 }
+                break;
+            }
+            case "end": {
+                switch (hitAreaY) {
+                    case "start": {
+                        return {
+                            type: "SelectionRect.TopRightHandle",
+                            selectionRect,
+                        };
+                    }
+                    case "middle": {
+                        return {
+                            type: "SelectionRect.RightHandle",
+                            selectionRect,
+                        };
+                    }
+                    case "end": {
+                        return {
+                            type: "SelectionRect.BottomRightHandle",
+                            selectionRect,
+                        };
+                    }
+                }
+                break;
             }
         }
 
         return null;
     }
-
-    private getSelectionType(app: App): SelectionType {
-        const selectedEntities = app.canvasStateStore
-            .getState()
-            .getSelectedEntities();
-
-        if (selectedEntities.length === 0) return "none";
-
-        if (
-            selectedEntities.length === 1 &&
-            selectedEntities[0] instanceof PathEntity
-        ) {
-            return "path";
-        }
-
-        if (
-            selectedEntities.length === 1 &&
-            selectedEntities[0] instanceof TextEntity
-        ) {
-            return "text";
-        }
-
-        return "rect";
-    }
 }
-
-type SelectionType = "path" | "rect" | "text" | "none";
 
 export type SelectionHandleType =
     | { type: "SelectionRect.TopLeftHandle"; selectionRect: Rect }
@@ -547,12 +378,7 @@ export type SelectionHandleType =
     | { type: "SelectionRect.RightHandle"; selectionRect: Rect }
     | { type: "SelectionRect.BottomLeftHandle"; selectionRect: Rect }
     | { type: "SelectionRect.BottomHandle"; selectionRect: Rect }
-    | { type: "SelectionRect.BottomRightHandle"; selectionRect: Rect }
-    | { type: "SelectionPath.Edge"; path: PathEntity }
-    | { type: "SelectionPath.Node"; path: PathEntity; node: PathNode }
-    | { type: "SelectionText.Left"; text: TextEntity }
-    | { type: "SelectionText.Center"; text: TextEntity }
-    | { type: "SelectionText.Right"; text: TextEntity };
+    | { type: "SelectionRect.BottomRightHandle"; selectionRect: Rect };
 
 /**
  * Test if a given value is inside of a range.

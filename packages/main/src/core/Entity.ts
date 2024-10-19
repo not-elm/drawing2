@@ -123,7 +123,8 @@ export abstract class Entity<P extends EntityProps = EntityProps> {
 
 export interface EntityTapEvent extends CanvasPointerEvent {
     /**
-     * True if only this entity is already selected.
+     * Entity IDs that are already selected before this tap event happened.
+     * Entities that are newly selected by this tap event are not included.
      */
-    selectedOnlyThisEntity: boolean;
+    previousSelectedEntities: Set<string>;
 }

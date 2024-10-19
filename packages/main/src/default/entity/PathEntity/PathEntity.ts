@@ -1,4 +1,5 @@
 import type { App } from "../../../core/App";
+import { createEditPathMode } from "../../../core/EditPathModeController";
 import {
     Entity,
     type EntityProps,
@@ -7,28 +8,22 @@ import {
 import type { SerializedEntity } from "../../../core/EntityConverter";
 import { Graph, GraphNode } from "../../../core/Graph";
 import type { JSONObject } from "../../../core/JSONObject";
-import { LinkToEdge } from "../../../core/Link";
 import type { PathEdge, PathNode } from "../../../core/Path";
 import { assert } from "../../../lib/assert";
 import { Line } from "../../../lib/geo/Line";
 import { Point } from "../../../lib/geo/Point";
 import { Rect } from "../../../lib/geo/Rect";
 import type { TransformMatrix } from "../../../lib/geo/TransformMatrix";
-import { randomId } from "../../../lib/randomId";
-import { EditTextModeController } from "../../mode/EditTextModeController";
 import { type ColorId, PROPERTY_KEY_COLOR_ID } from "../../property/Colors";
 import {
     type FillStyle,
     PROPERTY_KEY_FILL_STYLE,
 } from "../../property/FillStyle";
-import { PROPERTY_KEY_SIZING_MODE } from "../../property/SizingMode";
 import {
     PROPERTY_KEY_STROKE_STYLE,
     type StrokeStyle,
 } from "../../property/StrokeStyle";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../../property/StrokeWidth";
-import { PROPERTY_KEY_TEXT_ALIGNMENT_X } from "../../property/TextAlignment";
-import { TextEntity } from "../TextEntity/TextEntity";
 
 interface Props extends EntityProps {
     id: string;
@@ -227,35 +222,41 @@ export class PathEntity extends Entity<Props> {
     }
 
     onTap(app: App, ev: EntityTapEvent) {
-        if (ev.selectedOnlyThisEntity) {
-            const labelId = randomId();
-            const label = new TextEntity({
-                id: labelId,
-                rect: Rect.fromSize(ev.point, 1, 1),
-                content: "",
-                [PROPERTY_KEY_SIZING_MODE]: "content",
-                [PROPERTY_KEY_TEXT_ALIGNMENT_X]: "center",
-                [PROPERTY_KEY_COLOR_ID]: 0,
-            });
-            const p0 = this.getNodes()[0];
-            const p1 = this.getNodes()[1];
-
-            app.canvasStateStore.edit((draft) => {
-                draft.setEntity(label);
-                const linkToEdge = new LinkToEdge(
-                    randomId(),
-                    labelId,
-                    this.props.id,
-                    p0.id,
-                    p1.id,
-                );
-                draft.addLink(linkToEdge);
-            });
-
-            app.canvasStateStore.unselectAll();
-            app.canvasStateStore.select(label.props.id);
-            app.setMode(EditTextModeController.createMode(label.props.id));
+        if (ev.previousSelectedEntities.has(this.props.id)) {
+            app.setMode(createEditPathMode(this.props.id));
         }
+        // if (
+        //     ev.previousSelectedEntities.size === 1 &&
+        //     ev.previousSelectedEntities.has(this.props.id)
+        // ) {
+        //     const labelId = randomId();
+        //     const label = new TextEntity({
+        //         id: labelId,
+        //         rect: Rect.fromSize(ev.point, 1, 1),
+        //         content: "",
+        //         [PROPERTY_KEY_SIZING_MODE]: "content",
+        //         [PROPERTY_KEY_TEXT_ALIGNMENT_X]: "center",
+        //         [PROPERTY_KEY_COLOR_ID]: 0,
+        //     });
+        //     const p0 = this.getNodes()[0];
+        //     const p1 = this.getNodes()[1];
+        //
+        //     app.canvasStateStore.edit((draft) => {
+        //         draft.setEntity(label);
+        //         const linkToEdge = new LinkToEdge(
+        //             randomId(),
+        //             labelId,
+        //             this.props.id,
+        //             p0.id,
+        //             p1.id,
+        //         );
+        //         draft.addLink(linkToEdge);
+        //     });
+        //
+        //     app.canvasStateStore.unselectAll();
+        //     app.canvasStateStore.select(label.props.id);
+        //     app.setMode(EditTextModeController.createMode(label.props.id));
+        // }
     }
 }
 

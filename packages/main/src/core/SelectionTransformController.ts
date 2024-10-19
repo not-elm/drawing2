@@ -1,45 +1,51 @@
 import { assert } from "../lib/assert";
 import { Line } from "../lib/geo/Line";
 import { Point } from "../lib/geo/Point";
+import { Rect } from "../lib/geo/Rect";
 import {
     type TransformMatrix,
     scale,
     translate,
 } from "../lib/geo/TransformMatrix";
 import type { App } from "./App";
+import type { Entity } from "./Entity";
 import {
     type SnapEntry,
     type SnapGuide,
     computeSnapEntry2D,
 } from "./SnapEntry";
 
+interface SnapPoints {
+    /**
+     * Snap points used for snapping in X-axis.
+     */
+    x: Point[];
+
+    /**
+     * Snap points used for snapping in Y-axis.
+     */
+    y: Point[];
+}
+
 /**
  * Controller for transforms happened by selection (scale, translate, rotate, etc.)
  */
 export abstract class SelectionTransformController {
-    private oldPoint: Point;
+    protected readonly originalEntities: Entity[];
 
     constructor(
         public readonly app: App,
-        initialPoint: Point,
+        protected readonly initialPoint: Point,
     ) {
-        this.oldPoint = initialPoint;
+        this.originalEntities = this.app.canvasStateStore
+            .getState()
+            .getSelectedEntities();
     }
 
     /**
      * Return the snap points for this transform.
      */
-    protected abstract getSnapPoints(): {
-        /**
-         * Snap points used for snapping in X-axis.
-         */
-        x: Point[];
-
-        /**
-         * Snap points used for snapping in Y-axis.
-         */
-        y: Point[];
-    };
+    protected abstract getSnapPoints(): SnapPoints;
 
     /**
      * Apply constraints to the raw input point. Constraints limits the
@@ -90,22 +96,31 @@ export abstract class SelectionTransformController {
             newPoint = this.applyConstraints(newPoint, snapAxis);
         }
 
-        const transform = this.getTransform(this.oldPoint, newPoint);
+        const transform = this.getTransform(this.initialPoint, newPoint);
+
+        const transformedSnapPoints = this.getSnapPoints();
+        transformedSnapPoints.x = transformedSnapPoints.x.map((point) =>
+            transform.apply(point),
+        );
+        transformedSnapPoints.y = transformedSnapPoints.y.map((point) =>
+            transform.apply(point),
+        );
+
         this.app.snapGuideStore.setSnapGuide(
-            snap ? this.computeSnapGuide() : null,
+            snap ? this.computeSnapGuide(transformedSnapPoints) : null,
         );
 
         this.app.canvasStateStore.edit((draft) => {
+            draft.setEntities(this.originalEntities);
             draft.transformEntities(
                 [...this.app.canvasStateStore.getState().selectedEntityIds],
                 transform,
             );
         });
-        this.oldPoint = newPoint;
     }
 
     private applySnap(point: Point): { axis: "x" | "y" | null; point: Point } {
-        const transform = this.getTransform(this.oldPoint, point);
+        const transform = this.getTransform(this.initialPoint, point);
         const snapPoints = this.getSnapPoints();
 
         let bestEntryX: SnapEntry = {
@@ -172,12 +187,11 @@ export abstract class SelectionTransformController {
         return { axis, point };
     }
 
-    private computeSnapGuide(): SnapGuide {
+    private computeSnapGuide(snapPoints: SnapPoints): SnapGuide {
         const canvasState = this.app.canvasStateStore.getState();
         const page = canvasState.page;
         const viewport = this.app.viewportStore.getState();
 
-        const snapPoints = this.getSnapPoints();
         const snapGuide: SnapGuide = {
             points: [],
             lines: [],
@@ -250,15 +264,10 @@ export abstract class SelectionTransformController {
 }
 
 export class TranslateSelectionTransformController extends SelectionTransformController {
-    constructor(
-        app: App,
-        private readonly initialPoint: Point,
-    ) {
-        super(app, initialPoint);
-    }
-
     protected getSnapPoints(): { x: Point[]; y: Point[] } {
-        const rect = this.app.canvasStateStore.getState().getSelectionRect();
+        const rect = Rect.union(
+            this.originalEntities.map((entity) => entity.getBoundingRect()),
+        );
         if (rect === null) return { x: [], y: [] };
 
         const points = [
@@ -308,7 +317,7 @@ export class ScaleSelectionTransformController extends SelectionTransformControl
 
     constructor(
         app: App,
-        private readonly initialPoint: Point,
+        initialPoint: Point,
         private readonly transformOrigin: Point,
         private readonly handlePositionInXAxis: "left" | "center" | "right",
         private readonly handlePositionInYAxis: "top" | "center" | "bottom",
@@ -323,7 +332,9 @@ export class ScaleSelectionTransformController extends SelectionTransformControl
     }
 
     protected getSnapPoints(): { x: Point[]; y: Point[] } {
-        const rect = this.app.canvasStateStore.getState().getSelectionRect();
+        const rect = Rect.union(
+            this.originalEntities.map((entity) => entity.getBoundingRect()),
+        );
         if (rect === null) return { x: [], y: [] };
 
         const xs: Point[] = [];
