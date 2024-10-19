@@ -37,7 +37,7 @@ export class App {
         this.addModeController("select", this.defaultModeController);
     }
 
-    addModeController(type: string, controller: ModeController): this {
+    addModeController(type: string, controller: ModeController): App {
         assert(
             !this.modeControllers.has(type),
             `Mode ${type} is already registered`,
@@ -93,7 +93,7 @@ export class App {
     registerEntityConverter<T extends string>(
         type: string,
         converter: EntityConverter<T>,
-    ): this {
+    ): App {
         this.entityConverter.register(type, converter);
         return this;
     }
@@ -101,7 +101,7 @@ export class App {
     registerEntityView<E extends Entity>(
         type: string,
         component: ComponentType<{ entity: E }>,
-    ): this {
+    ): App {
         this.entityViewMap.set(
             type,
             component as ComponentType<{ entity: Entity }>,

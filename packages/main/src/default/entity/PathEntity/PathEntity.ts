@@ -1,6 +1,11 @@
 import type { App } from "../../../core/App";
-import { Entity, type EntityTapEvent } from "../../../core/Entity";
+import {
+    Entity,
+    type EntityProps,
+    type EntityTapEvent,
+} from "../../../core/Entity";
 import type { SerializedEntity } from "../../../core/EntityConverter";
+import { Graph, GraphNode } from "../../../core/Graph";
 import type { JSONObject } from "../../../core/JSONObject";
 import { LinkToEdge } from "../../../core/Link";
 import type { PathEdge, PathNode } from "../../../core/Path";
@@ -25,25 +30,44 @@ import { PROPERTY_KEY_STROKE_WIDTH } from "../../property/StrokeWidth";
 import { PROPERTY_KEY_TEXT_ALIGNMENT_X } from "../../property/TextAlignment";
 import { TextEntity } from "../TextEntity/TextEntity";
 
-export class PathEntity extends Entity<{
+interface Props extends EntityProps {
     id: string;
-    nodes: Map<string, PathNode>;
-    edges: [string, string][];
     [PROPERTY_KEY_COLOR_ID]: ColorId;
     [PROPERTY_KEY_STROKE_STYLE]: StrokeStyle;
     [PROPERTY_KEY_STROKE_WIDTH]: number;
     [PROPERTY_KEY_FILL_STYLE]: FillStyle;
-}> {
+}
+
+export class PathEntity extends Entity<Props> {
     readonly type = "path";
 
+    constructor(
+        props: Props,
+        readonly graph: Graph,
+    ) {
+        super(props);
+    }
+
+    setProperty(propertyKey: string, value: unknown): PathEntity {
+        if (!this.isPropertySupported(propertyKey)) return this;
+
+        return new PathEntity(
+            {
+                ...this.props,
+                [propertyKey]: value,
+            },
+            this.graph,
+        );
+    }
+
     getBoundingRect(): Rect {
-        const xs = this.props.nodes
+        const xs = this.graph.nodes
             .values()
-            .map((node) => node.point.x)
+            .map((node) => node.x)
             .toArray();
-        const ys = this.props.nodes
+        const ys = this.graph.nodes
             .values()
-            .map((node) => node.point.y)
+            .map((node) => node.y)
             .toArray();
 
         const x = Math.min(...xs);
@@ -54,77 +78,80 @@ export class PathEntity extends Entity<{
         return Rect.of(x, y, width, height);
     }
 
-    transform(transform: TransformMatrix) {
-        const nodes = new Map<string, PathNode>();
-        for (const node of this.props.nodes.values()) {
-            nodes.set(node.id, {
-                ...node,
-                point: transform.apply(node.point),
-            });
+    transform(transform: TransformMatrix): PathEntity {
+        const graph = this.graph.clone();
+        for (const node of this.graph.nodes.values()) {
+            const newPoint = transform.apply(new Point(node.x, node.y));
+            graph.setNodePosition(node.id, newPoint.x, newPoint.y);
         }
 
-        return this.copy({ nodes });
+        return new PathEntity(this.props, graph);
     }
 
     getNodes(): PathNode[] {
-        return this.props.nodes.values().toArray();
+        return [...this.graph.nodes.values()].map((graphNode) => ({
+            id: graphNode.id,
+            point: new Point(graphNode.x, graphNode.y),
+        }));
     }
 
-    getNodeById(this: this, nodeId: string): PathNode | undefined {
-        return this.props.nodes.get(nodeId);
+    getNodeById(nodeId: string): PathNode | undefined {
+        const graphNode = this.graph.nodes.get(nodeId);
+        if (graphNode === undefined) return undefined;
+
+        return {
+            id: graphNode.id,
+            point: new Point(graphNode.x, graphNode.y),
+        };
     }
 
     getEdges(): PathEdge[] {
-        return this.props.edges.map(([startId, endId]) => {
-            const startNode = this.props.nodes.get(startId);
-            assert(
-                startNode !== undefined,
-                `node ${startId} is not found in path ${this.props.id}`,
-            );
+        const nodes = this.graph.getOutline();
 
-            const endNode = this.props.nodes.get(endId);
-            assert(
-                endNode !== undefined,
-                `node ${endId} is not found in path ${this.props.id}`,
-            );
+        const edges: PathEdge[] = [];
+        for (let i = 0; i < nodes.length; i++) {
+            const startNode = nodes[i];
+            const endNode = nodes[i === nodes.length - 1 ? 0 : i + 1];
 
-            return [startNode, endNode];
-        });
+            edges.push([
+                {
+                    id: startNode.id,
+                    point: new Point(startNode.x, startNode.y),
+                },
+                {
+                    id: endNode.id,
+                    point: new Point(endNode.x, endNode.y),
+                },
+            ]);
+        }
+        return edges;
     }
 
     getOutline(): (Rect | Line | Point)[] {
-        return this.props.edges.map(([startNodeId, endNodeId]) => {
-            const startNode = this.props.nodes.get(startNodeId);
-            assert(
-                startNode !== undefined,
-                `node ${startNodeId} is not found in path ${this.props.id}`,
-            );
-            const endNode = this.props.nodes.get(endNodeId);
-            assert(
-                endNode !== undefined,
-                `node ${endNodeId} is not found in path ${this.props.id}`,
-            );
+        const nodes = this.graph.getOutline();
 
-            return new Line({
-                p1: startNode.point,
-                p2: endNode.point,
-            });
-        });
+        const liens: Line[] = [];
+        for (let i = 0; i < nodes.length; i++) {
+            const startNode = nodes[i];
+            const endNode = nodes[i === nodes.length - 1 ? 0 : i + 1];
+
+            liens.push(Line.of(startNode.x, startNode.y, endNode.x, endNode.y));
+        }
+        return liens;
     }
 
     serialize(): SerializedEntity {
         return {
             id: this.props.id,
             type: "path",
-            nodes: this.props.nodes
-                .values()
-                .map((node) => ({
-                    id: node.id,
-                    x: node.point.x,
-                    y: node.point.y,
-                }))
-                .toArray(),
-            edges: this.props.edges,
+            nodes: [...this.graph.nodes.values()].map((node) => ({
+                id: node.id,
+                x: node.x,
+                y: node.y,
+            })),
+            edges: this.graph
+                .getEdges()
+                .map(([startNode, endNode]) => [startNode.id, endNode.id]),
             colorId: this.props.colorId,
             strokeStyle: this.props.strokeStyle,
             strokeWidth: this.props.strokeWidth,
@@ -132,19 +159,16 @@ export class PathEntity extends Entity<{
         } satisfies SerializedPathEntity;
     }
 
-    setNodePosition(nodeId: string, position: Point): this {
-        const nodes = new Map(this.props.nodes);
-        const node = nodes.get(nodeId);
-        assert(
-            node !== undefined,
-            `node ${nodeId} is not found in path ${this.props.id}`,
-        );
+    setNodePosition(nodeId: string, position: Point): PathEntity {
+        const graph = this.graph.clone();
+        graph.setNodePosition(nodeId, position.x, position.y);
 
-        nodes.set(nodeId, { ...node, point: position });
-        return this.copy({ nodes });
+        return new PathEntity(this.props, graph);
     }
 
     getDistance(point: Point): { distance: number; point: Point } {
+        if (this.graph.contains(point)) return { distance: 0, point };
+
         let bestResult: { distance: number; point: Point } = {
             distance: Number.POSITIVE_INFINITY,
             point: point,
@@ -162,24 +186,44 @@ export class PathEntity extends Entity<{
 
     static deserialize(data: JSONObject): PathEntity {
         const serialized = data as unknown as SerializedPathEntity;
+        const nodes = new Map(
+            serialized.nodes.map((serializedNode) => {
+                const node = new GraphNode(
+                    serializedNode.id,
+                    serializedNode.x,
+                    serializedNode.y,
+                );
+                return [node.id, node];
+            }),
+        );
 
-        return new PathEntity({
-            id: serialized.id,
-            nodes: new Map(
-                serialized.nodes.map((node) => [
-                    node.id,
-                    {
-                        id: node.id,
-                        point: new Point(node.x, node.y),
-                    },
-                ]),
-            ),
-            edges: serialized.edges,
-            [PROPERTY_KEY_COLOR_ID]: serialized.colorId,
-            [PROPERTY_KEY_STROKE_STYLE]: serialized.strokeStyle,
-            [PROPERTY_KEY_STROKE_WIDTH]: serialized.strokeWidth,
-            [PROPERTY_KEY_FILL_STYLE]: serialized.fillStyle,
-        });
+        const graph = Graph.create();
+        for (const edge of serialized.edges) {
+            const node1 = nodes.get(edge[0]);
+            assert(
+                node1 !== undefined,
+                `node ${edge[0]} is not found in path ${serialized.id}`,
+            );
+
+            const node2 = nodes.get(edge[1]);
+            assert(
+                node2 !== undefined,
+                `node ${edge[1]} is not found in path ${serialized.id}`,
+            );
+
+            graph.addEdge(node1, node2);
+        }
+
+        return new PathEntity(
+            {
+                id: serialized.id,
+                [PROPERTY_KEY_COLOR_ID]: serialized.colorId,
+                [PROPERTY_KEY_STROKE_STYLE]: serialized.strokeStyle,
+                [PROPERTY_KEY_STROKE_WIDTH]: serialized.strokeWidth,
+                [PROPERTY_KEY_FILL_STYLE]: serialized.fillStyle,
+            },
+            graph,
+        );
     }
 
     onTap(app: App, ev: EntityTapEvent) {
@@ -198,15 +242,14 @@ export class PathEntity extends Entity<{
 
             app.canvasStateStore.edit((draft) => {
                 draft.setEntity(label);
-                draft.addLink(
-                    new LinkToEdge(
-                        randomId(),
-                        labelId,
-                        this.props.id,
-                        p0.id,
-                        p1.id,
-                    ),
+                const linkToEdge = new LinkToEdge(
+                    randomId(),
+                    labelId,
+                    this.props.id,
+                    p0.id,
+                    p1.id,
                 );
+                draft.addLink(linkToEdge);
             });
 
             app.canvasStateStore.unselectAll();

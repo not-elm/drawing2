@@ -3,7 +3,7 @@ export class EventEmitter<
 > {
     private readonly eventHandlers = new Map<keyof T, Set<() => void>>();
 
-    on<K extends keyof T>(ev: K, handler: T[K]): this {
+    on<K extends keyof T>(ev: K, handler: T[K]): EventEmitter<T> {
         let handlers = this.eventHandlers.get(ev);
         if (!handlers) {
             handlers = new Set();

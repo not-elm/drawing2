@@ -52,6 +52,7 @@ class PageDraftCore {
         this.entities.delete(entityId);
         const index = this.entityIds.indexOf(entityId);
         this.entityIds.splice(index, 1);
+        this.links.deleteByEntityId(entityId);
 
         this.dirtyEntityIds.add(entityId);
         this.updatedEntityIds.delete(entityId);

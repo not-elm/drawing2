@@ -1,10 +1,5 @@
 import { memo } from "react";
-import type { Entity } from "../../../core/Entity";
-import type { Line } from "../../../lib/geo/Line";
-import { Point } from "../../../lib/geo/Point";
-import type { Rect } from "../../../lib/geo/Rect";
-import { identity } from "../../../lib/geo/TransformMatrix";
-import { convertGeometryToPathDefinition } from "../../../react/SelectionRect";
+import type { Graph } from "../../../core/Graph";
 import {
     type ColorId,
     ColorPaletteBackground,
@@ -21,12 +16,13 @@ import {
     type StrokeStyle,
 } from "../../property/StrokeStyle";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../../property/StrokeWidth";
+import type { PathEntity } from "./PathEntity";
 
 export const STROKE_WIDTH_BASE = 5;
 
 export const PathView = memo(function ShapeView({
     entity,
-}: { entity: Entity }) {
+}: { entity: PathEntity }) {
     const rect = entity.getBoundingRect();
 
     return (
@@ -44,7 +40,7 @@ export const PathView = memo(function ShapeView({
                 )}
                 strokeWidth={entity.getProperty(PROPERTY_KEY_STROKE_WIDTH, 2)}
                 fillStyle={entity.getProperty(PROPERTY_KEY_FILL_STYLE, "none")}
-                outline={entity.getOutline()}
+                graph={entity.graph}
                 top={rect.top}
                 left={rect.left}
             />
@@ -57,7 +53,7 @@ export const PathViewInner = memo(function PathViewInner({
     strokeStyle,
     strokeWidth,
     fillStyle,
-    outline,
+    graph,
     top,
     left,
 }: {
@@ -65,7 +61,7 @@ export const PathViewInner = memo(function PathViewInner({
     strokeStyle: StrokeStyle;
     strokeWidth: number;
     fillStyle: FillStyle;
-    outline: (Rect | Line | Point)[];
+    graph: Graph;
     top: number;
     left: number;
 }) {
@@ -90,11 +86,10 @@ export const PathViewInner = memo(function PathViewInner({
             }}
         >
             <path
-                d={convertGeometryToPathDefinition(
-                    outline,
-                    new Point(left, top),
-                    identity(),
-                )}
+                d={`M${graph
+                    .getOutline()
+                    .map((node) => `${node.x - left} ${node.y - top}`)
+                    .join(" L ")}Z`}
                 css={{
                     stroke: Colors[colorId],
                     strokeLinejoin: "round",
@@ -111,8 +106,8 @@ export const PathViewInner = memo(function PathViewInner({
                 strokeDasharray={
                     {
                         solid: undefined,
-                        dashed: [2 * strokeWidth, strokeWidth + 5].join(" "),
-                        dotted: [0, strokeWidth * (0.5 + 1.2 + 0.5)].join(" "),
+                        dashed: [2 * strokeWidth2, strokeWidth2 + 5].join(" "),
+                        dotted: [0, strokeWidth2 * (0.5 + 1.2 + 0.5)].join(" "),
                     }[strokeStyle]
                 }
             />

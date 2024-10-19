@@ -1,10 +1,10 @@
 import type { App } from "../../core/App";
 import type { Entity } from "../../core/Entity";
+import { Graph, GraphNode } from "../../core/Graph";
 import {
     type CanvasPointerEvent,
     ModeController,
 } from "../../core/ModeController";
-import type { PathNode } from "../../core/Path";
 import { ScaleSelectionTransformController } from "../../core/SelectionTransformController";
 import { setupSelectionTransformPointerEventHandlers } from "../../core/setupSelectionTransformPointerEventHandlers";
 import { Rect } from "../../lib/geo/Rect";
@@ -42,38 +42,50 @@ export class NewShapeModeController extends ModeController {
     }
 
     private insertNewShape(app: App, rect: Rect): Entity {
-        const topLeftNode = { id: randomId(), point: rect.topLeft };
-        const topRightNode = { id: randomId(), point: rect.topRight };
-        const bottomRightNode = { id: randomId(), point: rect.bottomRight };
-        const bottomLeftNode = { id: randomId(), point: rect.bottomLeft };
-        const nodes = new Map<string, PathNode>();
-        nodes.set(topLeftNode.id, topLeftNode);
-        nodes.set(topRightNode.id, topRightNode);
-        nodes.set(bottomRightNode.id, bottomRightNode);
-        nodes.set(bottomLeftNode.id, bottomLeftNode);
+        const topLeftNode = new GraphNode(
+            randomId(),
+            rect.topLeft.x,
+            rect.topLeft.y,
+        );
+        const topRightNode = new GraphNode(
+            randomId(),
+            rect.topRight.x,
+            rect.topRight.y,
+        );
+        const bottomRightNode = new GraphNode(
+            randomId(),
+            rect.bottomRight.x,
+            rect.bottomRight.y,
+        );
+        const bottomLeftNode = new GraphNode(
+            randomId(),
+            rect.bottomLeft.x,
+            rect.bottomLeft.y,
+        );
+        const graph = Graph.create();
+        graph.addEdge(topLeftNode, topRightNode);
+        graph.addEdge(topRightNode, bottomRightNode);
+        graph.addEdge(bottomRightNode, bottomLeftNode);
+        graph.addEdge(bottomLeftNode, topLeftNode);
 
-        const shape = new PathEntity({
-            id: randomId(),
-            nodes,
-            edges: [
-                [topLeftNode.id, topRightNode.id],
-                [topRightNode.id, bottomRightNode.id],
-                [bottomRightNode.id, bottomLeftNode.id],
-                [bottomLeftNode.id, topLeftNode.id],
-            ],
-            [PROPERTY_KEY_COLOR_ID]: app.defaultPropertyStore
-                .getState()
-                .getOrDefault(PROPERTY_KEY_COLOR_ID, 0),
-            [PROPERTY_KEY_STROKE_STYLE]: app.defaultPropertyStore
-                .getState()
-                .getOrDefault(PROPERTY_KEY_STROKE_STYLE, "solid"),
-            [PROPERTY_KEY_STROKE_WIDTH]: app.defaultPropertyStore
-                .getState()
-                .getOrDefault(PROPERTY_KEY_STROKE_WIDTH, 2),
-            [PROPERTY_KEY_FILL_STYLE]: app.defaultPropertyStore
-                .getState()
-                .getOrDefault(PROPERTY_KEY_FILL_STYLE, "none"),
-        });
+        const shape = new PathEntity(
+            {
+                id: randomId(),
+                [PROPERTY_KEY_COLOR_ID]: app.defaultPropertyStore
+                    .getState()
+                    .getOrDefault(PROPERTY_KEY_COLOR_ID, 0),
+                [PROPERTY_KEY_STROKE_STYLE]: app.defaultPropertyStore
+                    .getState()
+                    .getOrDefault(PROPERTY_KEY_STROKE_STYLE, "solid"),
+                [PROPERTY_KEY_STROKE_WIDTH]: app.defaultPropertyStore
+                    .getState()
+                    .getOrDefault(PROPERTY_KEY_STROKE_WIDTH, 2),
+                [PROPERTY_KEY_FILL_STYLE]: app.defaultPropertyStore
+                    .getState()
+                    .getOrDefault(PROPERTY_KEY_FILL_STYLE, "none"),
+            },
+            graph,
+        );
 
         app.canvasStateStore.edit((draft) => {
             draft.setEntity(shape);

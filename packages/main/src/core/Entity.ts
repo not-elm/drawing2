@@ -8,28 +8,25 @@ import type { JSONObject } from "./JSONObject";
 import type { CanvasPointerEvent } from "./ModeController";
 import type { PathEdge, PathNode } from "./Path";
 
-interface Props {
+export interface EntityProps {
     id: string;
     [key: string]: unknown;
 }
 
-export abstract class Entity<P extends Props = Props> {
+export abstract class Entity<P extends EntityProps = EntityProps> {
     constructor(readonly props: P) {}
 
     abstract type: string;
 
-    abstract getBoundingRect(this: this): Rect;
+    abstract getBoundingRect(): Rect;
 
-    copy(props: Partial<P>): this {
-        // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-        return new (this as any).constructor({ ...this.props, ...props });
-    }
+    abstract setProperty(propertyKey: string, value: unknown): Entity;
 
-    serialize(this: this): SerializedEntity {
+    serialize(): SerializedEntity {
         return this as unknown as SerializedEntity;
     }
 
-    transform(transform: TransformMatrix): this {
+    transform(transform: TransformMatrix): Entity {
         return this;
     }
 
@@ -37,40 +34,31 @@ export abstract class Entity<P extends Props = Props> {
         return propertyKey in this.props;
     }
 
-    setProperty(propertyKey: string, value: unknown): this {
-        // if (!this.isPropertySupported(propertyKey)) return this;
-
-        return this.copy({ [propertyKey]: value } as Partial<P>);
-    }
-
     getProperty<T = unknown>(propertyKey: string, defaultValue: T): T {
         return (this.props[propertyKey] as T | undefined) ?? defaultValue;
     }
 
-    getNodes(this: this): PathNode[] {
+    getNodes(): PathNode[] {
         return [];
     }
 
-    getNodeById(this: this, nodeId: string): PathNode | undefined {
+    getNodeById(nodeId: string): PathNode | undefined {
         return this.getNodes().find((node) => node.id === nodeId);
     }
 
-    getEdges(this: this): PathEdge[] {
+    getEdges(): PathEdge[] {
         return [];
     }
 
-    getOutline(this: this): (Rect | Line | Point)[] {
+    getOutline(): (Rect | Line | Point)[] {
         return [this.getBoundingRect()];
     }
 
-    setNodePosition(nodeId: string, position: Point): this {
+    setNodePosition(nodeId: string, position: Point): Entity {
         return this;
     }
 
-    getDistance(
-        this: this,
-        point: Point,
-    ): {
+    getDistance(point: Point): {
         distance: number;
         point: Point;
     } {

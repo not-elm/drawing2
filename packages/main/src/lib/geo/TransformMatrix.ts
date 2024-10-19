@@ -23,13 +23,13 @@ export class TransformMatrix {
         }
     }
 
-    translate(dx: number, dy: number): this {
+    translate(dx: number, dy: number): TransformMatrix {
         this.e += dx;
         this.f += dy;
         return this;
     }
 
-    scale(origin: Point, sx: number, sy: number): this {
+    scale(origin: Point, sx: number, sy: number): TransformMatrix {
         this.translate(-origin.x, -origin.y);
         this.a *= sx;
         this.b *= sy;

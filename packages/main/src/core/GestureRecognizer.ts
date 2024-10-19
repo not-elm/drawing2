@@ -91,7 +91,7 @@ export class GestureRecognizer {
     addPointerMoveHandler(
         pointerId: number,
         handler: (app: App, ev: CanvasPointerMoveEvent) => void,
-    ): this {
+    ): GestureRecognizer {
         const session = this.sessions.get(pointerId);
         assert(
             session !== undefined,
@@ -105,7 +105,7 @@ export class GestureRecognizer {
     addPointerUpHandler(
         pointerId: number,
         handler: (app: App, ev: CanvasPointerUpEvent) => void,
-    ): this {
+    ): GestureRecognizer {
         const session = this.sessions.get(pointerId);
         assert(
             session !== undefined,

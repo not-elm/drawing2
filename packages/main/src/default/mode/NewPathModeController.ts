@@ -1,5 +1,6 @@
 import type { App } from "../../core/App";
 import type { Entity } from "../../core/Entity";
+import { Graph, GraphNode } from "../../core/Graph";
 import { LinkToEdge, LinkToRect } from "../../core/Link";
 import {
     type CanvasPointerEvent,
@@ -58,34 +59,29 @@ export class NewPathModeController extends ModeController {
     }
 
     private insertNewPath(app: App, line: Line): PathEntity {
-        const node1: PathNode = {
-            id: randomId(),
-            point: line.p1,
-        };
-        const node2: PathNode = {
-            id: randomId(),
-            point: line.p2,
-        };
-        const pathEntity = new PathEntity({
-            id: randomId(),
-            nodes: new Map([
-                [node1.id, node1],
-                [node2.id, node2],
-            ]),
-            edges: [[node1.id, node2.id]],
-            [PROPERTY_KEY_COLOR_ID]: app.defaultPropertyStore
-                .getState()
-                .getOrDefault(PROPERTY_KEY_COLOR_ID, 0),
-            [PROPERTY_KEY_STROKE_STYLE]: app.defaultPropertyStore
-                .getState()
-                .getOrDefault(PROPERTY_KEY_STROKE_STYLE, "solid"),
-            [PROPERTY_KEY_STROKE_WIDTH]: app.defaultPropertyStore
-                .getState()
-                .getOrDefault(PROPERTY_KEY_STROKE_WIDTH, 2),
-            [PROPERTY_KEY_FILL_STYLE]: app.defaultPropertyStore
-                .getState()
-                .getOrDefault(PROPERTY_KEY_FILL_STYLE, "none"),
-        });
+        const node1 = new GraphNode(randomId(), line.p1.x, line.p1.y);
+        const node2 = new GraphNode(randomId(), line.p2.x, line.p2.y);
+        const graph = Graph.create();
+        graph.addEdge(node1, node2);
+
+        const pathEntity = new PathEntity(
+            {
+                id: randomId(),
+                [PROPERTY_KEY_COLOR_ID]: app.defaultPropertyStore
+                    .getState()
+                    .getOrDefault(PROPERTY_KEY_COLOR_ID, 0),
+                [PROPERTY_KEY_STROKE_STYLE]: app.defaultPropertyStore
+                    .getState()
+                    .getOrDefault(PROPERTY_KEY_STROKE_STYLE, "solid"),
+                [PROPERTY_KEY_STROKE_WIDTH]: app.defaultPropertyStore
+                    .getState()
+                    .getOrDefault(PROPERTY_KEY_STROKE_WIDTH, 2),
+                [PROPERTY_KEY_FILL_STYLE]: app.defaultPropertyStore
+                    .getState()
+                    .getOrDefault(PROPERTY_KEY_FILL_STYLE, "none"),
+            },
+            graph,
+        );
 
         app.canvasStateStore.edit((draft) => {
             draft.setEntity(pathEntity);

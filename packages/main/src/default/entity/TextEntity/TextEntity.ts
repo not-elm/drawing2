@@ -45,7 +45,8 @@ export class TextEntity extends Entity<{
                 ? "fixed"
                 : this.props[PROPERTY_KEY_SIZING_MODE];
 
-        return this.copy({
+        return new TextEntity({
+            ...this.props,
             rect: newRect,
             [PROPERTY_KEY_SIZING_MODE]: newSizingMode,
         });
@@ -63,6 +64,15 @@ export class TextEntity extends Entity<{
             textAlignment: this.props[PROPERTY_KEY_TEXT_ALIGNMENT_X],
             content: this.props.content,
         } satisfies SerializedTextEntity;
+    }
+
+    setProperty(propertyKey: string, value: unknown): TextEntity {
+        if (!this.isPropertySupported(propertyKey)) return this;
+
+        return new TextEntity({
+            ...this.props,
+            [propertyKey]: value,
+        });
     }
 
     static deserialize(data: JSONObject): TextEntity {

@@ -1,7 +1,7 @@
 import { PathEntity } from "../default/entity/PathEntity/PathEntity";
 import { TextEntity } from "../default/entity/TextEntity/TextEntity";
 import { assert } from "../lib/assert";
-import type { Point } from "../lib/geo/Point";
+import { Point } from "../lib/geo/Point";
 import type { Rect } from "../lib/geo/Rect";
 import { testHitEntities } from "../lib/testHitEntities";
 import type { App } from "./App";
@@ -355,12 +355,18 @@ export class SelectModeController extends ModeController {
             assert(entity instanceof PathEntity, "Selected entity is not path");
             const pathEntity = entity as PathEntity;
 
-            for (const node of pathEntity.props.nodes.values()) {
-                if (point.getDistance(node.point).distance < marginInCanvas) {
+            for (const node of pathEntity.graph.nodes.values()) {
+                if (
+                    point.getDistance(new Point(node.x, node.y)).distance <
+                    marginInCanvas
+                ) {
                     return {
                         type: "SelectionPath.Node",
                         path: pathEntity,
-                        node,
+                        node: {
+                            id: node.id,
+                            point: new Point(node.x, node.y),
+                        },
                     };
                 }
             }

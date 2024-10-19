@@ -179,10 +179,10 @@ export class Graph {
     }
 
     getOutline(): Node[] {
-        if (!this.normalized) {
-            return this.normalize().getOutline();
-        }
-
+        // if (!this.normalized) {
+        //     return this.normalize().getOutline();
+        // }
+        //
         if (this.nodes.size < 3) return [...this.nodes.values()];
 
         const startNode = [...this.nodes.values()].reduce((n1, n2) =>
