@@ -4,6 +4,8 @@ export function assert(condition: boolean, message: string): asserts condition {
     }
 }
 
+type Edge = [Node, Node];
+
 export class Point {
     constructor(
         public x: number,
@@ -308,47 +310,68 @@ export class Graph {
         if (this.normalized) return this;
         const clone = this.clone();
 
-        let flagDirty = true;
-        while (flagDirty) {
-            flagDirty = false;
-            const edges = clone.getEdges();
+        const edges = new Set(clone.getEdges());
+        const queue = new Set(edges);
 
-            for (const edge1 of edges) {
-                if (flagDirty) break;
+        const newNodesMap = new Map<Edge, Node[]>();
 
-                for (const edge2 of edges) {
-                    if (flagDirty) break;
+        while (queue.size > 0) {
+            const edge1 = queue.values().next().value;
+            assert(edge1 !== undefined, "Empty queue");
+            queue.delete(edge1);
 
-                    if (edge1 === edge2) continue;
-                    if (edge1[0] === edge2[0]) continue;
-                    if (edge1[0] === edge2[1]) continue;
-                    if (edge1[1] === edge2[0]) continue;
-                    if (edge1[1] === edge2[1]) continue;
+            for (const edge2 of edges) {
+                if (edge1 === edge2) continue;
+                if (edge1[0].id > edge2[0].id) continue;
 
-                    if (isCross(edge1[0], edge1[1], edge2[0], edge2[1])) {
-                        const crossPoint = getCrossPoint(
-                            edge1[0],
-                            edge1[1],
-                            edge2[0],
-                            edge2[1],
-                        );
-                        // Add new edges first. When nodes have only this edge,
-                        // they would be cleaned up.
-                        clone.addEdge(crossPoint, edge1[0]);
-                        clone.addEdge(crossPoint, edge1[1]);
-                        clone.addEdge(crossPoint, edge2[0]);
-                        clone.addEdge(crossPoint, edge2[1]);
-                        clone.deleteEdge(edge1[0].id, edge1[1].id);
-                        clone.deleteEdge(edge2[0].id, edge2[1].id);
-                        flagDirty = true;
-                        break;
-                    }
+                if (edge1[0] === edge2[0]) continue;
+                if (edge1[0] === edge2[1]) continue;
+                if (edge1[1] === edge2[0]) continue;
+                if (edge1[1] === edge2[1]) continue;
+
+                if (isCross(edge1[0], edge1[1], edge2[0], edge2[1])) {
+                    const crossPoint = getCrossPoint(
+                        edge1[0],
+                        edge1[1],
+                        edge2[0],
+                        edge2[1],
+                    );
+
+                    newNodesMap.set(edge1, [
+                        ...(newNodesMap.get(edge1) ?? []),
+                        crossPoint,
+                    ]);
+                    newNodesMap.set(edge2, [
+                        ...(newNodesMap.get(edge2) ?? []),
+                        crossPoint,
+                    ]);
                 }
             }
         }
 
+        for (const [edge, newNodes] of newNodesMap.entries()) {
+            newNodes.sort((n1, n2) =>
+                n1.x === n2.x ? n1.y - n2.y : n1.x - n2.x,
+            );
+            if (
+                edge[0].x < edge[1].x ||
+                (edge[0].x === edge[1].x && edge[0].y < edge[1].y)
+            ) {
+                newNodes.unshift(edge[0]);
+                newNodes.push(edge[1]);
+            } else {
+                newNodes.unshift(edge[1]);
+                newNodes.push(edge[0]);
+            }
+
+            clone.deleteEdge(edge[0].id, edge[1].id);
+            for (let i = 0; i < newNodes.length - 1; i++) {
+                clone.addEdge(newNodes[i], newNodes[i + 1]);
+            }
+        }
+
         const nodeIdsToBeDeleted = new Set<string>();
-        flagDirty = true;
+        let flagDirty = true;
         while (flagDirty) {
             flagDirty = false;
 
@@ -390,6 +413,25 @@ export class Graph {
             }
         }
         return edges;
+    }
+
+    contains(point: Point) {
+        const outline = this.getOutline();
+
+        let count = 0;
+        for (let i = 0; i < outline.length; i++) {
+            const p1 = outline[i];
+            const p2 = outline[i === outline.length - 1 ? 0 : i + 1];
+            if (p1.y === p2.y) continue;
+            if (point.y < p1.y && point.y < p2.y) continue;
+            if (point.y >= p1.y && point.y >= p2.y) continue;
+            const x = ((p2.x - p1.x) * (point.y - p1.y)) / (p2.y - p1.y) + p1.x;
+            if (x > point.x) {
+                count++;
+            }
+        }
+
+        return count % 2 === 1;
     }
 }
 

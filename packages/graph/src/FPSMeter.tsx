@@ -21,8 +21,8 @@ export function monitorFPS() {
     requestAnimationFrame(update);
 }
 
-export function StatusBar() {
-    const domRef = useRef<HTMLDivElement | null>(null);
+export function FPSMeter() {
+    const domRef = useRef<HTMLSpanElement | null>(null);
     useEffect(() => {
         const timerId = setInterval(() => {
             const dom = domRef.current;
@@ -42,6 +42,15 @@ export function StatusBar() {
             const fps = Math.round(numFrame / (duration / 1000));
 
             dom.innerText = [`FPS: ${fps}`].join("\n");
+            if (fps < 120) {
+                dom.style.backgroundColor = "#f00";
+                dom.style.color = "#000";
+                dom.style.fontWeight = "900";
+            } else {
+                dom.style.background = "none";
+                dom.style.color = "#505263";
+                dom.style.fontWeight = "300";
+            }
         }, 200);
 
         return () => {
@@ -50,13 +59,12 @@ export function StatusBar() {
     }, []);
 
     useEffect(() => {
-        const dom = document.createElement("div");
+        const dom = document.createElement("span");
         dom.style.pointerEvents = "none";
         dom.style.position = "fixed";
-        dom.style.bottom = "10px";
+        dom.style.top = "10px";
         dom.style.left = "10px";
         dom.style.fontFamily = "monospace";
-        dom.style.color = "#505263";
         dom.style.whiteSpace = "pre";
 
         document.body.appendChild(dom);
