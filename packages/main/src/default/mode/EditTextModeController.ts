@@ -13,6 +13,18 @@ export class EditTextModeController extends ModeController {
         return { type: "edit-text", entityId };
     }
 
+    onRegistered(app: App) {
+        app.keyboard.addBinding({
+            key: "Escape",
+            mode: ["edit-text"],
+            action: (app, ev) => {
+                const mode = app.appStateStore.getState().mode;
+                assert(isEditTextMode(mode), `Invalid mode: ${mode.type}`);
+                app.setMode(createSelectEntityMode(new Set(mode.entityId)));
+            },
+        });
+    }
+
     onBeforeEnterMode(app: App, ev: ModeChangeEvent) {
         if (
             ev.oldMode.type === "edit-text" &&

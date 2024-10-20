@@ -8,6 +8,7 @@ export interface Mode {
 }
 
 export class ModeController {
+    onRegistered(app: App): void {}
     onBeforeExitMode(app: App, ev: ModeChangeEvent): void {}
     onBeforeEnterMode(app: App, ev: ModeChangeEvent): void {}
     onAfterExitMode(app: App, ev: ModeChangeEvent): void {}

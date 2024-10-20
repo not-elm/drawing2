@@ -20,6 +20,18 @@ const EDGE_CONTROL_HIT_AREA_WIDTH = 16;
 export class SelectPathModeController extends ModeController {
     readonly store = new SelectPathModeStateStore();
 
+    onRegistered(app: App) {
+        app.keyboard.addBinding({
+            key: "Escape",
+            mode: ["select-path"],
+            action: (app, ev) => {
+                const mode = app.appStateStore.getState().mode;
+                assert(isSelectPathMode(mode), `Invalid mode: ${mode.type}`);
+                app.setMode(createSelectEntityMode(new Set(mode.entityId)));
+            },
+        });
+    }
+
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
         const control = this.getControlByPoint(app, ev.point);
         if (control === null) {

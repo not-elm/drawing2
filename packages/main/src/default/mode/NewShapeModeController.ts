@@ -21,6 +21,22 @@ import { PROPERTY_KEY_STROKE_STYLE } from "../property/StrokeStyle";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../property/StrokeWidth";
 
 export class NewShapeModeController extends ModeController {
+    onRegistered(app: App) {
+        app.keyboard.addBinding({
+            key: "r",
+            action: (app, ev) => {
+                app.setMode({ type: "new-shape" });
+            },
+        });
+        app.keyboard.addBinding({
+            key: "Escape",
+            mode: ["new-shape"],
+            action: (app, ev) => {
+                app.setMode(createSelectEntityMode(new Set()));
+            },
+        });
+    }
+
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
         const p0 = ev.point;
         const p1 = translate(1, 1).apply(ev.point);

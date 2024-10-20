@@ -9,6 +9,7 @@ import type { Entity } from "./Entity";
 import { type EntityConverter, EntityConverterMap } from "./EntityConverter";
 import { GestureRecognizer } from "./GestureRecognizer";
 import { HistoryManager } from "./HistoryManager";
+import { KeyboardManager } from "./KeyboardManager";
 import type { Mode, ModeChangeEvent, ModeController } from "./ModeController";
 import {
     SelectEntityModeController,
@@ -28,6 +29,7 @@ export class App {
     readonly appStateStore = new AppStateStore();
     readonly historyManager = new HistoryManager(this);
     readonly defaultPropertyStore = new DefaultPropertyStore();
+    readonly keyboard = new KeyboardManager(this);
     private readonly modeControllers = new Map<string, ModeController>();
     private readonly entityViewMap = new Map<
         string,
@@ -41,6 +43,62 @@ export class App {
     constructor() {
         this.addModeController("select-entity", this.defaultModeController);
         this.addModeController("select-path", new SelectPathModeController());
+
+        this.keyboard.addBinding({
+            key: "z",
+            metaKey: true,
+            shiftKey: false,
+            action: () => this.historyManager.undo(),
+        });
+        this.keyboard.addBinding({
+            key: "z",
+            metaKey: true,
+            shiftKey: true,
+            action: () => this.historyManager.redo(),
+        });
+        this.keyboard.addBinding({
+            key: "x",
+            metaKey: true,
+            action: () => this.cut(),
+        });
+        this.keyboard.addBinding({
+            key: "c",
+            metaKey: true,
+            action: () => this.copy(),
+        });
+        this.keyboard.addBinding({
+            key: "v",
+            metaKey: true,
+            action: () => this.paste(),
+        });
+
+        this.keyboard.addBinding({
+            key: "z",
+            ctrlKey: true,
+            shiftKey: false,
+            action: () => this.historyManager.undo(),
+        });
+        this.keyboard.addBinding({
+            key: "z",
+            ctrlKey: true,
+            shiftKey: true,
+            action: () => this.historyManager.redo(),
+        });
+        this.keyboard.addBinding({
+            key: "x",
+            ctrlKey: true,
+            action: () => this.cut(),
+        });
+        this.keyboard.addBinding({
+            key: "c",
+            ctrlKey: true,
+            action: () => this.copy(),
+        });
+        this.keyboard.addBinding({
+            key: "v",
+            ctrlKey: true,
+            action: () => this.paste(),
+        });
     }
 
     addModeController(type: string, controller: ModeController): App {
@@ -49,6 +107,7 @@ export class App {
             `Mode ${type} is already registered`,
         );
         this.modeControllers.set(type, controller);
+        controller.onRegistered(this);
         return this;
     }
 
@@ -264,6 +323,10 @@ export class App {
 
     // Event handlers
 
+    /**
+     * Handle native `pointerdown` events
+     * @internal
+     */
     handlePointerDown(ev: PointerEvent) {
         this.gestureRecognizer.handlePointerDown(ev);
 
@@ -281,6 +344,10 @@ export class App {
         });
     }
 
+    /**
+     * Handle native `pointermove` events
+     * @internal
+     */
     handlePointerMove(ev: PointerEvent) {
         this.gestureRecognizer.handlePointerMove(ev);
 
@@ -292,10 +359,18 @@ export class App {
         this.getModeController().onMouseMove(this, point);
     }
 
+    /**
+     * Handle native `pointerup` events
+     * @internal
+     */
     handlePointerUp(ev: PointerEvent) {
         this.gestureRecognizer.handlePointerUp(ev);
     }
 
+    /**
+     * Handle native `doubleclick` events
+     * @internal
+     */
     handleDoubleClick(ev: MouseEvent) {
         this.getModeController().onCanvasDoubleClick(this, {
             pointerId: -1,
@@ -323,135 +398,12 @@ export class App {
         this.viewportStore.setScale(newScale, centerCanvasX, centerCanvasY);
     }
 
-    handleKeyDown(
-        key: string,
-        modifiers: { metaKey: boolean; ctrlKey: boolean; shiftKey: boolean },
-    ): boolean {
-        switch (key) {
-            case "a": {
-                switch (this.appStateStore.getState().mode.type) {
-                    case "new-path":
-                    case "new-shape":
-                    case "new-text":
-                    case "select-entity": {
-                        if (modifiers.metaKey || modifiers.ctrlKey) {
-                            this.setMode(createSelectEntityMode(new Set()));
-                            this.selectAll();
-                            return true;
-                        } else {
-                            this.setMode({ type: "new-path" });
-                        }
-                    }
-                }
-                break;
-            }
-            case "r": {
-                switch (this.appStateStore.getState().mode.type) {
-                    case "new-path":
-                    case "new-text":
-                    case "select-entity": {
-                        this.setMode({ type: "new-shape" });
-                        return true;
-                    }
-                }
-                break;
-            }
-            case "t": {
-                switch (this.appStateStore.getState().mode.type) {
-                    case "new-shape":
-                    case "new-path":
-                    case "select-entity": {
-                        this.setMode({ type: "new-text" });
-                        return true;
-                    }
-                }
-                break;
-            }
-            case "l": {
-                switch (this.appStateStore.getState().mode.type) {
-                    case "new-shape":
-                    case "select-entity": {
-                        this.setMode({ type: "new-path" });
-                        return true;
-                    }
-                }
-                break;
-            }
-            case "z": {
-                switch (this.appStateStore.getState().mode.type) {
-                    case "new-path":
-                    case "new-shape":
-                    case "select-entity": {
-                        if (modifiers.metaKey || modifiers.ctrlKey) {
-                            if (modifiers.shiftKey) {
-                                this.historyManager.redo();
-                            } else {
-                                this.historyManager.undo();
-                            }
-                            return true;
-                        }
-                    }
-                }
-                break;
-            }
-            case "x": {
-                switch (this.appStateStore.getState().mode.type) {
-                    case "select-entity": {
-                        if (modifiers.metaKey || modifiers.ctrlKey) {
-                            this.cut();
-                        }
-                        return true;
-                    }
-                }
-                break;
-            }
-            case "c": {
-                switch (this.appStateStore.getState().mode.type) {
-                    case "select-entity": {
-                        if (modifiers.metaKey || modifiers.ctrlKey) {
-                            this.copy();
-                        }
-                        return true;
-                    }
-                }
-                break;
-            }
-            case "v": {
-                switch (this.appStateStore.getState().mode.type) {
-                    case "select-entity": {
-                        if (modifiers.metaKey || modifiers.ctrlKey) {
-                            this.paste();
-                        }
-                        return true;
-                    }
-                }
-                break;
-            }
-            case "Escape": {
-                switch (this.appStateStore.getState().mode.type) {
-                    case "select-entity": {
-                        this.unselectAll();
-                        return true;
-                    }
-                    default: {
-                        this.setMode(createSelectEntityMode(new Set()));
-                        return true;
-                    }
-                }
-            }
-            case "Delete":
-            case "Backspace": {
-                switch (this.appStateStore.getState().mode.type) {
-                    case "select-entity": {
-                        this.deleteSelectedEntities();
-                        return true;
-                    }
-                }
-                break;
-            }
-        }
-
-        return false;
+    /**
+     * Handle native `keydown` events
+     * @internal
+     */
+    handleKeyDown(ev: KeyboardEvent) {
+        this.keyboard.handleKeyDown(ev);
     }
 
     handleEntityResize(entityId: string, width: number, height: number) {
