@@ -13,7 +13,10 @@ import { Line } from "../../lib/geo/Line";
 import { translate } from "../../lib/geo/TransformMatrix";
 import { randomId } from "../../lib/randomId";
 import { testHitEntities } from "../../lib/testHitEntities";
-import { PathEntity } from "../entity/PathEntity/PathEntity";
+import {
+    PROPERTY_KEY_CORNER_RADIUS,
+    PathEntity,
+} from "../entity/PathEntity/PathEntity";
 import { PROPERTY_KEY_COLOR_ID } from "../property/Colors";
 import { PROPERTY_KEY_FILL_STYLE } from "../property/FillStyle";
 import { PROPERTY_KEY_STROKE_STYLE } from "../property/StrokeStyle";
@@ -79,6 +82,7 @@ export class NewPathModeController extends ModeController {
                 [PROPERTY_KEY_FILL_STYLE]: app.defaultPropertyStore
                     .getState()
                     .getOrDefault(PROPERTY_KEY_FILL_STYLE, "none"),
+                [PROPERTY_KEY_CORNER_RADIUS]: 0,
             },
             graph,
         );

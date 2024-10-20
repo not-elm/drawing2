@@ -3,7 +3,7 @@ import { assert } from "../lib/assert";
 import { useStore } from "./hooks/useStore";
 import { useApp } from "./useApp";
 
-export function PathEditControlLayer() {
+export function SelectPathControlLayer() {
     const app = useApp();
     const appState = useStore(app.appStateStore);
     const canvasState = useStore(app.canvasStateStore);

@@ -1,8 +1,8 @@
 import { type WheelEventHandler, useCallback, useEffect } from "react";
 import { BrushRect } from "./BrushRect";
 import { LinkGuideLayer } from "./LinkGuideLayer";
-import { PathEditControlLayer } from "./PathEditControlLayer";
-import { SelectionRect } from "./SelectionRect";
+import { SelectEntityControlLayer } from "./SelectEntityControlLayer";
+import { SelectPathControlLayer } from "./SelectPathControlLayer";
 import { SnapGuideLayer } from "./SnapGuideLayer";
 import { useResizeObserver } from "./hooks/useResizeObserver";
 import { useStore } from "./hooks/useStore";
@@ -98,8 +98,8 @@ export function Canvas() {
                 <BrushRect />
             </div>
 
-            <SelectionRect />
-            <PathEditControlLayer />
+            <SelectEntityControlLayer />
+            <SelectPathControlLayer />
             <LinkGuideLayer />
             <SnapGuideLayer />
         </div>

@@ -1,10 +1,16 @@
+import {
+    PROPERTY_KEY_CORNER_RADIUS,
+    PathEntity,
+} from "../default/entity/PathEntity/PathEntity";
 import { assert } from "../lib/assert";
 import type { Point } from "../lib/geo/Point";
 import { Rect } from "../lib/geo/Rect";
+import { normalizeAngle } from "../lib/normalizeAngle";
 import { testHitEntities } from "../lib/testHitEntities";
 import type { App } from "./App";
 import { BrushStore } from "./BrushStore";
 import type { Entity } from "./Entity";
+import type { GraphNode } from "./Graph";
 import {
     type CanvasPointerEvent,
     type Mode,
@@ -16,15 +22,16 @@ import {
     TranslateSelectionTransformController,
 } from "./SelectionTransformController";
 import { setupBrushSelectPointerEventHandlers } from "./setupBrushSelectPointerEventHandlers";
+import { setupCornerRadiusHandlePointerEventHandlers } from "./setupCornerRadiusHandlePointerEventHandlers";
 import { setupSelectionTransformPointerEventHandlers } from "./setupSelectionTransformPointerEventHandlers";
 
 export class SelectEntityModeController extends ModeController {
     readonly brushStore = new BrushStore();
 
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
-        const selectionHandle = this.getSelectionHandleType(app, ev.point);
-        if (selectionHandle !== null) {
-            this.onSelectionPointerDown(app, ev, selectionHandle);
+        const handle = this.getHandleType(app, ev.point);
+        if (handle !== null) {
+            this.onSelectionPointerDown(app, ev, handle);
             return;
         }
 
@@ -50,34 +57,34 @@ export class SelectEntityModeController extends ModeController {
     }
 
     onMouseMove(app: App, point: Point) {
-        const selectionHandle = this.getSelectionHandleType(app, point);
-        if (selectionHandle !== null) {
-            switch (selectionHandle.type) {
-                case "SelectionRect.TopLeftHandle":
+        const handle = this.getHandleType(app, point);
+        if (handle !== null) {
+            switch (handle.type) {
+                case "TopLeftHandle":
                     app.appStateStore.setCursor("nwse-resize");
                     break;
-                case "SelectionRect.TopHandle":
+                case "TopHandle":
                     app.appStateStore.setCursor("ns-resize");
                     break;
-                case "SelectionRect.TopRightHandle":
+                case "TopRightHandle":
                     app.appStateStore.setCursor("nesw-resize");
                     break;
-                case "SelectionRect.LeftHandle":
+                case "LeftHandle":
                     app.appStateStore.setCursor("ew-resize");
                     break;
-                case "SelectionRect.CenterHandle":
+                case "CenterHandle":
                     app.appStateStore.setCursor("default");
                     break;
-                case "SelectionRect.RightHandle":
+                case "RightHandle":
                     app.appStateStore.setCursor("ew-resize");
                     break;
-                case "SelectionRect.BottomLeftHandle":
+                case "BottomLeftHandle":
                     app.appStateStore.setCursor("nesw-resize");
                     break;
-                case "SelectionRect.BottomHandle":
+                case "BottomHandle":
                     app.appStateStore.setCursor("ns-resize");
                     break;
-                case "SelectionRect.BottomRightHandle":
+                case "BottomRightHandle":
                     app.appStateStore.setCursor("nwse-resize");
                     break;
             }
@@ -147,126 +154,135 @@ export class SelectEntityModeController extends ModeController {
     private onSelectionPointerDown(
         app: App,
         ev: CanvasPointerEvent,
-        selectionHandle: SelectionHandleType,
+        handle: HandleType,
     ) {
-        switch (selectionHandle.type) {
-            case "SelectionRect.TopLeftHandle": {
+        switch (handle.type) {
+            case "TopLeftHandle": {
                 setupSelectionTransformPointerEventHandlers(
                     app,
                     ev,
                     new ScaleSelectionTransformController(
                         app,
                         ev.point,
-                        selectionHandle.selectionRect.bottomRight,
+                        handle.selectionRect.bottomRight,
                         "left",
                         "top",
                     ),
                 );
                 break;
             }
-            case "SelectionRect.TopHandle": {
+            case "TopHandle": {
                 setupSelectionTransformPointerEventHandlers(
                     app,
                     ev,
                     new ScaleSelectionTransformController(
                         app,
                         ev.point,
-                        selectionHandle.selectionRect.bottomCenter,
+                        handle.selectionRect.bottomCenter,
                         "center",
                         "top",
                     ),
                 );
                 break;
             }
-            case "SelectionRect.TopRightHandle": {
+            case "TopRightHandle": {
                 setupSelectionTransformPointerEventHandlers(
                     app,
                     ev,
                     new ScaleSelectionTransformController(
                         app,
                         ev.point,
-                        selectionHandle.selectionRect.bottomLeft,
+                        handle.selectionRect.bottomLeft,
                         "right",
                         "top",
                     ),
                 );
                 break;
             }
-            case "SelectionRect.LeftHandle": {
+            case "LeftHandle": {
                 setupSelectionTransformPointerEventHandlers(
                     app,
                     ev,
                     new ScaleSelectionTransformController(
                         app,
                         ev.point,
-                        selectionHandle.selectionRect.centerRight,
+                        handle.selectionRect.centerRight,
                         "left",
                         "center",
                     ),
                 );
                 break;
             }
-            case "SelectionRect.RightHandle": {
+            case "RightHandle": {
                 setupSelectionTransformPointerEventHandlers(
                     app,
                     ev,
                     new ScaleSelectionTransformController(
                         app,
                         ev.point,
-                        selectionHandle.selectionRect.centerLeft,
+                        handle.selectionRect.centerLeft,
                         "right",
                         "center",
                     ),
                 );
                 break;
             }
-            case "SelectionRect.BottomLeftHandle": {
+            case "BottomLeftHandle": {
                 setupSelectionTransformPointerEventHandlers(
                     app,
                     ev,
                     new ScaleSelectionTransformController(
                         app,
                         ev.point,
-                        selectionHandle.selectionRect.topRight,
+                        handle.selectionRect.topRight,
                         "left",
                         "bottom",
                     ),
                 );
                 break;
             }
-            case "SelectionRect.BottomHandle": {
+            case "BottomHandle": {
                 setupSelectionTransformPointerEventHandlers(
                     app,
                     ev,
                     new ScaleSelectionTransformController(
                         app,
                         ev.point,
-                        selectionHandle.selectionRect.topCenter,
+                        handle.selectionRect.topCenter,
                         "center",
                         "bottom",
                     ),
                 );
                 break;
             }
-            case "SelectionRect.BottomRightHandle": {
+            case "BottomRightHandle": {
                 setupSelectionTransformPointerEventHandlers(
                     app,
                     ev,
                     new ScaleSelectionTransformController(
                         app,
                         ev.point,
-                        selectionHandle.selectionRect.topLeft,
+                        handle.selectionRect.topLeft,
                         "right",
                         "bottom",
                     ),
                 );
                 break;
             }
-            case "SelectionRect.CenterHandle": {
+            case "CenterHandle": {
                 setupSelectionTransformPointerEventHandlers(
                     app,
                     ev,
                     new TranslateSelectionTransformController(app, ev.point),
+                );
+                break;
+            }
+            case "CornerRadiusHandle": {
+                setupCornerRadiusHandlePointerEventHandlers(
+                    app,
+                    ev,
+                    handle.entity,
+                    handle.corner,
                 );
                 break;
             }
@@ -279,13 +295,74 @@ export class SelectEntityModeController extends ModeController {
         });
     }
 
-    private getSelectionHandleType(
+    private getHandleType(
         app: App,
         point: Point,
         margin = 8,
-    ): SelectionHandleType | null {
+    ): HandleType | null {
         const marginInCanvas = margin / app.viewportStore.getState().scale;
-        const selectionRect = this.getSelectionRect(app);
+        const selectedEntities = getSelectedEntities(
+            app.appStateStore.getState().mode,
+            app.canvasStateStore.getState(),
+        );
+        if (
+            selectedEntities.length === 1 &&
+            selectedEntities[0] instanceof PathEntity
+        ) {
+            const entity = selectedEntities[0];
+            const outline = entity.graph.getOutline();
+            const cornerRadius = entity.getProperty(
+                PROPERTY_KEY_CORNER_RADIUS,
+                0,
+            );
+            const CORNER_RADIUS_HANDLE_MARGIN = 50;
+
+            for (let i = 0; i < outline.length; i++) {
+                const p0 = outline[(i - 1 + outline.length) % outline.length];
+                const p1 = outline[i];
+                const p2 = outline[(i + 1) % outline.length];
+
+                const p10x = p0.x - p1.x;
+                const p10y = p0.y - p1.y;
+                const norm10 = Math.hypot(p10x, p10y);
+                const i10x = p10x / norm10;
+                const i10y = p10y / norm10;
+
+                const p12x = p2.x - p1.x;
+                const p12y = p2.y - p1.y;
+                const norm12 = Math.hypot(p12x, p12y);
+                const i12x = p12x / norm12;
+                const i12y = p12y / norm12;
+
+                const angleP10 = Math.atan2(p10y, p10x);
+                const angleP12 = Math.atan2(p12y, p12x);
+                const angle = normalizeAngle(-(angleP12 - angleP10));
+
+                const normVHandle =
+                    cornerRadius / Math.sin(angle / 2) +
+                    CORNER_RADIUS_HANDLE_MARGIN;
+                const vHandleCX = p1.x + ((i10x + i12x) / 2) * normVHandle;
+                const vHandleCY = p1.y + ((i10y + i12y) / 2) * normVHandle;
+
+                const distance = Math.hypot(
+                    vHandleCX - point.x,
+                    vHandleCY - point.y,
+                );
+
+                if (distance < marginInCanvas) {
+                    return {
+                        type: "CornerRadiusHandle",
+                        corner: p1,
+                        entity,
+                    };
+                }
+            }
+        }
+
+        const selectionRect = getSelectionRect(
+            app.appStateStore.getState().mode,
+            app.canvasStateStore.getState(),
+        );
         if (selectionRect === null) return null;
 
         const hitAreaX = testHitWithRange(
@@ -306,19 +383,19 @@ export class SelectEntityModeController extends ModeController {
                 switch (hitAreaY) {
                     case "start": {
                         return {
-                            type: "SelectionRect.TopLeftHandle",
+                            type: "TopLeftHandle",
                             selectionRect,
                         };
                     }
                     case "middle": {
                         return {
-                            type: "SelectionRect.LeftHandle",
+                            type: "LeftHandle",
                             selectionRect,
                         };
                     }
                     case "end": {
                         return {
-                            type: "SelectionRect.BottomLeftHandle",
+                            type: "BottomLeftHandle",
                             selectionRect,
                         };
                     }
@@ -329,19 +406,19 @@ export class SelectEntityModeController extends ModeController {
                 switch (hitAreaY) {
                     case "start": {
                         return {
-                            type: "SelectionRect.TopHandle",
+                            type: "TopHandle",
                             selectionRect,
                         };
                     }
                     case "middle": {
                         return {
-                            type: "SelectionRect.CenterHandle",
+                            type: "CenterHandle",
                             selectionRect,
                         };
                     }
                     case "end": {
                         return {
-                            type: "SelectionRect.BottomHandle",
+                            type: "BottomHandle",
                             selectionRect,
                         };
                     }
@@ -352,19 +429,19 @@ export class SelectEntityModeController extends ModeController {
                 switch (hitAreaY) {
                     case "start": {
                         return {
-                            type: "SelectionRect.TopRightHandle",
+                            type: "TopRightHandle",
                             selectionRect,
                         };
                     }
                     case "middle": {
                         return {
-                            type: "SelectionRect.RightHandle",
+                            type: "RightHandle",
                             selectionRect,
                         };
                     }
                     case "end": {
                         return {
-                            type: "SelectionRect.BottomRightHandle",
+                            type: "BottomRightHandle",
                             selectionRect,
                         };
                     }
@@ -374,18 +451,6 @@ export class SelectEntityModeController extends ModeController {
         }
 
         return null;
-    }
-
-    private getSelectionRect(app: App): Rect | null {
-        const selectedEntities = getSelectedEntities(
-            app.appStateStore.getState().mode,
-            app.canvasStateStore.getState(),
-        );
-        if (selectedEntities.length === 0) return null;
-
-        return Rect.union(
-            selectedEntities.map((entity) => entity.getBoundingRect()),
-        );
     }
 }
 
@@ -426,16 +491,17 @@ export function getSelectionRect(mode: Mode, page: Page): Rect | null {
     );
 }
 
-export type SelectionHandleType =
-    | { type: "SelectionRect.TopLeftHandle"; selectionRect: Rect }
-    | { type: "SelectionRect.TopHandle"; selectionRect: Rect }
-    | { type: "SelectionRect.TopRightHandle"; selectionRect: Rect }
-    | { type: "SelectionRect.LeftHandle"; selectionRect: Rect }
-    | { type: "SelectionRect.CenterHandle"; selectionRect: Rect }
-    | { type: "SelectionRect.RightHandle"; selectionRect: Rect }
-    | { type: "SelectionRect.BottomLeftHandle"; selectionRect: Rect }
-    | { type: "SelectionRect.BottomHandle"; selectionRect: Rect }
-    | { type: "SelectionRect.BottomRightHandle"; selectionRect: Rect };
+export type HandleType =
+    | { type: "TopLeftHandle"; selectionRect: Rect }
+    | { type: "TopHandle"; selectionRect: Rect }
+    | { type: "TopRightHandle"; selectionRect: Rect }
+    | { type: "LeftHandle"; selectionRect: Rect }
+    | { type: "CenterHandle"; selectionRect: Rect }
+    | { type: "RightHandle"; selectionRect: Rect }
+    | { type: "BottomLeftHandle"; selectionRect: Rect }
+    | { type: "BottomHandle"; selectionRect: Rect }
+    | { type: "BottomRightHandle"; selectionRect: Rect }
+    | { type: "CornerRadiusHandle"; entity: PathEntity; corner: GraphNode };
 
 /**
  * Test if a given value is inside of a range.

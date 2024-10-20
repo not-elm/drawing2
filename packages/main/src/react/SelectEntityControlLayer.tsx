@@ -1,17 +1,22 @@
-import styled from "@emotion/styled";
+import type { ReactNode } from "react";
 import {
     getSelectedEntities,
     getSelectionRect,
     isSelectEntityMode,
 } from "../core/SelectEntityModeController";
+import {
+    PROPERTY_KEY_CORNER_RADIUS,
+    PathEntity,
+} from "../default/entity/PathEntity/PathEntity";
 import { Line } from "../lib/geo/Line";
 import type { Point } from "../lib/geo/Point";
 import { Rect } from "../lib/geo/Rect";
 import type { TransformMatrix } from "../lib/geo/TransformMatrix";
+import { normalizeAngle } from "../lib/normalizeAngle";
 import { useStore } from "./hooks/useStore";
 import { useApp } from "./useApp";
 
-export function SelectionRect() {
+export function SelectEntityControlLayer() {
     const app = useApp();
     const appState = useStore(app.appStateStore);
     const viewport = useStore(app.viewportStore);
@@ -73,97 +78,93 @@ export function SelectionRect() {
                         />
                     );
                 })}
+                <rect
+                    x={0 - 4}
+                    y={0 - 4}
+                    width={8}
+                    height={8}
+                    fill="#fff"
+                    stroke="var(--color-selection)"
+                />
+                <rect
+                    x={rect.width - 4}
+                    y={0 - 4}
+                    width={8}
+                    height={8}
+                    fill="#fff"
+                    stroke="var(--color-selection)"
+                />
+                <rect
+                    x={rect.width - 4}
+                    y={rect.height - 4}
+                    width={8}
+                    height={8}
+                    fill="#fff"
+                    stroke="var(--color-selection)"
+                />
+                <rect
+                    x={0 - 4}
+                    y={rect.height - 4}
+                    width={8}
+                    height={8}
+                    fill="#fff"
+                    stroke="var(--color-selection)"
+                />
+                {entities.length === 1 &&
+                    entities[0] instanceof PathEntity &&
+                    createRadiusHandle(entities[0], rect)}
             </svg>
-            <ResizeHandle
-                css={{
-                    top: "0%",
-                    left: "0%",
-                    width: "100%",
-                    cursor: "ns-resize",
-                }}
-            />
-            <ResizeHandle
-                css={{
-                    top: "0%",
-                    left: "100%",
-                    height: "100%",
-                    cursor: "ew-resize",
-                }}
-            />
-            <ResizeHandle
-                css={{
-                    top: "100%",
-                    left: "0%",
-                    width: "100%",
-                    cursor: "ns-resize",
-                }}
-            />
-            <ResizeHandle
-                css={{
-                    top: "0%",
-                    left: "0%",
-                    height: "100%",
-                    cursor: "ew-resize",
-                }}
-            />
-
-            <ResizeHandle
-                css={{
-                    top: "0%",
-                    left: "0%",
-                    cursor: "nwse-resize",
-                }}
-            >
-                <CornerResizeHandle />
-            </ResizeHandle>
-            <ResizeHandle
-                css={{
-                    top: "0%",
-                    left: "100%",
-                    cursor: "nesw-resize",
-                }}
-            >
-                <CornerResizeHandle />
-            </ResizeHandle>
-            <ResizeHandle
-                css={{
-                    top: "100%",
-                    left: "100%",
-                    cursor: "nwse-resize",
-                }}
-            >
-                <CornerResizeHandle />
-            </ResizeHandle>
-            <ResizeHandle
-                css={{
-                    top: "100%",
-                    left: "0%",
-                    cursor: "nesw-resize",
-                }}
-            >
-                <CornerResizeHandle />
-            </ResizeHandle>
         </div>
     );
 }
 
-const ResizeHandle = styled.div({
-    position: "absolute",
-    transform: "translate(-8px, -8px)",
-    minWidth: "16px",
-    minHeight: "16px",
-});
-const CornerResizeHandle = styled.div({
-    background: "#fff",
-    outline: "2px solid var(--color-selection)",
-    boxSizing: "border-box",
-    position: "absolute",
-    transform: "translate(-50%, -50%)",
-    top: "50%",
-    left: "50%",
-    minWidth: "8px",
-    minHeight: "8px",
-});
+const CORNER_RADIUS_HANDLE_MARGIN = 50;
+
+function createRadiusHandle(entity: PathEntity, rect: Rect) {
+    const outline = entity.graph.getOutline();
+    const nodes: ReactNode[] = [];
+    const cornerRadius = entity.getProperty(PROPERTY_KEY_CORNER_RADIUS, 0);
+
+    for (let i = 0; i < outline.length; i++) {
+        const p0 = outline[(i - 1 + outline.length) % outline.length];
+        const p1 = outline[i];
+        const p2 = outline[(i + 1) % outline.length];
+
+        const p10x = p0.x - p1.x;
+        const p10y = p0.y - p1.y;
+        const norm10 = Math.hypot(p10x, p10y);
+        const i10x = p10x / norm10;
+        const i10y = p10y / norm10;
+
+        const p12x = p2.x - p1.x;
+        const p12y = p2.y - p1.y;
+        const norm12 = Math.hypot(p12x, p12y);
+        const i12x = p12x / norm12;
+        const i12y = p12y / norm12;
+
+        const angleP10 = Math.atan2(p10y, p10x);
+        const angleP12 = Math.atan2(p12y, p12x);
+        const angle = normalizeAngle(-(angleP12 - angleP10));
+
+        const normVHandle =
+            cornerRadius / Math.sin(angle / 2) + CORNER_RADIUS_HANDLE_MARGIN;
+        const vHandleX = p1.x + ((i10x + i12x) / 2) * normVHandle;
+        const vHandleY = p1.y + ((i10y + i12y) / 2) * normVHandle;
+
+        nodes.push(
+            <circle
+                key={p1.id}
+                cx={vHandleX - rect.left}
+                cy={vHandleY - rect.top}
+                r={5}
+                fill="#fff"
+                stroke="var(--color-selection)"
+            />,
+        );
+    }
+
+    return nodes;
+}
 
 export function convertGeometryToPathDefinition(
     geos: (Rect | Line | Point)[],

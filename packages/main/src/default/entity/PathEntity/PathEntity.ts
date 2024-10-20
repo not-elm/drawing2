@@ -24,12 +24,15 @@ import {
 } from "../../property/StrokeStyle";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../../property/StrokeWidth";
 
+export const PROPERTY_KEY_CORNER_RADIUS = "cornerRadius";
+
 interface Props extends EntityProps {
     id: string;
     [PROPERTY_KEY_COLOR_ID]: ColorId;
     [PROPERTY_KEY_STROKE_STYLE]: StrokeStyle;
     [PROPERTY_KEY_STROKE_WIDTH]: number;
     [PROPERTY_KEY_FILL_STYLE]: FillStyle;
+    [PROPERTY_KEY_CORNER_RADIUS]: number;
 }
 
 export class PathEntity extends Entity<Props> {
@@ -114,6 +117,7 @@ export class PathEntity extends Entity<Props> {
             strokeStyle: this.props.strokeStyle,
             strokeWidth: this.props.strokeWidth,
             fillStyle: this.props.fillStyle,
+            cornerRadius: this.props.cornerRadius,
         } satisfies SerializedPathEntity;
     }
 
@@ -179,6 +183,7 @@ export class PathEntity extends Entity<Props> {
                 [PROPERTY_KEY_STROKE_STYLE]: serialized.strokeStyle,
                 [PROPERTY_KEY_STROKE_WIDTH]: serialized.strokeWidth,
                 [PROPERTY_KEY_FILL_STYLE]: serialized.fillStyle,
+                [PROPERTY_KEY_CORNER_RADIUS]: serialized.cornerRadius,
             },
             graph,
         );
@@ -236,4 +241,5 @@ interface SerializedPathEntity extends JSONObject {
     strokeStyle: StrokeStyle;
     strokeWidth: number;
     fillStyle: FillStyle;
+    cornerRadius: number;
 }

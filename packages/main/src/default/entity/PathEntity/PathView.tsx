@@ -1,8 +1,7 @@
 import { memo } from "react";
 import type { Graph, GraphNode } from "../../../core/Graph";
 import { Point } from "../../../lib/geo/Point";
-import { useStore } from "../../../react/hooks/useStore";
-import { useApp } from "../../../react/useApp";
+import { normalizeAngle } from "../../../lib/normalizeAngle";
 import {
     type ColorId,
     ColorPaletteBackground,
@@ -19,7 +18,7 @@ import {
     type StrokeStyle,
 } from "../../property/StrokeStyle";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../../property/StrokeWidth";
-import type { PathEntity } from "./PathEntity";
+import { PROPERTY_KEY_CORNER_RADIUS, type PathEntity } from "./PathEntity";
 
 export const STROKE_WIDTH_BASE = 5;
 
@@ -46,6 +45,7 @@ export const PathView = memo(function PathView({
                 graph={entity.graph}
                 top={rect.top}
                 left={rect.left}
+                cornerRadius={entity.getProperty(PROPERTY_KEY_CORNER_RADIUS, 0)}
             />
         </div>
     );
@@ -59,6 +59,7 @@ const PathViewInner = memo(function PathViewInner({
     graph,
     top,
     left,
+    cornerRadius,
 }: {
     colorId: ColorId;
     strokeStyle: StrokeStyle;
@@ -67,8 +68,8 @@ const PathViewInner = memo(function PathViewInner({
     graph: Graph;
     top: number;
     left: number;
+    cornerRadius: number;
 }) {
-    const appState = useStore(useApp().appStateStore);
     const strokeWidth2 =
         ({
             solid: STROKE_WIDTH_BASE,
@@ -93,7 +94,7 @@ const PathViewInner = memo(function PathViewInner({
         >
             {outline.length > 0 && (
                 <path
-                    d={constructPathDefinition(outline)}
+                    d={constructPathDefinition(outline, cornerRadius)}
                     css={{
                         ...{
                             none: { fill: "none" },
@@ -146,9 +147,10 @@ function constructArrowHeadPath(
     return [`M${q1x} ${q1y}`, `L${x1} ${y1}`, `L${q2x} ${q2y}`].join(" ");
 }
 
-const R = 30;
-
-function constructPathDefinition(outline: Array<GraphNode>): string {
+function constructPathDefinition(
+    outline: Array<GraphNode>,
+    cornerRadius: number,
+): string {
     const commands: string[] = [];
 
     for (let i = 0; i < outline.length; i++) {
@@ -167,37 +169,20 @@ function constructPathDefinition(outline: Array<GraphNode>): string {
         const i12x = p12x / norm12;
         const i12y = p12y / norm12;
 
-        const angleP10 = normalizeAngle(Math.atan2(p10y, p10x));
-        const angleP12 = normalizeAngle(Math.atan2(p12y, p12x));
+        const angleP10 = Math.atan2(p10y, p10x);
+        const angleP12 = Math.atan2(p12y, p12x);
         const angle = normalizeAngle(-(angleP12 - angleP10));
+        const arcAngle =
+            cornerRadius /
+            Math.tan(angle > Math.PI ? Math.PI - angle / 2 : angle / 2);
 
         const pArcStart = new Point(
-            p1.x +
-                (R /
-                    Math.tan(
-                        angle > Math.PI ? Math.PI - angle / 2 : angle / 2,
-                    )) *
-                    i10x,
-            p1.y +
-                (R /
-                    Math.tan(
-                        angle > Math.PI ? Math.PI - angle / 2 : angle / 2,
-                    )) *
-                    i10y,
+            p1.x + arcAngle * i10x,
+            p1.y + arcAngle * i10y,
         );
         const pArcEnd = new Point(
-            p1.x +
-                (R /
-                    Math.tan(
-                        angle > Math.PI ? Math.PI - angle / 2 : angle / 2,
-                    )) *
-                    i12x,
-            p1.y +
-                (R /
-                    Math.tan(
-                        angle > Math.PI ? Math.PI - angle / 2 : angle / 2,
-                    )) *
-                    i12y,
+            p1.x + arcAngle * i12x,
+            p1.y + arcAngle * i12y,
         );
 
         if (commands.length === 0) {
@@ -212,15 +197,9 @@ function constructPathDefinition(outline: Array<GraphNode>): string {
         // because the arc should be at the outside of the outline.
         const arcDirection = angle > Math.PI ? 0 : 1;
         commands.push(
-            `A${R} ${R} 0 0 ${arcDirection} ${pArcEnd.x} ${pArcEnd.y}`,
+            `A${cornerRadius} ${cornerRadius} 0 0 ${arcDirection} ${pArcEnd.x} ${pArcEnd.y}`,
         );
     }
 
     return `${commands.join(" ")}Z`;
-}
-
-function normalizeAngle(angle: number): number {
-    if (angle < 0) angle += Math.PI * 2;
-    if (angle >= Math.PI * 2) angle -= Math.PI * 2;
-    return angle;
 }

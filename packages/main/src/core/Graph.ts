@@ -1,5 +1,6 @@
 import { assert } from "../lib/assert";
 import { Point } from "../lib/geo/Point";
+import { normalizeAngle } from "../lib/normalizeAngle";
 
 export class GraphNode extends Point {
     constructor(
@@ -168,7 +169,7 @@ export class Graph {
     getArgument(p0Id: string, p1Id: string): number {
         assert(p0Id !== p1Id, `from and to should be different: ${p0Id}`);
         if (p0Id > p1Id) {
-            return normalizeRadian(this.getArgument(p1Id, p0Id) + Math.PI);
+            return normalizeAngle(this.getArgument(p1Id, p0Id) + Math.PI);
         }
 
         let value = this.arguments.get(p0Id)?.get(p1Id);
@@ -179,7 +180,7 @@ export class Graph {
             const p1 = this.nodes.get(p1Id);
             assert(p1 !== undefined, `Node ${p1Id} is not found.`);
 
-            value = normalizeRadian(Math.atan2(p1.y - p0.y, p1.x - p0.x));
+            value = normalizeAngle(Math.atan2(p1.y - p0.y, p1.x - p0.x));
             if (!this.arguments.has(p0Id)) {
                 this.arguments.set(p0Id, new Map());
             }
@@ -289,7 +290,7 @@ export class Graph {
         const nextNodeIds = this.edges.get(nodeId);
         assert(nextNodeIds !== undefined, `Node ${nodeId} is not found.`);
 
-        let bestAngle = normalizeRadian(
+        let bestAngle = normalizeAngle(
             this.getArgument(nodeId, nextNodeIds[0]) - startAngle,
         );
         if (bestAngle === 0) {
@@ -301,7 +302,7 @@ export class Graph {
             const nextNode = this.nodes.get(nextNodeId);
             assert(nextNode !== undefined, `Node ${nextNodeId} is not found.`);
 
-            let angle = normalizeRadian(
+            let angle = normalizeAngle(
                 this.getArgument(nodeId, nextNode.id) - startAngle,
             );
             if (angle === 0) {
@@ -509,10 +510,6 @@ function getCrossPoint(
             (cross_v1000_v1011 + cross_v1001_v1011);
 
     return new CrossPoint(p00.id, p01.id, p10.id, p11.id, x, y);
-}
-
-function normalizeRadian(v: number): number {
-    return v - Math.floor(v / (2 * Math.PI)) * 2 * Math.PI;
 }
 
 export function getEdgeId(p0: string, p1: string): string {
