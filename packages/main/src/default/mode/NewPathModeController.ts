@@ -23,6 +23,31 @@ import { PROPERTY_KEY_STROKE_STYLE } from "../property/StrokeStyle";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../property/StrokeWidth";
 
 export class NewPathModeController extends ModeController {
+    onRegistered(app: App) {
+        app.keyboard.addBinding({
+            key: "a",
+            // To avoid conflicts with 'Select All' binding
+            metaKey: false,
+            ctrlKey: false,
+            action: (app, ev) => {
+                app.setMode({ type: "new-path" });
+            },
+        });
+        app.keyboard.addBinding({
+            key: "l",
+            action: (app, ev) => {
+                app.setMode({ type: "new-path" });
+            },
+        });
+        app.keyboard.addBinding({
+            key: "Escape",
+            mode: ["new-path"],
+            action: (app, ev) => {
+                app.setMode(createSelectEntityMode(new Set()));
+            },
+        });
+    }
+
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
         app.historyManager.pause();
         const hit = testHitEntities(

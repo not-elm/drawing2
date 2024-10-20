@@ -28,6 +28,47 @@ import { setupSelectionTransformPointerEventHandlers } from "./setupSelectionTra
 export class SelectEntityModeController extends ModeController {
     readonly store = new SelectEntityModeStateStore();
 
+    onRegistered(app: App): void {
+        app.keyboard.addBinding({
+            key: "a",
+            metaKey: true,
+            action: (app, ev) => {
+                app.setMode(createSelectEntityMode(new Set()));
+                app.selectAll();
+            },
+        });
+        app.keyboard.addBinding({
+            key: "a",
+            ctrlKey: true,
+            action: (app, ev) => {
+                app.setMode(createSelectEntityMode(new Set()));
+                app.selectAll();
+            },
+        });
+
+        app.keyboard.addBinding({
+            key: "Escape",
+            mode: ["select-entity"],
+            action: (app, ev) => {
+                app.unselectAll();
+            },
+        });
+        app.keyboard.addBinding({
+            key: "Backspace",
+            mode: ["select-entity"],
+            action: (app, ev) => {
+                app.deleteSelectedEntities();
+            },
+        });
+        app.keyboard.addBinding({
+            key: "Delete",
+            mode: ["select-entity"],
+            action: (app, ev) => {
+                app.deleteSelectedEntities();
+            },
+        });
+    }
+
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
         const handle = this.getHandleType(app, ev.point);
         if (handle !== null) {

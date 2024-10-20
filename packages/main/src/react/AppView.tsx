@@ -24,16 +24,8 @@ export function AppView({ app: controlledApp }: { app?: App }) {
     const app = controlledApp ?? appRef.current;
 
     useEffect(() => {
-        function handleKeyDown(event: KeyboardEvent) {
-            const isHandled = app.handleKeyDown(event.key, {
-                metaKey: event.metaKey,
-                ctrlKey: event.ctrlKey,
-                shiftKey: event.shiftKey,
-            });
-
-            if (isHandled) {
-                event.preventDefault();
-            }
+        function handleKeyDown(ev: KeyboardEvent) {
+            app.handleKeyDown(ev);
         }
         window.addEventListener("keydown", handleKeyDown);
 
