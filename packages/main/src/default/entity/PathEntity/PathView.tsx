@@ -1,5 +1,8 @@
 import { memo } from "react";
-import type { Graph } from "../../../core/Graph";
+import type { Graph, GraphNode } from "../../../core/Graph";
+import { Point } from "../../../lib/geo/Point";
+import { useStore } from "../../../react/hooks/useStore";
+import { useApp } from "../../../react/useApp";
 import {
     type ColorId,
     ColorPaletteBackground,
@@ -65,6 +68,7 @@ const PathViewInner = memo(function PathViewInner({
     top: number;
     left: number;
 }) {
+    const appState = useStore(useApp().appStateStore);
     const strokeWidth2 =
         ({
             solid: STROKE_WIDTH_BASE,
@@ -89,9 +93,7 @@ const PathViewInner = memo(function PathViewInner({
         >
             {outline.length > 0 && (
                 <path
-                    d={`M${outline
-                        .map((node) => `${node.x},${node.y}`)
-                        .join(" L")} Z`}
+                    d={constructPathDefinition(outline)}
                     css={{
                         ...{
                             none: { fill: "none" },
@@ -100,26 +102,22 @@ const PathViewInner = memo(function PathViewInner({
                                 fill: ColorPaletteBackground[colorId],
                             },
                         }[fillStyle],
+                        stroke: Colors[colorId],
+                        strokeLinejoin: "round",
+                        strokeLinecap: "round",
+                        strokeWidth: strokeWidth2,
+                        strokeDasharray: {
+                            solid: undefined,
+                            dashed: [2 * strokeWidth2, strokeWidth2 + 5].join(
+                                " ",
+                            ),
+                            dotted: [0, strokeWidth2 * (0.5 + 1.2 + 0.5)].join(
+                                " ",
+                            ),
+                        }[strokeStyle],
                     }}
                 />
             )}
-            <path
-                d={graph
-                    .getEdges()
-                    .map(([p1, p2]) => `M${p1.x},${p1.y} L${p2.x},${p2.y}`)
-                    .join(" ")}
-                css={{
-                    stroke: Colors[colorId],
-                    strokeLinejoin: "round",
-                    strokeLinecap: "round",
-                    strokeWidth: strokeWidth2,
-                    strokeDasharray: {
-                        solid: undefined,
-                        dashed: [2 * strokeWidth2, strokeWidth2 + 5].join(" "),
-                        dotted: [0, strokeWidth2 * (0.5 + 1.2 + 0.5)].join(" "),
-                    }[strokeStyle],
-                }}
-            />
         </svg>
     );
 });
@@ -146,4 +144,83 @@ function constructArrowHeadPath(
     const q2y = y1 + vx * sinR + vy * cosR;
 
     return [`M${q1x} ${q1y}`, `L${x1} ${y1}`, `L${q2x} ${q2y}`].join(" ");
+}
+
+const R = 30;
+
+function constructPathDefinition(outline: Array<GraphNode>): string {
+    const commands: string[] = [];
+
+    for (let i = 0; i < outline.length; i++) {
+        const p0 = outline[(i - 1 + outline.length) % outline.length];
+        const p1 = outline[i];
+        const p2 = outline[(i + 1) % outline.length];
+
+        const p10x = p0.x - p1.x;
+        const p10y = p0.y - p1.y;
+        const norm10 = Math.hypot(p10x, p10y);
+        const i10x = p10x / norm10;
+        const i10y = p10y / norm10;
+        const p12x = p2.x - p1.x;
+        const p12y = p2.y - p1.y;
+        const norm12 = Math.hypot(p12x, p12y);
+        const i12x = p12x / norm12;
+        const i12y = p12y / norm12;
+
+        const angleP10 = normalizeAngle(Math.atan2(p10y, p10x));
+        const angleP12 = normalizeAngle(Math.atan2(p12y, p12x));
+        const angle = normalizeAngle(-(angleP12 - angleP10));
+
+        const pArcStart = new Point(
+            p1.x +
+                (R /
+                    Math.tan(
+                        angle > Math.PI ? Math.PI - angle / 2 : angle / 2,
+                    )) *
+                    i10x,
+            p1.y +
+                (R /
+                    Math.tan(
+                        angle > Math.PI ? Math.PI - angle / 2 : angle / 2,
+                    )) *
+                    i10y,
+        );
+        const pArcEnd = new Point(
+            p1.x +
+                (R /
+                    Math.tan(
+                        angle > Math.PI ? Math.PI - angle / 2 : angle / 2,
+                    )) *
+                    i12x,
+            p1.y +
+                (R /
+                    Math.tan(
+                        angle > Math.PI ? Math.PI - angle / 2 : angle / 2,
+                    )) *
+                    i12y,
+        );
+
+        if (commands.length === 0) {
+            commands.push(`M${pArcStart.x} ${pArcStart.y}`);
+        } else {
+            commands.push(`L${pArcStart.x} ${pArcStart.y}`);
+        }
+
+        // 0 is clockwise, 1 is counter-clockwise.
+        // Outline is defined in clockwise. Round arc should be also in clockwise.
+        // However, if the angle is larger than PI, it should be in counter-clockwise
+        // because the arc should be at the outside of the outline.
+        const arcDirection = angle > Math.PI ? 0 : 1;
+        commands.push(
+            `A${R} ${R} 0 0 ${arcDirection} ${pArcEnd.x} ${pArcEnd.y}`,
+        );
+    }
+
+    return `${commands.join(" ")}Z`;
+}
+
+function normalizeAngle(angle: number): number {
+    if (angle < 0) angle += Math.PI * 2;
+    if (angle >= Math.PI * 2) angle -= Math.PI * 2;
+    return angle;
 }
