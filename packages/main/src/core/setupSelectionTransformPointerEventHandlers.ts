@@ -13,11 +13,11 @@ export function setupSelectionTransformPointerEventHandlers(
         .addPointerMoveHandler(ev.pointerId, (app, ev) => {
             transformController.move(ev.point, {
                 constraint: ev.shiftKey,
-                snap: ev.ctrlKey,
+                snap: true,
             });
         })
         .addPointerUpHandler(ev.pointerId, () => {
-            app.snapGuideStore.clear();
+            app.snapGuideStore.deleteSnapGuide("selectionTransform");
             app.historyManager.resume();
         });
 }

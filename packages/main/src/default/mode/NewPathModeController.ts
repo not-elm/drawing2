@@ -7,7 +7,8 @@ import {
     ModeController,
 } from "../../core/ModeController";
 import type { Page } from "../../core/Page";
-import { setupMovePointPointerEventHandlers } from "../../core/setupMovePointPointerEventHandlers";
+import { createSelectEntityMode } from "../../core/SelectEntityModeController";
+import { setupMoveNodePointerEventHandlers } from "../../core/setupMoveNodePointerEventHandlers";
 import { Line } from "../../lib/geo/Line";
 import { translate } from "../../lib/geo/TransformMatrix";
 import { randomId } from "../../lib/randomId";
@@ -22,7 +23,7 @@ export class NewPathModeController extends ModeController {
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
         app.historyManager.pause();
         const hit = testHitEntities(
-            app.canvasStateStore.getState().page,
+            app.canvasStateStore.getState(),
             ev.point,
             app.viewportStore.getState().scale,
         );
@@ -45,11 +46,11 @@ export class NewPathModeController extends ModeController {
             );
         }
 
-        app.setMode({ type: "select-entity" });
-        app.canvasStateStore.unselectAll();
-        app.canvasStateStore.select(pathEntity.props.id);
+        app.setMode(createSelectEntityMode(new Set(pathEntity.props.id)));
+        app.unselectAll();
+        app.select(pathEntity.props.id);
 
-        setupMovePointPointerEventHandlers(
+        setupMoveNodePointerEventHandlers(
             app,
             ev,
             pathEntity,
@@ -98,7 +99,7 @@ export function registerLinkToRect(
     if (nodeOwner.props.id === target.props.id) {
         return;
     }
-    if (isOwnedLabel(app.canvasStateStore.getState().page, nodeOwner, target)) {
+    if (isOwnedLabel(app.canvasStateStore.getState(), nodeOwner, target)) {
         return;
     }
 

@@ -2,21 +2,25 @@ import { Store } from "../lib/Store";
 import type { SnapGuide } from "./SnapEntry";
 
 interface SnapGuideState {
-    guide: SnapGuide | null;
+    guides: Map<string, SnapGuide>;
 }
 
 export class SnapGuideStore extends Store<SnapGuideState> {
     constructor() {
         super({
-            guide: null,
+            guides: new Map(),
         });
     }
 
-    setSnapGuide(guide: SnapGuide | null) {
-        this.setState({ guide });
+    setSnapGuide(key: string, guide: SnapGuide) {
+        const newGuides = new Map(this.state.guides);
+        newGuides.set(key, guide);
+        this.setState({ guides: newGuides });
     }
 
-    clear() {
-        this.setSnapGuide(null);
+    deleteSnapGuide(key: string) {
+        const newGuides = new Map(this.state.guides);
+        newGuides.delete(key);
+        this.setState({ guides: newGuides });
     }
 }

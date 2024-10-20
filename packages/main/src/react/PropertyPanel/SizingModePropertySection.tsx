@@ -13,10 +13,7 @@ export function SizingModePropertySection() {
     const selectedValue = useSelectedPropertyValue(PROPERTY_KEY_SIZING_MODE);
 
     const handleClick = (sizingMode: SizingMode) => {
-        app.canvasStateStore.updateProperty(
-            PROPERTY_KEY_SIZING_MODE,
-            sizingMode,
-        );
+        app.updateProperty(PROPERTY_KEY_SIZING_MODE, sizingMode);
         app.defaultPropertyStore.set(PROPERTY_KEY_SIZING_MODE, sizingMode);
     };
 

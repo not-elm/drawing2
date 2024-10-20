@@ -1,6 +1,7 @@
 import { MathJaxContext } from "better-react-mathjax";
 import { useEffect, useRef } from "react";
 import type { App } from "../core/App";
+import { createSelectEntityMode } from "../core/SelectEntityModeController";
 import { createDefaultApp } from "../default/createDefaultApp";
 import { Canvas } from "./Canvas";
 import { ColorPropertySection } from "./PropertyPanel/ColorPropertySection";
@@ -85,7 +86,9 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                         }}
                     >
                         <ToolBar>
-                            <ToolBar.Button mode={{ type: "select-entity" }}>
+                            <ToolBar.Button
+                                mode={createSelectEntityMode(new Set())}
+                            >
                                 Select
                             </ToolBar.Button>
                             <ToolBar.Button mode={{ type: "new-shape" }}>

@@ -14,9 +14,7 @@ export function syncWithLocalStorage(app: App) {
         }
 
         debounceTimerId = setTimeout(() => {
-            const serializedPage = app.canvasStateStore
-                .getState()
-                .page.serialize();
+            const serializedPage = app.canvasStateStore.getState().serialize();
             localStorage.setItem(
                 LOCAL_STORAGE_KEY,
                 JSON.stringify(serializedPage),
@@ -28,7 +26,7 @@ export function syncWithLocalStorage(app: App) {
 
     if (page !== null) {
         app.canvasStateStore.setPage(page);
-        app.canvasStateStore.unselectAll();
+        app.unselectAll();
     }
 }
 

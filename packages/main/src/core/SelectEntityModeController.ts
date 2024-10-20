@@ -1,10 +1,16 @@
+import { assert } from "../lib/assert";
 import type { Point } from "../lib/geo/Point";
-import type { Rect } from "../lib/geo/Rect";
+import { Rect } from "../lib/geo/Rect";
 import { testHitEntities } from "../lib/testHitEntities";
 import type { App } from "./App";
 import { BrushStore } from "./BrushStore";
 import type { Entity } from "./Entity";
-import { type CanvasPointerEvent, ModeController } from "./ModeController";
+import {
+    type CanvasPointerEvent,
+    type Mode,
+    ModeController,
+} from "./ModeController";
+import type { Page } from "./Page";
 import {
     ScaleSelectionTransformController,
     TranslateSelectionTransformController,
@@ -23,7 +29,7 @@ export class SelectEntityModeController extends ModeController {
         }
 
         const hitResult = testHitEntities(
-            app.canvasStateStore.getState().page,
+            app.canvasStateStore.getState(),
             ev.point,
             app.viewportStore.getState().scale,
         );
@@ -33,7 +39,7 @@ export class SelectEntityModeController extends ModeController {
             return;
         }
 
-        if (!ev.shiftKey) app.canvasStateStore.unselectAll();
+        if (!ev.shiftKey) app.unselectAll();
 
         setupBrushSelectPointerEventHandlers(app, ev, this.brushStore);
     }
@@ -82,31 +88,35 @@ export class SelectEntityModeController extends ModeController {
 
     private onCanvasTap(app: App, ev: CanvasPointerEvent) {
         const hitEntity = testHitEntities(
-            app.canvasStateStore.getState().page,
+            app.canvasStateStore.getState(),
             ev.point,
             app.viewportStore.getState().scale,
         ).entities.at(0);
 
         if (hitEntity !== undefined) {
-            const previousSelectedEntities =
-                app.canvasStateStore.getState().selectedEntityIds;
+            const previousSelectedEntityIds = getSelectedEntityIds(
+                app.appStateStore.getState().mode,
+            );
 
             const selectedOnlyThisEntity =
-                previousSelectedEntities.size === 1 &&
-                previousSelectedEntities.has(hitEntity.target.props.id);
+                previousSelectedEntityIds.size === 1 &&
+                previousSelectedEntityIds.has(hitEntity.target.props.id);
 
             if (ev.shiftKey) {
-                app.canvasStateStore.unselect(hitEntity.target.props.id);
+                app.unselect(hitEntity.target.props.id);
             } else {
                 if (!selectedOnlyThisEntity) {
-                    app.canvasStateStore.unselectAll();
-                    app.canvasStateStore.select(hitEntity.target.props.id);
+                    app.unselectAll();
+                    app.select(hitEntity.target.props.id);
                 }
             }
 
-            hitEntity.target.onTap(app, { ...ev, previousSelectedEntities });
+            hitEntity.target.onTap(app, {
+                ...ev,
+                previousSelectedEntities: previousSelectedEntityIds,
+            });
         } else {
-            if (!ev.shiftKey) app.canvasStateStore.unselectAll();
+            if (!ev.shiftKey) app.unselectAll();
         }
     }
 
@@ -115,11 +125,12 @@ export class SelectEntityModeController extends ModeController {
         ev: CanvasPointerEvent,
         entity: Entity,
     ) {
-        const previousSelectedEntities =
-            app.canvasStateStore.getState().selectedEntityIds;
+        const previousSelectedEntities = getSelectedEntityIds(
+            app.appStateStore.getState().mode,
+        );
 
-        if (!ev.shiftKey) app.canvasStateStore.unselectAll();
-        app.canvasStateStore.select(entity.props.id);
+        if (!ev.shiftKey) app.unselectAll();
+        app.select(entity.props.id);
 
         setupSelectionTransformPointerEventHandlers(
             app,
@@ -274,10 +285,7 @@ export class SelectEntityModeController extends ModeController {
         margin = 8,
     ): SelectionHandleType | null {
         const marginInCanvas = margin / app.viewportStore.getState().scale;
-
-        const selectionRect = app.canvasStateStore
-            .getState()
-            .getSelectionRect();
+        const selectionRect = this.getSelectionRect(app);
         if (selectionRect === null) return null;
 
         const hitAreaX = testHitWithRange(
@@ -367,6 +375,55 @@ export class SelectEntityModeController extends ModeController {
 
         return null;
     }
+
+    private getSelectionRect(app: App): Rect | null {
+        const selectedEntities = getSelectedEntities(
+            app.appStateStore.getState().mode,
+            app.canvasStateStore.getState(),
+        );
+        if (selectedEntities.length === 0) return null;
+
+        return Rect.union(
+            selectedEntities.map((entity) => entity.getBoundingRect()),
+        );
+    }
+}
+
+export interface SelectEntityMode extends Mode {
+    type: "select-entity";
+    entityIds: Set<string>;
+}
+
+export function isSelectEntityMode(mode: Mode): mode is SelectEntityMode {
+    return mode.type === "select-entity";
+}
+
+export function createSelectEntityMode(
+    entityIds: Set<string>,
+): SelectEntityMode {
+    return { type: "select-entity", entityIds };
+}
+
+export function getSelectedEntityIds(mode: Mode): Set<string> {
+    if (!isSelectEntityMode(mode)) return new Set();
+    return mode.entityIds;
+}
+
+export function getSelectedEntities(mode: Mode, page: Page): Entity[] {
+    return Array.from(getSelectedEntityIds(mode)).map((id) => {
+        const entity = page.entities.get(id);
+        assert(entity !== undefined, `Entity ${id} not found`);
+        return entity;
+    });
+}
+
+export function getSelectionRect(mode: Mode, page: Page): Rect | null {
+    const selectedEntities = getSelectedEntities(mode, page);
+    if (selectedEntities.length === 0) return null;
+
+    return Rect.union(
+        selectedEntities.map((entity) => entity.getBoundingRect()),
+    );
 }
 
 export type SelectionHandleType =

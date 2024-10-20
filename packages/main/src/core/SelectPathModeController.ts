@@ -10,7 +10,8 @@ import {
     type Mode,
     ModeController,
 } from "./ModeController";
-import { setupMovePointPointerEventHandlers } from "./setupMovePointPointerEventHandlers";
+import { createSelectEntityMode } from "./SelectEntityModeController";
+import { setupMoveNodePointerEventHandlers } from "./setupMoveNodePointerEventHandlers";
 
 const NODE_CONTROL_HIT_AREA_RADIUS = 16;
 const EDGE_CONTROL_HIT_AREA_WIDTH = 16;
@@ -23,7 +24,7 @@ export class SelectPathModeController extends ModeController {
         }
 
         if (control.type === "node") {
-            setupMovePointPointerEventHandlers(
+            setupMoveNodePointerEventHandlers(
                 app,
                 ev,
                 this.getPathEntity(app),
@@ -51,16 +52,16 @@ export class SelectPathModeController extends ModeController {
                 draft.setEntities([newPath]);
             });
 
-            setupMovePointPointerEventHandlers(app, ev, newPath, newNode.id);
+            setupMoveNodePointerEventHandlers(app, ev, newPath, newNode.id);
         }
     }
 
     onCanvasDoubleClick(app: App, ev: CanvasPointerEvent) {
         const entity = this.getPathEntity(app);
 
-        app.setMode({ type: "select-entity" });
-        app.canvasStateStore.unselectAll();
-        app.canvasStateStore.select(entity.props.id);
+        app.setMode(createSelectEntityMode(new Set(entity.props.id)));
+        app.unselectAll();
+        app.select(entity.props.id);
         return;
     }
 
@@ -106,7 +107,7 @@ export class SelectPathModeController extends ModeController {
 
         const entity = app.canvasStateStore
             .getState()
-            .page.entities.get(mode.entityId);
+            .entities.get(mode.entityId);
         assert(entity instanceof PathEntity, `Invalid entity: ${entity}`);
 
         return entity;

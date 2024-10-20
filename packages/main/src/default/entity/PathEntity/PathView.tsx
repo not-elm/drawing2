@@ -20,7 +20,7 @@ import type { PathEntity } from "./PathEntity";
 
 export const STROKE_WIDTH_BASE = 5;
 
-export const PathView = memo(function ShapeView({
+export const PathView = memo(function PathView({
     entity,
 }: { entity: PathEntity }) {
     const rect = entity.getBoundingRect();
@@ -48,7 +48,7 @@ export const PathView = memo(function ShapeView({
     );
 });
 
-export const PathViewInner = memo(function PathViewInner({
+const PathViewInner = memo(function PathViewInner({
     colorId,
     strokeStyle,
     strokeWidth,
@@ -74,9 +74,11 @@ export const PathViewInner = memo(function PathViewInner({
             strokeWidth) /
         2;
 
+    const outline = graph.getOutline();
+
     return (
         <svg
-            viewBox="0 0 1 1"
+            viewBox={`${left} ${top} 1 1`}
             width={1}
             height={1}
             css={{
@@ -85,31 +87,38 @@ export const PathViewInner = memo(function PathViewInner({
                 inset: 0,
             }}
         >
+            {outline.length > 0 && (
+                <path
+                    d={`M${outline
+                        .map((node) => `${node.x},${node.y}`)
+                        .join(" L")} Z`}
+                    css={{
+                        ...{
+                            none: { fill: "none" },
+                            mono: { fill: ColorPaletteBackgroundMonoColor },
+                            color: {
+                                fill: ColorPaletteBackground[colorId],
+                            },
+                        }[fillStyle],
+                    }}
+                />
+            )}
             <path
-                d={`M${graph
-                    .getOutline()
-                    .map((node) => `${node.x - left} ${node.y - top}`)
-                    .join(" L ")}Z`}
+                d={graph
+                    .getEdges()
+                    .map(([p1, p2]) => `M${p1.x},${p1.y} L${p2.x},${p2.y}`)
+                    .join(" ")}
                 css={{
                     stroke: Colors[colorId],
                     strokeLinejoin: "round",
                     strokeLinecap: "round",
-                    ...{
-                        none: { fill: "none" },
-                        mono: { fill: ColorPaletteBackgroundMonoColor },
-                        color: {
-                            fill: ColorPaletteBackground[colorId],
-                        },
-                    }[fillStyle],
-                }}
-                strokeWidth={strokeWidth2}
-                strokeDasharray={
-                    {
+                    strokeWidth: strokeWidth2,
+                    strokeDasharray: {
                         solid: undefined,
                         dashed: [2 * strokeWidth2, strokeWidth2 + 5].join(" "),
                         dotted: [0, strokeWidth2 * (0.5 + 1.2 + 0.5)].join(" "),
-                    }[strokeStyle]
-                }
+                    }[strokeStyle],
+                }}
             />
         </svg>
     );

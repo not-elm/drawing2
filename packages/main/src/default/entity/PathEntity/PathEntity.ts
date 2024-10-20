@@ -91,29 +91,11 @@ export class PathEntity extends Entity<Props> {
     }
 
     getEdges(): GraphEdge[] {
-        const nodes = this.graph.getOutline();
-
-        const edges: GraphEdge[] = [];
-        for (let i = 0; i < nodes.length; i++) {
-            const startNode = nodes[i];
-            const endNode = nodes[i === nodes.length - 1 ? 0 : i + 1];
-
-            edges.push([startNode, endNode]);
-        }
-        return edges;
+        return this.graph.getEdges();
     }
 
     getOutline(): (Rect | Line | Point)[] {
-        const nodes = this.graph.getOutline();
-
-        const liens: Line[] = [];
-        for (let i = 0; i < nodes.length; i++) {
-            const startNode = nodes[i];
-            const endNode = nodes[i === nodes.length - 1 ? 0 : i + 1];
-
-            liens.push(Line.of(startNode.x, startNode.y, endNode.x, endNode.y));
-        }
-        return liens;
+        return this.graph.getEdges().map(([p1, p2]) => new Line({ p1, p2 }));
     }
 
     serialize(): SerializedEntity {

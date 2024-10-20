@@ -10,10 +10,7 @@ export function StrokeWidthPropertySection() {
     const selectedValue = useSelectedPropertyValue(PROPERTY_KEY_STROKE_WIDTH);
 
     const handleClick = (strokeWidth: number) => {
-        app.canvasStateStore.updateProperty(
-            PROPERTY_KEY_STROKE_WIDTH,
-            strokeWidth,
-        );
+        app.updateProperty(PROPERTY_KEY_STROKE_WIDTH, strokeWidth);
         app.defaultPropertyStore.set(PROPERTY_KEY_STROKE_WIDTH, strokeWidth);
     };
 

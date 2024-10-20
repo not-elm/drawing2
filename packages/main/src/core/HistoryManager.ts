@@ -1,11 +1,18 @@
-import type { CanvasState, CanvasStateStore } from "./CanvasStateStore";
+import type { App } from "./App";
+import type { Mode } from "./ModeController";
+import type { Page } from "./Page";
 
 const MAX_HISTORY_LENGTH = 1000;
 
+interface HistoryEntry {
+    page: Page;
+    mode: Mode;
+}
+
 export class HistoryManager {
-    private readonly undoStack: CanvasState[] = [];
-    private currentState: CanvasState;
-    private readonly redoStack: CanvasState[] = [];
+    private readonly undoStack: HistoryEntry[] = [];
+    private currentState: HistoryEntry;
+    private readonly redoStack: HistoryEntry[] = [];
 
     /**
      * If true, the history manager will not record any changes to the history stack.
@@ -17,9 +24,14 @@ export class HistoryManager {
      */
     private processing = false;
 
-    constructor(private readonly canvasStateStore: CanvasStateStore) {
-        this.canvasStateStore.addListener(this.handleCanvasStateStoreChange);
-        this.currentState = canvasStateStore.getState();
+    constructor(private readonly app: App) {
+        this.app.canvasStateStore.addListener(
+            this.handleCanvasStateStoreChange,
+        );
+        this.currentState = {
+            page: app.canvasStateStore.getState(),
+            mode: app.appStateStore.getState().mode,
+        };
     }
 
     pause() {
@@ -42,11 +54,14 @@ export class HistoryManager {
         }
     }
 
-    private handleCanvasStateStoreChange = (state: CanvasState) => {
+    private handleCanvasStateStoreChange = (page: Page) => {
         const lastState = this.currentState;
-        this.currentState = state;
+        this.currentState = {
+            page,
+            mode: this.app.appStateStore.getState().mode,
+        };
 
-        if (lastState.page === state.page) {
+        if (lastState.page === page) {
             return;
         }
         if (this.paused) {
@@ -81,10 +96,8 @@ export class HistoryManager {
 
         this.processing = true;
         try {
-            this.canvasStateStore.setPage(prevState.page);
-            this.canvasStateStore.setSelectedEntityIds([
-                ...prevState.selectedEntityIds,
-            ]);
+            this.app.canvasStateStore.setPage(prevState.page);
+            this.app.setMode(prevState.mode);
         } catch (e) {
             console.error(e);
         } finally {
@@ -109,10 +122,8 @@ export class HistoryManager {
 
         this.processing = true;
         try {
-            this.canvasStateStore.setPage(nextPage.page);
-            this.canvasStateStore.setSelectedEntityIds([
-                ...nextPage.selectedEntityIds,
-            ]);
+            this.app.canvasStateStore.setPage(nextPage.page);
+            this.app.setMode(nextPage.mode);
         } finally {
             this.processing = false;
         }

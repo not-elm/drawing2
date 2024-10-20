@@ -56,7 +56,11 @@ export function StatusBar() {
                 `Version: ${__COMMIT_HASH__}`,
                 `Viewport: (x:${viewport.rect.left.toFixed(
                     0,
-                )}, y:${viewport.rect.top.toFixed(0)}), ${(
+                )}, y:${viewport.rect.top.toFixed(
+                    0,
+                )}, w:${viewport.rect.width.toFixed(
+                    0,
+                )}, h:${viewport.rect.height.toFixed(0)}), ${(
                     viewport.scale * 100
                 ).toFixed(0)}%`,
                 `Mode: ${JSON.stringify(appState.mode)}`,

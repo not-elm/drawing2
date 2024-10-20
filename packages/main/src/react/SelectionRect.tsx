@@ -1,4 +1,9 @@
 import styled from "@emotion/styled";
+import {
+    getSelectedEntities,
+    getSelectionRect,
+    isSelectEntityMode,
+} from "../core/SelectEntityModeController";
 import { Line } from "../lib/geo/Line";
 import type { Point } from "../lib/geo/Point";
 import { Rect } from "../lib/geo/Rect";
@@ -11,14 +16,13 @@ export function SelectionRect() {
     const appState = useStore(app.appStateStore);
     const viewport = useStore(app.viewportStore);
     const canvasState = useStore(app.canvasStateStore);
+    if (!isSelectEntityMode(appState.mode)) return null;
 
-    const selectionRect = canvasState.getSelectionRect();
+    const entities = getSelectedEntities(appState.mode, canvasState);
+    const selectionRect = getSelectionRect(appState.mode, canvasState);
     if (selectionRect === null) return null;
 
-    const entities = canvasState.getSelectedEntities();
     const rect = viewport.transform.apply(selectionRect);
-
-    if (appState.mode.type !== "select-entity") return null;
 
     return (
         <div

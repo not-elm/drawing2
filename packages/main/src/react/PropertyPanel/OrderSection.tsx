@@ -1,3 +1,4 @@
+import { isSelectEntityMode } from "../../core/SelectEntityModeController";
 import { Button } from "../Button";
 import { Card } from "../Card";
 import { useStore } from "../hooks/useStore";
@@ -6,18 +7,14 @@ import { useApp } from "../useApp";
 export function OrderSection() {
     const app = useApp();
     const { mode } = useStore(app.appStateStore);
-    const { selectedEntityIds } = useStore(app.canvasStateStore);
-
-    const visible = mode.type === "select-entity" && selectedEntityIds.size > 0;
-
-    if (!visible) return null;
+    if (!isSelectEntityMode(mode) || mode.entityIds.size === 0) return null;
 
     return (
         <Card.Section>
             <Button
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    app.canvasStateStore.bringToFront();
+                    app.bringToFront();
                 }}
             >
                 最前面へ
@@ -25,7 +22,7 @@ export function OrderSection() {
             <Button
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    app.canvasStateStore.bringForward();
+                    app.bringForward();
                 }}
             >
                 ひとつ前へ
@@ -33,7 +30,7 @@ export function OrderSection() {
             <Button
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    app.canvasStateStore.sendBackward();
+                    app.sendBackward();
                 }}
             >
                 ひとつ後ろへ
@@ -41,7 +38,7 @@ export function OrderSection() {
             <Button
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
-                    app.canvasStateStore.sendToBack();
+                    app.sendToBack();
                 }}
             >
                 最背面へ

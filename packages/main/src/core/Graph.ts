@@ -1,10 +1,5 @@
+import { assert } from "../lib/assert";
 import { Point } from "../lib/geo/Point";
-
-export function assert(condition: boolean, message: string): asserts condition {
-    if (!condition) {
-        throw new Error(message);
-    }
-}
 
 export class GraphNode extends Point {
     constructor(
@@ -58,6 +53,31 @@ export class Graph {
             edges.set(id, [...edge]);
         }
         return new Graph(nodes, edges);
+    }
+
+    /**
+     * Merge two nodes. The source node will be deleted. All edges connected to the source node
+     * will be reconnected to the destination node.
+     * @param sourceNodeId
+     * @param destNodeId
+     */
+    mergeNodes(sourceNodeId: string, destNodeId: string) {
+        const destNode = this.nodes.get(destNodeId);
+        assert(destNode !== undefined, `Node ${destNodeId} is not found.`);
+
+        for (const otherNodeId of this.edges.get(sourceNodeId) ?? []) {
+            if (otherNodeId === destNodeId) continue;
+
+            const otherNode = this.nodes.get(otherNodeId);
+            assert(
+                otherNode !== undefined,
+                `Node ${otherNodeId} is not found.`,
+            );
+
+            this.addEdge(otherNode, destNode);
+        }
+
+        this.deleteNode(sourceNodeId);
     }
 
     addEdge(node1: GraphNode, node2: GraphNode): Graph {
@@ -170,10 +190,10 @@ export class Graph {
     }
 
     getOutline(): GraphNode[] {
-        // if (!this.normalized) {
-        //     return this.normalize().getOutline();
-        // }
-        //
+        if (!this.normalized) {
+            return this.normalize().getOutline();
+        }
+
         if (this.nodes.size < 3) return [...this.nodes.values()];
 
         const startNode = [...this.nodes.values()].reduce((n1, n2) =>

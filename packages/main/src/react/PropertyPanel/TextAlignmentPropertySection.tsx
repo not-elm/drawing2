@@ -28,14 +28,8 @@ export function TextAlignmentPropertySection() {
         alignmentX: TextAlignment,
         alignmentY: TextAlignment,
     ) => {
-        app.canvasStateStore.updateProperty(
-            PROPERTY_KEY_TEXT_ALIGNMENT_X,
-            alignmentX,
-        );
-        app.canvasStateStore.updateProperty(
-            PROPERTY_KEY_TEXT_ALIGNMENT_Y,
-            alignmentY,
-        );
+        app.updateProperty(PROPERTY_KEY_TEXT_ALIGNMENT_X, alignmentX);
+        app.updateProperty(PROPERTY_KEY_TEXT_ALIGNMENT_Y, alignmentY);
         app.defaultPropertyStore.set(PROPERTY_KEY_TEXT_ALIGNMENT_X, alignmentX);
         app.defaultPropertyStore.set(PROPERTY_KEY_TEXT_ALIGNMENT_Y, alignmentY);
     };

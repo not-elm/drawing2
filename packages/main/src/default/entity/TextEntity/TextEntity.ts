@@ -115,7 +115,7 @@ export class TextEntity extends Entity<{
             this.props.sizingMode === "content" ? width : this.props.rect.width;
         const newHeight = height;
 
-        app.canvasStateStore.updateProperty(
+        app.updateProperty(
             "rect",
             Rect.fromSize(this.props.rect.topLeft, newWidth, newHeight),
         );

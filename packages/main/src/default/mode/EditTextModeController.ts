@@ -5,6 +5,7 @@ import {
     type ModeChangeEvent,
     ModeController,
 } from "../../core/ModeController";
+import { createSelectEntityMode } from "../../core/SelectEntityModeController";
 import { assert } from "../../lib/assert";
 
 export class EditTextModeController extends ModeController {
@@ -29,7 +30,7 @@ export class EditTextModeController extends ModeController {
 
         const entity = app.canvasStateStore
             .getState()
-            .page.entities.get(newMode.entityId);
+            .entities.get(newMode.entityId);
         assert(entity !== undefined, `Entity ${newMode.entityId} not found`);
 
         entity.onTextEditStart(app);
@@ -41,7 +42,7 @@ export class EditTextModeController extends ModeController {
 
         const entity = app.canvasStateStore
             .getState()
-            .page.entities.get(oldMode.entityId);
+            .entities.get(oldMode.entityId);
         assert(entity !== undefined, `Entity ${oldMode.entityId} not found`);
 
         app.historyManager.resume();
@@ -49,7 +50,7 @@ export class EditTextModeController extends ModeController {
     }
 
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
-        app.setMode({ type: "select-entity" });
+        app.setMode(createSelectEntityMode(new Set()));
         app.getModeController().onCanvasPointerDown(app, ev);
     }
 }

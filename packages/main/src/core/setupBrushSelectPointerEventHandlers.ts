@@ -1,15 +1,19 @@
+import { assert } from "../lib/assert";
 import { Rect } from "../lib/geo/Rect";
 import type { App } from "./App";
 import type { BrushStore } from "./BrushStore";
 import type { CanvasPointerEvent } from "./ModeController";
+import { isSelectEntityMode } from "./SelectEntityModeController";
 
 export function setupBrushSelectPointerEventHandlers(
     app: App,
     ev: CanvasPointerEvent,
     brushStore: BrushStore,
 ) {
-    const originalSelectedEntityIds =
-        app.canvasStateStore.getState().selectedEntityIds;
+    const mode = app.appStateStore.getState().mode;
+    assert(isSelectEntityMode(mode), `Invalid mode: ${mode.type}`);
+
+    const originalSelectedEntityIds = mode.entityIds;
 
     brushStore.setActive(true);
     brushStore.setRect(new Rect({ p0: ev.point, p1: ev.point }));
@@ -22,13 +26,13 @@ export function setupBrushSelectPointerEventHandlers(
             const selectedEntityIds = new Set(originalSelectedEntityIds);
             for (const entity of app.canvasStateStore
                 .getState()
-                .page.entities.values()) {
+                .entities.values()) {
                 if (entity.isOverlapWith(rect)) {
                     selectedEntityIds.add(entity.props.id);
                 }
             }
 
-            app.canvasStateStore.setSelectedEntityIds([...selectedEntityIds]);
+            app.setSelectedEntityIds([...selectedEntityIds]);
         })
         .addPointerUpHandler(ev.pointerId, () => {
             brushStore.setActive(false);
