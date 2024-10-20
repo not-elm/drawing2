@@ -17,7 +17,7 @@ export function setupSelectionTransformPointerEventHandlers(
             });
         })
         .addPointerUpHandler(ev.pointerId, () => {
-            app.snapGuideStore.deleteSnapGuide("selectionTransform");
+            transformController.complete();
             app.historyManager.resume();
         });
 }

@@ -24,6 +24,8 @@ import {
 } from "../../property/StrokeStyle";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../../property/StrokeWidth";
 
+import { getMaxCornerRadius } from "../../../core/SelectEntityModeController";
+
 export const PROPERTY_KEY_CORNER_RADIUS = "cornerRadius";
 
 interface Props extends EntityProps {
@@ -225,6 +227,23 @@ export class PathEntity extends Entity<Props> {
         //     app.canvasStateStore.select(label.props.id);
         //     app.setMode(EditTextModeController.createMode(label.props.id));
         // }
+    }
+
+    onTransformEnd(app: App) {
+        this.constraintCornerRadius(app);
+    }
+
+    private constraintCornerRadius(app: App) {
+        const maxCornerRadius = getMaxCornerRadius(this.graph.getOutline());
+        if (maxCornerRadius < this.props[PROPERTY_KEY_CORNER_RADIUS]) {
+            app.canvasStateStore.edit((draft) => {
+                draft.updateProperty(
+                    [this.props.id],
+                    PROPERTY_KEY_CORNER_RADIUS,
+                    maxCornerRadius,
+                );
+            });
+        }
     }
 }
 

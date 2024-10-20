@@ -1,7 +1,9 @@
 import { memo } from "react";
 import type { Graph, GraphNode } from "../../../core/Graph";
-import { Point } from "../../../lib/geo/Point";
-import { normalizeAngle } from "../../../lib/normalizeAngle";
+import {
+    getCornerRoundHandleData,
+    getMaxCornerRadius,
+} from "../../../core/SelectEntityModeController";
 import {
     type ColorId,
     ColorPaletteBackground,
@@ -152,54 +154,29 @@ function constructPathDefinition(
     cornerRadius: number,
 ): string {
     const commands: string[] = [];
+    const handles = getCornerRoundHandleData(outline, cornerRadius);
+    const maxRadius = getMaxCornerRadius(outline);
+    const radius = Math.min(cornerRadius, maxRadius);
 
-    for (let i = 0; i < outline.length; i++) {
-        const p0 = outline[(i - 1 + outline.length) % outline.length];
-        const p1 = outline[i];
-        const p2 = outline[(i + 1) % outline.length];
-
-        const p10x = p0.x - p1.x;
-        const p10y = p0.y - p1.y;
-        const norm10 = Math.hypot(p10x, p10y);
-        const i10x = p10x / norm10;
-        const i10y = p10y / norm10;
-        const p12x = p2.x - p1.x;
-        const p12y = p2.y - p1.y;
-        const norm12 = Math.hypot(p12x, p12y);
-        const i12x = p12x / norm12;
-        const i12y = p12y / norm12;
-
-        const angleP10 = Math.atan2(p10y, p10x);
-        const angleP12 = Math.atan2(p12y, p12x);
-        const angle = normalizeAngle(-(angleP12 - angleP10));
-        const arcAngle =
-            cornerRadius /
-            Math.tan(angle > Math.PI ? Math.PI - angle / 2 : angle / 2);
-
-        const pArcStart = new Point(
-            p1.x + arcAngle * i10x,
-            p1.y + arcAngle * i10y,
-        );
-        const pArcEnd = new Point(
-            p1.x + arcAngle * i12x,
-            p1.y + arcAngle * i12y,
-        );
-
+    for (const handle of handles) {
         if (commands.length === 0) {
-            commands.push(`M${pArcStart.x} ${pArcStart.y}`);
+            commands.push(
+                `M${handle.arcStartPosition.x} ${handle.arcStartPosition.y}`,
+            );
         } else {
-            commands.push(`L${pArcStart.x} ${pArcStart.y}`);
+            commands.push(
+                `L${handle.arcStartPosition.x} ${handle.arcStartPosition.y}`,
+            );
         }
 
         // 0 is clockwise, 1 is counter-clockwise.
         // Outline is defined in clockwise. Round arc should be also in clockwise.
         // However, if the angle is larger than PI, it should be in counter-clockwise
         // because the arc should be at the outside of the outline.
-        const arcDirection = angle > Math.PI ? 0 : 1;
+        const arcDirection = handle.cornerAngle > Math.PI ? 0 : 1;
         commands.push(
-            `A${cornerRadius} ${cornerRadius} 0 0 ${arcDirection} ${pArcEnd.x} ${pArcEnd.y}`,
+            `A${radius} ${radius} 0 0 ${arcDirection} ${handle.arcEndPosition.x} ${handle.arcEndPosition.y}`,
         );
     }
-
     return `${commands.join(" ")}Z`;
 }

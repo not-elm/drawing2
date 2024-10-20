@@ -133,6 +133,22 @@ export abstract class SelectionTransformController {
         });
     }
 
+    complete() {
+        this.app.snapGuideStore.deleteSnapGuide("selectionTransform");
+        const entityIds = this.originalEntities.map(
+            (entity) => entity.props.id,
+        );
+
+        for (const entityId of entityIds) {
+            const entity = this.app.canvasStateStore
+                .getState()
+                .entities.get(entityId);
+            assert(entity !== undefined, `Entity must exist: ${entityId}`);
+
+            entity.onTransformEnd(this.app);
+        }
+    }
+
     private applySnap(point: Point): { axis: "x" | "y" | null; point: Point } {
         const transform = this.getTransform(this.initialPoint, point);
         const snapPoints = this.getSnapPoints();

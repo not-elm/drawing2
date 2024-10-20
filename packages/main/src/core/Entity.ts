@@ -115,6 +115,12 @@ export abstract class Entity<P extends EntityProps = EntityProps> {
     onTextEditEnd(app: App): void {}
 
     /**
+     * Called when a transform session happened in select-entity mode is ended.
+     * @param app
+     */
+    onTransformEnd(app: App): void {}
+
+    /**
      *  Called when entity view is resized by browser's layout engine. This
      *  event is not called when this entity is resized by user interaction.
      */

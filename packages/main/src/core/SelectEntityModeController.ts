@@ -3,7 +3,7 @@ import {
     PathEntity,
 } from "../default/entity/PathEntity/PathEntity";
 import { assert } from "../lib/assert";
-import type { Point } from "../lib/geo/Point";
+import { Point } from "../lib/geo/Point";
 import { Rect } from "../lib/geo/Rect";
 import { normalizeAngle } from "../lib/normalizeAngle";
 import { testHitEntities } from "../lib/testHitEntities";
@@ -57,6 +57,46 @@ export class SelectEntityModeController extends ModeController {
     }
 
     onMouseMove(app: App, point: Point) {
+        this.updateCursor(app, point);
+        this.updateVisibleCornerRoundHandles(app, point);
+    }
+
+    private updateVisibleCornerRoundHandles(app: App, point: Point) {
+        const selectedEntities = getSelectedEntities(
+            app.appStateStore.getState().mode,
+            app.canvasStateStore.getState(),
+        );
+        if (
+            selectedEntities.length !== 1 ||
+            !(selectedEntities[0] instanceof PathEntity)
+        ) {
+            this.brushStore.setVisibleCornerRoundHandles([]);
+            return;
+        }
+        const entity = selectedEntities[0];
+
+        const handles = getCornerRoundHandleData(
+            entity.graph.getOutline(),
+            entity.getProperty(PROPERTY_KEY_CORNER_RADIUS, 0),
+        );
+
+        const visibleHandles: CornerRoundHandleData[] = [];
+        for (const handle of handles) {
+            if (
+                isPointInTriangle(point, [
+                    handle.previousNode,
+                    handle.node,
+                    handle.nextNode,
+                ])
+            ) {
+                visibleHandles.push(handle);
+            }
+        }
+
+        this.brushStore.setVisibleCornerRoundHandles(visibleHandles);
+    }
+
+    private updateCursor(app: App, point: Point) {
         const handle = this.getHandleType(app, point);
         if (handle !== null) {
             switch (handle.type) {
@@ -282,7 +322,7 @@ export class SelectEntityModeController extends ModeController {
                     app,
                     ev,
                     handle.entity,
-                    handle.corner,
+                    handle.handle,
                 );
                 break;
             }
@@ -310,50 +350,23 @@ export class SelectEntityModeController extends ModeController {
             selectedEntities[0] instanceof PathEntity
         ) {
             const entity = selectedEntities[0];
-            const outline = entity.graph.getOutline();
-            const cornerRadius = entity.getProperty(
-                PROPERTY_KEY_CORNER_RADIUS,
-                0,
+
+            const handles = getCornerRoundHandleData(
+                entity.graph.getOutline(),
+                entity.getProperty(PROPERTY_KEY_CORNER_RADIUS, 0),
             );
-            const CORNER_RADIUS_HANDLE_MARGIN = 50;
 
-            for (let i = 0; i < outline.length; i++) {
-                const p0 = outline[(i - 1 + outline.length) % outline.length];
-                const p1 = outline[i];
-                const p2 = outline[(i + 1) % outline.length];
-
-                const p10x = p0.x - p1.x;
-                const p10y = p0.y - p1.y;
-                const norm10 = Math.hypot(p10x, p10y);
-                const i10x = p10x / norm10;
-                const i10y = p10y / norm10;
-
-                const p12x = p2.x - p1.x;
-                const p12y = p2.y - p1.y;
-                const norm12 = Math.hypot(p12x, p12y);
-                const i12x = p12x / norm12;
-                const i12y = p12y / norm12;
-
-                const angleP10 = Math.atan2(p10y, p10x);
-                const angleP12 = Math.atan2(p12y, p12x);
-                const angle = normalizeAngle(-(angleP12 - angleP10));
-
-                const normVHandle =
-                    cornerRadius / Math.sin(angle / 2) +
-                    CORNER_RADIUS_HANDLE_MARGIN;
-                const vHandleCX = p1.x + ((i10x + i12x) / 2) * normVHandle;
-                const vHandleCY = p1.y + ((i10y + i12y) / 2) * normVHandle;
-
+            for (const handle of handles) {
                 const distance = Math.hypot(
-                    vHandleCX - point.x,
-                    vHandleCY - point.y,
+                    handle.handlePosition.x - point.x,
+                    handle.handlePosition.y - point.y,
                 );
 
                 if (distance < marginInCanvas) {
                     return {
                         type: "CornerRadiusHandle",
-                        corner: p1,
                         entity,
+                        handle,
                     };
                 }
             }
@@ -491,6 +504,132 @@ export function getSelectionRect(mode: Mode, page: Page): Rect | null {
     );
 }
 
+export interface CornerRoundHandleData {
+    node: GraphNode;
+    previousNode: GraphNode;
+    nextNode: GraphNode;
+    arcStartPosition: Point;
+    arcEndPosition: Point;
+    handlePosition: Point;
+
+    /**
+     * The angle of the corner in radian
+     */
+    cornerAngle: number;
+
+    /**
+     * The angle of the corner arc in radian
+     */
+    arcAngle: number;
+
+    /**
+     * Length from the corner to the point on the edge that the circle touches on
+     */
+    offset: number;
+}
+
+export function getMaxCornerRadius(outline: Array<GraphNode>): number {
+    // 1/tan(angle / 2) of each angle of the outline
+    const invTans: number[] = [];
+
+    // i-th element is the length between P_i and P_i+1
+    const edgeLength: number[] = [];
+
+    for (let i = 0; i < outline.length; i++) {
+        const p0 = outline[(i - 1 + outline.length) % outline.length];
+        const p1 = outline[i];
+        const p2 = outline[(i + 1) % outline.length];
+
+        const p10x = p0.x - p1.x;
+        const p10y = p0.y - p1.y;
+
+        const p12x = p2.x - p1.x;
+        const p12y = p2.y - p1.y;
+        const norm12 = Math.hypot(p12x, p12y);
+
+        const angleP10 = Math.atan2(p10y, p10x);
+        const angleP12 = Math.atan2(p12y, p12x);
+        const angle = normalizeAngle(-(angleP12 - angleP10));
+        const invTan =
+            1 / Math.tan(angle > Math.PI ? Math.PI - angle / 2 : angle / 2);
+
+        invTans.push(invTan);
+        edgeLength.push(norm12);
+    }
+
+    let minCornerRadius = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < outline.length; i++) {
+        const sumInvTan = invTans[i] + invTans[(i + 1) % outline.length];
+        minCornerRadius = Math.min(minCornerRadius, edgeLength[i] / sumInvTan);
+    }
+
+    return minCornerRadius;
+}
+
+export function getCornerRoundHandleData(
+    outline: GraphNode[],
+    cornerRadius: number,
+): CornerRoundHandleData[] {
+    const CORNER_RADIUS_HANDLE_MARGIN = 50;
+
+    const handles: CornerRoundHandleData[] = [];
+
+    for (let i = 0; i < outline.length; i++) {
+        const p0 = outline[(i - 1 + outline.length) % outline.length];
+        const p1 = outline[i];
+        const p2 = outline[(i + 1) % outline.length];
+
+        const p10x = p0.x - p1.x;
+        const p10y = p0.y - p1.y;
+        const norm10 = Math.hypot(p10x, p10y);
+        const i10x = p10x / norm10;
+        const i10y = p10y / norm10;
+
+        const p12x = p2.x - p1.x;
+        const p12y = p2.y - p1.y;
+        const norm12 = Math.hypot(p12x, p12y);
+        const i12x = p12x / norm12;
+        const i12y = p12y / norm12;
+
+        const angleP10 = Math.atan2(p10y, p10x);
+        const angleP12 = Math.atan2(p12y, p12x);
+        const angle = normalizeAngle(-(angleP12 - angleP10));
+        const offset =
+            cornerRadius /
+            Math.tan(angle > Math.PI ? Math.PI - angle / 2 : angle / 2);
+
+        const normHandle = Math.max(
+            Math.hypot(offset, cornerRadius),
+            CORNER_RADIUS_HANDLE_MARGIN,
+        );
+
+        const iHandleX = (i10x + i12x) / Math.hypot(i10x + i12x, i10y + i12y);
+        const iHandleY = (i10y + i12y) / Math.hypot(i10x + i12x, i10y + i12y);
+        const handleX = p1.x + iHandleX * normHandle;
+        const handleY = p1.y + iHandleY * normHandle;
+
+        handles.push({
+            node: p1,
+            previousNode: p0,
+            nextNode: p2,
+            arcStartPosition: new Point(
+                p1.x + offset * i10x,
+                p1.y + offset * i10y,
+            ),
+            arcEndPosition: new Point(
+                p1.x + offset * i12x,
+                p1.y + offset * i12y,
+            ),
+            handlePosition: new Point(handleX, handleY),
+            cornerAngle: angle,
+            arcAngle: angle > Math.PI ? 2 * Math.PI - angle : angle,
+            offset,
+        });
+    }
+
+    return handles;
+}
+
 export type HandleType =
     | { type: "TopLeftHandle"; selectionRect: Rect }
     | { type: "TopHandle"; selectionRect: Rect }
@@ -501,7 +640,11 @@ export type HandleType =
     | { type: "BottomLeftHandle"; selectionRect: Rect }
     | { type: "BottomHandle"; selectionRect: Rect }
     | { type: "BottomRightHandle"; selectionRect: Rect }
-    | { type: "CornerRadiusHandle"; entity: PathEntity; corner: GraphNode };
+    | {
+          type: "CornerRadiusHandle";
+          entity: PathEntity;
+          handle: CornerRoundHandleData;
+      };
 
 /**
  * Test if a given value is inside of a range.
@@ -534,4 +677,28 @@ function testHitWithRange(
     } else {
         return "none";
     }
+}
+
+function isPointInTriangle(
+    point: Point,
+    triangle: [Point, Point, Point],
+): boolean {
+    const [p0, p1, p2] = triangle;
+
+    const p0x = p0.x - point.x;
+    const p0y = p0.y - point.y;
+    const p1x = p1.x - point.x;
+    const p1y = p1.y - point.y;
+    const p2x = p2.x - point.x;
+    const p2y = p2.y - point.y;
+
+    const cross01 = p0x * p1y - p0y * p1x;
+    const cross12 = p1x * p2y - p1y * p2x;
+    const cross20 = p2x * p0y - p2y * p0x;
+
+    if (cross01 * cross12 < 0) return false;
+    if (cross12 * cross20 < 0) return false;
+    if (cross20 * cross01 < 0) return false;
+
+    return true;
 }
