@@ -7,7 +7,7 @@
         "build": "NODE_ENV=production webpack-cli build",
         "prebuild": "bun run clean",
         "clean": "rimraf ./build",
-        "lint": "biome check --apply src",
+        "lint": "biome check src",
         "check": "tsc --noEmit"
     },
     "devDependencies": {
