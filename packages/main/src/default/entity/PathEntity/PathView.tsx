@@ -154,9 +154,9 @@ function constructPathDefinition(
     cornerRadius: number,
 ): string {
     const commands: string[] = [];
-    const handles = getCornerRoundHandleData(outline, cornerRadius);
     const maxRadius = getMaxCornerRadius(outline);
     const radius = Math.min(cornerRadius, maxRadius);
+    const handles = getCornerRoundHandleData(outline, radius);
 
     for (const handle of handles) {
         if (commands.length === 0) {

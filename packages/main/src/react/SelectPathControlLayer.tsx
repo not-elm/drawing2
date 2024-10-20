@@ -1,13 +1,33 @@
-import { isSelectPathMode } from "../core/SelectPathModeController";
+import type { ReactNode } from "react";
+import {
+    SelectPathModeController,
+    isSelectPathMode,
+} from "../core/SelectPathModeController";
 import { assert } from "../lib/assert";
 import { useStore } from "./hooks/useStore";
 import { useApp } from "./useApp";
 
 export function SelectPathControlLayer() {
     const app = useApp();
+
+    const modeController = app.getModeController();
+    if (!(modeController instanceof SelectPathModeController)) return null;
+
+    return <SelectPathControlLayerInner modeController={modeController} />;
+}
+
+export function SelectPathControlLayerInner({
+    modeController,
+}: {
+    modeController: SelectPathModeController;
+}) {
+    const app = useApp();
     const appState = useStore(app.appStateStore);
     const canvasState = useStore(app.canvasStateStore);
     const viewport = useStore(app.viewportStore);
+    const { highlightedItemIds, highlightCenterOfEdgeHandle } = useStore(
+        modeController.store,
+    );
     if (!isSelectPathMode(appState.mode)) return null;
 
     const entityId = appState.mode.entityId;
@@ -26,25 +46,63 @@ export function SelectPathControlLayer() {
                 overflow: "visible",
             }}
         >
-            {entity.getEdges().map(([node1, node2]) => {
-                const p1 = viewport.transform.apply(node1);
-                const p2 = viewport.transform.apply(node2);
-                return (
+            {entity.getEdges().map((edge) => {
+                const highlighted = highlightedItemIds.has(edge.id);
+
+                const p1 = viewport.transform.apply(edge.p0);
+                const p2 = viewport.transform.apply(edge.p1);
+
+                const nodes: ReactNode[] = [];
+                nodes.push(
                     <line
-                        key={`${node1.id}-${node2.id}`}
+                        key={`${edge.p0.id}-${edge.p1.id}`}
                         x1={p1.x}
                         y1={p1.y}
                         x2={p2.x}
                         y2={p2.y}
                         css={{
-                            strokeWidth: 1,
+                            strokeWidth: highlighted ? 3 : 1,
                             stroke: "var(--color-selection)",
                         }}
-                    />
+                    />,
                 );
+
+                if (highlighted) {
+                    if (highlightCenterOfEdgeHandle) {
+                        nodes.push(
+                            <circle
+                                key={`${edge.p0.id}-${edge.p1.id}-center`}
+                                cx={(p1.x + p2.x) / 2}
+                                cy={(p1.y + p2.y) / 2}
+                                r={5}
+                                css={{
+                                    strokeWidth: 2,
+                                    stroke: "var(--color-selection)",
+                                    fill: "#fff",
+                                }}
+                            />,
+                        );
+                    } else {
+                        nodes.push(
+                            <circle
+                                key={`${edge.p0.id}-${edge.p1.id}-center`}
+                                cx={(p1.x + p2.x) / 2}
+                                cy={(p1.y + p2.y) / 2}
+                                r={3}
+                                css={{
+                                    fill: "var(--color-selection)",
+                                }}
+                            />,
+                        );
+                    }
+                }
+
+                return nodes;
             })}
             {entity.getNodes().map((node) => {
                 const point = viewport.transform.apply(node);
+                const highlighted = highlightedItemIds.has(node.id);
+
                 return (
                     <circle
                         key={node.id}
@@ -52,7 +110,7 @@ export function SelectPathControlLayer() {
                         cy={point.y}
                         r={5}
                         css={{
-                            strokeWidth: 2,
+                            strokeWidth: highlighted ? 3 : 1,
                             stroke: "var(--color-selection)",
                             fill: "#fff",
                         }}

@@ -8,7 +8,7 @@ import {
 } from "../../core/ModeController";
 import type { Page } from "../../core/Page";
 import { createSelectEntityMode } from "../../core/SelectEntityModeController";
-import { setupMoveNodePointerEventHandlers } from "../../core/setupMoveNodePointerEventHandlers";
+import { setupMoveNodesPointerEventHandlers } from "../../core/setupMoveNodesPointerEventHandlers";
 import { Line } from "../../lib/geo/Line";
 import { translate } from "../../lib/geo/TransformMatrix";
 import { randomId } from "../../lib/randomId";
@@ -53,12 +53,9 @@ export class NewPathModeController extends ModeController {
         app.unselectAll();
         app.select(pathEntity.props.id);
 
-        setupMoveNodePointerEventHandlers(
-            app,
-            ev,
-            pathEntity,
+        setupMoveNodesPointerEventHandlers(app, ev, pathEntity, [
             pathEntity.getNodes()[1].id,
-        );
+        ]);
     }
 
     private insertNewPath(app: App, line: Line): PathEntity {

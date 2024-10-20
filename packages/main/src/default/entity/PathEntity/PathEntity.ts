@@ -100,7 +100,9 @@ export class PathEntity extends Entity<Props> {
     }
 
     getOutline(): (Rect | Line | Point)[] {
-        return this.graph.getEdges().map(([p1, p2]) => new Line({ p1, p2 }));
+        return this.graph
+            .getEdges()
+            .map((edge) => new Line({ p1: edge.p0, p2: edge.p1 }));
     }
 
     serialize(): SerializedEntity {
@@ -114,7 +116,7 @@ export class PathEntity extends Entity<Props> {
             })),
             edges: this.graph
                 .getEdges()
-                .map(([startNode, endNode]) => [startNode.id, endNode.id]),
+                .map((edge) => [edge.p0.id, edge.p1.id]),
             colorId: this.props.colorId,
             strokeStyle: this.props.strokeStyle,
             strokeWidth: this.props.strokeWidth,

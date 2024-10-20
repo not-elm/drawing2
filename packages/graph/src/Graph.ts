@@ -69,7 +69,7 @@ export class Graph {
         return new Graph(nodes, edges);
     }
 
-    addEdge(node1: Node, node2: Node): this {
+    addEdge(node1: Node, node2: Node): Graph {
         if (this.edges.get(node1.id)?.includes(node2.id)) return this;
 
         this.nodes.set(node1.id, node1);
@@ -88,7 +88,7 @@ export class Graph {
         return this;
     }
 
-    deleteEdge(nodeId1: string, nodeId2: string): this {
+    deleteEdge(nodeId1: string, nodeId2: string): Graph {
         const newEdges1 = (this.edges.get(nodeId1) ?? []).filter(
             (id) => id !== nodeId2,
         );
@@ -113,14 +113,14 @@ export class Graph {
         return this;
     }
 
-    addNode(node: Node): this {
+    addNode(node: Node): Graph {
         this.nodes.set(node.id, node);
 
         this.normalized = false;
         return this;
     }
 
-    deleteNode(nodeId: string): this {
+    deleteNode(nodeId: string): Graph {
         this.nodes.delete(nodeId);
         const nextNodeIds = this.edges.get(nodeId);
         for (const nextNodeId of nextNodeIds ?? []) {
@@ -140,7 +140,7 @@ export class Graph {
         return this;
     }
 
-    setNodePosition(nodeId: string, x: number, y: number): this {
+    setNodePosition(nodeId: string, x: number, y: number): Graph {
         const node = this.nodes.get(nodeId);
         assert(node !== undefined, `Node ${nodeId} is not found.`);
 
@@ -183,7 +183,7 @@ export class Graph {
             return this.normalize().getOutline();
         }
 
-        if (this.nodes.size < 3) return [];
+        if (this.nodes.size < 3) return [...this.nodes.values()];
 
         const startNode = [...this.nodes.values()].reduce((n1, n2) =>
             n1.y < n2.y ? n1 : n2,

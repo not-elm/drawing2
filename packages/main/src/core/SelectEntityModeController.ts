@@ -8,7 +8,6 @@ import { Rect } from "../lib/geo/Rect";
 import { normalizeAngle } from "../lib/normalizeAngle";
 import { testHitEntities } from "../lib/testHitEntities";
 import type { App } from "./App";
-import { BrushStore } from "./BrushStore";
 import type { Entity } from "./Entity";
 import type { GraphNode } from "./Graph";
 import {
@@ -17,6 +16,7 @@ import {
     ModeController,
 } from "./ModeController";
 import type { Page } from "./Page";
+import { SelectEntityModeStateStore } from "./SelectEntityModeStateStore";
 import {
     ScaleSelectionTransformController,
     TranslateSelectionTransformController,
@@ -26,7 +26,7 @@ import { setupCornerRadiusHandlePointerEventHandlers } from "./setupCornerRadius
 import { setupSelectionTransformPointerEventHandlers } from "./setupSelectionTransformPointerEventHandlers";
 
 export class SelectEntityModeController extends ModeController {
-    readonly brushStore = new BrushStore();
+    readonly store = new SelectEntityModeStateStore();
 
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
         const handle = this.getHandleType(app, ev.point);
@@ -48,7 +48,7 @@ export class SelectEntityModeController extends ModeController {
 
         if (!ev.shiftKey) app.unselectAll();
 
-        setupBrushSelectPointerEventHandlers(app, ev, this.brushStore);
+        setupBrushSelectPointerEventHandlers(app, ev, this.store);
     }
 
     onCanvasDoubleClick(app: App, ev: CanvasPointerEvent) {
@@ -70,7 +70,7 @@ export class SelectEntityModeController extends ModeController {
             selectedEntities.length !== 1 ||
             !(selectedEntities[0] instanceof PathEntity)
         ) {
-            this.brushStore.setVisibleCornerRoundHandles([]);
+            this.store.setVisibleCornerRoundHandles([]);
             return;
         }
         const entity = selectedEntities[0];
@@ -93,7 +93,7 @@ export class SelectEntityModeController extends ModeController {
             }
         }
 
-        this.brushStore.setVisibleCornerRoundHandles(visibleHandles);
+        this.store.setVisibleCornerRoundHandles(visibleHandles);
     }
 
     private updateCursor(app: App, point: Point) {

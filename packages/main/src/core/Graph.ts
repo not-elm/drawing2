@@ -29,7 +29,23 @@ export class CrossPoint extends GraphNode {
     }
 }
 
-export type GraphEdge = [GraphNode, GraphNode];
+export class GraphEdge {
+    public readonly id: string;
+    public readonly p0: GraphNode;
+    public readonly p1: GraphNode;
+
+    constructor(p0: GraphNode, p1: GraphNode) {
+        if (p0.id > p1.id) {
+            this.p0 = p1;
+            this.p1 = p0;
+        } else {
+            this.p0 = p0;
+            this.p1 = p1;
+        }
+
+        this.id = `${this.p0.id}-${this.p1.id}`;
+    }
+}
 
 export class Graph {
     private readonly arguments = new Map<string, Map<string, number>>();
@@ -334,19 +350,19 @@ export class Graph {
 
             for (const edge2 of edges) {
                 if (edge1 === edge2) continue;
-                if (edge1[0].id > edge2[0].id) continue;
+                if (edge1.p0.id > edge2.p0.id) continue;
 
-                if (edge1[0] === edge2[0]) continue;
-                if (edge1[0] === edge2[1]) continue;
-                if (edge1[1] === edge2[0]) continue;
-                if (edge1[1] === edge2[1]) continue;
+                if (edge1.p0 === edge2.p0) continue;
+                if (edge1.p0 === edge2.p1) continue;
+                if (edge1.p1 === edge2.p0) continue;
+                if (edge1.p1 === edge2.p1) continue;
 
-                if (isCross(edge1[0], edge1[1], edge2[0], edge2[1])) {
+                if (isCross(edge1.p0, edge1.p1, edge2.p0, edge2.p1)) {
                     const crossPoint = getCrossPoint(
-                        edge1[0],
-                        edge1[1],
-                        edge2[0],
-                        edge2[1],
+                        edge1.p0,
+                        edge1.p1,
+                        edge2.p0,
+                        edge2.p1,
                     );
 
                     newNodesMap.set(edge1, [
@@ -366,17 +382,17 @@ export class Graph {
                 n1.x === n2.x ? n1.y - n2.y : n1.x - n2.x,
             );
             if (
-                edge[0].x < edge[1].x ||
-                (edge[0].x === edge[1].x && edge[0].y < edge[1].y)
+                edge.p0.x < edge.p1.x ||
+                (edge.p0.x === edge.p1.x && edge.p0.y < edge.p1.y)
             ) {
-                newNodes.unshift(edge[0]);
-                newNodes.push(edge[1]);
+                newNodes.unshift(edge.p0);
+                newNodes.push(edge.p1);
             } else {
-                newNodes.unshift(edge[1]);
-                newNodes.push(edge[0]);
+                newNodes.unshift(edge.p1);
+                newNodes.push(edge.p0);
             }
 
-            clone.deleteEdge(edge[0].id, edge[1].id);
+            clone.deleteEdge(edge.p0.id, edge.p1.id);
             for (let i = 0; i < newNodes.length - 1; i++) {
                 clone.addEdge(newNodes[i], newNodes[i + 1]);
             }
@@ -410,8 +426,8 @@ export class Graph {
         return clone;
     }
 
-    getEdges(): [GraphNode, GraphNode][] {
-        const edges: [GraphNode, GraphNode][] = [];
+    getEdges(): GraphEdge[] {
+        const edges: GraphEdge[] = [];
         for (const [from, tos] of this.edges.entries()) {
             const fromNode = this.nodes.get(from);
             assert(fromNode !== undefined, `Node ${from} is not found.`);
@@ -421,7 +437,7 @@ export class Graph {
                 const toNode = this.nodes.get(to);
                 assert(toNode !== undefined, `Node ${to} is not found.`);
 
-                edges.push([fromNode, toNode]);
+                edges.push(new GraphEdge(fromNode, toNode));
             }
         }
         return edges;

@@ -29,14 +29,18 @@ function SelectEntityControlLayerInner({
     const appState = useStore(app.appStateStore);
     const viewport = useStore(app.viewportStore);
     const canvasState = useStore(app.canvasStateStore);
-    const { visibleCornerRoundHandles } = useStore(modeController.brushStore);
+    const { brushRect, visibleCornerRoundHandles } = useStore(
+        modeController.store,
+    );
     if (!isSelectEntityMode(appState.mode)) return null;
 
     const entities = getSelectedEntities(appState.mode, canvasState);
     const selectionRect = getSelectionRect(appState.mode, canvasState);
-    if (selectionRect === null) return null;
 
-    const rect = viewport.transform.apply(selectionRect);
+    const transformedSelectionRect =
+        selectionRect === null ? null : viewport.transform.apply(selectionRect);
+    const transformedBrushRect =
+        brushRect === null ? null : viewport.transform.apply(brushRect);
 
     return (
         <svg
@@ -50,17 +54,19 @@ function SelectEntityControlLayerInner({
                 top: 0,
             }}
         >
-            <rect
-                css={{
-                    stroke: "var(--color-selection)",
-                    fill: "none",
-                }}
-                x={rect.left}
-                y={rect.top}
-                width={rect.width}
-                height={rect.height}
-                strokeWidth={3}
-            />
+            {transformedSelectionRect !== null && (
+                <rect
+                    css={{
+                        stroke: "var(--color-selection)",
+                        fill: "none",
+                    }}
+                    x={transformedSelectionRect.left}
+                    y={transformedSelectionRect.top}
+                    width={transformedSelectionRect.width}
+                    height={transformedSelectionRect.height}
+                    strokeWidth={3}
+                />
+            )}
             {entities.map((entity) => (
                 <path
                     key={entity.props.id}
@@ -75,38 +81,42 @@ function SelectEntityControlLayerInner({
                     strokeWidth={1}
                 />
             ))}
-            <rect
-                x={rect.left - 4}
-                y={rect.top - 4}
-                width={8}
-                height={8}
-                fill="#fff"
-                stroke="var(--color-selection)"
-            />
-            <rect
-                x={rect.right - 4}
-                y={rect.top - 4}
-                width={8}
-                height={8}
-                fill="#fff"
-                stroke="var(--color-selection)"
-            />
-            <rect
-                x={rect.right - 4}
-                y={rect.bottom - 4}
-                width={8}
-                height={8}
-                fill="#fff"
-                stroke="var(--color-selection)"
-            />
-            <rect
-                x={rect.left - 4}
-                y={rect.bottom - 4}
-                width={8}
-                height={8}
-                fill="#fff"
-                stroke="var(--color-selection)"
-            />
+            {transformedSelectionRect !== null && (
+                <>
+                    <rect
+                        x={transformedSelectionRect.left - 4}
+                        y={transformedSelectionRect.top - 4}
+                        width={8}
+                        height={8}
+                        fill="#fff"
+                        stroke="var(--color-selection)"
+                    />
+                    <rect
+                        x={transformedSelectionRect.right - 4}
+                        y={transformedSelectionRect.top - 4}
+                        width={8}
+                        height={8}
+                        fill="#fff"
+                        stroke="var(--color-selection)"
+                    />
+                    <rect
+                        x={transformedSelectionRect.right - 4}
+                        y={transformedSelectionRect.bottom - 4}
+                        width={8}
+                        height={8}
+                        fill="#fff"
+                        stroke="var(--color-selection)"
+                    />
+                    <rect
+                        x={transformedSelectionRect.left - 4}
+                        y={transformedSelectionRect.bottom - 4}
+                        width={8}
+                        height={8}
+                        fill="#fff"
+                        stroke="var(--color-selection)"
+                    />
+                </>
+            )}
             {visibleCornerRoundHandles.map((handle) => {
                 const position = viewport.transform.apply(
                     handle.handlePosition,
@@ -123,6 +133,17 @@ function SelectEntityControlLayerInner({
                     />
                 );
             })}
+            {transformedBrushRect !== null && (
+                <rect
+                    x={transformedBrushRect.left}
+                    y={transformedBrushRect.top}
+                    width={transformedBrushRect.width}
+                    height={transformedBrushRect.height}
+                    css={{
+                        fill: "rgba(40, 40 ,40, 0.1)",
+                    }}
+                />
+            )}
         </svg>
     );
 }

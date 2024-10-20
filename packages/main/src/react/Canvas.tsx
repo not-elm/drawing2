@@ -1,5 +1,4 @@
 import { type WheelEventHandler, useCallback, useEffect } from "react";
-import { BrushRect } from "./BrushRect";
 import { LinkGuideLayer } from "./LinkGuideLayer";
 import { SelectEntityControlLayer } from "./SelectEntityControlLayer";
 import { SelectPathControlLayer } from "./SelectPathControlLayer";
@@ -95,7 +94,6 @@ export function Canvas() {
                     const View = app.getEntityView(entity);
                     return <View entity={entity} key={entity.props.id} />;
                 })}
-                <BrushRect />
             </div>
 
             <SelectEntityControlLayer />

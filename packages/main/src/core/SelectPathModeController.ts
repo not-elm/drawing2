@@ -1,22 +1,25 @@
 import { PathEntity } from "../default/entity/PathEntity/PathEntity";
 import { assert } from "../lib/assert";
 import { Line } from "../lib/geo/Line";
-import type { Point } from "../lib/geo/Point";
+import { Point } from "../lib/geo/Point";
 import { randomId } from "../lib/randomId";
 import type { App } from "./App";
-import { GraphNode } from "./Graph";
+import { type GraphEdge, GraphNode } from "./Graph";
 import {
     type CanvasPointerEvent,
     type Mode,
     ModeController,
 } from "./ModeController";
 import { createSelectEntityMode } from "./SelectEntityModeController";
-import { setupMoveNodePointerEventHandlers } from "./setupMoveNodePointerEventHandlers";
+import { SelectPathModeStateStore } from "./SelectPathModeStateStore";
+import { setupMoveNodesPointerEventHandlers } from "./setupMoveNodesPointerEventHandlers";
 
 const NODE_CONTROL_HIT_AREA_RADIUS = 16;
 const EDGE_CONTROL_HIT_AREA_WIDTH = 16;
 
 export class SelectPathModeController extends ModeController {
+    readonly store = new SelectPathModeStateStore();
+
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
         const control = this.getControlByPoint(app, ev.point);
         if (control === null) {
@@ -24,15 +27,24 @@ export class SelectPathModeController extends ModeController {
         }
 
         if (control.type === "node") {
-            setupMoveNodePointerEventHandlers(
+            setupMoveNodesPointerEventHandlers(
                 app,
                 ev,
                 this.getPathEntity(app),
-                control.node.id,
+                [control.node.id],
             );
         }
 
         if (control.type === "edge") {
+            setupMoveNodesPointerEventHandlers(
+                app,
+                ev,
+                this.getPathEntity(app),
+                [control.edge.p0.id, control.edge.p1.id],
+            );
+        }
+
+        if (control.type === "center-of-edge") {
             const entity = this.getPathEntity(app);
 
             const newNode = new GraphNode(
@@ -42,9 +54,9 @@ export class SelectPathModeController extends ModeController {
             );
 
             const graph = entity.graph.clone();
-            graph.addEdge(control.edge[0], newNode);
-            graph.addEdge(control.edge[1], newNode);
-            graph.deleteEdge(control.edge[0].id, control.edge[1].id);
+            graph.addEdge(control.edge.p0, newNode);
+            graph.addEdge(control.edge.p1, newNode);
+            graph.deleteEdge(control.edge.p0.id, control.edge.p1.id);
 
             const newPath = new PathEntity(entity.props, graph);
 
@@ -52,7 +64,7 @@ export class SelectPathModeController extends ModeController {
                 draft.setEntities([newPath]);
             });
 
-            setupMoveNodePointerEventHandlers(app, ev, newPath, newNode.id);
+            setupMoveNodesPointerEventHandlers(app, ev, newPath, [newNode.id]);
         }
     }
 
@@ -68,9 +80,36 @@ export class SelectPathModeController extends ModeController {
     onMouseMove(app: App, point: Point) {
         const control = this.getControlByPoint(app, point);
         if (control === null) {
+            this.store.clearHighlight();
             app.appStateStore.setCursor("default");
-        } else if (control.type === "node") {
-            app.appStateStore.setCursor("grab");
+            return;
+        }
+
+        switch (control.type) {
+            case "node": {
+                this.store.setHighlight({
+                    highlightedItemIds: new Set([control.node.id]),
+                    highlightCenterOfEdgeHandle: false,
+                });
+                app.appStateStore.setCursor("grab");
+                break;
+            }
+            case "edge": {
+                this.store.setHighlight({
+                    highlightedItemIds: new Set([control.edge.id]),
+                    highlightCenterOfEdgeHandle: false,
+                });
+                app.appStateStore.setCursor("grab");
+                break;
+            }
+            case "center-of-edge": {
+                this.store.setHighlight({
+                    highlightedItemIds: new Set([control.edge.id]),
+                    highlightCenterOfEdgeHandle: true,
+                });
+                app.appStateStore.setCursor("crosshair");
+                break;
+            }
         }
     }
 
@@ -85,13 +124,14 @@ export class SelectPathModeController extends ModeController {
         }
 
         for (const edge of entity.graph.getEdges()) {
-            const [node1, node2] = edge;
-            const entry = Line.of(
-                node1.x,
-                node1.y,
-                node2.x,
-                node2.y,
-            ).getDistance(point);
+            const { p0, p1 } = edge;
+            const center = new Point((p0.x + p1.x) / 2, (p0.y + p1.y) / 2);
+            const distance = Math.hypot(center.x - point.x, center.y - point.y);
+            if (distance < NODE_CONTROL_HIT_AREA_RADIUS) {
+                return { type: "center-of-edge", edge, point: center };
+            }
+
+            const entry = Line.of(p0.x, p0.y, p1.x, p1.y).getDistance(point);
 
             if (entry.distance < EDGE_CONTROL_HIT_AREA_WIDTH) {
                 return { type: "edge", edge, point: entry.point };
@@ -128,5 +168,6 @@ export function createSelectPathMode(entityId: string): SelectPathMode {
 }
 
 export type Control =
-    | { type: "edge"; edge: [GraphNode, GraphNode]; point: Point }
+    | { type: "edge"; edge: GraphEdge; point: Point }
+    | { type: "center-of-edge"; edge: GraphEdge; point: Point }
     | { type: "node"; node: GraphNode };

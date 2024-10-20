@@ -61,7 +61,7 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                         position: "absolute",
                         inset: 0,
                         overflow: "clip",
-                        "--color-ui-primary": "#2568cd",
+                        "--color-ui-primary": "#3680f4",
                         "--color-ui-selected": "var(--color-ui-primary)",
                         "--color-selection": "var(--color-ui-primary)",
 
