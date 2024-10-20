@@ -33,8 +33,11 @@ $ cd ./packages/main
 $ bun run start
 ```
 
-## Contribution
+## プロジェクトへの協力 / Contribution
 
-- 誰でも歓迎です
-- 趣味プロジェクトのため設計がコロコロ変わる可能性がありますが許してください
-- ブランチ名のルールやPRのテンプレートとかは無いので好きにやってください
+- **誰でも歓迎です**
+  - [バグ報告](https://github.com/Kiikurage/drawing2/issues/new?assignees=&labels=bug&projects=&template=bug-report---%E3%83%90%E3%82%B0%E5%A0%B1%E5%91%8A.md&title=)
+  - [新機能リクエスト](https://github.com/Kiikurage/drawing2/issues/new)
+  - コード変更(PR)
+    - 趣味プロジェクトのため設計がコロコロ変わる可能性がありますが許してください
+    - ブランチ名のルールやPRのテンプレートとかは無いので好きにやってください
