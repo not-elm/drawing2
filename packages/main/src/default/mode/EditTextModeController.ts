@@ -43,7 +43,7 @@ export class EditTextModeController extends ModeController {
 
         const entity = app.canvasStateStore
             .getState()
-            .entities.get(newMode.entityId);
+            .page.entities.get(newMode.entityId);
         assert(entity !== undefined, `Entity ${newMode.entityId} not found`);
 
         entity.onTextEditStart(app);
@@ -55,7 +55,7 @@ export class EditTextModeController extends ModeController {
 
         const entity = app.canvasStateStore
             .getState()
-            .entities.get(oldMode.entityId);
+            .page.entities.get(oldMode.entityId);
         assert(entity !== undefined, `Entity ${oldMode.entityId} not found`);
 
         app.historyManager.resume();

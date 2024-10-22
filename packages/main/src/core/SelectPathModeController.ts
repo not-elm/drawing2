@@ -159,7 +159,7 @@ export class SelectPathModeController extends ModeController {
 
         const entity = app.canvasStateStore
             .getState()
-            .entities.get(mode.entityId);
+            .page.entities.get(mode.entityId);
         assert(entity instanceof PathEntity, `Invalid entity: ${entity}`);
 
         return entity;

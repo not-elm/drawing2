@@ -34,8 +34,8 @@ function SelectEntityControlLayerInner({
     );
     if (!isSelectEntityMode(appState.mode)) return null;
 
-    const entities = getSelectedEntities(appState.mode, canvasState);
-    const selectionRect = getSelectionRect(appState.mode, canvasState);
+    const entities = getSelectedEntities(appState.mode, canvasState.page);
+    const selectionRect = getSelectionRect(appState.mode, canvasState.page);
 
     const transformedSelectionRect =
         selectionRect === null ? null : viewport.transform.apply(selectionRect);

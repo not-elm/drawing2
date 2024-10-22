@@ -25,7 +25,7 @@ export function setupBrushSelectPointerEventHandlers(
             const selectedEntityIds = new Set(originalSelectedEntityIds);
             for (const entity of app.canvasStateStore
                 .getState()
-                .entities.values()) {
+                .page.entities.values()) {
                 if (entity.isOverlapWith(rect)) {
                     selectedEntityIds.add(entity.props.id);
                 }

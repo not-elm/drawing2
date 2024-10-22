@@ -9,7 +9,7 @@ import { useApp } from "./useApp";
 
 export function Canvas() {
     const app = useApp();
-    const page = useStore(app.canvasStateStore);
+    const { page } = useStore(app.canvasStateStore);
     const viewport = useStore(app.viewportStore);
     const appState = useStore(app.appStateStore);
 

@@ -45,7 +45,7 @@ export abstract class SelectionTransformController {
     ) {
         this.originalEntities = getSelectedEntities(
             app.appStateStore.getState().mode,
-            app.canvasStateStore.getState(),
+            app.canvasStateStore.getState().page,
         );
     }
 
@@ -142,7 +142,7 @@ export abstract class SelectionTransformController {
         for (const entityId of entityIds) {
             const entity = this.app.canvasStateStore
                 .getState()
-                .entities.get(entityId);
+                .page.entities.get(entityId);
             assert(entity !== undefined, `Entity must exist: ${entityId}`);
 
             entity.onTransformEnd(this.app);
@@ -169,7 +169,7 @@ export abstract class SelectionTransformController {
         };
         for (const snapPoint of snapPoints.x) {
             const entry = computeSnapEntry2D(
-                this.app.canvasStateStore.getState(),
+                this.app.canvasStateStore.getState().page,
                 this.app.viewportStore.getState(),
                 transform.apply(snapPoint),
                 getSelectedEntityIds(this.app.appStateStore.getState().mode),
@@ -182,7 +182,7 @@ export abstract class SelectionTransformController {
 
         for (const snapPoint of snapPoints.y) {
             const entry = computeSnapEntry2D(
-                this.app.canvasStateStore.getState(),
+                this.app.canvasStateStore.getState().page,
                 this.app.viewportStore.getState(),
                 transform.apply(snapPoint),
                 getSelectedEntityIds(this.app.appStateStore.getState().mode),
@@ -221,7 +221,7 @@ export abstract class SelectionTransformController {
 
     private computeSnapGuide(snapPoints: SnapPoints): SnapGuide {
         const canvasState = this.app.canvasStateStore.getState();
-        const page = canvasState;
+        const { page } = canvasState;
         const viewport = this.app.viewportStore.getState();
 
         const snapGuide: SnapGuide = {

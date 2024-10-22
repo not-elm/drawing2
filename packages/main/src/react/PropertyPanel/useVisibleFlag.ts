@@ -17,7 +17,7 @@ export function useVisibleFlag(
     const { mode } = useStore(app.appStateStore);
     if (!isSelectEntityMode(mode)) return false;
 
-    const selectedEntities = getSelectedEntities(mode, canvasState);
+    const selectedEntities = getSelectedEntities(mode, canvasState.page);
 
     if (modes.some((m) => mode.type === m)) {
         return true;

@@ -77,7 +77,7 @@ export class SelectEntityModeController extends ModeController {
         }
 
         const hitResult = testHitEntities(
-            app.canvasStateStore.getState(),
+            app.canvasStateStore.getState().page,
             ev.point,
             app.viewportStore.getState().scale,
         );
@@ -105,7 +105,7 @@ export class SelectEntityModeController extends ModeController {
     private updateVisibleCornerRoundHandles(app: App, point: Point) {
         const selectedEntities = getSelectedEntities(
             app.appStateStore.getState().mode,
-            app.canvasStateStore.getState(),
+            app.canvasStateStore.getState().page,
         );
         if (
             selectedEntities.length !== 1 ||
@@ -176,7 +176,7 @@ export class SelectEntityModeController extends ModeController {
 
     private onCanvasTap(app: App, ev: CanvasPointerEvent) {
         const hitEntity = testHitEntities(
-            app.canvasStateStore.getState(),
+            app.canvasStateStore.getState().page,
             ev.point,
             app.viewportStore.getState().scale,
         ).entities.at(0);
@@ -384,7 +384,7 @@ export class SelectEntityModeController extends ModeController {
         const marginInCanvas = margin / app.viewportStore.getState().scale;
         const selectedEntities = getSelectedEntities(
             app.appStateStore.getState().mode,
-            app.canvasStateStore.getState(),
+            app.canvasStateStore.getState().page,
         );
         if (
             selectedEntities.length === 1 &&
@@ -415,7 +415,7 @@ export class SelectEntityModeController extends ModeController {
 
         const selectionRect = getSelectionRect(
             app.appStateStore.getState().mode,
-            app.canvasStateStore.getState(),
+            app.canvasStateStore.getState().page,
         );
         if (selectionRect === null) return null;
 

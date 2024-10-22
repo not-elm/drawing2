@@ -14,7 +14,9 @@ export function syncWithLocalStorage(app: App) {
         }
 
         debounceTimerId = setTimeout(() => {
-            const serializedPage = app.canvasStateStore.getState().serialize();
+            const serializedPage = app.canvasStateStore
+                .getState()
+                .page.serialize();
             localStorage.setItem(
                 LOCAL_STORAGE_KEY,
                 JSON.stringify(serializedPage),

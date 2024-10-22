@@ -17,7 +17,7 @@ export function useSelectedPropertyValue<T = unknown>(
     const mode = appState.mode;
     if (!isSelectEntityMode(mode)) return null;
 
-    const selectedEntities = getSelectedEntities(mode, canvasState);
+    const selectedEntities = getSelectedEntities(mode, canvasState.page);
 
     const values = new Set(
         selectedEntities

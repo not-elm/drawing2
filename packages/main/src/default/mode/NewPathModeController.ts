@@ -51,7 +51,7 @@ export class NewPathModeController extends ModeController {
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
         app.historyManager.pause();
         const hit = testHitEntities(
-            app.canvasStateStore.getState(),
+            app.canvasStateStore.getState().page,
             ev.point,
             app.viewportStore.getState().scale,
         );
@@ -125,7 +125,7 @@ export function registerLinkToRect(
     if (nodeOwner.props.id === target.props.id) {
         return;
     }
-    if (isOwnedLabel(app.canvasStateStore.getState(), nodeOwner, target)) {
+    if (isOwnedLabel(app.canvasStateStore.getState().page, nodeOwner, target)) {
         return;
     }
 

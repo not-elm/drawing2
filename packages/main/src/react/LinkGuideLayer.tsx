@@ -16,7 +16,7 @@ export function LinkGuideLayer() {
     const selectedEntityId = mode.entityIds.values().next().value;
     if (selectedEntityId === undefined) return null;
 
-    const links = canvasState.links.getByEntityId(selectedEntityId);
+    const links = canvasState.page.links.getByEntityId(selectedEntityId);
 
     return links.map((link) => {
         if (link instanceof LinkToEdge) {
@@ -32,11 +32,11 @@ export function LinkToEdgeGuide({ link }: { link: LinkToEdge }) {
     const viewport = useStore(app.viewportStore);
     const canvasState = useStore(app.canvasStateStore);
 
-    const entity = canvasState.entities.get(link.entityId);
+    const entity = canvasState.page.entities.get(link.entityId);
     assert(entity !== undefined, `Entity ${link.entityId} not found`);
     const rect = entity.getBoundingRect();
 
-    const path = canvasState.entities.get(link.pathId);
+    const path = canvasState.page.entities.get(link.pathId);
     assert(path !== undefined, `Path ${link.pathId} not found`);
 
     const p1 = path.getNodeById(link.p1Id);

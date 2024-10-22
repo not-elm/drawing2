@@ -31,7 +31,7 @@ export function SelectPathControlLayerInner({
     if (!isSelectPathMode(appState.mode)) return null;
 
     const entityId = appState.mode.entityId;
-    const entity = canvasState.entities.get(entityId);
+    const entity = canvasState.page.entities.get(entityId);
     assert(entity !== undefined, `Entity not found: ${entityId}`);
 
     return (

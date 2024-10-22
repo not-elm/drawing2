@@ -276,7 +276,7 @@ export class App {
     selectAll() {
         return this.setMode(
             createSelectEntityMode(
-                new Set(this.canvasStateStore.getState().entityIds),
+                new Set(this.canvasStateStore.getState().page.entityIds),
             ),
         );
     }
@@ -300,7 +300,7 @@ export class App {
         if (selectedEntityIds.size === 0) return;
 
         this.clipboardService.copy(
-            this.canvasStateStore.getState(),
+            this.canvasStateStore.getState().page,
             selectedEntityIds,
         );
     }
@@ -410,7 +410,9 @@ export class App {
     }
 
     handleEntityResize(entityId: string, width: number, height: number) {
-        const entity = this.canvasStateStore.getState().entities.get(entityId);
+        const entity = this.canvasStateStore
+            .getState()
+            .page.entities.get(entityId);
         assert(entity !== undefined, `Entity ${entityId} is not found`);
 
         entity.onViewResize(this, width, height);

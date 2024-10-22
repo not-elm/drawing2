@@ -4,27 +4,38 @@ import { LinkCollection } from "./Link";
 import { Page } from "./Page";
 import { PageDraft } from "./PageDraft";
 
-export class CanvasStateStore extends Store<Page> {
+export interface CanvasState {
+    page: Page;
+}
+
+export class CanvasStateStore extends Store<CanvasState> {
     constructor(private readonly app: App) {
-        super(
-            new Page({
+        super({
+            page: new Page({
                 entities: new Map(),
                 entityIds: [],
                 links: LinkCollection.create(),
             }),
-        );
+        });
+    }
+
+    /**
+     * @internal Exposed only for history rollback
+     */
+    setState(newState: CanvasState) {
+        super.setState(newState);
     }
 
     edit(updater: (draft: PageDraft) => void) {
-        const draft = new PageDraft(this.state);
+        const draft = new PageDraft(this.state.page);
         updater(draft);
         for (const entityId of draft.deletedEntityIds) {
-            this.state.links.deleteByEntityId(entityId);
+            this.state.page.links.deleteByEntityId(entityId);
         }
 
-        this.state.links.apply(draft);
+        this.state.page.links.apply(draft);
         for (const entityId of draft.deletedEntityIds) {
-            this.state.links.deleteByEntityId(entityId);
+            this.state.page.links.deleteByEntityId(entityId);
         }
 
         for (const entityId of draft.deletedEntityIds) {
@@ -34,6 +45,6 @@ export class CanvasStateStore extends Store<Page> {
     }
 
     setPage(page: Page) {
-        this.setState(page);
+        this.setState({ ...this.state, page });
     }
 }

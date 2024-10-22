@@ -1,11 +1,11 @@
 import type { App } from "./App";
+import type { CanvasState } from "./CanvasStateStore";
 import type { Mode } from "./ModeController";
-import type { Page } from "./Page";
 
 const MAX_HISTORY_LENGTH = 1000;
 
 interface HistoryEntry {
-    page: Page;
+    canvasState: CanvasState;
     mode: Mode;
 }
 
@@ -29,7 +29,7 @@ export class HistoryManager {
             this.handleCanvasStateStoreChange,
         );
         this.currentState = {
-            page: app.canvasStateStore.getState(),
+            canvasState: app.canvasStateStore.getState(),
             mode: app.appStateStore.getState().mode,
         };
     }
@@ -54,14 +54,14 @@ export class HistoryManager {
         }
     }
 
-    private handleCanvasStateStoreChange = (page: Page) => {
+    private handleCanvasStateStoreChange = (canvasState: CanvasState) => {
         const lastState = this.currentState;
         this.currentState = {
-            page,
+            canvasState,
             mode: this.app.appStateStore.getState().mode,
         };
 
-        if (lastState.page === page) {
+        if (lastState.canvasState === canvasState) {
             return;
         }
         if (this.paused) {
@@ -96,7 +96,7 @@ export class HistoryManager {
 
         this.processing = true;
         try {
-            this.app.canvasStateStore.setPage(prevState.page);
+            this.app.canvasStateStore.setState(prevState.canvasState);
             this.app.setMode(prevState.mode);
         } catch (e) {
             console.error(e);
@@ -111,19 +111,19 @@ export class HistoryManager {
             this.resume();
         }
 
-        const nextPage = this.redoStack.pop();
-        if (nextPage === undefined) return;
+        const nestState = this.redoStack.pop();
+        if (nestState === undefined) return;
 
         this.undoStack.push(this.currentState);
         while (this.undoStack.length > MAX_HISTORY_LENGTH) {
             this.undoStack.shift();
         }
-        this.currentState = nextPage;
+        this.currentState = nestState;
 
         this.processing = true;
         try {
-            this.app.canvasStateStore.setPage(nextPage.page);
-            this.app.setMode(nextPage.mode);
+            this.app.canvasStateStore.setState(nestState.canvasState);
+            this.app.setMode(nestState.mode);
         } finally {
             this.processing = false;
         }
