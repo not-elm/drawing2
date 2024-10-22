@@ -3,26 +3,30 @@ import {
     type CanvasPointerEvent,
     ModeController,
 } from "../../core/ModeController";
-import { createSelectEntityMode } from "../../core/SelectEntityModeController";
+import { SelectEntityModeController } from "../../core/SelectEntityModeController";
 import { Rect } from "../../lib/geo/Rect";
 import { randomId } from "../../lib/randomId";
 import { TextEntity } from "../entity/TextEntity/TextEntity";
 import { PROPERTY_KEY_COLOR_ID } from "../property/Colors";
 import { PROPERTY_KEY_TEXT_ALIGNMENT_X } from "../property/TextAlignment";
+import { EditTextModeController } from "./EditTextModeController";
 
 export class NewTextModeController extends ModeController {
+    static readonly MODE_NAME = "new-text";
+
     onRegistered(app: App) {
         app.keyboard.addBinding({
             key: "t",
             action: (app, ev) => {
-                app.setMode({ type: "new-text" });
+                app.setMode(NewTextModeController.MODE_NAME);
             },
         });
         app.keyboard.addBinding({
             key: "Escape",
-            mode: ["new-text"],
+            mode: [NewTextModeController.MODE_NAME],
             action: (app, ev) => {
-                app.setMode(createSelectEntityMode(new Set()));
+                app.canvasStateStore.unselectAll();
+                app.setMode(SelectEntityModeController.MODE_NAME);
             },
         });
     }
@@ -30,11 +34,9 @@ export class NewTextModeController extends ModeController {
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
         app.historyManager.pause();
         const text = this.insertNewText(app, Rect.fromSize(ev.point, 1, 1));
-
-        app.setMode({
-            type: "edit-text",
-            entityId: text.props.id,
-        });
+        app.canvasStateStore.unselectAll();
+        app.canvasStateStore.select(text.props.id);
+        app.setMode(EditTextModeController.MODE_NAME);
 
         // To leave focus at the new text entity
         ev.preventDefault();

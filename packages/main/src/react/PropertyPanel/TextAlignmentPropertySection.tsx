@@ -6,6 +6,7 @@ import {
 import { Card } from "../Card";
 import { useApp } from "../useApp";
 
+import { NewTextModeController } from "../../default/mode/NewTextModeController";
 import { useSelectedPropertyValue } from "./useSelectedPropertyValue";
 import { useVisibleFlag } from "./useVisibleFlag";
 
@@ -28,14 +29,20 @@ export function TextAlignmentPropertySection() {
         alignmentX: TextAlignment,
         alignmentY: TextAlignment,
     ) => {
-        app.updateProperty(PROPERTY_KEY_TEXT_ALIGNMENT_X, alignmentX);
-        app.updateProperty(PROPERTY_KEY_TEXT_ALIGNMENT_Y, alignmentY);
+        app.updatePropertyForSelectedEntities(
+            PROPERTY_KEY_TEXT_ALIGNMENT_X,
+            alignmentX,
+        );
+        app.updatePropertyForSelectedEntities(
+            PROPERTY_KEY_TEXT_ALIGNMENT_Y,
+            alignmentY,
+        );
         app.defaultPropertyStore.set(PROPERTY_KEY_TEXT_ALIGNMENT_X, alignmentX);
         app.defaultPropertyStore.set(PROPERTY_KEY_TEXT_ALIGNMENT_Y, alignmentY);
     };
 
     const visible = useVisibleFlag({
-        modes: ["new-text"],
+        modes: [NewTextModeController.MODE_NAME],
         propertyKeys: [
             PROPERTY_KEY_TEXT_ALIGNMENT_X,
             PROPERTY_KEY_TEXT_ALIGNMENT_Y,

@@ -47,7 +47,9 @@ function getPointerMoveHandler(
     cornerAngle: number,
 ) {
     return (app: App, ev: CanvasPointerMoveEvent) => {
-        const entity = app.canvasStateStore.getState().entities.get(entityId);
+        const entity = app.canvasStateStore
+            .getState()
+            .page.entities.get(entityId);
         assert(entity !== undefined, `entity not found: ${entityId}`);
         assert(entity instanceof PathEntity);
         const maxValue = getMaxCornerRadius(entity.graph.getOutline());

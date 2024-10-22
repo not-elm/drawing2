@@ -1,8 +1,5 @@
 import type { ReactNode } from "react";
-import {
-    SelectPathModeController,
-    isSelectPathMode,
-} from "../core/SelectPathModeController";
+import { SelectPathModeController } from "../core/SelectPathModeController";
 import { assert } from "../lib/assert";
 import { useStore } from "./hooks/useStore";
 import { useApp } from "./useApp";
@@ -28,10 +25,12 @@ export function SelectPathControlLayerInner({
     const { highlightedItemIds, highlightCenterOfEdgeHandle } = useStore(
         modeController.store,
     );
-    if (!isSelectPathMode(appState.mode)) return null;
+    if (appState.mode !== SelectPathModeController.MODE_NAME) return null;
 
-    const entityId = appState.mode.entityId;
-    const entity = canvasState.entities.get(entityId);
+    const entityId = canvasState.selectedEntityIds.values().next().value;
+    assert(entityId !== undefined, "Entity not selected");
+
+    const entity = canvasState.page.entities.get(entityId);
     assert(entity !== undefined, `Entity not found: ${entityId}`);
 
     return (

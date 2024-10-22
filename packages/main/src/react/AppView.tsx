@@ -1,8 +1,11 @@
 import { MathJaxContext } from "better-react-mathjax";
 import { useEffect, useRef } from "react";
 import type { App } from "../core/App";
-import { createSelectEntityMode } from "../core/SelectEntityModeController";
+import { SelectEntityModeController } from "../core/SelectEntityModeController";
 import { createDefaultApp } from "../default/createDefaultApp";
+import { NewPathModeController } from "../default/mode/NewPathModeController";
+import { NewShapeModeController } from "../default/mode/NewShapeModeController";
+import { NewTextModeController } from "../default/mode/NewTextModeController";
 import { Canvas } from "./Canvas";
 import { ColorPropertySection } from "./PropertyPanel/ColorPropertySection";
 import { FillModePropertySection } from "./PropertyPanel/FillModePropertySection";
@@ -79,17 +82,23 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                     >
                         <ToolBar>
                             <ToolBar.Button
-                                mode={createSelectEntityMode(new Set())}
+                                mode={SelectEntityModeController.MODE_NAME}
                             >
                                 Select
                             </ToolBar.Button>
-                            <ToolBar.Button mode={{ type: "new-shape" }}>
+                            <ToolBar.Button
+                                mode={NewShapeModeController.MODE_NAME}
+                            >
                                 Rect
                             </ToolBar.Button>
-                            <ToolBar.Button mode={{ type: "new-path" }}>
+                            <ToolBar.Button
+                                mode={NewPathModeController.MODE_NAME}
+                            >
                                 Line
                             </ToolBar.Button>
-                            <ToolBar.Button mode={{ type: "new-text" }}>
+                            <ToolBar.Button
+                                mode={NewTextModeController.MODE_NAME}
+                            >
                                 Text
                             </ToolBar.Button>
                         </ToolBar>

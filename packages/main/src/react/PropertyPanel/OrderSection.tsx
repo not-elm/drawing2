@@ -1,4 +1,4 @@
-import { isSelectEntityMode } from "../../core/SelectEntityModeController";
+import { SelectEntityModeController } from "../../core/SelectEntityModeController";
 import { Button } from "../Button";
 import { Card } from "../Card";
 import { useStore } from "../hooks/useStore";
@@ -6,8 +6,13 @@ import { useApp } from "../useApp";
 
 export function OrderSection() {
     const app = useApp();
+    const canvasState = useStore(app.canvasStateStore);
     const { mode } = useStore(app.appStateStore);
-    if (!isSelectEntityMode(mode) || mode.entityIds.size === 0) return null;
+    if (
+        mode !== SelectEntityModeController.MODE_NAME ||
+        canvasState.selectedEntityIds.size === 0
+    )
+        return null;
 
     return (
         <Card.Section>

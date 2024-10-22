@@ -1,3 +1,5 @@
+import { NewPathModeController } from "../../default/mode/NewPathModeController";
+import { NewShapeModeController } from "../../default/mode/NewShapeModeController";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../../default/property/StrokeWidth";
 import { Button } from "../Button";
 import { Card } from "../Card";
@@ -10,12 +12,18 @@ export function StrokeWidthPropertySection() {
     const selectedValue = useSelectedPropertyValue(PROPERTY_KEY_STROKE_WIDTH);
 
     const handleClick = (strokeWidth: number) => {
-        app.updateProperty(PROPERTY_KEY_STROKE_WIDTH, strokeWidth);
+        app.updatePropertyForSelectedEntities(
+            PROPERTY_KEY_STROKE_WIDTH,
+            strokeWidth,
+        );
         app.defaultPropertyStore.set(PROPERTY_KEY_STROKE_WIDTH, strokeWidth);
     };
 
     const visible = useVisibleFlag({
-        modes: ["new-path", "new-shape"],
+        modes: [
+            NewPathModeController.MODE_NAME,
+            NewShapeModeController.MODE_NAME,
+        ],
         propertyKeys: [PROPERTY_KEY_STROKE_WIDTH],
     });
     if (!visible) return null;

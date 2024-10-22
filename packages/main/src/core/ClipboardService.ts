@@ -13,7 +13,7 @@ interface ClipboardData extends JSONObject {
 export class ClipboardService {
     constructor(private readonly entityConverter: EntityConverter) {}
 
-    copy(page: Page, entityIds: Set<string>): Promise<void> {
+    copy(page: Page, entityIds: ReadonlySet<string>): Promise<void> {
         const entitiesInOrder: Entity[] = [];
 
         for (const entityId of page.entityIds) {

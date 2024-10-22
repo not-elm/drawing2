@@ -1,3 +1,5 @@
+import { NewPathModeController } from "../../default/mode/NewPathModeController";
+import { NewShapeModeController } from "../../default/mode/NewShapeModeController";
 import {
     PROPERTY_KEY_STROKE_STYLE,
     type StrokeStyle,
@@ -13,12 +15,18 @@ export function StrokeStylePropertySection() {
     const selectedValue = useSelectedPropertyValue(PROPERTY_KEY_STROKE_STYLE);
 
     const handleClick = (strokeStyle: StrokeStyle) => {
-        app.updateProperty(PROPERTY_KEY_STROKE_STYLE, strokeStyle);
+        app.updatePropertyForSelectedEntities(
+            PROPERTY_KEY_STROKE_STYLE,
+            strokeStyle,
+        );
         app.defaultPropertyStore.set(PROPERTY_KEY_STROKE_STYLE, strokeStyle);
     };
 
     const visible = useVisibleFlag({
-        modes: ["new-path", "new-shape"],
+        modes: [
+            NewPathModeController.MODE_NAME,
+            NewShapeModeController.MODE_NAME,
+        ],
         propertyKeys: [PROPERTY_KEY_STROKE_STYLE],
     });
     if (!visible) return null;

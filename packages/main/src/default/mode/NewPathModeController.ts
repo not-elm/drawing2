@@ -7,7 +7,7 @@ import {
     ModeController,
 } from "../../core/ModeController";
 import type { Page } from "../../core/Page";
-import { createSelectEntityMode } from "../../core/SelectEntityModeController";
+import { SelectEntityModeController } from "../../core/SelectEntityModeController";
 import { setupMoveNodesPointerEventHandlers } from "../../core/setupMoveNodesPointerEventHandlers";
 import { Line } from "../../lib/geo/Line";
 import { translate } from "../../lib/geo/TransformMatrix";
@@ -23,6 +23,8 @@ import { PROPERTY_KEY_STROKE_STYLE } from "../property/StrokeStyle";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../property/StrokeWidth";
 
 export class NewPathModeController extends ModeController {
+    static readonly MODE_NAME = "new-path";
+
     onRegistered(app: App) {
         app.keyboard.addBinding({
             key: "a",
@@ -30,20 +32,21 @@ export class NewPathModeController extends ModeController {
             metaKey: false,
             ctrlKey: false,
             action: (app, ev) => {
-                app.setMode({ type: "new-path" });
+                app.setMode(NewPathModeController.MODE_NAME);
             },
         });
         app.keyboard.addBinding({
             key: "l",
             action: (app, ev) => {
-                app.setMode({ type: "new-path" });
+                app.setMode(NewPathModeController.MODE_NAME);
             },
         });
         app.keyboard.addBinding({
             key: "Escape",
-            mode: ["new-path"],
+            mode: [NewPathModeController.MODE_NAME],
             action: (app, ev) => {
-                app.setMode(createSelectEntityMode(new Set()));
+                app.canvasStateStore.unselectAll();
+                app.setMode(SelectEntityModeController.MODE_NAME);
             },
         });
     }
@@ -51,7 +54,7 @@ export class NewPathModeController extends ModeController {
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
         app.historyManager.pause();
         const hit = testHitEntities(
-            app.canvasStateStore.getState(),
+            app.canvasStateStore.getState().page,
             ev.point,
             app.viewportStore.getState().scale,
         );
@@ -74,9 +77,9 @@ export class NewPathModeController extends ModeController {
             );
         }
 
-        app.setMode(createSelectEntityMode(new Set(pathEntity.props.id)));
-        app.unselectAll();
-        app.select(pathEntity.props.id);
+        app.setMode(SelectEntityModeController.MODE_NAME);
+        app.canvasStateStore.unselectAll();
+        app.canvasStateStore.select(pathEntity.props.id);
 
         setupMoveNodesPointerEventHandlers(app, ev, pathEntity, [
             pathEntity.getNodes()[1].id,
@@ -125,7 +128,7 @@ export function registerLinkToRect(
     if (nodeOwner.props.id === target.props.id) {
         return;
     }
-    if (isOwnedLabel(app.canvasStateStore.getState(), nodeOwner, target)) {
+    if (isOwnedLabel(app.canvasStateStore.getState().page, nodeOwner, target)) {
         return;
     }
 

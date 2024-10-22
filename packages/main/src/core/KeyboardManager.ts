@@ -1,3 +1,4 @@
+import { EditTextModeController } from "../default/mode/EditTextModeController";
 import type { App } from "./App";
 
 export interface KeyboardBinging {
@@ -91,7 +92,7 @@ export class KeyboardManager {
             if (binding.key !== ev.key) continue;
             if (
                 binding.enableInEditTextMode !== true &&
-                mode.type === "edit-text"
+                mode === EditTextModeController.MODE_NAME
             ) {
                 continue;
             }
@@ -103,7 +104,7 @@ export class KeyboardManager {
             if ("metaKey" in binding && ev.metaKey !== binding.metaKey)
                 continue;
             if (binding.mode !== undefined && binding.mode.length > 0) {
-                if (!binding.mode.includes(mode.type)) continue;
+                if (!binding.mode.includes(mode)) continue;
             }
             if (binding.platform !== undefined && binding.platform.length > 0) {
                 if (!binding.platform.includes(platform)) continue;

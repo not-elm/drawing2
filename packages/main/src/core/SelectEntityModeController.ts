@@ -2,20 +2,15 @@ import {
     PROPERTY_KEY_CORNER_RADIUS,
     PathEntity,
 } from "../default/entity/PathEntity/PathEntity";
-import { assert } from "../lib/assert";
+import { NewTextModeController } from "../default/mode/NewTextModeController";
 import { Point } from "../lib/geo/Point";
-import { Rect } from "../lib/geo/Rect";
+import type { Rect } from "../lib/geo/Rect";
 import { normalizeAngle } from "../lib/normalizeAngle";
 import { testHitEntities } from "../lib/testHitEntities";
 import type { App } from "./App";
 import type { Entity } from "./Entity";
 import type { GraphNode } from "./Graph";
-import {
-    type CanvasPointerEvent,
-    type Mode,
-    ModeController,
-} from "./ModeController";
-import type { Page } from "./Page";
+import { type CanvasPointerEvent, ModeController } from "./ModeController";
 import { SelectEntityModeStateStore } from "./SelectEntityModeStateStore";
 import {
     ScaleSelectionTransformController,
@@ -26,6 +21,8 @@ import { setupCornerRadiusHandlePointerEventHandlers } from "./setupCornerRadius
 import { setupSelectionTransformPointerEventHandlers } from "./setupSelectionTransformPointerEventHandlers";
 
 export class SelectEntityModeController extends ModeController {
+    static readonly MODE_NAME = "select-entity";
+
     readonly store = new SelectEntityModeStateStore();
 
     onRegistered(app: App): void {
@@ -33,36 +30,36 @@ export class SelectEntityModeController extends ModeController {
             key: "a",
             metaKey: true,
             action: (app, ev) => {
-                app.setMode(createSelectEntityMode(new Set()));
-                app.selectAll();
+                app.setMode(SelectEntityModeController.MODE_NAME);
+                app.canvasStateStore.selectAll();
             },
         });
         app.keyboard.addBinding({
             key: "a",
             ctrlKey: true,
             action: (app, ev) => {
-                app.setMode(createSelectEntityMode(new Set()));
-                app.selectAll();
+                app.setMode(SelectEntityModeController.MODE_NAME);
+                app.canvasStateStore.selectAll();
             },
         });
 
         app.keyboard.addBinding({
             key: "Escape",
-            mode: ["select-entity"],
+            mode: [SelectEntityModeController.MODE_NAME],
             action: (app, ev) => {
-                app.unselectAll();
+                app.canvasStateStore.unselectAll();
             },
         });
         app.keyboard.addBinding({
             key: "Backspace",
-            mode: ["select-entity"],
+            mode: [SelectEntityModeController.MODE_NAME],
             action: (app, ev) => {
                 app.deleteSelectedEntities();
             },
         });
         app.keyboard.addBinding({
             key: "Delete",
-            mode: ["select-entity"],
+            mode: [SelectEntityModeController.MODE_NAME],
             action: (app, ev) => {
                 app.deleteSelectedEntities();
             },
@@ -77,7 +74,7 @@ export class SelectEntityModeController extends ModeController {
         }
 
         const hitResult = testHitEntities(
-            app.canvasStateStore.getState(),
+            app.canvasStateStore.getState().page,
             ev.point,
             app.viewportStore.getState().scale,
         );
@@ -87,13 +84,13 @@ export class SelectEntityModeController extends ModeController {
             return;
         }
 
-        if (!ev.shiftKey) app.unselectAll();
+        if (!ev.shiftKey) app.canvasStateStore.unselectAll();
 
         setupBrushSelectPointerEventHandlers(app, ev, this.store);
     }
 
     onCanvasDoubleClick(app: App, ev: CanvasPointerEvent) {
-        app.setMode({ type: "new-text" });
+        app.setMode(NewTextModeController.MODE_NAME);
         app.getModeController().onCanvasPointerDown(app, ev);
     }
 
@@ -103,10 +100,9 @@ export class SelectEntityModeController extends ModeController {
     }
 
     private updateVisibleCornerRoundHandles(app: App, point: Point) {
-        const selectedEntities = getSelectedEntities(
-            app.appStateStore.getState().mode,
-            app.canvasStateStore.getState(),
-        );
+        const selectedEntities = app.canvasStateStore
+            .getState()
+            .getSelectedEntities();
         if (
             selectedEntities.length !== 1 ||
             !(selectedEntities[0] instanceof PathEntity)
@@ -176,26 +172,25 @@ export class SelectEntityModeController extends ModeController {
 
     private onCanvasTap(app: App, ev: CanvasPointerEvent) {
         const hitEntity = testHitEntities(
-            app.canvasStateStore.getState(),
+            app.canvasStateStore.getState().page,
             ev.point,
             app.viewportStore.getState().scale,
         ).entities.at(0);
 
         if (hitEntity !== undefined) {
-            const previousSelectedEntityIds = getSelectedEntityIds(
-                app.appStateStore.getState().mode,
-            );
+            const previousSelectedEntityIds =
+                app.canvasStateStore.getState().selectedEntityIds;
 
             const selectedOnlyThisEntity =
                 previousSelectedEntityIds.size === 1 &&
                 previousSelectedEntityIds.has(hitEntity.target.props.id);
 
             if (ev.shiftKey) {
-                app.unselect(hitEntity.target.props.id);
+                app.canvasStateStore.unselect(hitEntity.target.props.id);
             } else {
                 if (!selectedOnlyThisEntity) {
-                    app.unselectAll();
-                    app.select(hitEntity.target.props.id);
+                    app.canvasStateStore.unselectAll();
+                    app.canvasStateStore.select(hitEntity.target.props.id);
                 }
             }
 
@@ -204,7 +199,7 @@ export class SelectEntityModeController extends ModeController {
                 previousSelectedEntities: previousSelectedEntityIds,
             });
         } else {
-            if (!ev.shiftKey) app.unselectAll();
+            if (!ev.shiftKey) app.canvasStateStore.unselectAll();
         }
     }
 
@@ -213,12 +208,11 @@ export class SelectEntityModeController extends ModeController {
         ev: CanvasPointerEvent,
         entity: Entity,
     ) {
-        const previousSelectedEntities = getSelectedEntityIds(
-            app.appStateStore.getState().mode,
-        );
+        const previousSelectedEntities =
+            app.canvasStateStore.getState().selectedEntityIds;
 
-        if (!ev.shiftKey) app.unselectAll();
-        app.select(entity.props.id);
+        if (!ev.shiftKey) app.canvasStateStore.unselectAll();
+        app.canvasStateStore.select(entity.props.id);
 
         setupSelectionTransformPointerEventHandlers(
             app,
@@ -382,10 +376,9 @@ export class SelectEntityModeController extends ModeController {
         margin = 8,
     ): HandleType | null {
         const marginInCanvas = margin / app.viewportStore.getState().scale;
-        const selectedEntities = getSelectedEntities(
-            app.appStateStore.getState().mode,
-            app.canvasStateStore.getState(),
-        );
+        const selectedEntities = app.canvasStateStore
+            .getState()
+            .getSelectedEntities();
         if (
             selectedEntities.length === 1 &&
             selectedEntities[0] instanceof PathEntity
@@ -413,10 +406,9 @@ export class SelectEntityModeController extends ModeController {
             }
         }
 
-        const selectionRect = getSelectionRect(
-            app.appStateStore.getState().mode,
-            app.canvasStateStore.getState(),
-        );
+        const selectionRect = app.canvasStateStore
+            .getState()
+            .getSelectionRect();
         if (selectionRect === null) return null;
 
         const hitAreaX = testHitWithRange(
@@ -506,43 +498,6 @@ export class SelectEntityModeController extends ModeController {
 
         return null;
     }
-}
-
-export interface SelectEntityMode extends Mode {
-    type: "select-entity";
-    entityIds: Set<string>;
-}
-
-export function isSelectEntityMode(mode: Mode): mode is SelectEntityMode {
-    return mode.type === "select-entity";
-}
-
-export function createSelectEntityMode(
-    entityIds: Set<string>,
-): SelectEntityMode {
-    return { type: "select-entity", entityIds };
-}
-
-export function getSelectedEntityIds(mode: Mode): Set<string> {
-    if (!isSelectEntityMode(mode)) return new Set();
-    return mode.entityIds;
-}
-
-export function getSelectedEntities(mode: Mode, page: Page): Entity[] {
-    return Array.from(getSelectedEntityIds(mode)).map((id) => {
-        const entity = page.entities.get(id);
-        assert(entity !== undefined, `Entity ${id} not found`);
-        return entity;
-    });
-}
-
-export function getSelectionRect(mode: Mode, page: Page): Rect | null {
-    const selectedEntities = getSelectedEntities(mode, page);
-    if (selectedEntities.length === 0) return null;
-
-    return Rect.union(
-        selectedEntities.map((entity) => entity.getBoundingRect()),
-    );
 }
 
 export interface CornerRoundHandleData {

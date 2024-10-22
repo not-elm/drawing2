@@ -7,7 +7,6 @@ import {
 import type { SerializedEntity } from "../../../core/EntityConverter";
 import { Graph, type GraphEdge, GraphNode } from "../../../core/Graph";
 import type { JSONObject } from "../../../core/JSONObject";
-import { createSelectPathMode } from "../../../core/SelectPathModeController";
 import { assert } from "../../../lib/assert";
 import { Line } from "../../../lib/geo/Line";
 import { Point } from "../../../lib/geo/Point";
@@ -25,6 +24,7 @@ import {
 import { PROPERTY_KEY_STROKE_WIDTH } from "../../property/StrokeWidth";
 
 import { getMaxCornerRadius } from "../../../core/SelectEntityModeController";
+import { SelectPathModeController } from "../../../core/SelectPathModeController";
 
 export const PROPERTY_KEY_CORNER_RADIUS = "cornerRadius";
 
@@ -195,7 +195,9 @@ export class PathEntity extends Entity<Props> {
 
     onTap(app: App, ev: EntityTapEvent) {
         if (ev.previousSelectedEntities.has(this.props.id)) {
-            app.setMode(createSelectPathMode(this.props.id));
+            app.canvasStateStore.unselectAll();
+            app.canvasStateStore.select(this.props.id);
+            app.setMode(SelectPathModeController.MODE_NAME);
         }
         // if (
         //     ev.previousSelectedEntities.size === 1 &&

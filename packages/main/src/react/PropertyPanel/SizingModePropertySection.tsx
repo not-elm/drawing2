@@ -1,3 +1,4 @@
+import { NewTextModeController } from "../../default/mode/NewTextModeController";
 import {
     PROPERTY_KEY_SIZING_MODE,
     type SizingMode,
@@ -13,12 +14,15 @@ export function SizingModePropertySection() {
     const selectedValue = useSelectedPropertyValue(PROPERTY_KEY_SIZING_MODE);
 
     const handleClick = (sizingMode: SizingMode) => {
-        app.updateProperty(PROPERTY_KEY_SIZING_MODE, sizingMode);
+        app.updatePropertyForSelectedEntities(
+            PROPERTY_KEY_SIZING_MODE,
+            sizingMode,
+        );
         app.defaultPropertyStore.set(PROPERTY_KEY_SIZING_MODE, sizingMode);
     };
 
     const visible = useVisibleFlag({
-        modes: ["new-text"],
+        modes: [NewTextModeController.MODE_NAME],
         propertyKeys: [PROPERTY_KEY_SIZING_MODE],
     });
     if (!visible) return null;

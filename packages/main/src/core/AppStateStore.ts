@@ -1,18 +1,16 @@
 import type * as csstype from "csstype";
 import { Store } from "../lib/Store";
-
-import type { Mode } from "./ModeController";
-import { createSelectEntityMode } from "./SelectEntityModeController";
+import { SelectEntityModeController } from "./SelectEntityModeController";
 
 interface AppState {
-    readonly mode: Mode;
+    readonly mode: string;
     readonly cursor: csstype.Property.Cursor;
 }
 
 export class AppStateStore extends Store<AppState> {
     constructor() {
         super({
-            mode: createSelectEntityMode(new Set()),
+            mode: SelectEntityModeController.MODE_NAME,
             cursor: "default",
         });
     }
@@ -21,7 +19,7 @@ export class AppStateStore extends Store<AppState> {
         this.setState({ ...this.state, cursor });
     }
 
-    setMode(mode: Mode) {
+    setMode(mode: string) {
         this.setState({ ...this.state, mode });
     }
 }

@@ -5,12 +5,8 @@ import { Point } from "../lib/geo/Point";
 import { randomId } from "../lib/randomId";
 import type { App } from "./App";
 import { type GraphEdge, GraphNode } from "./Graph";
-import {
-    type CanvasPointerEvent,
-    type Mode,
-    ModeController,
-} from "./ModeController";
-import { createSelectEntityMode } from "./SelectEntityModeController";
+import { type CanvasPointerEvent, ModeController } from "./ModeController";
+import { SelectEntityModeController } from "./SelectEntityModeController";
 import { SelectPathModeStateStore } from "./SelectPathModeStateStore";
 import { setupMoveNodesPointerEventHandlers } from "./setupMoveNodesPointerEventHandlers";
 
@@ -18,16 +14,16 @@ const NODE_CONTROL_HIT_AREA_RADIUS = 16;
 const EDGE_CONTROL_HIT_AREA_WIDTH = 16;
 
 export class SelectPathModeController extends ModeController {
+    static readonly MODE_NAME = "select-path";
+
     readonly store = new SelectPathModeStateStore();
 
     onRegistered(app: App) {
         app.keyboard.addBinding({
             key: "Escape",
-            mode: ["select-path"],
+            mode: [SelectPathModeController.MODE_NAME],
             action: (app, ev) => {
-                const mode = app.appStateStore.getState().mode;
-                assert(isSelectPathMode(mode), `Invalid mode: ${mode.type}`);
-                app.setMode(createSelectEntityMode(new Set(mode.entityId)));
+                app.setMode(SelectEntityModeController.MODE_NAME);
             },
         });
     }
@@ -83,9 +79,9 @@ export class SelectPathModeController extends ModeController {
     onCanvasDoubleClick(app: App, ev: CanvasPointerEvent) {
         const entity = this.getPathEntity(app);
 
-        app.setMode(createSelectEntityMode(new Set(entity.props.id)));
-        app.unselectAll();
-        app.select(entity.props.id);
+        app.setMode(SelectEntityModeController.MODE_NAME);
+        app.canvasStateStore.unselectAll();
+        app.canvasStateStore.select(entity.props.id);
         return;
     }
 
@@ -155,28 +151,16 @@ export class SelectPathModeController extends ModeController {
 
     private getPathEntity(app: App): PathEntity {
         const mode = app.appStateStore.getState().mode;
-        assert(isSelectPathMode(mode), `Invalid mode: ${mode.type}`);
+        assert(
+            mode === SelectPathModeController.MODE_NAME,
+            `Invalid mode: ${mode}`,
+        );
 
-        const entity = app.canvasStateStore
-            .getState()
-            .entities.get(mode.entityId);
+        const entity = app.canvasStateStore.getState().getSelectedEntities()[0];
         assert(entity instanceof PathEntity, `Invalid entity: ${entity}`);
 
         return entity;
     }
-}
-
-interface SelectPathMode extends Mode {
-    type: "select-path";
-    entityId: string;
-}
-
-export function isSelectPathMode(mode: Mode): mode is SelectPathMode {
-    return mode.type === "select-path";
-}
-
-export function createSelectPathMode(entityId: string): SelectPathMode {
-    return { type: "select-path", entityId };
 }
 
 export type Control =

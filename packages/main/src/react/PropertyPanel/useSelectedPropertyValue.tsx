@@ -1,7 +1,4 @@
-import {
-    getSelectedEntities,
-    isSelectEntityMode,
-} from "../../core/SelectEntityModeController";
+import { SelectEntityModeController } from "../../core/SelectEntityModeController";
 import type { ColorId } from "../../default/property/Colors";
 import { isNotNullish } from "../../lib/isNullish";
 import { useStore } from "../hooks/useStore";
@@ -11,13 +8,14 @@ export function useSelectedPropertyValue<T = unknown>(
     propertyKey: string,
 ): T | null {
     const app = useApp();
-    const canvasState = useStore(app.canvasStateStore);
     const defaultProperties = useStore(app.defaultPropertyStore);
     const appState = useStore(app.appStateStore);
     const mode = appState.mode;
-    if (!isSelectEntityMode(mode)) return null;
+    if (mode !== SelectEntityModeController.MODE_NAME) return null;
 
-    const selectedEntities = getSelectedEntities(mode, canvasState);
+    const selectedEntities = app.canvasStateStore
+        .getState()
+        .getSelectedEntities();
 
     const values = new Set(
         selectedEntities

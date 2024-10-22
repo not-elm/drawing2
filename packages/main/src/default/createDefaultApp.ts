@@ -12,10 +12,22 @@ import { syncWithLocalStorage } from "./syncWithLocalStorage";
 export function createDefaultApp(): App {
     const app = new App();
 
-    app.addModeController("new-shape", new NewShapeModeController())
-        .addModeController("new-path", new NewPathModeController())
-        .addModeController("new-text", new NewTextModeController())
-        .addModeController("edit-text", new EditTextModeController())
+    app.addModeController(
+        NewShapeModeController.MODE_NAME,
+        new NewShapeModeController(),
+    )
+        .addModeController(
+            NewPathModeController.MODE_NAME,
+            new NewPathModeController(),
+        )
+        .addModeController(
+            NewTextModeController.MODE_NAME,
+            new NewTextModeController(),
+        )
+        .addModeController(
+            EditTextModeController.MODE_NAME,
+            new EditTextModeController(),
+        )
         .registerEntityView("path", PathView)
         .registerEntityConverter("path", {
             deserialize(data) {

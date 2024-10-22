@@ -25,7 +25,7 @@ export function computeSnapEntry2D(
     page: Page,
     viewport: Viewport,
     point: Point,
-    ignoreEntityIds: Set<string>,
+    ignoreEntityIds: ReadonlySet<string>,
     threshold = 16,
 ): SnapEntry2D {
     let bestXPoints: Point[] = [];

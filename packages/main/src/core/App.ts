@@ -10,12 +10,8 @@ import { type EntityConverter, EntityConverterMap } from "./EntityConverter";
 import { GestureRecognizer } from "./GestureRecognizer";
 import { HistoryManager } from "./HistoryManager";
 import { KeyboardManager } from "./KeyboardManager";
-import type { Mode, ModeChangeEvent, ModeController } from "./ModeController";
-import {
-    SelectEntityModeController,
-    createSelectEntityMode,
-    getSelectedEntityIds,
-} from "./SelectEntityModeController";
+import type { ModeChangeEvent, ModeController } from "./ModeController";
+import { SelectEntityModeController } from "./SelectEntityModeController";
 import { SelectPathModeController } from "./SelectPathModeController";
 import { SnapGuideStore } from "./SnapGuideStore";
 import { ViewportStore } from "./ViewportStore";
@@ -41,8 +37,14 @@ export class App {
     readonly snapGuideStore = new SnapGuideStore();
 
     constructor() {
-        this.addModeController("select-entity", this.defaultModeController);
-        this.addModeController("select-path", new SelectPathModeController());
+        this.addModeController(
+            SelectEntityModeController.MODE_NAME,
+            this.defaultModeController,
+        );
+        this.addModeController(
+            SelectPathModeController.MODE_NAME,
+            new SelectPathModeController(),
+        );
 
         this.keyboard.addBinding({
             key: "z",
@@ -113,9 +115,8 @@ export class App {
 
     getModeController(): ModeController {
         return (
-            this.getModeControllerByType(
-                this.appStateStore.getState().mode.type,
-            ) ?? this.defaultModeController
+            this.getModeControllerByType(this.appStateStore.getState().mode) ??
+            this.defaultModeController
         );
     }
 
@@ -123,7 +124,7 @@ export class App {
         return this.modeControllers.get(type) ?? null;
     }
 
-    setMode(newMode: Mode) {
+    setMode(newMode: string) {
         let aborted = false;
         const ev: ModeChangeEvent = {
             oldMode: this.appStateStore.getState().mode,
@@ -134,7 +135,7 @@ export class App {
         };
 
         const oldModeController = this.getModeController();
-        const newModeController = this.getModeControllerByType(newMode.type);
+        const newModeController = this.getModeControllerByType(newMode);
         if (newModeController === null) {
             return;
         }
@@ -186,9 +187,8 @@ export class App {
     // Edit
 
     deleteSelectedEntities() {
-        const selectedEntityIds = getSelectedEntityIds(
-            this.appStateStore.getState().mode,
-        );
+        const selectedEntityIds =
+            this.canvasStateStore.getState().selectedEntityIds;
         if (selectedEntityIds.size === 0) return;
 
         this.canvasStateStore.edit((draft) => {
@@ -196,10 +196,9 @@ export class App {
         });
     }
 
-    updateProperty(key: string, value: unknown) {
-        const selectedEntityIds = getSelectedEntityIds(
-            this.appStateStore.getState().mode,
-        );
+    updatePropertyForSelectedEntities(key: string, value: unknown) {
+        const selectedEntityIds =
+            this.canvasStateStore.getState().selectedEntityIds;
         if (selectedEntityIds.size === 0) {
             return;
         }
@@ -211,9 +210,8 @@ export class App {
     // Ordering
 
     bringToFront() {
-        const selectedEntityIds = getSelectedEntityIds(
-            this.appStateStore.getState().mode,
-        );
+        const selectedEntityIds =
+            this.canvasStateStore.getState().selectedEntityIds;
         if (selectedEntityIds.size === 0) return;
 
         this.canvasStateStore.edit((draft) =>
@@ -222,9 +220,8 @@ export class App {
     }
 
     bringForward() {
-        const selectedEntityIds = getSelectedEntityIds(
-            this.appStateStore.getState().mode,
-        );
+        const selectedEntityIds =
+            this.canvasStateStore.getState().selectedEntityIds;
         if (selectedEntityIds.size === 0) return;
 
         this.canvasStateStore.edit((draft) =>
@@ -233,9 +230,8 @@ export class App {
     }
 
     sendBackward() {
-        const selectedEntityIds = getSelectedEntityIds(
-            this.appStateStore.getState().mode,
-        );
+        const selectedEntityIds =
+            this.canvasStateStore.getState().selectedEntityIds;
         if (selectedEntityIds.size === 0) return;
 
         this.canvasStateStore.edit((draft) =>
@@ -244,9 +240,8 @@ export class App {
     }
 
     sendToBack() {
-        const selectedEntityIds = getSelectedEntityIds(
-            this.appStateStore.getState().mode,
-        );
+        const selectedEntityIds =
+            this.canvasStateStore.getState().selectedEntityIds;
         if (selectedEntityIds.size === 0) return;
 
         this.canvasStateStore.edit((draft) =>
@@ -254,53 +249,15 @@ export class App {
         );
     }
 
-    // Selection
-
-    select(entityId: string) {
-        const entityIds = new Set(
-            getSelectedEntityIds(this.appStateStore.getState().mode),
-        );
-        entityIds.add(entityId);
-        return this.setMode(createSelectEntityMode(entityIds));
-    }
-
-    unselect(entityId: string) {
-        const entityIds = new Set(
-            getSelectedEntityIds(this.appStateStore.getState().mode),
-        );
-        if (!entityIds.has(entityId)) return;
-        entityIds.delete(entityId);
-        return this.setMode(createSelectEntityMode(entityIds));
-    }
-
-    selectAll() {
-        return this.setMode(
-            createSelectEntityMode(
-                new Set(this.canvasStateStore.getState().entityIds),
-            ),
-        );
-    }
-
-    unselectAll() {
-        if (this.appStateStore.getState().mode.type !== "select-entity") return;
-
-        return this.setMode(createSelectEntityMode(new Set()));
-    }
-
-    setSelectedEntityIds(entityIds: Iterable<string>) {
-        return this.setMode(createSelectEntityMode(new Set(entityIds)));
-    }
-
     // Clipboard
 
     copy() {
-        const selectedEntityIds = getSelectedEntityIds(
-            this.appStateStore.getState().mode,
-        );
+        const selectedEntityIds =
+            this.canvasStateStore.getState().selectedEntityIds;
         if (selectedEntityIds.size === 0) return;
 
         this.clipboardService.copy(
-            this.canvasStateStore.getState(),
+            this.canvasStateStore.getState().page,
             selectedEntityIds,
         );
     }
@@ -317,7 +274,9 @@ export class App {
             draft.setEntities(entities);
             // draft.addDependencies(dependencies);
         });
-        this.setSelectedEntityIds(entities.map((entity) => entity.props.id));
+        this.canvasStateStore.setSelectedEntityIds(
+            entities.map((entity) => entity.props.id),
+        );
 
         // Copy pasted entities so that next paste operation will
         // create a new copy of entities in different position
@@ -410,7 +369,9 @@ export class App {
     }
 
     handleEntityResize(entityId: string, width: number, height: number) {
-        const entity = this.canvasStateStore.getState().entities.get(entityId);
+        const entity = this.canvasStateStore
+            .getState()
+            .page.entities.get(entityId);
         assert(entity !== undefined, `Entity ${entityId} is not found`);
 
         entity.onViewResize(this, width, height);

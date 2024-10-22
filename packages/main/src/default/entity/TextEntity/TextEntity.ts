@@ -98,7 +98,7 @@ export class TextEntity extends Entity<{
             ev.previousSelectedEntities.size === 1 &&
             ev.previousSelectedEntities.has(this.props.id)
         ) {
-            app.setMode(EditTextModeController.createMode(this.props.id));
+            app.setMode(EditTextModeController.MODE_NAME);
         }
     }
 
@@ -115,9 +115,12 @@ export class TextEntity extends Entity<{
             this.props.sizingMode === "content" ? width : this.props.rect.width;
         const newHeight = height;
 
-        app.updateProperty(
-            "rect",
-            Rect.fromSize(this.props.rect.topLeft, newWidth, newHeight),
+        app.canvasStateStore.edit((draft) =>
+            draft.updateProperty(
+                [this.props.id],
+                "rect",
+                Rect.fromSize(this.props.rect.topLeft, newWidth, newHeight),
+            ),
         );
     }
 }

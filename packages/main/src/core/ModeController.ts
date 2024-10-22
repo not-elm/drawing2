@@ -1,12 +1,6 @@
 import type { Point } from "../lib/geo/Point";
 import type { App } from "./App";
 
-export interface Mode {
-    type: string;
-
-    [key: string]: unknown;
-}
-
 export class ModeController {
     onRegistered(app: App): void {}
     onBeforeExitMode(app: App, ev: ModeChangeEvent): void {}
@@ -28,7 +22,7 @@ export interface CanvasPointerEvent {
 }
 
 export interface ModeChangeEvent {
-    oldMode: Mode;
-    newMode: Mode;
+    oldMode: string;
+    newMode: string;
     abort: () => void;
 }

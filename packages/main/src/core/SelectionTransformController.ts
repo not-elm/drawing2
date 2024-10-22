@@ -10,10 +10,6 @@ import {
 import type { App } from "./App";
 import type { Entity } from "./Entity";
 import {
-    getSelectedEntities,
-    getSelectedEntityIds,
-} from "./SelectEntityModeController";
-import {
     type SnapEntry,
     type SnapGuide,
     computeSnapEntry2D,
@@ -43,10 +39,9 @@ export abstract class SelectionTransformController {
         public readonly app: App,
         protected readonly initialPoint: Point,
     ) {
-        this.originalEntities = getSelectedEntities(
-            app.appStateStore.getState().mode,
-            app.canvasStateStore.getState(),
-        );
+        this.originalEntities = app.canvasStateStore
+            .getState()
+            .getSelectedEntities();
     }
 
     /**
@@ -123,11 +118,7 @@ export abstract class SelectionTransformController {
         this.app.canvasStateStore.edit((draft) => {
             draft.setEntities(this.originalEntities);
             draft.transformEntities(
-                [
-                    ...getSelectedEntityIds(
-                        this.app.appStateStore.getState().mode,
-                    ),
-                ],
+                [...this.app.canvasStateStore.getState().selectedEntityIds],
                 transform,
             );
         });
@@ -142,7 +133,7 @@ export abstract class SelectionTransformController {
         for (const entityId of entityIds) {
             const entity = this.app.canvasStateStore
                 .getState()
-                .entities.get(entityId);
+                .page.entities.get(entityId);
             assert(entity !== undefined, `Entity must exist: ${entityId}`);
 
             entity.onTransformEnd(this.app);
@@ -169,10 +160,10 @@ export abstract class SelectionTransformController {
         };
         for (const snapPoint of snapPoints.x) {
             const entry = computeSnapEntry2D(
-                this.app.canvasStateStore.getState(),
+                this.app.canvasStateStore.getState().page,
                 this.app.viewportStore.getState(),
                 transform.apply(snapPoint),
-                getSelectedEntityIds(this.app.appStateStore.getState().mode),
+                this.app.canvasStateStore.getState().selectedEntityIds,
                 SNAP_DISTANCE_THRESHOLD,
             );
             if (entry.x.distance < bestEntryX.distance) {
@@ -182,10 +173,10 @@ export abstract class SelectionTransformController {
 
         for (const snapPoint of snapPoints.y) {
             const entry = computeSnapEntry2D(
-                this.app.canvasStateStore.getState(),
+                this.app.canvasStateStore.getState().page,
                 this.app.viewportStore.getState(),
                 transform.apply(snapPoint),
-                getSelectedEntityIds(this.app.appStateStore.getState().mode),
+                this.app.canvasStateStore.getState().selectedEntityIds,
                 SNAP_DISTANCE_THRESHOLD,
             );
             if (entry.y.distance < bestEntryY.distance) {
@@ -221,7 +212,7 @@ export abstract class SelectionTransformController {
 
     private computeSnapGuide(snapPoints: SnapPoints): SnapGuide {
         const canvasState = this.app.canvasStateStore.getState();
-        const page = canvasState;
+        const { page } = canvasState;
         const viewport = this.app.viewportStore.getState();
 
         const snapGuide: SnapGuide = {
@@ -233,7 +224,7 @@ export abstract class SelectionTransformController {
                 page,
                 viewport,
                 snapPoint,
-                getSelectedEntityIds(this.app.appStateStore.getState().mode),
+                this.app.canvasStateStore.getState().selectedEntityIds,
                 1,
             );
             if (!snapEntry2D.x.snapped) {
@@ -264,7 +255,7 @@ export abstract class SelectionTransformController {
                 page,
                 viewport,
                 snapPoint,
-                getSelectedEntityIds(this.app.appStateStore.getState().mode),
+                this.app.canvasStateStore.getState().selectedEntityIds,
                 1,
             );
             if (!snapEntry2D.y.snapped) {

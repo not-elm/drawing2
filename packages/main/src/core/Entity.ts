@@ -132,5 +132,5 @@ export interface EntityTapEvent extends CanvasPointerEvent {
      * Entity IDs that are already selected before this tap event happened.
      * Entities that are newly selected by this tap event are not included.
      */
-    previousSelectedEntities: Set<string>;
+    previousSelectedEntities: ReadonlySet<string>;
 }

@@ -1,5 +1,4 @@
 import type { LiHTMLAttributes, ReactNode } from "react";
-import type { Mode } from "../core/ModeController";
 import { Button } from "./Button";
 import { Card } from "./Card";
 import { useStore } from "./hooks/useStore";
@@ -39,7 +38,7 @@ function ToolBarButton({
     mode,
     children,
 }: {
-    mode: Mode;
+    mode: string;
     children?: ReactNode;
 }) {
     const app = useApp();
@@ -49,7 +48,7 @@ function ToolBarButton({
         <ToolBarItem>
             <Button
                 css={{ width: 48, height: 48 }}
-                aria-checked={appState.mode.type === mode.type}
+                aria-checked={appState.mode === mode}
                 onPointerDown={() => app.setMode(mode)}
             >
                 {children}

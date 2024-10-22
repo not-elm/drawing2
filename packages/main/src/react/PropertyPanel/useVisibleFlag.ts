@@ -1,7 +1,4 @@
-import {
-    getSelectedEntities,
-    isSelectEntityMode,
-} from "../../core/SelectEntityModeController";
+import { SelectEntityModeController } from "../../core/SelectEntityModeController";
 import { useStore } from "../hooks/useStore";
 import { useApp } from "../useApp";
 
@@ -13,15 +10,14 @@ export function useVisibleFlag(
 ) {
     const { modes = [], propertyKeys = [] } = condition;
     const app = useApp();
-    const canvasState = useStore(app.canvasStateStore);
     const { mode } = useStore(app.appStateStore);
-    if (!isSelectEntityMode(mode)) return false;
+    if (mode !== SelectEntityModeController.MODE_NAME) return false;
 
-    const selectedEntities = getSelectedEntities(mode, canvasState);
+    const selectedEntities = app.canvasStateStore
+        .getState()
+        .getSelectedEntities();
 
-    if (modes.some((m) => mode.type === m)) {
-        return true;
-    }
+    if (modes.includes(mode)) return true;
 
     if (
         selectedEntities.some((entity) =>
