@@ -53,6 +53,12 @@ export interface KeyboardBinging {
     mode?: string[];
 
     /**
+     * If true, the binding will be active even in `edit-text` mode.
+     * Default is `false`.
+     */
+    enableInEditTextMode?: boolean;
+
+    /**
      * The action to be triggered when the binding is activated.
      * @param app The {@link App} instance
      * @param ev The {@link CanvasKeyboardEvent} instance
@@ -79,8 +85,16 @@ export class KeyboardManager {
      */
     handleKeyDown(ev: KeyboardEvent) {
         const platform = getPlatform();
+        const mode = this.app.appStateStore.getState().mode;
+
         for (const binding of this.bindings) {
             if (binding.key !== ev.key) continue;
+            if (
+                binding.enableInEditTextMode !== true &&
+                mode.type === "edit-text"
+            ) {
+                continue;
+            }
             if ("ctrlKey" in binding && ev.ctrlKey !== binding.ctrlKey)
                 continue;
             if ("shiftKey" in binding && ev.shiftKey !== binding.shiftKey)
@@ -89,7 +103,6 @@ export class KeyboardManager {
             if ("metaKey" in binding && ev.metaKey !== binding.metaKey)
                 continue;
             if (binding.mode !== undefined && binding.mode.length > 0) {
-                const mode = this.app.appStateStore.getState().mode;
                 if (!binding.mode.includes(mode.type)) continue;
             }
             if (binding.platform !== undefined && binding.platform.length > 0) {
