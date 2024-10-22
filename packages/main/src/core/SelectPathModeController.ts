@@ -6,6 +6,7 @@ import { randomId } from "../lib/randomId";
 import type { App } from "./App";
 import { type GraphEdge, GraphNode } from "./Graph";
 import { type CanvasPointerEvent, ModeController } from "./ModeController";
+import { SelectEntityModeController } from "./SelectEntityModeController";
 import { SelectPathModeStateStore } from "./SelectPathModeStateStore";
 import { setupMoveNodesPointerEventHandlers } from "./setupMoveNodesPointerEventHandlers";
 
@@ -13,14 +14,16 @@ const NODE_CONTROL_HIT_AREA_RADIUS = 16;
 const EDGE_CONTROL_HIT_AREA_WIDTH = 16;
 
 export class SelectPathModeController extends ModeController {
+    static readonly MODE_NAME = "select-path";
+
     readonly store = new SelectPathModeStateStore();
 
     onRegistered(app: App) {
         app.keyboard.addBinding({
             key: "Escape",
-            mode: ["select-path"],
+            mode: [SelectPathModeController.MODE_NAME],
             action: (app, ev) => {
-                app.setMode("select-entity");
+                app.setMode(SelectEntityModeController.MODE_NAME);
             },
         });
     }
@@ -76,7 +79,7 @@ export class SelectPathModeController extends ModeController {
     onCanvasDoubleClick(app: App, ev: CanvasPointerEvent) {
         const entity = this.getPathEntity(app);
 
-        app.setMode("select-entity");
+        app.setMode(SelectEntityModeController.MODE_NAME);
         app.canvasStateStore.unselectAll();
         app.canvasStateStore.select(entity.props.id);
         return;
@@ -148,7 +151,10 @@ export class SelectPathModeController extends ModeController {
 
     private getPathEntity(app: App): PathEntity {
         const mode = app.appStateStore.getState().mode;
-        assert(mode === "select-path", `Invalid mode: ${mode}`);
+        assert(
+            mode === SelectPathModeController.MODE_NAME,
+            `Invalid mode: ${mode}`,
+        );
 
         const entity = app.canvasStateStore.getState().getSelectedEntities()[0];
         assert(entity instanceof PathEntity, `Invalid entity: ${entity}`);

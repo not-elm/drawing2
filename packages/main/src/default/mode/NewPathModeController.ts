@@ -7,6 +7,7 @@ import {
     ModeController,
 } from "../../core/ModeController";
 import type { Page } from "../../core/Page";
+import { SelectEntityModeController } from "../../core/SelectEntityModeController";
 import { setupMoveNodesPointerEventHandlers } from "../../core/setupMoveNodesPointerEventHandlers";
 import { Line } from "../../lib/geo/Line";
 import { translate } from "../../lib/geo/TransformMatrix";
@@ -22,6 +23,8 @@ import { PROPERTY_KEY_STROKE_STYLE } from "../property/StrokeStyle";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../property/StrokeWidth";
 
 export class NewPathModeController extends ModeController {
+    static readonly MODE_NAME = "new-path";
+
     onRegistered(app: App) {
         app.keyboard.addBinding({
             key: "a",
@@ -29,21 +32,21 @@ export class NewPathModeController extends ModeController {
             metaKey: false,
             ctrlKey: false,
             action: (app, ev) => {
-                app.setMode("new-path");
+                app.setMode(NewPathModeController.MODE_NAME);
             },
         });
         app.keyboard.addBinding({
             key: "l",
             action: (app, ev) => {
-                app.setMode("new-path");
+                app.setMode(NewPathModeController.MODE_NAME);
             },
         });
         app.keyboard.addBinding({
             key: "Escape",
-            mode: ["new-path"],
+            mode: [NewPathModeController.MODE_NAME],
             action: (app, ev) => {
                 app.canvasStateStore.unselectAll();
-                app.setMode("select-entity");
+                app.setMode(SelectEntityModeController.MODE_NAME);
             },
         });
     }
@@ -74,7 +77,7 @@ export class NewPathModeController extends ModeController {
             );
         }
 
-        app.setMode("select-entity");
+        app.setMode(SelectEntityModeController.MODE_NAME);
         app.canvasStateStore.unselectAll();
         app.canvasStateStore.select(pathEntity.props.id);
 

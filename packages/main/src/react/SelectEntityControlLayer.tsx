@@ -23,11 +23,10 @@ function SelectEntityControlLayerInner({
     const app = useApp();
     const appState = useStore(app.appStateStore);
     const viewport = useStore(app.viewportStore);
-    const canvasState = useStore(app.canvasStateStore);
     const { brushRect, visibleCornerRoundHandles } = useStore(
         modeController.store,
     );
-    if (appState.mode !== "select-entity") return null;
+    if (appState.mode !== SelectEntityModeController.MODE_NAME) return null;
 
     const entities = app.canvasStateStore.getState().getSelectedEntities();
     const selectionRect = app.canvasStateStore.getState().getSelectionRect();

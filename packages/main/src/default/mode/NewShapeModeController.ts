@@ -5,6 +5,7 @@ import {
     type CanvasPointerEvent,
     ModeController,
 } from "../../core/ModeController";
+import { SelectEntityModeController } from "../../core/SelectEntityModeController";
 import { ScaleSelectionTransformController } from "../../core/SelectionTransformController";
 import { setupSelectionTransformPointerEventHandlers } from "../../core/setupSelectionTransformPointerEventHandlers";
 import { Rect } from "../../lib/geo/Rect";
@@ -20,19 +21,21 @@ import { PROPERTY_KEY_STROKE_STYLE } from "../property/StrokeStyle";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../property/StrokeWidth";
 
 export class NewShapeModeController extends ModeController {
+    static readonly MODE_NAME = "new-shape";
+
     onRegistered(app: App) {
         app.keyboard.addBinding({
             key: "r",
             action: (app, ev) => {
-                app.setMode("new-shape");
+                app.setMode(NewShapeModeController.MODE_NAME);
             },
         });
         app.keyboard.addBinding({
             key: "Escape",
-            mode: ["new-shape"],
+            mode: [NewShapeModeController.MODE_NAME],
             action: (app, ev) => {
                 app.canvasStateStore.unselectAll();
-                app.setMode("select-entity");
+                app.setMode(SelectEntityModeController.MODE_NAME);
             },
         });
     }
@@ -44,7 +47,7 @@ export class NewShapeModeController extends ModeController {
         app.historyManager.pause();
         const shape = this.insertNewShape(app, new Rect({ p0, p1 }));
 
-        app.setMode("select-entity");
+        app.setMode(SelectEntityModeController.MODE_NAME);
         app.canvasStateStore.unselectAll();
         app.canvasStateStore.select(shape.props.id);
 

@@ -37,8 +37,14 @@ export class App {
     readonly snapGuideStore = new SnapGuideStore();
 
     constructor() {
-        this.addModeController("select-entity", this.defaultModeController);
-        this.addModeController("select-path", new SelectPathModeController());
+        this.addModeController(
+            SelectEntityModeController.MODE_NAME,
+            this.defaultModeController,
+        );
+        this.addModeController(
+            SelectPathModeController.MODE_NAME,
+            new SelectPathModeController(),
+        );
 
         this.keyboard.addBinding({
             key: "z",

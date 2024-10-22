@@ -24,6 +24,7 @@ import {
 import { PROPERTY_KEY_STROKE_WIDTH } from "../../property/StrokeWidth";
 
 import { getMaxCornerRadius } from "../../../core/SelectEntityModeController";
+import { SelectPathModeController } from "../../../core/SelectPathModeController";
 
 export const PROPERTY_KEY_CORNER_RADIUS = "cornerRadius";
 
@@ -196,7 +197,7 @@ export class PathEntity extends Entity<Props> {
         if (ev.previousSelectedEntities.has(this.props.id)) {
             app.canvasStateStore.unselectAll();
             app.canvasStateStore.select(this.props.id);
-            app.setMode("select-path");
+            app.setMode(SelectPathModeController.MODE_NAME);
         }
         // if (
         //     ev.previousSelectedEntities.size === 1 &&

@@ -25,7 +25,7 @@ export function SelectPathControlLayerInner({
     const { highlightedItemIds, highlightCenterOfEdgeHandle } = useStore(
         modeController.store,
     );
-    if (appState.mode !== "select-path") return null;
+    if (appState.mode !== SelectPathModeController.MODE_NAME) return null;
 
     const entityId = canvasState.selectedEntityIds.values().next().value;
     assert(entityId !== undefined, "Entity not selected");

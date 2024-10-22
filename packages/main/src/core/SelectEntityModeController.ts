@@ -2,6 +2,7 @@ import {
     PROPERTY_KEY_CORNER_RADIUS,
     PathEntity,
 } from "../default/entity/PathEntity/PathEntity";
+import { NewTextModeController } from "../default/mode/NewTextModeController";
 import { Point } from "../lib/geo/Point";
 import type { Rect } from "../lib/geo/Rect";
 import { normalizeAngle } from "../lib/normalizeAngle";
@@ -20,6 +21,8 @@ import { setupCornerRadiusHandlePointerEventHandlers } from "./setupCornerRadius
 import { setupSelectionTransformPointerEventHandlers } from "./setupSelectionTransformPointerEventHandlers";
 
 export class SelectEntityModeController extends ModeController {
+    static readonly MODE_NAME = "select-entity";
+
     readonly store = new SelectEntityModeStateStore();
 
     onRegistered(app: App): void {
@@ -27,7 +30,7 @@ export class SelectEntityModeController extends ModeController {
             key: "a",
             metaKey: true,
             action: (app, ev) => {
-                app.setMode("select-entity");
+                app.setMode(SelectEntityModeController.MODE_NAME);
                 app.canvasStateStore.selectAll();
             },
         });
@@ -35,28 +38,28 @@ export class SelectEntityModeController extends ModeController {
             key: "a",
             ctrlKey: true,
             action: (app, ev) => {
-                app.setMode("select-entity");
+                app.setMode(SelectEntityModeController.MODE_NAME);
                 app.canvasStateStore.selectAll();
             },
         });
 
         app.keyboard.addBinding({
             key: "Escape",
-            mode: ["select-entity"],
+            mode: [SelectEntityModeController.MODE_NAME],
             action: (app, ev) => {
                 app.canvasStateStore.unselectAll();
             },
         });
         app.keyboard.addBinding({
             key: "Backspace",
-            mode: ["select-entity"],
+            mode: [SelectEntityModeController.MODE_NAME],
             action: (app, ev) => {
                 app.deleteSelectedEntities();
             },
         });
         app.keyboard.addBinding({
             key: "Delete",
-            mode: ["select-entity"],
+            mode: [SelectEntityModeController.MODE_NAME],
             action: (app, ev) => {
                 app.deleteSelectedEntities();
             },
@@ -87,7 +90,7 @@ export class SelectEntityModeController extends ModeController {
     }
 
     onCanvasDoubleClick(app: App, ev: CanvasPointerEvent) {
-        app.setMode("new-text");
+        app.setMode(NewTextModeController.MODE_NAME);
         app.getModeController().onCanvasPointerDown(app, ev);
     }
 

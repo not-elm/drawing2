@@ -1,3 +1,5 @@
+import { NewPathModeController } from "../../default/mode/NewPathModeController";
+import { NewShapeModeController } from "../../default/mode/NewShapeModeController";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../../default/property/StrokeWidth";
 import { Button } from "../Button";
 import { Card } from "../Card";
@@ -18,7 +20,10 @@ export function StrokeWidthPropertySection() {
     };
 
     const visible = useVisibleFlag({
-        modes: ["new-path", "new-shape"],
+        modes: [
+            NewPathModeController.MODE_NAME,
+            NewShapeModeController.MODE_NAME,
+        ],
         propertyKeys: [PROPERTY_KEY_STROKE_WIDTH],
     });
     if (!visible) return null;

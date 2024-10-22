@@ -1,3 +1,4 @@
+import { EditTextModeController } from "../default/mode/EditTextModeController";
 import type { App } from "./App";
 
 export interface KeyboardBinging {
@@ -89,7 +90,10 @@ export class KeyboardManager {
 
         for (const binding of this.bindings) {
             if (binding.key !== ev.key) continue;
-            if (binding.enableInEditTextMode !== true && mode === "edit-text") {
+            if (
+                binding.enableInEditTextMode !== true &&
+                mode === EditTextModeController.MODE_NAME
+            ) {
                 continue;
             }
             if ("ctrlKey" in binding && ev.ctrlKey !== binding.ctrlKey)

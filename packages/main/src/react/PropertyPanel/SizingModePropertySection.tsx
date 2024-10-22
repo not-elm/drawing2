@@ -1,3 +1,4 @@
+import { NewTextModeController } from "../../default/mode/NewTextModeController";
 import {
     PROPERTY_KEY_SIZING_MODE,
     type SizingMode,
@@ -21,7 +22,7 @@ export function SizingModePropertySection() {
     };
 
     const visible = useVisibleFlag({
-        modes: ["new-text"],
+        modes: [NewTextModeController.MODE_NAME],
         propertyKeys: [PROPERTY_KEY_SIZING_MODE],
     });
     if (!visible) return null;

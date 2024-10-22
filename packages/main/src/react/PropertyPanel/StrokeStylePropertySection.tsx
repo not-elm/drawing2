@@ -1,3 +1,5 @@
+import { NewPathModeController } from "../../default/mode/NewPathModeController";
+import { NewShapeModeController } from "../../default/mode/NewShapeModeController";
 import {
     PROPERTY_KEY_STROKE_STYLE,
     type StrokeStyle,
@@ -21,7 +23,10 @@ export function StrokeStylePropertySection() {
     };
 
     const visible = useVisibleFlag({
-        modes: ["new-path", "new-shape"],
+        modes: [
+            NewPathModeController.MODE_NAME,
+            NewShapeModeController.MODE_NAME,
+        ],
         propertyKeys: [PROPERTY_KEY_STROKE_STYLE],
     });
     if (!visible) return null;

@@ -1,4 +1,5 @@
 import { LinkToEdge } from "../core/Link";
+import { SelectEntityModeController } from "../core/SelectEntityModeController";
 import { assert } from "../lib/assert";
 import { Point } from "../lib/geo/Point";
 import { useStore } from "./hooks/useStore";
@@ -8,7 +9,7 @@ export function LinkGuideLayer() {
     const app = useApp();
     const canvasState = useStore(app.canvasStateStore);
     const mode = useStore(app.appStateStore).mode;
-    if (mode !== "select-entity") return null;
+    if (mode !== SelectEntityModeController.MODE_NAME) return null;
 
     if (canvasState.selectedEntityIds.size >= 2) return null;
 

@@ -1,5 +1,6 @@
 import { useApp } from "../useApp";
 
+import { NewShapeModeController } from "../../default/mode/NewShapeModeController";
 import {
     type ColorId,
     ColorPaletteBackground,
@@ -28,7 +29,7 @@ export function FillModePropertySection() {
     };
 
     const visible = useVisibleFlag({
-        modes: ["new-shape"],
+        modes: [NewShapeModeController.MODE_NAME],
         propertyKeys: [PROPERTY_KEY_FILL_STYLE],
     });
     if (!visible) return null;
