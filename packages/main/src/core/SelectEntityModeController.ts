@@ -9,11 +9,7 @@ import { testHitEntities } from "../lib/testHitEntities";
 import type { App } from "./App";
 import type { Entity } from "./Entity";
 import type { GraphNode } from "./Graph";
-import {
-    type CanvasPointerEvent,
-    type Mode,
-    ModeController,
-} from "./ModeController";
+import { type CanvasPointerEvent, ModeController } from "./ModeController";
 import { SelectEntityModeStateStore } from "./SelectEntityModeStateStore";
 import {
     ScaleSelectionTransformController,
@@ -31,7 +27,7 @@ export class SelectEntityModeController extends ModeController {
             key: "a",
             metaKey: true,
             action: (app, ev) => {
-                app.setMode({ type: "select-entity" });
+                app.setMode("select-entity");
                 app.canvasStateStore.selectAll();
             },
         });
@@ -39,7 +35,7 @@ export class SelectEntityModeController extends ModeController {
             key: "a",
             ctrlKey: true,
             action: (app, ev) => {
-                app.setMode({ type: "select-entity" });
+                app.setMode("select-entity");
                 app.canvasStateStore.selectAll();
             },
         });
@@ -91,7 +87,7 @@ export class SelectEntityModeController extends ModeController {
     }
 
     onCanvasDoubleClick(app: App, ev: CanvasPointerEvent) {
-        app.setMode({ type: "new-text" });
+        app.setMode("new-text");
         app.getModeController().onCanvasPointerDown(app, ev);
     }
 
@@ -499,18 +495,6 @@ export class SelectEntityModeController extends ModeController {
 
         return null;
     }
-}
-
-export interface SelectEntityMode extends Mode {
-    type: "select-entity";
-}
-
-export function isSelectEntityMode(mode: Mode): mode is SelectEntityMode {
-    return mode.type === "select-entity";
-}
-
-export function createSelectEntityMode(): SelectEntityMode {
-    return { type: "select-entity" };
 }
 
 export interface CornerRoundHandleData {

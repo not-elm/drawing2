@@ -77,16 +77,16 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                         }}
                     >
                         <ToolBar>
-                            <ToolBar.Button mode={{ type: "select-entity" }}>
+                            <ToolBar.Button mode="select-entity">
                                 Select
                             </ToolBar.Button>
-                            <ToolBar.Button mode={{ type: "new-shape" }}>
+                            <ToolBar.Button mode="new-shape">
                                 Rect
                             </ToolBar.Button>
-                            <ToolBar.Button mode={{ type: "new-path" }}>
+                            <ToolBar.Button mode="new-path">
                                 Line
                             </ToolBar.Button>
-                            <ToolBar.Button mode={{ type: "new-text" }}>
+                            <ToolBar.Button mode="new-text">
                                 Text
                             </ToolBar.Button>
                         </ToolBar>

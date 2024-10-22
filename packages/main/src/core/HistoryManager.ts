@@ -1,12 +1,11 @@
 import type { App } from "./App";
 import type { CanvasState } from "./CanvasStateStore";
-import type { Mode } from "./ModeController";
 
 const MAX_HISTORY_LENGTH = 1000;
 
 interface HistoryEntry {
     canvasState: CanvasState;
-    mode: Mode;
+    mode: string;
 }
 
 export class HistoryManager {

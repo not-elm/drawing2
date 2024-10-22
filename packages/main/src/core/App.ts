@@ -10,7 +10,7 @@ import { type EntityConverter, EntityConverterMap } from "./EntityConverter";
 import { GestureRecognizer } from "./GestureRecognizer";
 import { HistoryManager } from "./HistoryManager";
 import { KeyboardManager } from "./KeyboardManager";
-import type { Mode, ModeChangeEvent, ModeController } from "./ModeController";
+import type { ModeChangeEvent, ModeController } from "./ModeController";
 import { SelectEntityModeController } from "./SelectEntityModeController";
 import { SelectPathModeController } from "./SelectPathModeController";
 import { SnapGuideStore } from "./SnapGuideStore";
@@ -109,9 +109,8 @@ export class App {
 
     getModeController(): ModeController {
         return (
-            this.getModeControllerByType(
-                this.appStateStore.getState().mode.type,
-            ) ?? this.defaultModeController
+            this.getModeControllerByType(this.appStateStore.getState().mode) ??
+            this.defaultModeController
         );
     }
 
@@ -119,7 +118,7 @@ export class App {
         return this.modeControllers.get(type) ?? null;
     }
 
-    setMode(newMode: Mode) {
+    setMode(newMode: string) {
         let aborted = false;
         const ev: ModeChangeEvent = {
             oldMode: this.appStateStore.getState().mode,
@@ -130,7 +129,7 @@ export class App {
         };
 
         const oldModeController = this.getModeController();
-        const newModeController = this.getModeControllerByType(newMode.type);
+        const newModeController = this.getModeControllerByType(newMode);
         if (newModeController === null) {
             return;
         }

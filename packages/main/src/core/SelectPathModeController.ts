@@ -5,11 +5,7 @@ import { Point } from "../lib/geo/Point";
 import { randomId } from "../lib/randomId";
 import type { App } from "./App";
 import { type GraphEdge, GraphNode } from "./Graph";
-import {
-    type CanvasPointerEvent,
-    type Mode,
-    ModeController,
-} from "./ModeController";
+import { type CanvasPointerEvent, ModeController } from "./ModeController";
 import { SelectPathModeStateStore } from "./SelectPathModeStateStore";
 import { setupMoveNodesPointerEventHandlers } from "./setupMoveNodesPointerEventHandlers";
 
@@ -24,7 +20,7 @@ export class SelectPathModeController extends ModeController {
             key: "Escape",
             mode: ["select-path"],
             action: (app, ev) => {
-                app.setMode({ type: "select-entity" });
+                app.setMode("select-entity");
             },
         });
     }
@@ -80,7 +76,7 @@ export class SelectPathModeController extends ModeController {
     onCanvasDoubleClick(app: App, ev: CanvasPointerEvent) {
         const entity = this.getPathEntity(app);
 
-        app.setMode({ type: "select-entity" });
+        app.setMode("select-entity");
         app.canvasStateStore.unselectAll();
         app.canvasStateStore.select(entity.props.id);
         return;
@@ -152,28 +148,13 @@ export class SelectPathModeController extends ModeController {
 
     private getPathEntity(app: App): PathEntity {
         const mode = app.appStateStore.getState().mode;
-        assert(isSelectPathMode(mode), `Invalid mode: ${mode.type}`);
+        assert(mode === "select-path", `Invalid mode: ${mode}`);
 
-        const entity = app.canvasStateStore
-            .getState()
-            .page.entities.get(mode.entityId);
+        const entity = app.canvasStateStore.getState().getSelectedEntities()[0];
         assert(entity instanceof PathEntity, `Invalid entity: ${entity}`);
 
         return entity;
     }
-}
-
-interface SelectPathMode extends Mode {
-    type: "select-path";
-    entityId: string;
-}
-
-export function isSelectPathMode(mode: Mode): mode is SelectPathMode {
-    return mode.type === "select-path";
-}
-
-export function createSelectPathMode(entityId: string): SelectPathMode {
-    return { type: "select-path", entityId };
 }
 
 export type Control =

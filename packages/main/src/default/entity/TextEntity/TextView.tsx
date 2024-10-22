@@ -18,7 +18,7 @@ export const TextView = memo(function ShapeView({
     const appState = useStore(useApp().appStateStore);
     const canvasState = useStore(useApp().canvasStateStore);
     const editing =
-        appState.mode.type === "edit-text" &&
+        appState.mode === "edit-text" &&
         canvasState.selectedEntityIds.has(entity.props.id);
 
     const textAlignment = entity.props[PROPERTY_KEY_TEXT_ALIGNMENT_X];

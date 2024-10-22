@@ -29,13 +29,13 @@ export class NewPathModeController extends ModeController {
             metaKey: false,
             ctrlKey: false,
             action: (app, ev) => {
-                app.setMode({ type: "new-path" });
+                app.setMode("new-path");
             },
         });
         app.keyboard.addBinding({
             key: "l",
             action: (app, ev) => {
-                app.setMode({ type: "new-path" });
+                app.setMode("new-path");
             },
         });
         app.keyboard.addBinding({
@@ -43,7 +43,7 @@ export class NewPathModeController extends ModeController {
             mode: ["new-path"],
             action: (app, ev) => {
                 app.canvasStateStore.unselectAll();
-                app.setMode({ type: "select-entity" });
+                app.setMode("select-entity");
             },
         });
     }
@@ -74,7 +74,7 @@ export class NewPathModeController extends ModeController {
             );
         }
 
-        app.setMode({ type: "select-entity" });
+        app.setMode("select-entity");
         app.canvasStateStore.unselectAll();
         app.canvasStateStore.select(pathEntity.props.id);
 

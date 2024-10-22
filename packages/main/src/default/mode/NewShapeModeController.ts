@@ -24,7 +24,7 @@ export class NewShapeModeController extends ModeController {
         app.keyboard.addBinding({
             key: "r",
             action: (app, ev) => {
-                app.setMode({ type: "new-shape" });
+                app.setMode("new-shape");
             },
         });
         app.keyboard.addBinding({
@@ -32,7 +32,7 @@ export class NewShapeModeController extends ModeController {
             mode: ["new-shape"],
             action: (app, ev) => {
                 app.canvasStateStore.unselectAll();
-                app.setMode({ type: "select-entity" });
+                app.setMode("select-entity");
             },
         });
     }
@@ -44,7 +44,7 @@ export class NewShapeModeController extends ModeController {
         app.historyManager.pause();
         const shape = this.insertNewShape(app, new Rect({ p0, p1 }));
 
-        app.setMode({ type: "select-entity" });
+        app.setMode("select-entity");
         app.canvasStateStore.unselectAll();
         app.canvasStateStore.select(shape.props.id);
 

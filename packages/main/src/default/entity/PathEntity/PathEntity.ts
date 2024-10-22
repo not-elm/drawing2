@@ -7,7 +7,6 @@ import {
 import type { SerializedEntity } from "../../../core/EntityConverter";
 import { Graph, type GraphEdge, GraphNode } from "../../../core/Graph";
 import type { JSONObject } from "../../../core/JSONObject";
-import { createSelectPathMode } from "../../../core/SelectPathModeController";
 import { assert } from "../../../lib/assert";
 import { Line } from "../../../lib/geo/Line";
 import { Point } from "../../../lib/geo/Point";
@@ -195,7 +194,9 @@ export class PathEntity extends Entity<Props> {
 
     onTap(app: App, ev: EntityTapEvent) {
         if (ev.previousSelectedEntities.has(this.props.id)) {
-            app.setMode(createSelectPathMode(this.props.id));
+            app.canvasStateStore.unselectAll();
+            app.canvasStateStore.select(this.props.id);
+            app.setMode("select-path");
         }
         // if (
         //     ev.previousSelectedEntities.size === 1 &&

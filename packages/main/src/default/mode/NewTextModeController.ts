@@ -14,7 +14,7 @@ export class NewTextModeController extends ModeController {
         app.keyboard.addBinding({
             key: "t",
             action: (app, ev) => {
-                app.setMode({ type: "new-text" });
+                app.setMode("new-text");
             },
         });
         app.keyboard.addBinding({
@@ -22,7 +22,7 @@ export class NewTextModeController extends ModeController {
             mode: ["new-text"],
             action: (app, ev) => {
                 app.canvasStateStore.unselectAll();
-                app.setMode({ type: "select-entity" });
+                app.setMode("select-entity");
             },
         });
     }
@@ -30,11 +30,9 @@ export class NewTextModeController extends ModeController {
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
         app.historyManager.pause();
         const text = this.insertNewText(app, Rect.fromSize(ev.point, 1, 1));
-
-        app.setMode({
-            type: "edit-text",
-            entityId: text.props.id,
-        });
+        app.canvasStateStore.unselectAll();
+        app.canvasStateStore.select(text.props.id);
+        app.setMode("edit-text");
 
         // To leave focus at the new text entity
         ev.preventDefault();

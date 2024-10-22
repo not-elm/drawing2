@@ -4,7 +4,6 @@ import type { SerializedEntity } from "../../../core/EntityConverter";
 import type { JSONObject } from "../../../core/JSONObject";
 import { Rect } from "../../../lib/geo/Rect";
 import type { TransformMatrix } from "../../../lib/geo/TransformMatrix";
-import { EditTextModeController } from "../../mode/EditTextModeController";
 import { type ColorId, PROPERTY_KEY_COLOR_ID } from "../../property/Colors";
 import {
     PROPERTY_KEY_SIZING_MODE,
@@ -98,7 +97,7 @@ export class TextEntity extends Entity<{
             ev.previousSelectedEntities.size === 1 &&
             ev.previousSelectedEntities.has(this.props.id)
         ) {
-            app.setMode(EditTextModeController.createMode(this.props.id));
+            app.setMode("edit-text");
         }
     }
 

@@ -1,7 +1,4 @@
-import {
-    SelectEntityModeController,
-    isSelectEntityMode,
-} from "../core/SelectEntityModeController";
+import { SelectEntityModeController } from "../core/SelectEntityModeController";
 import { Line } from "../lib/geo/Line";
 import type { Point } from "../lib/geo/Point";
 import { Rect } from "../lib/geo/Rect";
@@ -30,7 +27,7 @@ function SelectEntityControlLayerInner({
     const { brushRect, visibleCornerRoundHandles } = useStore(
         modeController.store,
     );
-    if (!isSelectEntityMode(appState.mode)) return null;
+    if (appState.mode !== "select-entity") return null;
 
     const entities = app.canvasStateStore.getState().getSelectedEntities();
     const selectionRect = app.canvasStateStore.getState().getSelectionRect();

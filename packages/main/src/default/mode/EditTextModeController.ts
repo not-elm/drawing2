@@ -1,33 +1,24 @@
 import type { App } from "../../core/App";
 import {
     type CanvasPointerEvent,
-    type Mode,
     type ModeChangeEvent,
     ModeController,
 } from "../../core/ModeController";
 
 export class EditTextModeController extends ModeController {
-    static createMode(entityId: string): Mode {
-        return { type: "edit-text", entityId };
-    }
-
     onRegistered(app: App) {
         app.keyboard.addBinding({
             key: "Escape",
             mode: ["edit-text"],
             enableInEditTextMode: true,
             action: (app, ev) => {
-                app.setMode({ type: "select-entity" });
+                app.setMode("select-entity");
             },
         });
     }
 
     onBeforeEnterMode(app: App, ev: ModeChangeEvent) {
-        if (
-            ev.oldMode.type === "edit-text" &&
-            ev.newMode.type === "edit-text" &&
-            ev.oldMode.entityId === ev.newMode.entityId
-        ) {
+        if (ev.oldMode === "edit-text" && ev.newMode === "edit-text") {
             ev.abort();
         }
         app.historyManager.pause();
@@ -52,7 +43,7 @@ export class EditTextModeController extends ModeController {
 
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
         app.canvasStateStore.unselectAll();
-        app.setMode({ type: "select-entity" });
+        app.setMode("select-entity");
         app.getModeController().onCanvasPointerDown(app, ev);
     }
 }

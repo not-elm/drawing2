@@ -2,7 +2,6 @@ import { assert } from "../lib/assert";
 import { Rect } from "../lib/geo/Rect";
 import type { App } from "./App";
 import type { CanvasPointerEvent } from "./ModeController";
-import { isSelectEntityMode } from "./SelectEntityModeController";
 import type { SelectEntityModeStateStore } from "./SelectEntityModeStateStore";
 
 export function setupBrushSelectPointerEventHandlers(
@@ -11,7 +10,7 @@ export function setupBrushSelectPointerEventHandlers(
     brushStore: SelectEntityModeStateStore,
 ) {
     const mode = app.appStateStore.getState().mode;
-    assert(isSelectEntityMode(mode), `Invalid mode: ${mode.type}`);
+    assert(mode === "select-entity", `Invalid mode: ${mode}`);
 
     const originalSelectedEntityIds =
         app.canvasStateStore.getState().selectedEntityIds;

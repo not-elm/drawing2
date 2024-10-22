@@ -89,10 +89,7 @@ export class KeyboardManager {
 
         for (const binding of this.bindings) {
             if (binding.key !== ev.key) continue;
-            if (
-                binding.enableInEditTextMode !== true &&
-                mode.type === "edit-text"
-            ) {
+            if (binding.enableInEditTextMode !== true && mode === "edit-text") {
                 continue;
             }
             if ("ctrlKey" in binding && ev.ctrlKey !== binding.ctrlKey)
@@ -103,7 +100,7 @@ export class KeyboardManager {
             if ("metaKey" in binding && ev.metaKey !== binding.metaKey)
                 continue;
             if (binding.mode !== undefined && binding.mode.length > 0) {
-                if (!binding.mode.includes(mode.type)) continue;
+                if (!binding.mode.includes(mode)) continue;
             }
             if (binding.platform !== undefined && binding.platform.length > 0) {
                 if (!binding.platform.includes(platform)) continue;
