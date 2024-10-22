@@ -13,7 +13,10 @@ export function StrokeStylePropertySection() {
     const selectedValue = useSelectedPropertyValue(PROPERTY_KEY_STROKE_STYLE);
 
     const handleClick = (strokeStyle: StrokeStyle) => {
-        app.updateProperty(PROPERTY_KEY_STROKE_STYLE, strokeStyle);
+        app.updatePropertyForSelectedEntities(
+            PROPERTY_KEY_STROKE_STYLE,
+            strokeStyle,
+        );
         app.defaultPropertyStore.set(PROPERTY_KEY_STROKE_STYLE, strokeStyle);
     };
 

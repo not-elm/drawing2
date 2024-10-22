@@ -7,7 +7,6 @@ import {
     ModeController,
 } from "../../core/ModeController";
 import type { Page } from "../../core/Page";
-import { createSelectEntityMode } from "../../core/SelectEntityModeController";
 import { setupMoveNodesPointerEventHandlers } from "../../core/setupMoveNodesPointerEventHandlers";
 import { Line } from "../../lib/geo/Line";
 import { translate } from "../../lib/geo/TransformMatrix";
@@ -43,7 +42,8 @@ export class NewPathModeController extends ModeController {
             key: "Escape",
             mode: ["new-path"],
             action: (app, ev) => {
-                app.setMode(createSelectEntityMode(new Set()));
+                app.canvasStateStore.unselectAll();
+                app.setMode({ type: "select-entity" });
             },
         });
     }
@@ -74,9 +74,9 @@ export class NewPathModeController extends ModeController {
             );
         }
 
-        app.setMode(createSelectEntityMode(new Set(pathEntity.props.id)));
-        app.unselectAll();
-        app.select(pathEntity.props.id);
+        app.setMode({ type: "select-entity" });
+        app.canvasStateStore.unselectAll();
+        app.canvasStateStore.select(pathEntity.props.id);
 
         setupMoveNodesPointerEventHandlers(app, ev, pathEntity, [
             pathEntity.getNodes()[1].id,

@@ -1,7 +1,5 @@
 import {
     SelectEntityModeController,
-    getSelectedEntities,
-    getSelectionRect,
     isSelectEntityMode,
 } from "../core/SelectEntityModeController";
 import { Line } from "../lib/geo/Line";
@@ -34,8 +32,8 @@ function SelectEntityControlLayerInner({
     );
     if (!isSelectEntityMode(appState.mode)) return null;
 
-    const entities = getSelectedEntities(appState.mode, canvasState.page);
-    const selectionRect = getSelectionRect(appState.mode, canvasState.page);
+    const entities = app.canvasStateStore.getState().getSelectedEntities();
+    const selectionRect = app.canvasStateStore.getState().getSelectionRect();
 
     const transformedSelectionRect =
         selectionRect === null ? null : viewport.transform.apply(selectionRect);

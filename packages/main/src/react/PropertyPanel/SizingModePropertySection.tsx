@@ -13,7 +13,10 @@ export function SizingModePropertySection() {
     const selectedValue = useSelectedPropertyValue(PROPERTY_KEY_SIZING_MODE);
 
     const handleClick = (sizingMode: SizingMode) => {
-        app.updateProperty(PROPERTY_KEY_SIZING_MODE, sizingMode);
+        app.updatePropertyForSelectedEntities(
+            PROPERTY_KEY_SIZING_MODE,
+            sizingMode,
+        );
         app.defaultPropertyStore.set(PROPERTY_KEY_SIZING_MODE, sizingMode);
     };
 

@@ -5,8 +5,6 @@ import {
     type ModeChangeEvent,
     ModeController,
 } from "../../core/ModeController";
-import { createSelectEntityMode } from "../../core/SelectEntityModeController";
-import { assert } from "../../lib/assert";
 
 export class EditTextModeController extends ModeController {
     static createMode(entityId: string): Mode {
@@ -19,9 +17,7 @@ export class EditTextModeController extends ModeController {
             mode: ["edit-text"],
             enableInEditTextMode: true,
             action: (app, ev) => {
-                const mode = app.appStateStore.getState().mode;
-                assert(isEditTextMode(mode), `Invalid mode: ${mode.type}`);
-                app.setMode(createSelectEntityMode(new Set([mode.entityId])));
+                app.setMode({ type: "select-entity" });
             },
         });
     }
@@ -38,41 +34,25 @@ export class EditTextModeController extends ModeController {
     }
 
     onAfterEnterMode(app: App, ev: ModeChangeEvent) {
-        const newMode = ev.newMode;
-        assert(isEditTextMode(newMode));
-
-        const entity = app.canvasStateStore
+        for (const entity of app.canvasStateStore
             .getState()
-            .page.entities.get(newMode.entityId);
-        assert(entity !== undefined, `Entity ${newMode.entityId} not found`);
-
-        entity.onTextEditStart(app);
+            .getSelectedEntities()) {
+            entity.onTextEditStart(app);
+        }
     }
 
     onBeforeExitMode(app: App, ev: ModeChangeEvent) {
-        const oldMode = ev.oldMode;
-        assert(isEditTextMode(oldMode));
-
-        const entity = app.canvasStateStore
+        for (const entity of app.canvasStateStore
             .getState()
-            .page.entities.get(oldMode.entityId);
-        assert(entity !== undefined, `Entity ${oldMode.entityId} not found`);
-
+            .getSelectedEntities()) {
+            entity.onTextEditEnd(app);
+        }
         app.historyManager.resume();
-        entity.onTextEditEnd(app);
     }
 
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
-        app.setMode(createSelectEntityMode(new Set()));
+        app.canvasStateStore.unselectAll();
+        app.setMode({ type: "select-entity" });
         app.getModeController().onCanvasPointerDown(app, ev);
     }
-}
-
-export interface EditTextMode extends Mode {
-    type: "edit-text";
-    entityId: string;
-}
-
-export function isEditTextMode(mode: Mode): mode is EditTextMode {
-    return mode.type === "edit-text";
 }

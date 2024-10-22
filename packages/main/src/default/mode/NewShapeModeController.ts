@@ -5,7 +5,6 @@ import {
     type CanvasPointerEvent,
     ModeController,
 } from "../../core/ModeController";
-import { createSelectEntityMode } from "../../core/SelectEntityModeController";
 import { ScaleSelectionTransformController } from "../../core/SelectionTransformController";
 import { setupSelectionTransformPointerEventHandlers } from "../../core/setupSelectionTransformPointerEventHandlers";
 import { Rect } from "../../lib/geo/Rect";
@@ -32,7 +31,8 @@ export class NewShapeModeController extends ModeController {
             key: "Escape",
             mode: ["new-shape"],
             action: (app, ev) => {
-                app.setMode(createSelectEntityMode(new Set()));
+                app.canvasStateStore.unselectAll();
+                app.setMode({ type: "select-entity" });
             },
         });
     }
@@ -44,9 +44,9 @@ export class NewShapeModeController extends ModeController {
         app.historyManager.pause();
         const shape = this.insertNewShape(app, new Rect({ p0, p1 }));
 
-        app.setMode(createSelectEntityMode(new Set(shape.props.id)));
-        app.unselectAll();
-        app.select(shape.props.id);
+        app.setMode({ type: "select-entity" });
+        app.canvasStateStore.unselectAll();
+        app.canvasStateStore.select(shape.props.id);
 
         setupSelectionTransformPointerEventHandlers(
             app,

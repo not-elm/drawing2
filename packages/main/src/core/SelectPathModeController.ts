@@ -10,7 +10,6 @@ import {
     type Mode,
     ModeController,
 } from "./ModeController";
-import { createSelectEntityMode } from "./SelectEntityModeController";
 import { SelectPathModeStateStore } from "./SelectPathModeStateStore";
 import { setupMoveNodesPointerEventHandlers } from "./setupMoveNodesPointerEventHandlers";
 
@@ -25,9 +24,7 @@ export class SelectPathModeController extends ModeController {
             key: "Escape",
             mode: ["select-path"],
             action: (app, ev) => {
-                const mode = app.appStateStore.getState().mode;
-                assert(isSelectPathMode(mode), `Invalid mode: ${mode.type}`);
-                app.setMode(createSelectEntityMode(new Set(mode.entityId)));
+                app.setMode({ type: "select-entity" });
             },
         });
     }
@@ -83,9 +80,9 @@ export class SelectPathModeController extends ModeController {
     onCanvasDoubleClick(app: App, ev: CanvasPointerEvent) {
         const entity = this.getPathEntity(app);
 
-        app.setMode(createSelectEntityMode(new Set(entity.props.id)));
-        app.unselectAll();
-        app.select(entity.props.id);
+        app.setMode({ type: "select-entity" });
+        app.canvasStateStore.unselectAll();
+        app.canvasStateStore.select(entity.props.id);
         return;
     }
 

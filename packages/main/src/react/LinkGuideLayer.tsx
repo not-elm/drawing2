@@ -11,9 +11,11 @@ export function LinkGuideLayer() {
     const mode = useStore(app.appStateStore).mode;
     if (!isSelectEntityMode(mode)) return null;
 
-    if (mode.entityIds.size >= 2) return null;
+    if (canvasState.selectedEntityIds.size >= 2) return null;
 
-    const selectedEntityId = mode.entityIds.values().next().value;
+    const selectedEntityId = canvasState.selectedEntityIds
+        .values()
+        .next().value;
     if (selectedEntityId === undefined) return null;
 
     const links = canvasState.page.links.getByEntityId(selectedEntityId);

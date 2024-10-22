@@ -78,7 +78,7 @@ export class PageDraft extends PageDraftCore {
         }
     }
 
-    deleteEntities(entityIds: Set<string>): void {
+    deleteEntities(entityIds: ReadonlySet<string>): void {
         for (const entityId of entityIds) {
             this.deleteEntity(entityId);
         }
@@ -103,11 +103,11 @@ export class PageDraft extends PageDraftCore {
         }
     }
 
-    bringToFront(entityIds: Set<string>) {
+    bringToFront(entityIds: ReadonlySet<string>) {
         return this.bringForwardOf(entityIds, this.entityIds.length - 1);
     }
 
-    bringForward(entityIds: Set<string>) {
+    bringForward(entityIds: ReadonlySet<string>) {
         let mostBackwardResult = null;
         for (const entityId of entityIds) {
             const result = this.findForwardOverlappedEntity(
@@ -131,7 +131,7 @@ export class PageDraft extends PageDraftCore {
         this.bringForwardOf(entityIds, mostBackwardResult.globalIndex);
     }
 
-    sendBackward(entityIds: Set<string>) {
+    sendBackward(entityIds: ReadonlySet<string>) {
         let mostForwardResult = null;
         for (const entityId of entityIds) {
             const result = this.findBackwardOverlappedEntity(
@@ -155,7 +155,7 @@ export class PageDraft extends PageDraftCore {
         this.sendBackwardOf(entityIds, mostForwardResult.globalIndex);
     }
 
-    sendToBack(entityIds: Set<string>) {
+    sendToBack(entityIds: ReadonlySet<string>) {
         this.sendBackwardOf(entityIds, 0);
     }
 
@@ -176,7 +176,7 @@ export class PageDraft extends PageDraftCore {
      * forward of the target z-index
      */
     private bringForwardOf(
-        targetEntityIdSet: Set<string>,
+        targetEntityIdSet: ReadonlySet<string>,
         targetZIndex: number,
     ) {
         // Current z-index of selected entities
@@ -201,7 +201,7 @@ export class PageDraft extends PageDraftCore {
      * backward of the target z-index
      */
     private sendBackwardOf(
-        targetEntityIdSet: Set<string>,
+        targetEntityIdSet: ReadonlySet<string>,
         targetZIndex: number,
     ) {
         // Current z-index of selected entities
@@ -227,7 +227,7 @@ export class PageDraft extends PageDraftCore {
      */
     private findForwardOverlappedEntity(
         entityId: string,
-        ignoreEntityIds: Set<string>,
+        ignoreEntityIds: ReadonlySet<string>,
     ): { entityId: string; globalIndex: number } | null {
         let globalIndex = 0;
         for (; globalIndex < this.entityIds.length; globalIndex++) {
@@ -261,7 +261,7 @@ export class PageDraft extends PageDraftCore {
      */
     private findBackwardOverlappedEntity(
         entityId: string,
-        ignoreEntityIds: Set<string>,
+        ignoreEntityIds: ReadonlySet<string>,
     ): { entityId: string; globalIndex: number } | null {
         let globalIndex = this.entityIds.length - 1;
         for (; globalIndex >= 0; globalIndex--) {

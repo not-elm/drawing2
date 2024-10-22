@@ -28,7 +28,7 @@ export function syncWithLocalStorage(app: App) {
 
     if (page !== null) {
         app.canvasStateStore.setPage(page);
-        app.unselectAll();
+        app.canvasStateStore.unselectAll();
     }
 }
 

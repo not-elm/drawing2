@@ -2,7 +2,6 @@ import type * as csstype from "csstype";
 import { Store } from "../lib/Store";
 
 import type { Mode } from "./ModeController";
-import { createSelectEntityMode } from "./SelectEntityModeController";
 
 interface AppState {
     readonly mode: Mode;
@@ -12,7 +11,7 @@ interface AppState {
 export class AppStateStore extends Store<AppState> {
     constructor() {
         super({
-            mode: createSelectEntityMode(new Set()),
+            mode: { type: "select-entity" },
             cursor: "default",
         });
     }

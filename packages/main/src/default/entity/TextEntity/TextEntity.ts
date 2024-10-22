@@ -115,9 +115,12 @@ export class TextEntity extends Entity<{
             this.props.sizingMode === "content" ? width : this.props.rect.width;
         const newHeight = height;
 
-        app.updateProperty(
-            "rect",
-            Rect.fromSize(this.props.rect.topLeft, newWidth, newHeight),
+        app.canvasStateStore.edit((draft) =>
+            draft.updateProperty(
+                [this.props.id],
+                "rect",
+                Rect.fromSize(this.props.rect.topLeft, newWidth, newHeight),
+            ),
         );
     }
 }

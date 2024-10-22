@@ -20,7 +20,10 @@ export function FillModePropertySection() {
     const selectedValue = useSelectedPropertyValue(PROPERTY_KEY_FILL_STYLE);
 
     const handleClick = (fillStyle: FillStyle) => {
-        app.updateProperty(PROPERTY_KEY_FILL_STYLE, fillStyle);
+        app.updatePropertyForSelectedEntities(
+            PROPERTY_KEY_FILL_STYLE,
+            fillStyle,
+        );
         app.defaultPropertyStore.set(PROPERTY_KEY_FILL_STYLE, fillStyle);
     };
 

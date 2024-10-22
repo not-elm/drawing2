@@ -3,7 +3,6 @@ import {
     type CanvasPointerEvent,
     ModeController,
 } from "../../core/ModeController";
-import { createSelectEntityMode } from "../../core/SelectEntityModeController";
 import { Rect } from "../../lib/geo/Rect";
 import { randomId } from "../../lib/randomId";
 import { TextEntity } from "../entity/TextEntity/TextEntity";
@@ -22,7 +21,8 @@ export class NewTextModeController extends ModeController {
             key: "Escape",
             mode: ["new-text"],
             action: (app, ev) => {
-                app.setMode(createSelectEntityMode(new Set()));
+                app.canvasStateStore.unselectAll();
+                app.setMode({ type: "select-entity" });
             },
         });
     }

@@ -13,7 +13,8 @@ export function setupBrushSelectPointerEventHandlers(
     const mode = app.appStateStore.getState().mode;
     assert(isSelectEntityMode(mode), `Invalid mode: ${mode.type}`);
 
-    const originalSelectedEntityIds = mode.entityIds;
+    const originalSelectedEntityIds =
+        app.canvasStateStore.getState().selectedEntityIds;
 
     brushStore.setBrushRect(new Rect({ p0: ev.point, p1: ev.point }));
 
@@ -31,7 +32,7 @@ export function setupBrushSelectPointerEventHandlers(
                 }
             }
 
-            app.setSelectedEntityIds([...selectedEntityIds]);
+            app.canvasStateStore.setSelectedEntityIds(selectedEntityIds);
         })
         .addPointerUpHandler(ev.pointerId, () => {
             brushStore.setBrushRect(null);

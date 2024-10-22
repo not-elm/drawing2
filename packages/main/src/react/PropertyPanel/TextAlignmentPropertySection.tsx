@@ -28,8 +28,14 @@ export function TextAlignmentPropertySection() {
         alignmentX: TextAlignment,
         alignmentY: TextAlignment,
     ) => {
-        app.updateProperty(PROPERTY_KEY_TEXT_ALIGNMENT_X, alignmentX);
-        app.updateProperty(PROPERTY_KEY_TEXT_ALIGNMENT_Y, alignmentY);
+        app.updatePropertyForSelectedEntities(
+            PROPERTY_KEY_TEXT_ALIGNMENT_X,
+            alignmentX,
+        );
+        app.updatePropertyForSelectedEntities(
+            PROPERTY_KEY_TEXT_ALIGNMENT_Y,
+            alignmentY,
+        );
         app.defaultPropertyStore.set(PROPERTY_KEY_TEXT_ALIGNMENT_X, alignmentX);
         app.defaultPropertyStore.set(PROPERTY_KEY_TEXT_ALIGNMENT_Y, alignmentY);
     };

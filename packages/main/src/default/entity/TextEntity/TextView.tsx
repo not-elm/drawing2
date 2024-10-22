@@ -5,7 +5,6 @@ import { assert } from "../../../lib/assert";
 import { useResizeObserver } from "../../../react/hooks/useResizeObserver";
 import { useStore } from "../../../react/hooks/useStore";
 import { useApp } from "../../../react/useApp";
-import { isEditTextMode } from "../../mode/EditTextModeController";
 import { Colors } from "../../property/Colors";
 import {
     PROPERTY_KEY_TEXT_ALIGNMENT_X,
@@ -17,9 +16,10 @@ export const TextView = memo(function ShapeView({
     entity,
 }: { entity: TextEntity }) {
     const appState = useStore(useApp().appStateStore);
+    const canvasState = useStore(useApp().canvasStateStore);
     const editing =
-        isEditTextMode(appState.mode) &&
-        appState.mode.entityId === entity.props.id;
+        appState.mode.type === "edit-text" &&
+        canvasState.selectedEntityIds.has(entity.props.id);
 
     const textAlignment = entity.props[PROPERTY_KEY_TEXT_ALIGNMENT_X];
     assert(textAlignment !== undefined, "Text alignment must not be null");
