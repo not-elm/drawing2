@@ -17,10 +17,11 @@ export class EditTextModeController extends ModeController {
         app.keyboard.addBinding({
             key: "Escape",
             mode: ["edit-text"],
+            enableInEditTextMode: true,
             action: (app, ev) => {
                 const mode = app.appStateStore.getState().mode;
                 assert(isEditTextMode(mode), `Invalid mode: ${mode.type}`);
-                app.setMode(createSelectEntityMode(new Set(mode.entityId)));
+                app.setMode(createSelectEntityMode(new Set([mode.entityId])));
             },
         });
     }
