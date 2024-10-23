@@ -290,6 +290,10 @@ export class App {
      * @internal
      */
     handlePointerDown(ev: PointerEvent) {
+        // Ignore if not main button since we don't need to handle
+        // drag operation with other buttons
+        if (ev.button !== MouseEventButton.MAIN) return;
+
         this.gestureRecognizer.handlePointerDown(ev);
 
         this.getModeController().onCanvasPointerDown(this, {
@@ -377,3 +381,11 @@ export class App {
         entity.onViewResize(this, width, height);
     }
 }
+
+const MouseEventButton = {
+    MAIN: 0,
+    AUXILIARY: 1,
+    SECONDARY: 2,
+    FOURTH: 3,
+    FIFTH: 4,
+};
