@@ -11,21 +11,18 @@ export const Button = styled.button({
     minWidth: "32px",
     minHeight: "32px",
     border: "none",
-    background: "none",
+    backgroundColor: "var(--color-ui-background)",
     borderRadius: 8,
     cursor: "pointer",
-    transition: "background-color 0.2s",
     pointerEvents: "all",
 
     "&:hover": {
-        transition: "background-color none",
-        backgroundColor: "#f0f0f0",
+        backgroundColor: "var(--color-ui-background-hover)",
     },
 
     '&[aria-checked="true"]': {
         backgroundColor: "var(--color-ui-selected)",
         color: "#fff",
-        transition: "background-color none",
     },
     "&[aria-selected='true']": {
         background: "#f2f2f2",

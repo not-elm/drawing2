@@ -4,6 +4,7 @@ import { Point } from "../lib/geo/Point";
 import { AppStateStore } from "./AppStateStore";
 import { CanvasStateStore } from "./CanvasStateStore";
 import { ClipboardService } from "./ClipboardService";
+import { ContextMenuService } from "./ContextMenuService";
 import { DefaultPropertyStore } from "./DefaultPropertyStore";
 import type { Entity } from "./Entity";
 import { type EntityConverter, EntityConverterMap } from "./EntityConverter";
@@ -11,6 +12,7 @@ import { GestureRecognizer } from "./GestureRecognizer";
 import { HistoryManager } from "./HistoryManager";
 import { KeyboardManager } from "./KeyboardManager";
 import type { ModeChangeEvent, ModeController } from "./ModeController";
+import { MouseEventButton } from "./MouseEventButton";
 import { SelectEntityModeController } from "./SelectEntityModeController";
 import { SelectPathModeController } from "./SelectPathModeController";
 import { SnapGuideStore } from "./SnapGuideStore";
@@ -26,6 +28,7 @@ export class App {
     readonly historyManager = new HistoryManager(this);
     readonly defaultPropertyStore = new DefaultPropertyStore();
     readonly keyboard = new KeyboardManager(this);
+    readonly contextMenu = new ContextMenuService(this.viewportStore);
     private readonly modeControllers = new Map<string, ModeController>();
     private readonly entityViewMap = new Map<
         string,
@@ -35,6 +38,8 @@ export class App {
 
     // TODO: Move to SelectMode package
     readonly snapGuideStore = new SnapGuideStore();
+
+    private requiredPointerUpCountBeforeDoubleClick = 0;
 
     constructor() {
         this.addModeController(
@@ -290,6 +295,13 @@ export class App {
      * @internal
      */
     handlePointerDown(ev: PointerEvent) {
+        if (this.contextMenu.getState().visible) {
+            this.contextMenu.hide();
+            this.resetRequiredPointerUpCountBeforeDoubleClick();
+            ev.preventDefault();
+            return;
+        }
+
         // Ignore if not main button since we don't need to handle
         // drag operation with other buttons
         if (ev.button !== MouseEventButton.MAIN) return;
@@ -298,6 +310,27 @@ export class App {
 
         this.getModeController().onCanvasPointerDown(this, {
             pointerId: ev.pointerId,
+            button: ev.button === MouseEventButton.MAIN ? "main" : "other",
+            point: this.viewportStore
+                .getState()
+                .fromCanvasCoordinateTransform.apply(
+                    new Point(ev.clientX, ev.clientY),
+                ),
+            shiftKey: ev.shiftKey,
+            metaKey: ev.metaKey,
+            ctrlKey: ev.ctrlKey,
+            preventDefault: () => ev.preventDefault(),
+        });
+    }
+
+    handleContextMenu(ev: MouseEvent) {
+        ev.preventDefault();
+
+        if (this.gestureRecognizer.inPointerEventSession()) return;
+
+        this.getModeController().onContextMenu(this, {
+            pointerId: -1,
+            button: "other",
             point: this.viewportStore
                 .getState()
                 .fromCanvasCoordinateTransform.apply(
@@ -315,6 +348,8 @@ export class App {
      * @internal
      */
     handlePointerMove(ev: PointerEvent) {
+        if (this.contextMenu.getState().visible) return;
+
         this.gestureRecognizer.handlePointerMove(ev);
 
         const point = this.viewportStore
@@ -330,6 +365,11 @@ export class App {
      * @internal
      */
     handlePointerUp(ev: PointerEvent) {
+        if (this.contextMenu.getState().visible) return;
+        if (this.requiredPointerUpCountBeforeDoubleClick > 0) {
+            this.requiredPointerUpCountBeforeDoubleClick -= 1;
+        }
+
         this.gestureRecognizer.handlePointerUp(ev);
     }
 
@@ -338,8 +378,12 @@ export class App {
      * @internal
      */
     handleDoubleClick(ev: MouseEvent) {
+        if (this.contextMenu.getState().visible) return;
+        if (this.requiredPointerUpCountBeforeDoubleClick > 0) return;
+
         this.getModeController().onCanvasDoubleClick(this, {
             pointerId: -1,
+            button: "main",
             point: this.viewportStore
                 .getState()
                 .fromCanvasCoordinateTransform.apply(
@@ -353,6 +397,8 @@ export class App {
     }
 
     handleScroll(deltaCanvasX: number, deltaCanvasY: number) {
+        if (this.contextMenu.getState().visible) return;
+
         this.viewportStore.movePosition(deltaCanvasX, deltaCanvasY);
     }
 
@@ -361,6 +407,8 @@ export class App {
         centerCanvasX: number,
         centerCanvasY: number,
     ) {
+        if (this.contextMenu.getState().visible) return;
+
         this.viewportStore.setScale(newScale, centerCanvasX, centerCanvasY);
     }
 
@@ -369,6 +417,8 @@ export class App {
      * @internal
      */
     handleKeyDown(ev: KeyboardEvent) {
+        if (this.contextMenu.getState().visible) return;
+
         this.keyboard.handleKeyDown(ev);
     }
 
@@ -380,12 +430,27 @@ export class App {
 
         entity.onViewResize(this, width, height);
     }
-}
 
-const MouseEventButton = {
-    MAIN: 0,
-    AUXILIARY: 1,
-    SECONDARY: 2,
-    FOURTH: 3,
-    FIFTH: 4,
-};
+    /**
+     * This application handles pointer event sequences mainly, but native "dblclick" events
+     * cannot be prevented from pointer events. This causes unintended user experience when
+     * pointer sequence starts with closing the context menu.
+     *
+     * - pointerdown : context menu is closed here
+     * - pointerup
+     * - pointerdown : In user's intention, this is the first click of double click on canvas.
+     * - pointerup
+     * - dblclick    : Double click event is fired after "the first click"
+     * - pointerdown
+     * - pointerup
+     * - dblclick    : This is the double click event user expected
+     *
+     * To prevent this, we need to ignore dblclick event until pointerup event is fired
+     * at-least 3 times.
+     *
+     * @private
+     */
+    private resetRequiredPointerUpCountBeforeDoubleClick() {
+        this.requiredPointerUpCountBeforeDoubleClick = 3;
+    }
+}

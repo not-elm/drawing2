@@ -64,6 +64,31 @@ export class SelectEntityModeController extends ModeController {
                 app.deleteSelectedEntities();
             },
         });
+
+        app.contextMenu.add({
+            title: "最前面へ",
+            action: () => {
+                app.bringToFront();
+            },
+        });
+        app.contextMenu.add({
+            title: "ひとつ前へ",
+            action: () => {
+                app.bringForward();
+            },
+        });
+        app.contextMenu.add({
+            title: "ひとつ後ろへ",
+            action: () => {
+                app.sendBackward();
+            },
+        });
+        app.contextMenu.add({
+            title: "最背面へ",
+            action: () => {
+                app.sendToBack();
+            },
+        });
     }
 
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
@@ -97,6 +122,26 @@ export class SelectEntityModeController extends ModeController {
     onMouseMove(app: App, point: Point) {
         this.updateCursor(app, point);
         this.updateVisibleCornerRoundHandles(app, point);
+    }
+
+    onContextMenu(app: App, ev: CanvasPointerEvent) {
+        const hitResult = testHitEntities(
+            app.canvasStateStore.getState().page,
+            ev.point,
+            app.viewportStore.getState().scale,
+        );
+        const result = hitResult.entities.at(0);
+        if (result !== undefined) {
+            const entityId = result.target.props.id;
+            if (
+                !app.canvasStateStore.getState().selectedEntityIds.has(entityId)
+            ) {
+                app.canvasStateStore.unselectAll();
+                app.canvasStateStore.select(result.target.props.id);
+            }
+        }
+
+        super.onContextMenu(app, ev);
     }
 
     private updateVisibleCornerRoundHandles(app: App, point: Point) {
