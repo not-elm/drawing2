@@ -7,9 +7,9 @@ import { NewPathModeController } from "../default/mode/NewPathModeController";
 import { NewShapeModeController } from "../default/mode/NewShapeModeController";
 import { NewTextModeController } from "../default/mode/NewTextModeController";
 import { Canvas } from "./Canvas";
+import { ContextMenuLayer } from "./ContextMenuLayer";
 import { ColorPropertySection } from "./PropertyPanel/ColorPropertySection";
 import { FillModePropertySection } from "./PropertyPanel/FillModePropertySection";
-import { OrderSection } from "./PropertyPanel/OrderSection";
 import { PropertyPanel } from "./PropertyPanel/PropertyPanel";
 import { SizingModePropertySection } from "./PropertyPanel/SizingModePropertySection";
 import { StrokeStylePropertySection } from "./PropertyPanel/StrokeStylePropertySection";
@@ -39,6 +39,7 @@ export function AppView({ app: controlledApp }: { app?: App }) {
 
     return (
         <AppProvider app={app}>
+            <StatusBar />
             <MathJaxContext
                 version={2}
                 config={{
@@ -56,7 +57,10 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                         position: "absolute",
                         inset: 0,
                         overflow: "clip",
+                        "--color-ui-foreground": "#404040",
                         "--color-ui-primary": "#3680f4",
+                        "--color-ui-background": "#fff",
+                        "--color-ui-background-hover": "#f0f0f0",
                         "--color-ui-selected": "var(--color-ui-primary)",
                         "--color-selection": "var(--color-ui-primary)",
 
@@ -126,12 +130,11 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                             <StrokeStylePropertySection />
                             <StrokeWidthPropertySection />
                             <SizingModePropertySection />
-                            <OrderSection />
                         </PropertyPanel>
                     </div>
+                    <ContextMenuLayer />
                 </div>
             </MathJaxContext>
-            <StatusBar />
         </AppProvider>
     );
 }

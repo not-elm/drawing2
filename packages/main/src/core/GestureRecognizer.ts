@@ -2,6 +2,7 @@ import { assert } from "../lib/assert";
 import { Point } from "../lib/geo/Point";
 import type { App } from "./App";
 import type { CanvasPointerEvent } from "./ModeController";
+import { MouseEventButton } from "./MouseEventButton";
 
 const THRESHOLD_CLICK_DURATION_IN_MILLI = 200;
 
@@ -9,6 +10,7 @@ export class GestureRecognizer {
     constructor(private readonly app: App) {}
 
     private readonly sessions = new Map<number, PointerEventSession>();
+    private readonly sessionIdsWithListener = new Set<number>();
 
     handlePointerDown(nativeEv: PointerEvent) {
         const point = this.app.viewportStore
@@ -42,6 +44,10 @@ export class GestureRecognizer {
         for (const handler of session.pointerMoveHandlers) {
             handler(this.app, {
                 point,
+                button:
+                    nativeEv.button === MouseEventButton.MAIN
+                        ? "main"
+                        : "other",
                 pointerId: nativeEv.pointerId,
                 shiftKey: nativeEv.shiftKey,
                 ctrlKey: nativeEv.ctrlKey,
@@ -71,6 +77,10 @@ export class GestureRecognizer {
         for (const handler of session.pointerUpHandlers) {
             handler(this.app, {
                 point,
+                button:
+                    nativeEv.button === MouseEventButton.MAIN
+                        ? "main"
+                        : "other",
                 pointerId: nativeEv.pointerId,
                 shiftKey: nativeEv.shiftKey,
                 ctrlKey: nativeEv.ctrlKey,
@@ -86,6 +96,7 @@ export class GestureRecognizer {
         }
 
         this.sessions.delete(nativeEv.pointerId);
+        this.sessionIdsWithListener.delete(nativeEv.pointerId);
     }
 
     addPointerMoveHandler(
@@ -99,6 +110,7 @@ export class GestureRecognizer {
         );
 
         session.pointerMoveHandlers.add(handler);
+        this.sessionIdsWithListener.add(pointerId);
         return this;
     }
 
@@ -113,7 +125,15 @@ export class GestureRecognizer {
         );
 
         session.pointerUpHandlers.add(handler);
+        this.sessionIdsWithListener.add(pointerId);
         return this;
+    }
+
+    /**
+     * Returns true if there is at least one pointer event session on going.
+     */
+    inPointerEventSession(): boolean {
+        return this.sessionIdsWithListener.size > 0;
     }
 }
 

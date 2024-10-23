@@ -77,6 +77,10 @@ export function Canvas() {
                 ev.stopPropagation();
                 app.handlePointerDown(ev.nativeEvent);
             }}
+            onContextMenu={(ev) => {
+                ev.stopPropagation();
+                app.handleContextMenu(ev.nativeEvent);
+            }}
             onDoubleClick={(ev) => {
                 ev.stopPropagation();
                 app.handleDoubleClick(ev.nativeEvent);
