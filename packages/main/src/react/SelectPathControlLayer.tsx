@@ -48,13 +48,13 @@ export function SelectPathControlLayerInner({
             {entity.getEdges().map((edge) => {
                 const highlighted = highlightedItemIds.has(edge.id);
 
-                const p1 = viewport.transform.apply(edge.p0);
-                const p2 = viewport.transform.apply(edge.p1);
+                const p1 = viewport.transform.apply(edge.p1);
+                const p2 = viewport.transform.apply(edge.p2);
 
                 const nodes: ReactNode[] = [];
                 nodes.push(
                     <line
-                        key={`${edge.p0.id}-${edge.p1.id}`}
+                        key={`${edge.p1.id}-${edge.p2.id}`}
                         x1={p1.x}
                         y1={p1.y}
                         x2={p2.x}
@@ -70,7 +70,7 @@ export function SelectPathControlLayerInner({
                     if (highlightCenterOfEdgeHandle) {
                         nodes.push(
                             <circle
-                                key={`${edge.p0.id}-${edge.p1.id}-center`}
+                                key={`${edge.p1.id}-${edge.p2.id}-center`}
                                 cx={(p1.x + p2.x) / 2}
                                 cy={(p1.y + p2.y) / 2}
                                 r={5}
@@ -84,7 +84,7 @@ export function SelectPathControlLayerInner({
                     } else {
                         nodes.push(
                             <circle
-                                key={`${edge.p0.id}-${edge.p1.id}-center`}
+                                key={`${edge.p1.id}-${edge.p2.id}-center`}
                                 cx={(p1.x + p2.x) / 2}
                                 cy={(p1.y + p2.y) / 2}
                                 r={3}

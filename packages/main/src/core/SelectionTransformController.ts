@@ -6,10 +6,14 @@ import {
     type SnapGuide,
     computeSnapEntry2D,
 } from "./SnapEntry";
-import { Line } from "./geo/Line";
-import { Point } from "./geo/Point";
-import { Rect } from "./geo/Rect";
-import { type TransformMatrix, scale, translate } from "./geo/TransformMatrix";
+import { Line } from "./shape/Line";
+import { Point } from "./shape/Point";
+import { Rect } from "./shape/Shape";
+import {
+    type TransformMatrix,
+    scale,
+    translate,
+} from "./shape/TransformMatrix";
 
 interface SnapPoints {
     /**
@@ -239,10 +243,10 @@ export abstract class SelectionTransformController {
 
             if (minY !== maxY) {
                 snapGuide.lines.push(
-                    new Line({
-                        p1: new Point(snapEntry2D.x.after, minY),
-                        p2: new Point(snapEntry2D.x.after, maxY),
-                    }),
+                    new Line(
+                        new Point(snapEntry2D.x.after, minY),
+                        new Point(snapEntry2D.x.after, maxY),
+                    ),
                 );
             }
         }
@@ -270,10 +274,10 @@ export abstract class SelectionTransformController {
 
             if (minX !== maxX) {
                 snapGuide.lines.push(
-                    new Line({
-                        p1: new Point(minX, snapEntry2D.y.after),
-                        p2: new Point(maxX, snapEntry2D.y.after),
-                    }),
+                    new Line(
+                        new Point(minX, snapEntry2D.y.after),
+                        new Point(maxX, snapEntry2D.y.after),
+                    ),
                 );
             }
         }

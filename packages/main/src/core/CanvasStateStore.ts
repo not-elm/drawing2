@@ -5,7 +5,8 @@ import type { Entity } from "./Entity";
 import { LinkCollection } from "./Link";
 import { Page } from "./Page";
 import { PageDraft } from "./PageDraft";
-import { Rect } from "./geo/Rect";
+
+import { Rect } from "./shape/Shape";
 
 export class CanvasState {
     constructor(

@@ -1,15 +1,15 @@
 import type { App } from "../../core/App";
 import type { Entity } from "../../core/Entity";
-import { Graph, GraphNode } from "../../core/Graph";
 import {
     type CanvasPointerEvent,
     ModeController,
 } from "../../core/ModeController";
 import { SelectEntityModeController } from "../../core/SelectEntityModeController";
 import { ScaleSelectionTransformController } from "../../core/SelectionTransformController";
-import { Rect } from "../../core/geo/Rect";
-import { translate } from "../../core/geo/TransformMatrix";
 import { setupSelectionTransformPointerEventHandlers } from "../../core/setupSelectionTransformPointerEventHandlers";
+import { Graph, GraphNode } from "../../core/shape/Graph";
+import { Rect } from "../../core/shape/Shape";
+import { translate } from "../../core/shape/TransformMatrix";
 import { randomId } from "../../lib/randomId";
 import {
     PROPERTY_KEY_CORNER_RADIUS,
@@ -45,7 +45,7 @@ export class NewShapeModeController extends ModeController {
         const p1 = translate(1, 1).apply(ev.point);
 
         app.historyManager.pause();
-        const shape = this.insertNewShape(app, new Rect({ p0, p1 }));
+        const shape = this.insertNewShape(app, new Rect(p0, p1));
 
         app.setMode(SelectEntityModeController.MODE_NAME);
         app.canvasStateStore.unselectAll();

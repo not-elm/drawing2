@@ -1,8 +1,7 @@
 import { SelectEntityModeController } from "../core/SelectEntityModeController";
-import { Line } from "../core/geo/Line";
-import type { Point } from "../core/geo/Point";
-import { Rect } from "../core/geo/Rect";
-import type { TransformMatrix } from "../core/geo/TransformMatrix";
+import { Line } from "../core/shape/Line";
+import { Rect, type Shape } from "../core/shape/Shape";
+import type { TransformMatrix } from "../core/shape/TransformMatrix";
 import { useStore } from "./hooks/useStore";
 import { useApp } from "./useApp";
 
@@ -69,7 +68,7 @@ function SelectEntityControlLayerInner({
                         fill: "none",
                     }}
                     d={convertGeometryToPathDefinition(
-                        entity.getOutline(),
+                        entity.getShape(), // TODO: これはOutlineじゃない!
                         viewport.transform,
                     )}
                     strokeWidth={1}
@@ -143,25 +142,23 @@ function SelectEntityControlLayerInner({
 }
 
 export function convertGeometryToPathDefinition(
-    geos: (Rect | Line | Point)[],
+    shape: Shape,
     viewportTransform: TransformMatrix,
 ): string {
     const ds: string[] = [];
-    for (const g of geos) {
-        if (g instanceof Rect) {
-            const rect = viewportTransform.apply(g);
-            ds.push(
-                `M${rect.left},${rect.top} h${rect.width} v${
-                    rect.height
-                } h${-rect.width} v${-rect.height}`,
-            );
-        }
-        if (g instanceof Line) {
-            const p1 = viewportTransform.apply(g.p1);
-            const p2 = viewportTransform.apply(g.p2);
+    if (shape instanceof Rect) {
+        const rect = viewportTransform.apply(shape);
+        ds.push(
+            `M${rect.left},${rect.top} h${rect.width} v${
+                rect.height
+            } h${-rect.width} v${-rect.height}`,
+        );
+    }
+    if (shape instanceof Line) {
+        const p1 = viewportTransform.apply(shape.p1);
+        const p2 = viewportTransform.apply(shape.p2);
 
-            ds.push(`M${p1.x},${p1.y} L${p2.x},${p2.y}`);
-        }
+        ds.push(`M${p1.x},${p1.y} L${p2.x},${p2.y}`);
     }
 
     return ds.join("");

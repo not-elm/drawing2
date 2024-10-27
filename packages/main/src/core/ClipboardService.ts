@@ -4,7 +4,7 @@ import type { Entity } from "./Entity";
 import type { EntityConverter, SerializedEntity } from "./EntityConverter";
 import type { JSONObject } from "./JSONObject";
 import type { Page } from "./Page";
-import { translate } from "./geo/TransformMatrix";
+import { translate } from "./shape/TransformMatrix";
 
 interface ClipboardData extends JSONObject {
     entities: SerializedEntity[];

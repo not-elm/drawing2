@@ -1,6 +1,7 @@
 import { Line } from "./Line";
 import { Point } from "./Point";
-import { Rect } from "./Rect";
+
+import { Rect } from "./Shape";
 
 export class TransformMatrix {
     a = 1;
@@ -50,10 +51,7 @@ export class TransformMatrix {
     }
 
     private applyToLine(line: Line): Line {
-        return new Line({
-            p1: this.applyToPoint(line.p1),
-            p2: this.applyToPoint(line.p2),
-        });
+        return new Line(this.applyToPoint(line.p1), this.applyToPoint(line.p2));
     }
 
     private applyToRect(rect: Rect): Rect {

@@ -1,6 +1,6 @@
-import { Point } from "./geo/Point";
-import type { Rect } from "./geo/Rect";
-import { scale, translate } from "./geo/TransformMatrix";
+import { Point } from "./shape/Point";
+import type { Rect } from "./shape/Shape";
+import { scale, translate } from "./shape/TransformMatrix";
 
 export class Viewport {
     constructor(

@@ -3,7 +3,8 @@ import type { Entity } from "./Entity";
 import type { EntityConverter, SerializedEntity } from "./EntityConverter";
 import type { JSONObject } from "./JSONObject";
 import { LinkCollection, type SerializedLink } from "./Link";
-import type { Rect } from "./geo/Rect";
+
+import type { Rect } from "./shape/Shape";
 
 interface Props {
     entities: Map<string, Entity>;

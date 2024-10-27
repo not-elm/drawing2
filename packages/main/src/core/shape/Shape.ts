@@ -1,17 +1,110 @@
 import { assert } from "../../lib/assert";
-import { dataclass } from "../../lib/dataclass";
 import { Line } from "./Line";
 import { Point } from "./Point";
 
-export class Rect extends dataclass<{
-    p0: Point;
-    p1: Point;
-}>() {
-    static of(x: number, y: number, width: number, height: number): Rect {
-        return new Rect({
-            p0: new Point(x, y),
-            p1: new Point(x + width, y + height),
+export abstract class Shape {
+    /**
+     * Returns whether the shape overlaps with the line.
+     */
+    abstract contain(point: Point): boolean;
+
+    /**
+     * Returns edges of the shape.
+     */
+    abstract getEdges(): Line[];
+
+    /**
+     * Returns the bounding rectangle of the shape.
+     */
+    getBoundingRect(): Rect {
+        const edges = this.getEdges();
+        const xs = edges.flatMap((edge) => [edge.p1.x, edge.p2.x]);
+        const ys = edges.flatMap((edge) => [edge.p1.y, edge.p2.y]);
+
+        const minX = Math.min(...xs);
+        const minY = Math.min(...ys);
+        const maxX = Math.max(...xs);
+        const maxY = Math.max(...ys);
+
+        return Rect.of(minX, minY, maxX - minX, maxY - minY);
+    }
+
+    /**
+     * Returns whether the shape overlaps with the other shape.
+     * @param other
+     */
+    isOverlapWith(other: Shape): boolean {
+        const edges1 = this.getEdges();
+        const edges2 = other.getEdges();
+
+        if (
+            edges2.some(
+                (edge2) => this.contain(edge2.p1) || this.contain(edge2.p2),
+            )
+        ) {
+            return true;
+        }
+        if (
+            edges1.some(
+                (edge1) => other.contain(edge1.p1) || other.contain(edge1.p2),
+            )
+        ) {
+            return true;
+        }
+
+        return edges1.some((edge1) => {
+            return edges2.some((edge2) => {
+                return edge1.cross(edge2);
+            });
         });
+    }
+
+    getDistance(point: Point): {
+        distance: number;
+        point: Point;
+    } {
+        if (this.contain(point)) {
+            return { distance: 0, point };
+        }
+
+        const edges = this.getEdges();
+        if (edges.length === 0) {
+            return {
+                distance: Number.POSITIVE_INFINITY,
+                point: point,
+            };
+        }
+
+        const distances = edges.map((edge) => edge.getDistance(point));
+        return distances.reduce((prev, current) =>
+            prev.distance < current.distance ? prev : current,
+        );
+    }
+}
+
+export class Rect extends Shape {
+    constructor(
+        public readonly p0: Point,
+        public readonly p1: Point,
+    ) {
+        super();
+    }
+
+    getEdges(): Line[] {
+        return [this.topEdge, this.rightEdge, this.bottomEdge, this.leftEdge];
+    }
+
+    contain(point: Point): boolean {
+        return (
+            this.left <= point.x &&
+            point.x < this.right &&
+            this.top <= point.y &&
+            point.y < this.bottom
+        );
+    }
+
+    static of(x: number, y: number, width: number, height: number): Rect {
+        return new Rect(new Point(x, y), new Point(x + width, y + height));
     }
 
     static fromSize(topLeft: Point, width: number, height: number): Rect {
@@ -90,64 +183,23 @@ export class Rect extends dataclass<{
     }
 
     get topEdge(): Line {
-        return new Line({
-            p1: this.topLeft,
-            p2: this.topRight,
-        });
+        return new Line(this.topLeft, this.topRight);
     }
 
     get rightEdge(): Line {
-        return new Line({
-            p1: this.topRight,
-            p2: this.bottomRight,
-        });
+        return new Line(this.topRight, this.bottomRight);
     }
 
     get bottomEdge(): Line {
-        return new Line({
-            p1: this.bottomRight,
-            p2: this.bottomLeft,
-        });
+        return new Line(this.bottomRight, this.bottomLeft);
     }
 
     get leftEdge(): Line {
-        return new Line({
-            p1: this.bottomLeft,
-            p2: this.topLeft,
-        });
+        return new Line(this.bottomLeft, this.topLeft);
     }
 
     equals(other: Rect): boolean {
         return this.p0.equals(other.p0) && this.p1.equals(other.p1);
-    }
-
-    isOverlappedWith(other: Rect | Line | Point): boolean {
-        if (other instanceof Rect) {
-            return (
-                this.left < other.left + other.width &&
-                this.left + this.width > other.left &&
-                this.top < other.top + other.height &&
-                this.top + this.height > other.top
-            );
-        }
-
-        if (other instanceof Line) {
-            return (
-                this.isOverlappedWith(other.p1) ||
-                this.isOverlappedWith(other.p2) ||
-                this.topEdge.isOverlappedWith(other) ||
-                this.rightEdge.isOverlappedWith(other) ||
-                this.bottomEdge.isOverlappedWith(other) ||
-                this.leftEdge.isOverlappedWith(other)
-            );
-        }
-
-        return (
-            this.left <= other.x &&
-            other.x <= this.left + this.width &&
-            this.top <= other.y &&
-            other.y <= this.top + this.height
-        );
     }
 
     union(other: Rect): Rect {
@@ -174,7 +226,7 @@ export class Rect extends dataclass<{
         distance: number;
         point: Point;
     } {
-        if (this.isOverlappedWith(point)) {
+        if (this.contain(point)) {
             return { distance: 0, point };
         }
 

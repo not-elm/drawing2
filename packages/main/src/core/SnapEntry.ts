@@ -1,7 +1,7 @@
 import type { Page } from "./Page";
 import type { Viewport } from "./Viewport";
-import type { Line } from "./geo/Line";
-import type { Point } from "./geo/Point";
+import type { Line } from "./shape/Line";
+import type { Point } from "./shape/Point";
 
 export interface SnapEntry2D {
     x: SnapEntry;

@@ -1,8 +1,8 @@
 import { Store } from "../lib/Store";
 import { Viewport } from "./Viewport";
-import { Point } from "./geo/Point";
-import { Rect } from "./geo/Rect";
-import { scale, translate } from "./geo/TransformMatrix";
+import { Point } from "./shape/Point";
+import { Rect } from "./shape/Shape";
+import { scale, translate } from "./shape/TransformMatrix";
 
 export class ViewportStore extends Store<Viewport> {
     constructor(
@@ -37,7 +37,7 @@ export class ViewportStore extends Store<Viewport> {
         const p0 = transform.apply(this.state.rect.p0);
         const p1 = transform.apply(this.state.rect.p1);
 
-        this.setState(new Viewport(new Rect({ p0, p1 }), newScale));
+        this.setState(new Viewport(new Rect(p0, p1), newScale));
         // this.restoreViewportService.save(this.state);
     }
 

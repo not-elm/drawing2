@@ -3,7 +3,8 @@ import type { App } from "./App";
 import type { CanvasPointerEvent } from "./ModeController";
 import { SelectEntityModeController } from "./SelectEntityModeController";
 import type { SelectEntityModeStateStore } from "./SelectEntityModeStateStore";
-import { Rect } from "./geo/Rect";
+
+import { Rect } from "./shape/Shape";
 
 export function setupBrushSelectPointerEventHandlers(
     app: App,
@@ -19,7 +20,7 @@ export function setupBrushSelectPointerEventHandlers(
     const originalSelectedEntityIds =
         app.canvasStateStore.getState().selectedEntityIds;
 
-    brushStore.setBrushRect(new Rect({ p0: ev.point, p1: ev.point }));
+    brushStore.setBrushRect(new Rect(ev.point, ev.point));
 
     app.gestureRecognizer
         .addPointerMoveHandler(ev.pointerId, (app, ev) => {

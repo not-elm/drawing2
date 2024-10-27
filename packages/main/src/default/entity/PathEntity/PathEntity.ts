@@ -5,12 +5,10 @@ import {
     type EntityTapEvent,
 } from "../../../core/Entity";
 import type { SerializedEntity } from "../../../core/EntityConverter";
-import { Graph, type GraphEdge, GraphNode } from "../../../core/Graph";
 import type { JSONObject } from "../../../core/JSONObject";
-import { Line } from "../../../core/geo/Line";
-import { Point } from "../../../core/geo/Point";
-import { Rect } from "../../../core/geo/Rect";
-import type { TransformMatrix } from "../../../core/geo/TransformMatrix";
+import { Graph, type GraphEdge, GraphNode } from "../../../core/shape/Graph";
+import { Point } from "../../../core/shape/Point";
+import type { TransformMatrix } from "../../../core/shape/TransformMatrix";
 import { assert } from "../../../lib/assert";
 import { type ColorId, PROPERTY_KEY_COLOR_ID } from "../../property/Colors";
 import {
@@ -25,6 +23,7 @@ import { PROPERTY_KEY_STROKE_WIDTH } from "../../property/StrokeWidth";
 
 import { getMaxCornerRadius } from "../../../core/SelectEntityModeController";
 import { SelectPathModeController } from "../../../core/SelectPathModeController";
+import { Rect, type Shape } from "../../../core/shape/Shape";
 
 export const PROPERTY_KEY_CORNER_RADIUS = "cornerRadius";
 
@@ -99,10 +98,8 @@ export class PathEntity extends Entity<Props> {
         return this.graph.getEdges();
     }
 
-    getOutline(): (Rect | Line | Point)[] {
-        return this.graph
-            .getEdges()
-            .map((edge) => new Line({ p1: edge.p0, p2: edge.p1 }));
+    getShape(): Shape {
+        return this.graph;
     }
 
     serialize(): SerializedEntity {
@@ -116,7 +113,7 @@ export class PathEntity extends Entity<Props> {
             })),
             edges: this.graph
                 .getEdges()
-                .map((edge) => [edge.p0.id, edge.p1.id]),
+                .map((edge) => [edge.p1.id, edge.p2.id]),
             colorId: this.props.colorId,
             strokeStyle: this.props.strokeStyle,
             strokeWidth: this.props.strokeWidth,
@@ -130,24 +127,6 @@ export class PathEntity extends Entity<Props> {
         graph.setNodePosition(nodeId, position.x, position.y);
 
         return new PathEntity(this.props, graph);
-    }
-
-    getDistance(point: Point): { distance: number; point: Point } {
-        if (this.graph.contains(point)) return { distance: 0, point };
-
-        let bestResult: { distance: number; point: Point } = {
-            distance: Number.POSITIVE_INFINITY,
-            point: point,
-        };
-
-        for (const edge of this.getOutline()) {
-            const result = edge.getDistance(point);
-            if (result.distance < bestResult.distance) {
-                bestResult = result;
-            }
-        }
-
-        return bestResult;
     }
 
     static deserialize(data: JSONObject): PathEntity {
@@ -238,7 +217,9 @@ export class PathEntity extends Entity<Props> {
     }
 
     private constraintCornerRadius(app: App) {
-        const maxCornerRadius = getMaxCornerRadius(this.graph.getOutline());
+        const maxCornerRadius = getMaxCornerRadius(
+            this.graph.getOutline().points,
+        );
         if (maxCornerRadius < this.props[PROPERTY_KEY_CORNER_RADIUS]) {
             app.canvasStateStore.edit((draft) => {
                 draft.updateProperty(

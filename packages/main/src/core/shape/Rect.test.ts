@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { Line } from "./Line";
-import { Rect } from "./Rect";
+
+import { Rect } from "./Shape";
 
 describe("overlap", () => {
     test.each([
@@ -13,6 +14,6 @@ describe("overlap", () => {
         // The line is completely inside of the rect
         [Rect.of(0, 0, 3, 3), Line.of(1, 1, 2, 2), true],
     ])("case %#", (rect, line, expected) => {
-        expect(rect.isOverlappedWith(line)).toBe(expected);
+        expect(rect.isOverlapWith(line)).toBe(expected);
     });
 });

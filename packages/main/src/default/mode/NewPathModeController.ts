@@ -1,6 +1,5 @@
 import type { App } from "../../core/App";
 import type { Entity } from "../../core/Entity";
-import { Graph, GraphNode } from "../../core/Graph";
 import { LinkToEdge, LinkToRect } from "../../core/Link";
 import {
     type CanvasPointerEvent,
@@ -8,9 +7,10 @@ import {
 } from "../../core/ModeController";
 import type { Page } from "../../core/Page";
 import { SelectEntityModeController } from "../../core/SelectEntityModeController";
-import { Line } from "../../core/geo/Line";
-import { translate } from "../../core/geo/TransformMatrix";
 import { setupMoveNodesPointerEventHandlers } from "../../core/setupMoveNodesPointerEventHandlers";
+import { Graph, GraphNode } from "../../core/shape/Graph";
+import { Line } from "../../core/shape/Line";
+import { translate } from "../../core/shape/TransformMatrix";
 import { randomId } from "../../lib/randomId";
 import { testHitEntities } from "../../lib/testHitEntities";
 import {
@@ -61,10 +61,7 @@ export class NewPathModeController extends ModeController {
 
         const pathEntity = this.insertNewPath(
             app,
-            new Line({
-                p1: ev.point,
-                p2: translate(1, 1).apply(ev.point),
-            }),
+            new Line(ev.point, translate(1, 1).apply(ev.point)),
         );
 
         if (hit.entities.length > 0) {

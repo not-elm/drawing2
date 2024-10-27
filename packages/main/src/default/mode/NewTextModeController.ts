@@ -4,7 +4,7 @@ import {
     ModeController,
 } from "../../core/ModeController";
 import { SelectEntityModeController } from "../../core/SelectEntityModeController";
-import { Rect } from "../../core/geo/Rect";
+import { Rect } from "../../core/shape/Shape";
 import { randomId } from "../../lib/randomId";
 import { TextEntity } from "../entity/TextEntity/TextEntity";
 import { PROPERTY_KEY_COLOR_ID } from "../property/Colors";

@@ -16,7 +16,7 @@ import { SelectEntityModeController } from "./SelectEntityModeController";
 import { SelectPathModeController } from "./SelectPathModeController";
 import { SnapGuideStore } from "./SnapGuideStore";
 import { ViewportStore } from "./ViewportStore";
-import { Point } from "./geo/Point";
+import { Point } from "./shape/Point";
 
 export class App {
     readonly entityConverter = new EntityConverterMap();
