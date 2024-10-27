@@ -14,6 +14,7 @@ import { translate } from "../../core/shape/TransformMatrix";
 import { randomId } from "../../lib/randomId";
 import { testHitEntities } from "../../lib/testHitEntities";
 import {
+    PROPERTY_KEY_ARROW_HEAD_NODE_IDS,
     PROPERTY_KEY_CORNER_RADIUS,
     PathEntity,
 } from "../entity/PathEntity/PathEntity";
@@ -105,6 +106,7 @@ export class NewPathModeController extends ModeController {
                     .getState()
                     .getOrDefault(PROPERTY_KEY_FILL_STYLE, "none"),
                 [PROPERTY_KEY_CORNER_RADIUS]: 0,
+                [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]: [],
             },
             graph,
         );
