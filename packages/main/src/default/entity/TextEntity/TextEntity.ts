@@ -28,15 +28,6 @@ export class TextEntity extends Entity<{
 }> {
     readonly type = "text";
 
-    getBoundingRect(): Rect {
-        return Rect.of(
-            this.props.rect.left,
-            this.props.rect.top,
-            this.props.rect.width,
-            this.props.rect.height,
-        );
-    }
-
     transform(transform: TransformMatrix) {
         const oldRect = this.props.rect;
         const newRect = transform.apply(this.props.rect);

@@ -4,6 +4,7 @@ import {
     PathEntity,
 } from "../default/entity/PathEntity/PathEntity";
 import { NewTextModeController } from "../default/mode/NewTextModeController";
+import { assert } from "../lib/assert";
 import { normalizeAngle } from "../lib/normalizeAngle";
 import { testHitEntities } from "../lib/testHitEntities";
 import type { App } from "./App";
@@ -658,22 +659,34 @@ export function getCornerRoundHandleData(
         const p0 = outline[(i - 1 + outline.length) % outline.length];
         const p1 = outline[i];
         const p2 = outline[(i + 1) % outline.length];
+        if (p0.id === p2.id) continue;
 
         const p10x = p0.x - p1.x;
         const p10y = p0.y - p1.y;
         const norm10 = Math.hypot(p10x, p10y);
         const i10x = p10x / norm10;
         const i10y = p10y / norm10;
+        if (p10x === 0 && p10y === 0) {
+            continue;
+        }
 
         const p12x = p2.x - p1.x;
         const p12y = p2.y - p1.y;
         const norm12 = Math.hypot(p12x, p12y);
         const i12x = p12x / norm12;
         const i12y = p12y / norm12;
+        if (p12x === 0 && p12y === 0) {
+            continue;
+        }
 
         const angleP10 = Math.atan2(p10y, p10x);
         const angleP12 = Math.atan2(p12y, p12x);
         const angle = normalizeAngle(-(angleP12 - angleP10));
+        if (angle === 0) {
+            console.log(angle, p0, p1, p2);
+            assert(angle !== 0);
+        }
+
         const offset =
             cornerRadius /
             Math.tan(angle > Math.PI ? Math.PI - angle / 2 : angle / 2);

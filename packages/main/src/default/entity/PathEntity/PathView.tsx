@@ -31,7 +31,7 @@ export const STROKE_WIDTH_BASE = 5;
 export const PathView = memo(function PathView({
     entity,
 }: { entity: PathEntity }) {
-    const rect = entity.getBoundingRect();
+    const rect = entity.getShape().getBoundingRect();
 
     return (
         <div
@@ -93,6 +93,10 @@ const PathViewInner = memo(function PathViewInner({
 
     const outline = graph.getOutline();
 
+    const pathDefinitionForFill = computePathDefinitionForFill(
+        outline.points,
+        cornerRadius,
+    );
     return (
         <>
             <svg
@@ -105,21 +109,23 @@ const PathViewInner = memo(function PathViewInner({
                     inset: 0,
                 }}
             >
+                {pathDefinitionForFill !== "Z" && (
+                    <path
+                        d={pathDefinitionForFill}
+                        css={{
+                            ...{
+                                none: { fill: "none" },
+                                mono: { fill: ColorPaletteBackgroundMonoColor },
+                                color: {
+                                    fill: ColorPaletteBackground[colorId],
+                                },
+                            }[fillStyle],
+                            stroke: "none",
+                        }}
+                    />
+                )}
                 <path
-                    d={constructPathDefinition(outline.points, cornerRadius)}
-                    css={{
-                        ...{
-                            none: { fill: "none" },
-                            mono: { fill: ColorPaletteBackgroundMonoColor },
-                            color: {
-                                fill: ColorPaletteBackground[colorId],
-                            },
-                        }[fillStyle],
-                        stroke: "none",
-                    }}
-                />
-                <path
-                    d={constructPathDefinitionForEdges(graph, arrowHeadNodeIds)}
+                    d={computePathDefinitionForEdges(graph, arrowHeadNodeIds)}
                     css={{
                         fill: "none",
                         stroke: Colors[colorId],
@@ -174,7 +180,7 @@ function constructArrowHeadPath(
     return [`M${q1x} ${q1y}`, `L${x1} ${y1}`, `L${q2x} ${q2y}`].join(" ");
 }
 
-function constructPathDefinition(
+function computePathDefinitionForFill(
     nodes: GraphNode[],
     cornerRadius: number,
 ): string {
@@ -206,7 +212,7 @@ function constructPathDefinition(
     return `${commands.join(" ")}Z`;
 }
 
-function constructPathDefinitionForEdges(
+function computePathDefinitionForEdges(
     graph: Graph,
     arrowHeadNodeIds: string[],
 ): string {

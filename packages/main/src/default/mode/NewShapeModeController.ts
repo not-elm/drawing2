@@ -63,29 +63,20 @@ export class NewShapeModeController extends ModeController {
                 "bottom",
             ),
         );
+        app.gestureRecognizer.addPointerUpHandler(ev.pointerId, (app, ev) => {
+            if (ev.isTap) {
+                app.canvasStateStore.edit((draft) => {
+                    draft.deleteEntity(shape.props.id);
+                });
+            }
+        });
     }
 
     private insertNewShape(app: App, rect: Rect): Entity {
-        const topLeftNode = new GraphNode(
-            randomId(),
-            rect.topLeft.x,
-            rect.topLeft.y,
-        );
-        const topRightNode = new GraphNode(
-            randomId(),
-            rect.topRight.x,
-            rect.topRight.y,
-        );
-        const bottomRightNode = new GraphNode(
-            randomId(),
-            rect.bottomRight.x,
-            rect.bottomRight.y,
-        );
-        const bottomLeftNode = new GraphNode(
-            randomId(),
-            rect.bottomLeft.x,
-            rect.bottomLeft.y,
-        );
+        const topLeftNode = new GraphNode(randomId(), rect.topLeft);
+        const topRightNode = new GraphNode(randomId(), rect.topRight);
+        const bottomRightNode = new GraphNode(randomId(), rect.bottomRight);
+        const bottomLeftNode = new GraphNode(randomId(), rect.bottomLeft);
         const graph = Graph.create();
         graph.addEdge(topLeftNode, topRightNode);
         graph.addEdge(topRightNode, bottomRightNode);

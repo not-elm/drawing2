@@ -1,3 +1,4 @@
+import { PathEntity } from "../default/entity/PathEntity/PathEntity";
 import { assert } from "../lib/assert";
 import type { Entity } from "./Entity";
 import type { Link, LinkCollection } from "./Link";
@@ -93,6 +94,10 @@ export class PageDraft extends PageDraftCore {
 
     setPointPosition(pathId: string, nodeId: string, point: Point) {
         const entity = this.getEntity(pathId);
+        assert(
+            entity instanceof PathEntity,
+            `Entity ${pathId} is not a path: ${entity.type}`,
+        );
         this.setEntity(entity.setNodePosition(nodeId, point));
     }
 
@@ -247,7 +252,7 @@ export class PageDraft extends PageDraftCore {
             const otherEntity = this.getEntity(entityId);
             assert(otherEntity !== undefined, `Entity ${entityId} not found`);
 
-            if (refEntity.isOverlapWithEntity(otherEntity)) {
+            if (refEntity.getShape().isOverlapWith(otherEntity.getShape())) {
                 return { entityId: entityId, globalIndex };
             }
         }
@@ -279,7 +284,7 @@ export class PageDraft extends PageDraftCore {
 
             const otherEntity = this.getEntity(entityId);
 
-            if (refEntity.isOverlapWithEntity(otherEntity)) {
+            if (refEntity.getShape().isOverlapWith(otherEntity.getShape())) {
                 return { entityId: entityId, globalIndex };
             }
         }

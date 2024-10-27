@@ -289,7 +289,9 @@ export abstract class SelectionTransformController {
 export class TranslateSelectionTransformController extends SelectionTransformController {
     protected getSnapPoints(): { x: Point[]; y: Point[] } {
         const rect = Rect.union(
-            this.originalEntities.map((entity) => entity.getBoundingRect()),
+            this.originalEntities.map((entity) =>
+                entity.getShape().getBoundingRect(),
+            ),
         );
         if (rect === null) return { x: [], y: [] };
 
@@ -356,7 +358,9 @@ export class ScaleSelectionTransformController extends SelectionTransformControl
 
     protected getSnapPoints(): { x: Point[]; y: Point[] } {
         const rect = Rect.union(
-            this.originalEntities.map((entity) => entity.getBoundingRect()),
+            this.originalEntities.map((entity) =>
+                entity.getShape().getBoundingRect(),
+            ),
         );
         if (rect === null) return { x: [], y: [] };
 

@@ -44,15 +44,26 @@ export class Line extends Shape {
     contain(point: Point): boolean {
         const dx = this.x2 - this.x1;
         const dy = this.y2 - this.y1;
+
+        // Internal division parameter when the point is on the line
+        // i.e. point = p1 * (1-r) + r * p2
+        let r: number;
+
         if (Math.abs(dx) > Math.abs(dy)) {
-            const rx = (point.x - this.x1) / dx;
-            const y = this.y1 + rx * (this.y2 - this.y1);
-            return Math.abs(y - point.y) < 1e-6;
+            r = (point.x - this.x1) / dx;
+            const y = this.y1 + r * dy;
+            if (Math.abs(y - point.y) > 1e-6) {
+                return false;
+            }
         } else {
-            const ry = (point.y - this.y1) / dy;
-            const x = this.x1 + ry * (this.x2 - this.x1);
-            return Math.abs(x - point.x) < 1e-6;
+            r = (point.y - this.y1) / dy;
+            const x = this.x1 + r * dx;
+            if (Math.abs(x - point.x) > 1e-6) {
+                return false;
+            }
         }
+
+        return r >= 0 && r <= 1;
     }
 
     static of(x1: number, y1: number, x2: number, y2: number): Line {

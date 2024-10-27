@@ -60,33 +60,35 @@ export class NewPathModeController extends ModeController {
             app.viewportStore.getState().scale,
         );
 
-        const pathEntity = this.insertNewPath(
+        const path = this.insertNewPath(
             app,
             new Line(ev.point, translate(1, 1).apply(ev.point)),
         );
 
         if (hit.entities.length > 0) {
             const { target } = hit.entities[0];
-            registerLinkToRect(
-                app,
-                pathEntity,
-                pathEntity.getNodes()[0],
-                target,
-            );
+            registerLinkToRect(app, path, path.getNodes()[0], target);
         }
 
         app.setMode(SelectEntityModeController.MODE_NAME);
         app.canvasStateStore.unselectAll();
-        app.canvasStateStore.select(pathEntity.props.id);
+        app.canvasStateStore.select(path.props.id);
 
-        setupMoveNodesPointerEventHandlers(app, ev, pathEntity, [
-            pathEntity.getNodes()[1].id,
+        setupMoveNodesPointerEventHandlers(app, ev, path, [
+            path.getNodes()[1].id,
         ]);
+        app.gestureRecognizer.addPointerUpHandler(ev.pointerId, (app, ev) => {
+            if (ev.isTap) {
+                app.canvasStateStore.edit((draft) => {
+                    draft.deleteEntity(path.props.id);
+                });
+            }
+        });
     }
 
     private insertNewPath(app: App, line: Line): PathEntity {
-        const node1 = new GraphNode(randomId(), line.p1.x, line.p1.y);
-        const node2 = new GraphNode(randomId(), line.p2.x, line.p2.y);
+        const node1 = new GraphNode(randomId(), line.p1);
+        const node2 = new GraphNode(randomId(), line.p2);
         const graph = Graph.create();
         graph.addEdge(node1, node2);
 
