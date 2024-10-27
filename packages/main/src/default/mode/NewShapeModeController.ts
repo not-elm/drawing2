@@ -45,7 +45,7 @@ export class NewShapeModeController extends ModeController {
         const p1 = translate(1, 1).apply(ev.point);
 
         app.historyManager.pause();
-        const shape = this.insertNewShape(app, new Rect({ p0, p1 }));
+        const shape = this.insertNewShape(app, new Rect(p0, p1));
 
         app.setMode(SelectEntityModeController.MODE_NAME);
         app.canvasStateStore.unselectAll();

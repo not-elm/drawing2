@@ -19,7 +19,7 @@ export function setupBrushSelectPointerEventHandlers(
     const originalSelectedEntityIds =
         app.canvasStateStore.getState().selectedEntityIds;
 
-    brushStore.setBrushRect(new Rect({ p0: ev.point, p1: ev.point }));
+    brushStore.setBrushRect(new Rect(ev.point, ev.point));
 
     app.gestureRecognizer
         .addPointerMoveHandler(ev.pointerId, (app, ev) => {

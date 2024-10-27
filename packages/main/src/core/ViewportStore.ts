@@ -37,7 +37,7 @@ export class ViewportStore extends Store<Viewport> {
         const p0 = transform.apply(this.state.rect.p0);
         const p1 = transform.apply(this.state.rect.p1);
 
-        this.setState(new Viewport(new Rect({ p0, p1 }), newScale));
+        this.setState(new Viewport(new Rect(p0, p1), newScale));
         // this.restoreViewportService.save(this.state);
     }
 

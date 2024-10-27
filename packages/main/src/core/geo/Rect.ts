@@ -1,17 +1,15 @@
 import { assert } from "../../lib/assert";
-import { dataclass } from "../../lib/dataclass";
 import { Line } from "./Line";
 import { Point } from "./Point";
 
-export class Rect extends dataclass<{
-    p0: Point;
-    p1: Point;
-}>() {
+export class Rect {
+    constructor(
+        public readonly p0: Point,
+        public readonly p1: Point,
+    ) {}
+
     static of(x: number, y: number, width: number, height: number): Rect {
-        return new Rect({
-            p0: new Point(x, y),
-            p1: new Point(x + width, y + height),
-        });
+        return new Rect(new Point(x, y), new Point(x + width, y + height));
     }
 
     static fromSize(topLeft: Point, width: number, height: number): Rect {
