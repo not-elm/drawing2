@@ -28,6 +28,7 @@ module.exports = {
     experiments: {
         asyncWebAssembly: true,
     },
+    devtool: "source-map",
     plugins: [
         new ForkTsCheckerWebpackPlugin(),
         new webpack.DefinePlugin({
