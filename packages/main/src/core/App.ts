@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
 import { AppStateStore } from "./AppStateStore";
 import { CanvasStateStore } from "./CanvasStateStore";
@@ -18,7 +19,17 @@ import { SnapGuideStore } from "./SnapGuideStore";
 import { ViewportStore } from "./ViewportStore";
 import { Point } from "./shape/Point";
 
+class AppStore extends Store<{
+    pointerPosition: Point;
+}> {
+    setPointerPosition(point: Point) {
+        this.setState({ ...this.state, pointerPosition: point });
+    }
+}
+
 export class App {
+    readonly store = new AppStore({ pointerPosition: new Point(0, 0) });
+
     readonly entityConverter = new EntityConverterMap();
     readonly clipboardService = new ClipboardService(this.entityConverter);
     readonly canvasStateStore = new CanvasStateStore(this);
@@ -357,7 +368,8 @@ export class App {
             .fromCanvasCoordinateTransform.apply(
                 new Point(ev.clientX, ev.clientY),
             );
-        this.getModeController().onMouseMove(this, point);
+        this.store.setPointerPosition(point);
+        this.getModeController().getCursor(this);
     }
 
     /**

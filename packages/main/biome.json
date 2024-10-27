@@ -10,7 +10,8 @@
             "complexity": {
                 "noBannedTypes": "off",
                 "noStaticOnlyClass": "off",
-                "noUselessLoneBlockStatements": "off"
+                "noUselessLoneBlockStatements": "off",
+                "noUselessSwitchCase": "off"
             },
             "a11y": {
                 "noSvgWithoutTitle": "off",

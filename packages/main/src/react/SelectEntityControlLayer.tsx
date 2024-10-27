@@ -21,9 +21,12 @@ function SelectEntityControlLayerInner({
 }) {
     const app = useApp();
     const appState = useStore(app.appStateStore);
+    const { pointerPosition } = useStore(app.store);
     const viewport = useStore(app.viewportStore);
-    const { brushRect, visibleCornerRoundHandles } = useStore(
-        modeController.store,
+    const { brushRect } = useStore(modeController.store);
+    const visibleCornerRoundHandles = modeController.computeControlLayerData(
+        app,
+        pointerPosition,
     );
     if (appState.mode !== SelectEntityModeController.MODE_NAME) return null;
 
