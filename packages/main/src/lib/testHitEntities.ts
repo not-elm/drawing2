@@ -1,6 +1,6 @@
 import type { Entity } from "../core/Entity";
 import type { Page } from "../core/Page";
-import type { Point } from "../core/geo/Point";
+import type { Point } from "../core/shape/Point";
 import { assert } from "./assert";
 
 interface HitTestResult {

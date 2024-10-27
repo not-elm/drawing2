@@ -6,10 +6,14 @@ import {
     type SnapGuide,
     computeSnapEntry2D,
 } from "./SnapEntry";
-import { Line } from "./geo/Line";
-import { Point } from "./geo/Point";
-import { Rect } from "./geo/Shape";
-import { type TransformMatrix, scale, translate } from "./geo/TransformMatrix";
+import { Line } from "./shape/Line";
+import { Point } from "./shape/Point";
+import { Rect } from "./shape/Shape";
+import {
+    type TransformMatrix,
+    scale,
+    translate,
+} from "./shape/TransformMatrix";
 
 interface SnapPoints {
     /**

@@ -1,7 +1,9 @@
-import { assert } from "../lib/assert";
-import { normalizeAngle } from "../lib/normalizeAngle";
-import { Point } from "./geo/Point";
-import { Polygon } from "./geo/Polygon";
+import { assert } from "../../lib/assert";
+import { normalizeAngle } from "../../lib/normalizeAngle";
+import { Line } from "./Line";
+import { Point } from "./Point";
+import { Polygon } from "./Polygon";
+import { Shape } from "./Shape";
 
 export class GraphNode extends Point {
     constructor(
@@ -30,35 +32,43 @@ export class CrossPoint extends GraphNode {
     }
 }
 
-export class GraphEdge {
+export class GraphEdge extends Line {
     public readonly id: string;
-    public readonly p0: GraphNode;
     public readonly p1: GraphNode;
+    public readonly p2: GraphNode;
 
     constructor(p0: GraphNode, p1: GraphNode) {
+        super(p0, p1);
+
         if (p0.id > p1.id) {
-            this.p0 = p1;
-            this.p1 = p0;
-        } else {
-            this.p0 = p0;
             this.p1 = p1;
+            this.p2 = p0;
+        } else {
+            this.p1 = p0;
+            this.p2 = p1;
         }
 
-        this.id = `${this.p0.id}-${this.p1.id}`;
+        this.id = `${this.p1.id}-${this.p2.id}`;
     }
 }
 
-export class Graph {
+export class Graph extends Shape {
     private readonly arguments = new Map<string, Map<string, number>>();
     private normalized = false;
 
     constructor(
         public readonly nodes: Map<string, GraphNode>,
         private readonly edges: Map<string, string[]>,
-    ) {}
+    ) {
+        super();
+    }
 
     static create(): Graph {
         return new Graph(new Map(), new Map());
+    }
+
+    contain(point: Point): boolean {
+        return this.getOutline().contain(point);
     }
 
     clone(): Graph {
@@ -207,9 +217,9 @@ export class Graph {
         return value;
     }
 
-    getShape(): GraphPolygon {
+    getOutline(): GraphPolygon {
         if (!this.normalized) {
-            return this.normalize().getShape();
+            return this.normalize().getOutline();
         }
 
         if (this.nodes.size < 3)
@@ -352,19 +362,19 @@ export class Graph {
 
             for (const edge2 of edges) {
                 if (edge1 === edge2) continue;
-                if (edge1.p0.id > edge2.p0.id) continue;
+                if (edge1.p1.id > edge2.p1.id) continue;
 
-                if (edge1.p0 === edge2.p0) continue;
-                if (edge1.p0 === edge2.p1) continue;
-                if (edge1.p1 === edge2.p0) continue;
                 if (edge1.p1 === edge2.p1) continue;
+                if (edge1.p1 === edge2.p2) continue;
+                if (edge1.p2 === edge2.p1) continue;
+                if (edge1.p2 === edge2.p2) continue;
 
-                if (isCross(edge1.p0, edge1.p1, edge2.p0, edge2.p1)) {
+                if (isCross(edge1.p1, edge1.p2, edge2.p1, edge2.p2)) {
                     const crossPoint = getCrossPoint(
-                        edge1.p0,
                         edge1.p1,
-                        edge2.p0,
+                        edge1.p2,
                         edge2.p1,
+                        edge2.p2,
                     );
 
                     newNodesMap.set(edge1, [
@@ -384,17 +394,17 @@ export class Graph {
                 n1.x === n2.x ? n1.y - n2.y : n1.x - n2.x,
             );
             if (
-                edge.p0.x < edge.p1.x ||
-                (edge.p0.x === edge.p1.x && edge.p0.y < edge.p1.y)
+                edge.p1.x < edge.p2.x ||
+                (edge.p1.x === edge.p2.x && edge.p1.y < edge.p2.y)
             ) {
-                newNodes.unshift(edge.p0);
-                newNodes.push(edge.p1);
-            } else {
                 newNodes.unshift(edge.p1);
-                newNodes.push(edge.p0);
+                newNodes.push(edge.p2);
+            } else {
+                newNodes.unshift(edge.p2);
+                newNodes.push(edge.p1);
             }
 
-            clone.deleteEdge(edge.p0.id, edge.p1.id);
+            clone.deleteEdge(edge.p1.id, edge.p2.id);
             for (let i = 0; i < newNodes.length - 1; i++) {
                 clone.addEdge(newNodes[i], newNodes[i + 1]);
             }
@@ -519,13 +529,6 @@ function canonicalizeFace(face: GraphNode[]): GraphNode[] {
     const startNode = face.reduce((n1, n2) => (n1.y < n2.y ? n1 : n2));
     const startIndex = face.indexOf(startNode);
     return [...face.slice(startIndex), ...face.slice(0, startIndex)];
-}
-
-export function isSameFace(face1: GraphNode[], face2: GraphNode[]) {
-    return (
-        face1.length === face2.length &&
-        face1.every((node, i) => node.id === face2[i].id)
-    );
 }
 
 export class GraphPolygon extends Polygon {

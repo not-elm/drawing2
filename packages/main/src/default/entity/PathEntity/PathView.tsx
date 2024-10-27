@@ -1,9 +1,10 @@
 import { memo } from "react";
-import type { Graph, GraphNode } from "../../../core/Graph";
 import {
     getCornerRoundHandleData,
     getMaxCornerRadius,
 } from "../../../core/SelectEntityModeController";
+import type { Graph, GraphNode } from "../../../core/shape/Graph";
+import type { Line } from "../../../core/shape/Line";
 import {
     type ColorId,
     ColorPaletteBackground,
@@ -81,22 +82,22 @@ const PathViewInner = memo(function PathViewInner({
             strokeWidth) /
         2;
 
-    const shape = graph.getShape();
+    const outline = graph.getOutline();
 
     return (
-        <svg
-            viewBox={`${left} ${top} 1 1`}
-            width={1}
-            height={1}
-            css={{
-                position: "absolute",
-                overflow: "visible",
-                inset: 0,
-            }}
-        >
-            {shape.points.length > 0 && (
+        <>
+            <svg
+                viewBox={`${left} ${top} 1 1`}
+                width={1}
+                height={1}
+                css={{
+                    position: "absolute",
+                    overflow: "visible",
+                    inset: 0,
+                }}
+            >
                 <path
-                    d={constructPathDefinition(shape.points, cornerRadius)}
+                    d={constructPathDefinition(outline.points, cornerRadius)}
                     css={{
                         ...{
                             none: { fill: "none" },
@@ -105,6 +106,16 @@ const PathViewInner = memo(function PathViewInner({
                                 fill: ColorPaletteBackground[colorId],
                             },
                         }[fillStyle],
+                        stroke: "none",
+                    }}
+                />
+                <path
+                    d={constructPathDefinitionForEdges(
+                        graph.getEdges(),
+                        cornerRadius,
+                    )}
+                    css={{
+                        fill: "none",
                         stroke: Colors[colorId],
                         strokeLinejoin: "round",
                         strokeLinecap: "round",
@@ -120,8 +131,8 @@ const PathViewInner = memo(function PathViewInner({
                         }[strokeStyle],
                     }}
                 />
-            )}
-        </svg>
+            </svg>
+        </>
     );
 });
 
@@ -150,13 +161,13 @@ function constructArrowHeadPath(
 }
 
 function constructPathDefinition(
-    outline: Array<GraphNode>,
+    nodes: GraphNode[],
     cornerRadius: number,
 ): string {
     const commands: string[] = [];
-    const maxRadius = getMaxCornerRadius(outline);
+    const maxRadius = getMaxCornerRadius(nodes);
     const radius = Math.min(cornerRadius, maxRadius);
-    const handles = getCornerRoundHandleData(outline, radius);
+    const handles = getCornerRoundHandleData(nodes, radius);
 
     for (const handle of handles) {
         if (commands.length === 0) {
@@ -177,6 +188,18 @@ function constructPathDefinition(
         commands.push(
             `A${radius} ${radius} 0 0 ${arcDirection} ${handle.arcEndPosition.x} ${handle.arcEndPosition.y}`,
         );
+    }
+    return `${commands.join(" ")}Z`;
+}
+
+function constructPathDefinitionForEdges(
+    edges: Line[],
+    cornerRadius: number,
+): string {
+    const commands: string[] = [];
+    for (const edge of edges) {
+        commands.push(`M${edge.p1.x} ${edge.p1.y}`);
+        commands.push(`L${edge.p2.x} ${edge.p2.y}`);
     }
     return `${commands.join(" ")}Z`;
 }

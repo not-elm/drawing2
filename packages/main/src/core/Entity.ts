@@ -1,11 +1,11 @@
 import type { App } from "./App";
 import type { SerializedEntity } from "./EntityConverter";
-import type { GraphEdge, GraphNode } from "./Graph";
 import type { JSONObject } from "./JSONObject";
 import type { CanvasPointerEvent } from "./ModeController";
-import type { Point } from "./geo/Point";
-import type { Rect, Shape } from "./geo/Shape";
-import type { TransformMatrix } from "./geo/TransformMatrix";
+import type { GraphEdge, GraphNode } from "./shape/Graph";
+import type { Point } from "./shape/Point";
+import type { Rect, Shape } from "./shape/Shape";
+import type { TransformMatrix } from "./shape/TransformMatrix";
 
 export interface EntityProps {
     id: string;

@@ -2,10 +2,10 @@ import { PathEntity } from "../default/entity/PathEntity/PathEntity";
 import { assert } from "../lib/assert";
 import type { JSONObject } from "./JSONObject";
 import type { PageDraft } from "./PageDraft";
-import { Line } from "./geo/Line";
-import { Point } from "./geo/Point";
-import { Rect } from "./geo/Shape";
-import { translate } from "./geo/TransformMatrix";
+import { Line } from "./shape/Line";
+import { Point } from "./shape/Point";
+import { Rect } from "./shape/Shape";
+import { translate } from "./shape/TransformMatrix";
 
 export abstract class Link {
     protected constructor(public readonly id: string) {}
@@ -329,7 +329,7 @@ export class LinkToEdge extends Link {
             `Entity is not a path: ${this.pathId}`,
         );
 
-        const points = path.graph.getShape().points;
+        const points = path.graph.getOutline().points;
         if (points.length === 0) return;
 
         const entries = [];

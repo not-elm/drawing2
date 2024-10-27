@@ -1,6 +1,6 @@
-import type { Point } from "./geo/Point";
+import type { Point } from "./shape/Point";
 
-import type { Rect } from "./geo/Shape";
+import type { Rect } from "./shape/Shape";
 
 export interface Direction {
     getPoint(rect: Rect): Point;

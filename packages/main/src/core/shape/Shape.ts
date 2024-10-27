@@ -63,6 +63,10 @@ export abstract class Shape {
         distance: number;
         point: Point;
     } {
+        if (this.contain(point)) {
+            return { distance: 0, point };
+        }
+
         const edges = this.getEdges();
         if (edges.length === 0) {
             return {

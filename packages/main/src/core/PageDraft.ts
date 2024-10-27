@@ -2,8 +2,8 @@ import { assert } from "../lib/assert";
 import type { Entity } from "./Entity";
 import type { Link, LinkCollection } from "./Link";
 import { Page } from "./Page";
-import type { Point } from "./geo/Point";
-import type { TransformMatrix } from "./geo/TransformMatrix";
+import type { Point } from "./shape/Point";
+import type { TransformMatrix } from "./shape/TransformMatrix";
 
 /**
  * Mutable version of {@link Page}.

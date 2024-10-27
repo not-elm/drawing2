@@ -2,8 +2,8 @@ import type { App } from "../../../core/App";
 import { Entity, type EntityTapEvent } from "../../../core/Entity";
 import type { SerializedEntity } from "../../../core/EntityConverter";
 import type { JSONObject } from "../../../core/JSONObject";
-import { Rect, type Shape } from "../../../core/geo/Shape";
-import type { TransformMatrix } from "../../../core/geo/TransformMatrix";
+import { Rect, type Shape } from "../../../core/shape/Shape";
+import type { TransformMatrix } from "../../../core/shape/TransformMatrix";
 import { EditTextModeController } from "../../mode/EditTextModeController";
 import { type ColorId, PROPERTY_KEY_COLOR_ID } from "../../property/Colors";
 import {

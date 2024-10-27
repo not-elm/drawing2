@@ -52,7 +52,7 @@ function getPointerMoveHandler(
             .page.entities.get(entityId);
         assert(entity !== undefined, `entity not found: ${entityId}`);
         assert(entity instanceof PathEntity);
-        const maxValue = getMaxCornerRadius(entity.graph.getShape().points);
+        const maxValue = getMaxCornerRadius(entity.graph.getOutline().points);
 
         const dx = ev.point.x - ev.startPoint.x;
         const dy = ev.point.y - ev.startPoint.y;

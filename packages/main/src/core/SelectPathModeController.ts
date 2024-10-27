@@ -2,13 +2,13 @@ import { PathEntity } from "../default/entity/PathEntity/PathEntity";
 import { assert } from "../lib/assert";
 import { randomId } from "../lib/randomId";
 import type { App } from "./App";
-import { type GraphEdge, GraphNode } from "./Graph";
 import { type CanvasPointerEvent, ModeController } from "./ModeController";
 import { SelectEntityModeController } from "./SelectEntityModeController";
 import { SelectPathModeStateStore } from "./SelectPathModeStateStore";
-import { Line } from "./geo/Line";
-import { Point } from "./geo/Point";
 import { setupMoveNodesPointerEventHandlers } from "./setupMoveNodesPointerEventHandlers";
+import { type GraphEdge, GraphNode } from "./shape/Graph";
+import { Line } from "./shape/Line";
+import { Point } from "./shape/Point";
 
 const NODE_CONTROL_HIT_AREA_RADIUS = 16;
 const EDGE_CONTROL_HIT_AREA_WIDTH = 16;
@@ -48,7 +48,7 @@ export class SelectPathModeController extends ModeController {
                 app,
                 ev,
                 this.getPathEntity(app),
-                [control.edge.p0.id, control.edge.p1.id],
+                [control.edge.p1.id, control.edge.p2.id],
             );
         }
 
@@ -62,9 +62,9 @@ export class SelectPathModeController extends ModeController {
             );
 
             const graph = entity.graph.clone();
-            graph.addEdge(control.edge.p0, newNode);
             graph.addEdge(control.edge.p1, newNode);
-            graph.deleteEdge(control.edge.p0.id, control.edge.p1.id);
+            graph.addEdge(control.edge.p2, newNode);
+            graph.deleteEdge(control.edge.p1.id, control.edge.p2.id);
 
             const newPath = new PathEntity(entity.props, graph);
 
@@ -132,14 +132,14 @@ export class SelectPathModeController extends ModeController {
         }
 
         for (const edge of entity.graph.getEdges()) {
-            const { p0, p1 } = edge;
-            const center = new Point((p0.x + p1.x) / 2, (p0.y + p1.y) / 2);
+            const { p1, p2 } = edge;
+            const center = new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
             const distance = Math.hypot(center.x - point.x, center.y - point.y);
             if (distance < NODE_CONTROL_HIT_AREA_RADIUS) {
                 return { type: "center-of-edge", edge, point: center };
             }
 
-            const entry = Line.of(p0.x, p0.y, p1.x, p1.y).getDistance(point);
+            const entry = Line.of(p1.x, p1.y, p2.x, p2.y).getDistance(point);
 
             if (entry.distance < EDGE_CONTROL_HIT_AREA_WIDTH) {
                 return { type: "edge", edge, point: entry.point };

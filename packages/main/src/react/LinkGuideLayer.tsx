@@ -1,6 +1,6 @@
 import { LinkToEdge } from "../core/Link";
 import { SelectEntityModeController } from "../core/SelectEntityModeController";
-import { Point } from "../core/geo/Point";
+import { Point } from "../core/shape/Point";
 import { assert } from "../lib/assert";
 import { useStore } from "./hooks/useStore";
 import { useApp } from "./useApp";

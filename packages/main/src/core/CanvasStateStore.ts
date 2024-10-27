@@ -6,7 +6,7 @@ import { LinkCollection } from "./Link";
 import { Page } from "./Page";
 import { PageDraft } from "./PageDraft";
 
-import { Rect } from "./geo/Shape";
+import { Rect } from "./shape/Shape";
 
 export class CanvasState {
     constructor(

@@ -7,18 +7,18 @@ import { normalizeAngle } from "../lib/normalizeAngle";
 import { testHitEntities } from "../lib/testHitEntities";
 import type { App } from "./App";
 import type { Entity } from "./Entity";
-import type { GraphNode } from "./Graph";
 import { type CanvasPointerEvent, ModeController } from "./ModeController";
 import { SelectEntityModeStateStore } from "./SelectEntityModeStateStore";
 import {
     ScaleSelectionTransformController,
     TranslateSelectionTransformController,
 } from "./SelectionTransformController";
-import { Point } from "./geo/Point";
-import type { Rect } from "./geo/Shape";
 import { setupBrushSelectPointerEventHandlers } from "./setupBrushSelectPointerEventHandlers";
 import { setupCornerRadiusHandlePointerEventHandlers } from "./setupCornerRadiusHandlePointerEventHandlers";
 import { setupSelectionTransformPointerEventHandlers } from "./setupSelectionTransformPointerEventHandlers";
+import type { GraphNode } from "./shape/Graph";
+import { Point } from "./shape/Point";
+import type { Rect } from "./shape/Shape";
 
 export class SelectEntityModeController extends ModeController {
     static readonly MODE_NAME = "select-entity";
@@ -158,7 +158,7 @@ export class SelectEntityModeController extends ModeController {
         const entity = selectedEntities[0];
 
         const handles = getCornerRoundHandleData(
-            entity.graph.getShape().points,
+            entity.graph.getOutline().points,
             entity.getProperty(PROPERTY_KEY_CORNER_RADIUS, 0),
         );
 
@@ -431,7 +431,7 @@ export class SelectEntityModeController extends ModeController {
             const entity = selectedEntities[0];
 
             const handles = getCornerRoundHandleData(
-                entity.graph.getShape().points,
+                entity.graph.getOutline().points,
                 entity.getProperty(PROPERTY_KEY_CORNER_RADIUS, 0),
             );
 

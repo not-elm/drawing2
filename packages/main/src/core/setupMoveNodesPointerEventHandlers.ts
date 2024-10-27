@@ -6,13 +6,16 @@ import { testHitEntities } from "../lib/testHitEntities";
 import type { App } from "./App";
 import type { Entity } from "./Entity";
 import type { CanvasPointerMoveEvent } from "./GestureRecognizer";
-import type { GraphNode } from "./Graph";
 import { LinkToRect } from "./Link";
 import type { CanvasPointerEvent } from "./ModeController";
-import { Line } from "./geo/Line";
-import { Point } from "./geo/Point";
-import { translate } from "./geo/TransformMatrix";
-import { type AdjustAngleConstraintMode, adjustAngle } from "./geo/adjustAngle";
+import type { GraphNode } from "./shape/Graph";
+import { Line } from "./shape/Line";
+import { Point } from "./shape/Point";
+import { translate } from "./shape/TransformMatrix";
+import {
+    type AdjustAngleConstraintMode,
+    adjustAngle,
+} from "./shape/adjustAngle";
 
 const OVERLAP_NODE_THRESHOLD = 8;
 const SNAP_DISTANCE_THRESHOLD = 8;
