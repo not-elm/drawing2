@@ -100,9 +100,7 @@ export class PathEntity extends Entity<Props> {
     }
 
     getOutline(): (Rect | Line | Point)[] {
-        return this.graph
-            .getEdges()
-            .map((edge) => new Line({ p1: edge.p0, p2: edge.p1 }));
+        return this.graph.getEdges().map((edge) => new Line(edge.p0, edge.p1));
     }
 
     serialize(): SerializedEntity {

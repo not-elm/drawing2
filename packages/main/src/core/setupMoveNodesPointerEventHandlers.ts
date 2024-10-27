@@ -180,7 +180,7 @@ function getPointerMoveHandler(
                 assert(originalNode !== undefined);
                 const newPoint = transform.apply(originalNode);
                 points.push(originalNode, newPoint);
-                lines.push(new Line({ p1: originalNode, p2: newPoint }));
+                lines.push(new Line(originalNode, newPoint));
             }
 
             app.snapGuideStore.setSnapGuide(SNAP_GUIDE_KEY_ANGLE, {
@@ -208,10 +208,10 @@ function getPointerMoveHandler(
             const yMin = Math.min(...points.map((p) => p.y));
             const yMax = Math.max(...points.map((p) => p.y));
             xSnapGuideLines.push(
-                new Line({
-                    p1: new Point(newNode.x, yMin),
-                    p2: new Point(newNode.x, yMax),
-                }),
+                new Line(
+                    new Point(newNode.x, yMin),
+                    new Point(newNode.x, yMax),
+                ),
             );
         }
         if (xSnapGuidePoints.length > 0) {
@@ -240,10 +240,10 @@ function getPointerMoveHandler(
             const xMin = Math.min(...points.map((p) => p.x));
             const xMax = Math.max(...points.map((p) => p.x));
             ySnapGuideLines.push(
-                new Line({
-                    p1: new Point(xMin, newNode.y),
-                    p2: new Point(xMax, newNode.y),
-                }),
+                new Line(
+                    new Point(xMin, newNode.y),
+                    new Point(xMax, newNode.y),
+                ),
             );
         }
         if (ySnapGuidePoints.length > 0) {

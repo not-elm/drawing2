@@ -88,31 +88,19 @@ export class Rect {
     }
 
     get topEdge(): Line {
-        return new Line({
-            p1: this.topLeft,
-            p2: this.topRight,
-        });
+        return new Line(this.topLeft, this.topRight);
     }
 
     get rightEdge(): Line {
-        return new Line({
-            p1: this.topRight,
-            p2: this.bottomRight,
-        });
+        return new Line(this.topRight, this.bottomRight);
     }
 
     get bottomEdge(): Line {
-        return new Line({
-            p1: this.bottomRight,
-            p2: this.bottomLeft,
-        });
+        return new Line(this.bottomRight, this.bottomLeft);
     }
 
     get leftEdge(): Line {
-        return new Line({
-            p1: this.bottomLeft,
-            p2: this.topLeft,
-        });
+        return new Line(this.bottomLeft, this.topLeft);
     }
 
     equals(other: Rect): boolean {

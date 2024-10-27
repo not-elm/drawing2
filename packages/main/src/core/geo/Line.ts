@@ -1,16 +1,14 @@
-import { dataclass } from "../../lib/dataclass";
 import { Point } from "./Point";
 import { Rect } from "./Rect";
 
-export class Line extends dataclass<{
-    p1: Point;
-    p2: Point;
-}>() {
+export class Line {
+    constructor(
+        public readonly p1: Point,
+        public readonly p2: Point,
+    ) {}
+
     static of(x1: number, y1: number, x2: number, y2: number): Line {
-        return new Line({
-            p1: new Point(x1, y1),
-            p2: new Point(x2, y2),
-        });
+        return new Line(new Point(x1, y1), new Point(x2, y2));
     }
 
     get x1(): number {

@@ -61,10 +61,7 @@ export class NewPathModeController extends ModeController {
 
         const pathEntity = this.insertNewPath(
             app,
-            new Line({
-                p1: ev.point,
-                p2: translate(1, 1).apply(ev.point),
-            }),
+            new Line(ev.point, translate(1, 1).apply(ev.point)),
         );
 
         if (hit.entities.length > 0) {

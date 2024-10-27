@@ -239,10 +239,10 @@ export abstract class SelectionTransformController {
 
             if (minY !== maxY) {
                 snapGuide.lines.push(
-                    new Line({
-                        p1: new Point(snapEntry2D.x.after, minY),
-                        p2: new Point(snapEntry2D.x.after, maxY),
-                    }),
+                    new Line(
+                        new Point(snapEntry2D.x.after, minY),
+                        new Point(snapEntry2D.x.after, maxY),
+                    ),
                 );
             }
         }
@@ -270,10 +270,10 @@ export abstract class SelectionTransformController {
 
             if (minX !== maxX) {
                 snapGuide.lines.push(
-                    new Line({
-                        p1: new Point(minX, snapEntry2D.y.after),
-                        p2: new Point(maxX, snapEntry2D.y.after),
-                    }),
+                    new Line(
+                        new Point(minX, snapEntry2D.y.after),
+                        new Point(maxX, snapEntry2D.y.after),
+                    ),
                 );
             }
         }

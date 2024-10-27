@@ -336,10 +336,10 @@ export class LinkToEdge extends Link {
         for (let i = 0; i < outline.length; i++) {
             const p1 = outline[i];
             const p2 = outline[i === outline.length - 1 ? 0 : i + 1];
-            const hitEntry = new Line({
-                p1: new Point(p1.x, p1.y),
-                p2: new Point(p2.x, p2.y),
-            }).getDistance(rect.center);
+            const hitEntry = new Line(
+                new Point(p1.x, p1.y),
+                new Point(p2.x, p2.y),
+            ).getDistance(rect.center);
 
             entries.push({ hitEntry, p1, p2 });
         }
