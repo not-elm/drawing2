@@ -52,6 +52,9 @@ export class GraphEdge extends Line {
     }
 }
 
+/**
+ * A graph that consists of nodes and edges.
+ */
 export class Graph extends Shape {
     private readonly arguments = new Map<string, Map<string, number>>();
     private normalized = false;
@@ -69,6 +72,23 @@ export class Graph extends Shape {
 
     contain(point: Point): boolean {
         return this.getOutline().contain(point);
+    }
+
+    getEdges(): GraphEdge[] {
+        const edges: GraphEdge[] = [];
+        for (const [from, tos] of this.edges.entries()) {
+            const fromNode = this.nodes.get(from);
+            assert(fromNode !== undefined, `Node ${from} is not found.`);
+            for (const to of tos) {
+                if (from > to) continue;
+
+                const toNode = this.nodes.get(to);
+                assert(toNode !== undefined, `Node ${to} is not found.`);
+
+                edges.push(new GraphEdge(fromNode, toNode));
+            }
+        }
+        return edges;
     }
 
     clone(): Graph {
@@ -147,13 +167,6 @@ export class Graph extends Shape {
         } else {
             this.edges.set(nodeId2, newEdges2);
         }
-
-        this.normalized = false;
-        return this;
-    }
-
-    addNode(node: GraphNode): Graph {
-        this.nodes.set(node.id, node);
 
         this.normalized = false;
         return this;
@@ -248,70 +261,6 @@ export class Graph extends Shape {
         }
 
         return new GraphPolygon(canonicalizeFace(nodes));
-    }
-
-    getFaces(): GraphNode[][] {
-        if (!this.normalized) {
-            return this.normalize().getFaces();
-        }
-
-        const faces: GraphNode[][] = [];
-        const edgeVisitCount = new Map<string, number>();
-        if (this.nodes.size < 3) return faces;
-
-        const node1 = this.nodes.values().next().value;
-        assert(node1 !== undefined, "Empty graph");
-
-        const node2Id = this.edges.get(node1.id)?.[0];
-        assert(node2Id !== undefined, `Node ${node2Id} is not found.`);
-        const node2 = this.nodes.get(node2Id);
-        assert(node2 !== undefined, `Node ${node2Id} is not found.`);
-
-        const stack: [GraphNode, GraphNode][] = [[node1, node2]];
-
-        while (stack.length > 0) {
-            const edge = stack.pop();
-            assert(edge !== undefined, "Empty stack");
-            const [node1, node2] = edge;
-            if (edgeVisitCount.get(getEdgeId(node1.id, node2.id)) === 2) {
-                continue;
-            }
-
-            const faceNodes: GraphNode[] = [node1, node2];
-
-            while (true) {
-                const nextNode = this.getNodeBySmallestAngle(
-                    faceNodes[faceNodes.length - 1].id,
-                    this.getArgument(
-                        faceNodes[faceNodes.length - 1].id,
-                        faceNodes[faceNodes.length - 2].id,
-                    ),
-                );
-                if (nextNode.id === faceNodes[0].id) break;
-
-                faceNodes.push(nextNode);
-            }
-
-            if (faceNodes.length < 3) continue;
-
-            faces.push(canonicalizeFace(faceNodes));
-            for (let i = 0; i < faceNodes.length; i++) {
-                const node1 = faceNodes[i];
-                const node2 =
-                    i === faceNodes.length - 1
-                        ? faceNodes[0]
-                        : faceNodes[i + 1];
-                const edgeId = getEdgeId(node1.id, node2.id);
-                const visitCount = (edgeVisitCount.get(edgeId) ?? 0) + 1;
-                edgeVisitCount.set(edgeId, visitCount);
-
-                if (visitCount < 2) {
-                    stack.push([node2, node1]);
-                }
-            }
-        }
-
-        return faces;
     }
 
     getNodeBySmallestAngle(nodeId: string, startAngle: number): GraphNode {
@@ -436,23 +385,6 @@ export class Graph extends Shape {
 
         clone.normalized = true;
         return clone;
-    }
-
-    getEdges(): GraphEdge[] {
-        const edges: GraphEdge[] = [];
-        for (const [from, tos] of this.edges.entries()) {
-            const fromNode = this.nodes.get(from);
-            assert(fromNode !== undefined, `Node ${from} is not found.`);
-            for (const to of tos) {
-                if (from > to) continue;
-
-                const toNode = this.nodes.get(to);
-                assert(toNode !== undefined, `Node ${to} is not found.`);
-
-                edges.push(new GraphEdge(fromNode, toNode));
-            }
-        }
-        return edges;
     }
 }
 

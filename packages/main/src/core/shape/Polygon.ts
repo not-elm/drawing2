@@ -2,6 +2,11 @@ import { Line } from "./Line";
 import { Point } from "./Point";
 import { Shape } from "./Shape";
 
+/**
+ * The shape that is closed and bounded by line segments.
+ * There is no line inside of polygon and the line segments
+ * are connected as a single cycle.
+ */
 export class Polygon extends Shape {
     constructor(public readonly points: Point[]) {
         super();
