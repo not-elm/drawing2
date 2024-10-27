@@ -23,9 +23,8 @@ export function SelectPathControlLayerInner({
     const appState = useStore(app.appStateStore);
     const canvasState = useStore(app.canvasStateStore);
     const viewport = useStore(app.viewportStore);
-    const { highlightedItemIds, highlightCenterOfEdgeHandle } = useStore(
-        modeController.store,
-    );
+    const { highlightedItemIds, highlightCenterOfEdgeHandle } =
+        modeController.computeControlLayerData(app, appState.pointerPosition);
     if (appState.mode !== SelectPathModeController.MODE_NAME) return null;
 
     const entityId = canvasState.selectedEntityIds.values().next().value;

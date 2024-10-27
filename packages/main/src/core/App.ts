@@ -19,12 +19,13 @@ import { ViewportStore } from "./ViewportStore";
 import { Point } from "./shape/Point";
 
 export class App {
+    readonly appStateStore = new AppStateStore();
+
     readonly entityConverter = new EntityConverterMap();
     readonly clipboardService = new ClipboardService(this.entityConverter);
     readonly canvasStateStore = new CanvasStateStore(this);
     readonly viewportStore = new ViewportStore();
     readonly gestureRecognizer = new GestureRecognizer(this);
-    readonly appStateStore = new AppStateStore();
     readonly historyManager = new HistoryManager(this);
     readonly defaultPropertyStore = new DefaultPropertyStore();
     readonly keyboard = new KeyboardManager(this);
@@ -357,7 +358,8 @@ export class App {
             .fromCanvasCoordinateTransform.apply(
                 new Point(ev.clientX, ev.clientY),
             );
-        this.getModeController().onMouseMove(this, point);
+        this.appStateStore.setPointerPosition(point);
+        this.getModeController().getCursor(this);
     }
 
     /**

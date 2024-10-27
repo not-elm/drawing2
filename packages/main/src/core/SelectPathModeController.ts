@@ -1,10 +1,10 @@
+import type { Property } from "csstype";
 import { PathEntity } from "../default/entity/PathEntity/PathEntity";
 import { assert } from "../lib/assert";
 import { randomId } from "../lib/randomId";
 import type { App } from "./App";
 import { type CanvasPointerEvent, ModeController } from "./ModeController";
 import { SelectEntityModeController } from "./SelectEntityModeController";
-import { SelectPathModeStateStore } from "./SelectPathModeStateStore";
 import { setupMoveNodesPointerEventHandlers } from "./setupMoveNodesPointerEventHandlers";
 import { type GraphEdge, GraphNode } from "./shape/Graph";
 import { Line } from "./shape/Line";
@@ -15,8 +15,6 @@ const EDGE_CONTROL_HIT_AREA_WIDTH = 16;
 
 export class SelectPathModeController extends ModeController {
     static readonly MODE_NAME = "select-path";
-
-    readonly store = new SelectPathModeStateStore();
 
     onRegistered(app: App) {
         app.keyboard.addBinding({
@@ -73,39 +71,56 @@ export class SelectPathModeController extends ModeController {
         }
     }
 
-    onMouseMove(app: App, point: Point) {
-        const control = this.getControlByPoint(app, point);
+    computeControlLayerData(
+        app: App,
+        pointerPoint: Point,
+    ): {
+        highlightedItemIds: Set<string>;
+        highlightCenterOfEdgeHandle: boolean;
+    } {
+        const control = this.getControlByPoint(app, pointerPoint);
         if (control === null) {
-            this.store.clearHighlight();
-            app.appStateStore.setCursor("default");
-            return;
+            return {
+                highlightedItemIds: new Set(),
+                highlightCenterOfEdgeHandle: false,
+            };
         }
 
         switch (control.type) {
             case "node": {
-                this.store.setHighlight({
+                return {
                     highlightedItemIds: new Set([control.node.id]),
                     highlightCenterOfEdgeHandle: false,
-                });
-                app.appStateStore.setCursor("grab");
-                break;
+                };
             }
             case "edge": {
-                this.store.setHighlight({
+                return {
                     highlightedItemIds: new Set([control.edge.id]),
                     highlightCenterOfEdgeHandle: false,
-                });
-                app.appStateStore.setCursor("grab");
-                break;
+                };
             }
             case "center-of-edge": {
-                this.store.setHighlight({
+                return {
                     highlightedItemIds: new Set([control.edge.id]),
                     highlightCenterOfEdgeHandle: true,
-                });
-                app.appStateStore.setCursor("crosshair");
-                break;
+                };
             }
+        }
+    }
+
+    getCursor(app: App): Property.Cursor {
+        const control = this.getControlByPoint(
+            app,
+            app.appStateStore.getState().pointerPosition,
+        );
+        if (control === null) return "default";
+
+        switch (control.type) {
+            case "node":
+            case "edge":
+                return "grab";
+            case "center-of-edge":
+                return "crosshair";
         }
     }
 

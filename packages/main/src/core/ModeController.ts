@@ -1,7 +1,15 @@
+import type { Property } from "csstype";
 import type { App } from "./App";
 import type { Point } from "./shape/Point";
 
 export class ModeController {
+    /**
+     * Returns the mouse cursor type. Any CSS cursor type is allowed.
+     */
+    getCursor(app: App): Property.Cursor {
+        return "default";
+    }
+
     onRegistered(app: App): void {}
     onBeforeExitMode(app: App, ev: ModeChangeEvent): void {}
     onBeforeEnterMode(app: App, ev: ModeChangeEvent): void {}
@@ -14,7 +22,6 @@ export class ModeController {
         );
     }
     onCanvasDoubleClick(app: App, ev: CanvasPointerEvent): void {}
-    onMouseMove(app: App, point: Point): void {}
 }
 
 export interface CanvasPointerEvent {

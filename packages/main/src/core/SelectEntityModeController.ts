@@ -1,3 +1,4 @@
+import type { Property } from "csstype";
 import {
     PROPERTY_KEY_ARROW_HEAD_NODE_IDS,
     PROPERTY_KEY_CORNER_RADIUS,
@@ -159,9 +160,32 @@ export class SelectEntityModeController extends ModeController {
         app.getModeController().onCanvasPointerDown(app, ev);
     }
 
-    onMouseMove(app: App, point: Point) {
-        this.updateCursor(app, point);
-        this.updateVisibleCornerRoundHandles(app, point);
+    getCursor(app: App): Property.Cursor {
+        const handle = this.getHandleType(
+            app,
+            app.appStateStore.getState().pointerPosition,
+        );
+        if (handle !== null) {
+            switch (handle.type) {
+                case "TopLeftHandle":
+                case "BottomRightHandle":
+                    return "nwse-resize";
+                case "TopHandle":
+                case "BottomHandle":
+                    return "ns-resize";
+                case "TopRightHandle":
+                case "BottomLeftHandle":
+                    return "nesw-resize";
+                case "LeftHandle":
+                case "RightHandle":
+                    return "ew-resize";
+                case "CenterHandle":
+                default:
+                    return "default";
+            }
+        } else {
+            return "default";
+        }
     }
 
     onContextMenu(app: App, ev: CanvasPointerEvent) {
@@ -184,7 +208,10 @@ export class SelectEntityModeController extends ModeController {
         super.onContextMenu(app, ev);
     }
 
-    private updateVisibleCornerRoundHandles(app: App, point: Point) {
+    computeControlLayerData(
+        app: App,
+        pointerPosition: Point,
+    ): CornerRoundHandleData[] {
         const selectedEntities = app.canvasStateStore
             .getState()
             .getSelectedEntities();
@@ -192,8 +219,7 @@ export class SelectEntityModeController extends ModeController {
             selectedEntities.length !== 1 ||
             !(selectedEntities[0] instanceof PathEntity)
         ) {
-            this.store.setVisibleCornerRoundHandles([]);
-            return;
+            return [];
         }
         const entity = selectedEntities[0];
 
@@ -205,7 +231,7 @@ export class SelectEntityModeController extends ModeController {
         const visibleHandles: CornerRoundHandleData[] = [];
         for (const handle of handles) {
             if (
-                isPointInTriangle(point, [
+                isPointInTriangle(pointerPosition, [
                     handle.previousNode,
                     handle.node,
                     handle.nextNode,
@@ -215,44 +241,7 @@ export class SelectEntityModeController extends ModeController {
             }
         }
 
-        this.store.setVisibleCornerRoundHandles(visibleHandles);
-    }
-
-    private updateCursor(app: App, point: Point) {
-        const handle = this.getHandleType(app, point);
-        if (handle !== null) {
-            switch (handle.type) {
-                case "TopLeftHandle":
-                    app.appStateStore.setCursor("nwse-resize");
-                    break;
-                case "TopHandle":
-                    app.appStateStore.setCursor("ns-resize");
-                    break;
-                case "TopRightHandle":
-                    app.appStateStore.setCursor("nesw-resize");
-                    break;
-                case "LeftHandle":
-                    app.appStateStore.setCursor("ew-resize");
-                    break;
-                case "CenterHandle":
-                    app.appStateStore.setCursor("default");
-                    break;
-                case "RightHandle":
-                    app.appStateStore.setCursor("ew-resize");
-                    break;
-                case "BottomLeftHandle":
-                    app.appStateStore.setCursor("nesw-resize");
-                    break;
-                case "BottomHandle":
-                    app.appStateStore.setCursor("ns-resize");
-                    break;
-                case "BottomRightHandle":
-                    app.appStateStore.setCursor("nwse-resize");
-                    break;
-            }
-        } else {
-            app.appStateStore.setCursor("default");
-        }
+        return visibleHandles;
     }
 
     private onCanvasTap(app: App, ev: CanvasPointerEvent) {
