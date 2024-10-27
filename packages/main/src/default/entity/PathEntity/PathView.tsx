@@ -81,7 +81,7 @@ const PathViewInner = memo(function PathViewInner({
             strokeWidth) /
         2;
 
-    const outline = graph.getOutline();
+    const shape = graph.getShape();
 
     return (
         <svg
@@ -94,9 +94,9 @@ const PathViewInner = memo(function PathViewInner({
                 inset: 0,
             }}
         >
-            {outline.length > 0 && (
+            {shape.points.length > 0 && (
                 <path
-                    d={constructPathDefinition(outline, cornerRadius)}
+                    d={constructPathDefinition(shape.points, cornerRadius)}
                     css={{
                         ...{
                             none: { fill: "none" },

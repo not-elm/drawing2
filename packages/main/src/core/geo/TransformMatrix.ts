@@ -1,6 +1,7 @@
 import { Line } from "./Line";
 import { Point } from "./Point";
-import { Rect } from "./Rect";
+
+import { Rect } from "./Shape";
 
 export class TransformMatrix {
     a = 1;

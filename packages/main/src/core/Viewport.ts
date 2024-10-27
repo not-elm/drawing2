@@ -1,5 +1,5 @@
 import { Point } from "./geo/Point";
-import type { Rect } from "./geo/Rect";
+import type { Rect } from "./geo/Shape";
 import { scale, translate } from "./geo/TransformMatrix";
 
 export class Viewport {

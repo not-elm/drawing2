@@ -8,7 +8,7 @@ import {
 } from "./SnapEntry";
 import { Line } from "./geo/Line";
 import { Point } from "./geo/Point";
-import { Rect } from "./geo/Rect";
+import { Rect } from "./geo/Shape";
 import { type TransformMatrix, scale, translate } from "./geo/TransformMatrix";
 
 interface SnapPoints {

@@ -7,7 +7,7 @@ import {
 } from "../../core/ModeController";
 import { SelectEntityModeController } from "../../core/SelectEntityModeController";
 import { ScaleSelectionTransformController } from "../../core/SelectionTransformController";
-import { Rect } from "../../core/geo/Rect";
+import { Rect } from "../../core/geo/Shape";
 import { translate } from "../../core/geo/TransformMatrix";
 import { setupSelectionTransformPointerEventHandlers } from "../../core/setupSelectionTransformPointerEventHandlers";
 import { randomId } from "../../lib/randomId";

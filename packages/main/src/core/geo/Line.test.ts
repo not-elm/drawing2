@@ -17,6 +17,6 @@ describe("overlap", () => {
         // Same lines
         [Line.of(0, 0, 1, 1), Line.of(0, 0, 1, 1), true],
     ])("case %#", (line1, line2, expected) => {
-        expect(line1.isOverlappedWith(line2)).toBe(expected);
+        expect(line1.isOverlapWith(line2)).toBe(expected);
     });
 });

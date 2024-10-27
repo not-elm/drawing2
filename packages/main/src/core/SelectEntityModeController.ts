@@ -15,7 +15,7 @@ import {
     TranslateSelectionTransformController,
 } from "./SelectionTransformController";
 import { Point } from "./geo/Point";
-import type { Rect } from "./geo/Rect";
+import type { Rect } from "./geo/Shape";
 import { setupBrushSelectPointerEventHandlers } from "./setupBrushSelectPointerEventHandlers";
 import { setupCornerRadiusHandlePointerEventHandlers } from "./setupCornerRadiusHandlePointerEventHandlers";
 import { setupSelectionTransformPointerEventHandlers } from "./setupSelectionTransformPointerEventHandlers";
@@ -158,7 +158,7 @@ export class SelectEntityModeController extends ModeController {
         const entity = selectedEntities[0];
 
         const handles = getCornerRoundHandleData(
-            entity.graph.getOutline(),
+            entity.graph.getShape().points,
             entity.getProperty(PROPERTY_KEY_CORNER_RADIUS, 0),
         );
 
@@ -431,7 +431,7 @@ export class SelectEntityModeController extends ModeController {
             const entity = selectedEntities[0];
 
             const handles = getCornerRoundHandleData(
-                entity.graph.getOutline(),
+                entity.graph.getShape().points,
                 entity.getProperty(PROPERTY_KEY_CORNER_RADIUS, 0),
             );
 
@@ -569,7 +569,7 @@ export interface CornerRoundHandleData {
     offset: number;
 }
 
-export function getMaxCornerRadius(outline: Array<GraphNode>): number {
+export function getMaxCornerRadius(outline: Array<Point>): number {
     // 1/tan(angle / 2) of each angle of the outline
     const invTans: number[] = [];
 

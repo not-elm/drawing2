@@ -1,6 +1,7 @@
 import { assert } from "../lib/assert";
 import { normalizeAngle } from "../lib/normalizeAngle";
 import { Point } from "./geo/Point";
+import { Polygon } from "./geo/Polygon";
 
 export class GraphNode extends Point {
     constructor(
@@ -206,12 +207,13 @@ export class Graph {
         return value;
     }
 
-    getOutline(): GraphNode[] {
+    getShape(): GraphPolygon {
         if (!this.normalized) {
-            return this.normalize().getOutline();
+            return this.normalize().getShape();
         }
 
-        if (this.nodes.size < 3) return [...this.nodes.values()];
+        if (this.nodes.size < 3)
+            return new GraphPolygon([...this.nodes.values()]);
 
         const startNode = [...this.nodes.values()].reduce((n1, n2) =>
             n1.y < n2.y ? n1 : n2,
@@ -235,7 +237,7 @@ export class Graph {
             lastNode = node;
         }
 
-        return canonicalizeFace(nodes);
+        return new GraphPolygon(canonicalizeFace(nodes));
     }
 
     getFaces(): GraphNode[][] {
@@ -442,25 +444,6 @@ export class Graph {
         }
         return edges;
     }
-
-    contains(point: Point) {
-        const outline = this.getOutline();
-
-        let count = 0;
-        for (let i = 0; i < outline.length; i++) {
-            const p1 = outline[i];
-            const p2 = outline[i === outline.length - 1 ? 0 : i + 1];
-            if (p1.y === p2.y) continue;
-            if (point.y < p1.y && point.y < p2.y) continue;
-            if (point.y >= p1.y && point.y >= p2.y) continue;
-            const x = ((p2.x - p1.x) * (point.y - p1.y)) / (p2.y - p1.y) + p1.x;
-            if (x > point.x) {
-                count++;
-            }
-        }
-
-        return count % 2 === 1;
-    }
 }
 
 /**
@@ -543,4 +526,10 @@ export function isSameFace(face1: GraphNode[], face2: GraphNode[]) {
         face1.length === face2.length &&
         face1.every((node, i) => node.id === face2[i].id)
     );
+}
+
+export class GraphPolygon extends Polygon {
+    constructor(public readonly points: GraphNode[]) {
+        super(points);
+    }
 }

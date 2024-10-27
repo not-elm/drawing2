@@ -4,7 +4,7 @@ import type { JSONObject } from "./JSONObject";
 import type { PageDraft } from "./PageDraft";
 import { Line } from "./geo/Line";
 import { Point } from "./geo/Point";
-import { Rect } from "./geo/Rect";
+import { Rect } from "./geo/Shape";
 import { translate } from "./geo/TransformMatrix";
 
 export abstract class Link {
@@ -329,13 +329,13 @@ export class LinkToEdge extends Link {
             `Entity is not a path: ${this.pathId}`,
         );
 
-        const outline = path.graph.getOutline();
-        if (outline.length === 0) return;
+        const points = path.graph.getShape().points;
+        if (points.length === 0) return;
 
         const entries = [];
-        for (let i = 0; i < outline.length; i++) {
-            const p1 = outline[i];
-            const p2 = outline[i === outline.length - 1 ? 0 : i + 1];
+        for (let i = 0; i < points.length; i++) {
+            const p1 = points[i];
+            const p2 = points[i === points.length - 1 ? 0 : i + 1];
             const hitEntry = new Line(
                 new Point(p1.x, p1.y),
                 new Point(p2.x, p2.y),

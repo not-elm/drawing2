@@ -3,7 +3,8 @@ import type { App } from "./App";
 import type { CanvasPointerEvent } from "./ModeController";
 import { SelectEntityModeController } from "./SelectEntityModeController";
 import type { SelectEntityModeStateStore } from "./SelectEntityModeStateStore";
-import { Rect } from "./geo/Rect";
+
+import { Rect } from "./geo/Shape";
 
 export function setupBrushSelectPointerEventHandlers(
     app: App,
