@@ -163,7 +163,7 @@ export class SelectEntityModeController extends ModeController {
     getCursor(app: App): Property.Cursor {
         const handle = this.getHandleType(
             app,
-            app.store.getState().pointerPosition,
+            app.appStateStore.getState().pointerPosition,
         );
         if (handle !== null) {
             switch (handle.type) {

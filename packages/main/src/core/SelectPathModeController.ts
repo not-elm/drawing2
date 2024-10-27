@@ -111,7 +111,7 @@ export class SelectPathModeController extends ModeController {
     getCursor(app: App): Property.Cursor {
         const control = this.getControlByPoint(
             app,
-            app.store.getState().pointerPosition,
+            app.appStateStore.getState().pointerPosition,
         );
         if (control === null) return "default";
 
