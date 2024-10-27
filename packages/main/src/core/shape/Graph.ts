@@ -61,7 +61,7 @@ export class Graph extends Shape {
 
     constructor(
         public readonly nodes: Map<string, GraphNode>,
-        private readonly edges: Map<string, string[]>,
+        public readonly edges: Map<string, string[]>,
     ) {
         super();
     }

@@ -26,6 +26,7 @@ import { SelectPathModeController } from "../../../core/SelectPathModeController
 import { Rect, type Shape } from "../../../core/shape/Shape";
 
 export const PROPERTY_KEY_CORNER_RADIUS = "cornerRadius";
+export const PROPERTY_KEY_ARROW_HEAD_NODE_IDS = "arrowHeadNodeIds";
 
 interface Props extends EntityProps {
     id: string;
@@ -34,6 +35,7 @@ interface Props extends EntityProps {
     [PROPERTY_KEY_STROKE_WIDTH]: number;
     [PROPERTY_KEY_FILL_STYLE]: FillStyle;
     [PROPERTY_KEY_CORNER_RADIUS]: number;
+    [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]: string[];
 }
 
 export class PathEntity extends Entity<Props> {
@@ -119,6 +121,7 @@ export class PathEntity extends Entity<Props> {
             strokeWidth: this.props.strokeWidth,
             fillStyle: this.props.fillStyle,
             cornerRadius: this.props.cornerRadius,
+            arrowHeadNodeIds: this.props.arrowHeadNodeIds,
         } satisfies SerializedPathEntity;
     }
 
@@ -167,6 +170,8 @@ export class PathEntity extends Entity<Props> {
                 [PROPERTY_KEY_STROKE_WIDTH]: serialized.strokeWidth,
                 [PROPERTY_KEY_FILL_STYLE]: serialized.fillStyle,
                 [PROPERTY_KEY_CORNER_RADIUS]: serialized.cornerRadius,
+                [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]:
+                    serialized.arrowHeadNodeIds ?? [],
             },
             graph,
         );
@@ -246,4 +251,5 @@ interface SerializedPathEntity extends JSONObject {
     strokeWidth: number;
     fillStyle: FillStyle;
     cornerRadius: number;
+    arrowHeadNodeIds: string[];
 }

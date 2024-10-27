@@ -1,4 +1,5 @@
 import {
+    PROPERTY_KEY_ARROW_HEAD_NODE_IDS,
     PROPERTY_KEY_CORNER_RADIUS,
     PathEntity,
 } from "../default/entity/PathEntity/PathEntity";
@@ -87,6 +88,44 @@ export class SelectEntityModeController extends ModeController {
             title: "最背面へ",
             action: () => {
                 app.sendToBack();
+            },
+        });
+        app.contextMenu.add({
+            title: "線の端を矢印に",
+            action: () => {
+                const entities = app.canvasStateStore
+                    .getState()
+                    .getSelectedEntities();
+                app.canvasStateStore.edit((draft) => {
+                    for (const entity of entities) {
+                        if (!(entity instanceof PathEntity)) continue;
+                        const nodeIds = [...entity.graph.edges.entries()]
+                            .filter(([nodeId, childIds]) => {
+                                return childIds.length === 1;
+                            })
+                            .map(([nodeId, childIds]) => nodeId);
+
+                        draft.updateProperty(
+                            [entity.props.id],
+                            PROPERTY_KEY_ARROW_HEAD_NODE_IDS,
+                            nodeIds,
+                        );
+                    }
+                });
+            },
+        });
+        app.contextMenu.add({
+            title: "線の端の矢印を消す",
+            action: () => {
+                const selectedEntityIds =
+                    app.canvasStateStore.getState().selectedEntityIds;
+                app.canvasStateStore.edit((draft) => {
+                    draft.updateProperty(
+                        [...selectedEntityIds],
+                        PROPERTY_KEY_ARROW_HEAD_NODE_IDS,
+                        [],
+                    );
+                });
             },
         });
     }
