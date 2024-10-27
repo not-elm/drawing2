@@ -7,11 +7,11 @@ import {
 import type { SerializedEntity } from "../../../core/EntityConverter";
 import { Graph, type GraphEdge, GraphNode } from "../../../core/Graph";
 import type { JSONObject } from "../../../core/JSONObject";
+import { Line } from "../../../core/geo/Line";
+import { Point } from "../../../core/geo/Point";
+import { Rect } from "../../../core/geo/Rect";
+import type { TransformMatrix } from "../../../core/geo/TransformMatrix";
 import { assert } from "../../../lib/assert";
-import { Line } from "../../../lib/geo/Line";
-import { Point } from "../../../lib/geo/Point";
-import { Rect } from "../../../lib/geo/Rect";
-import type { TransformMatrix } from "../../../lib/geo/TransformMatrix";
 import { type ColorId, PROPERTY_KEY_COLOR_ID } from "../../property/Colors";
 import {
     type FillStyle,

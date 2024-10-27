@@ -1,13 +1,6 @@
 import { PathEntity } from "../default/entity/PathEntity/PathEntity";
 import { registerLinkToRect } from "../default/mode/NewPathModeController";
 import { assert } from "../lib/assert";
-import { Line } from "../lib/geo/Line";
-import { Point } from "../lib/geo/Point";
-import { translate } from "../lib/geo/TransformMatrix";
-import {
-    type AdjustAngleConstraintMode,
-    adjustAngle,
-} from "../lib/geo/adjustAngle";
 import { isNotNullish } from "../lib/isNullish";
 import { testHitEntities } from "../lib/testHitEntities";
 import type { App } from "./App";
@@ -16,6 +9,10 @@ import type { CanvasPointerMoveEvent } from "./GestureRecognizer";
 import type { GraphNode } from "./Graph";
 import { LinkToRect } from "./Link";
 import type { CanvasPointerEvent } from "./ModeController";
+import { Line } from "./geo/Line";
+import { Point } from "./geo/Point";
+import { translate } from "./geo/TransformMatrix";
+import { type AdjustAngleConstraintMode, adjustAngle } from "./geo/adjustAngle";
 
 const OVERLAP_NODE_THRESHOLD = 8;
 const SNAP_DISTANCE_THRESHOLD = 8;

@@ -1,8 +1,8 @@
 import { SelectEntityModeController } from "../core/SelectEntityModeController";
-import { Line } from "../lib/geo/Line";
-import type { Point } from "../lib/geo/Point";
-import { Rect } from "../lib/geo/Rect";
-import type { TransformMatrix } from "../lib/geo/TransformMatrix";
+import { Line } from "../core/geo/Line";
+import type { Point } from "../core/geo/Point";
+import { Rect } from "../core/geo/Rect";
+import type { TransformMatrix } from "../core/geo/TransformMatrix";
 import { useStore } from "./hooks/useStore";
 import { useApp } from "./useApp";
 

@@ -1,12 +1,4 @@
 import { assert } from "../lib/assert";
-import { Line } from "../lib/geo/Line";
-import { Point } from "../lib/geo/Point";
-import { Rect } from "../lib/geo/Rect";
-import {
-    type TransformMatrix,
-    scale,
-    translate,
-} from "../lib/geo/TransformMatrix";
 import type { App } from "./App";
 import type { Entity } from "./Entity";
 import {
@@ -14,6 +6,10 @@ import {
     type SnapGuide,
     computeSnapEntry2D,
 } from "./SnapEntry";
+import { Line } from "./geo/Line";
+import { Point } from "./geo/Point";
+import { Rect } from "./geo/Rect";
+import { type TransformMatrix, scale, translate } from "./geo/TransformMatrix";
 
 interface SnapPoints {
     /**

@@ -1,8 +1,8 @@
 import { assert } from "../lib/assert";
-import { Point } from "../lib/geo/Point";
 import type { App } from "./App";
 import type { CanvasPointerEvent } from "./ModeController";
 import { MouseEventButton } from "./MouseEventButton";
+import { Point } from "./geo/Point";
 
 const THRESHOLD_CLICK_DURATION_IN_MILLI = 200;
 

@@ -1,6 +1,6 @@
 import { assert } from "../lib/assert";
-import { Point } from "../lib/geo/Point";
 import { normalizeAngle } from "../lib/normalizeAngle";
+import { Point } from "./geo/Point";
 
 export class GraphNode extends Point {
     constructor(

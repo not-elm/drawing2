@@ -1,11 +1,11 @@
 import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
-import { Rect } from "../lib/geo/Rect";
 import type { App } from "./App";
 import type { Entity } from "./Entity";
 import { LinkCollection } from "./Link";
 import { Page } from "./Page";
 import { PageDraft } from "./PageDraft";
+import { Rect } from "./geo/Rect";
 
 export class CanvasState {
     constructor(

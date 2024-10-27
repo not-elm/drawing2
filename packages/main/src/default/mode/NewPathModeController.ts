@@ -8,9 +8,9 @@ import {
 } from "../../core/ModeController";
 import type { Page } from "../../core/Page";
 import { SelectEntityModeController } from "../../core/SelectEntityModeController";
+import { Line } from "../../core/geo/Line";
+import { translate } from "../../core/geo/TransformMatrix";
 import { setupMoveNodesPointerEventHandlers } from "../../core/setupMoveNodesPointerEventHandlers";
-import { Line } from "../../lib/geo/Line";
-import { translate } from "../../lib/geo/TransformMatrix";
 import { randomId } from "../../lib/randomId";
 import { testHitEntities } from "../../lib/testHitEntities";
 import {

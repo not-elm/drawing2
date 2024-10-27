@@ -1,10 +1,10 @@
 import { assert } from "../lib/assert";
-import { translate } from "../lib/geo/TransformMatrix";
 import { randomId } from "../lib/randomId";
 import type { Entity } from "./Entity";
 import type { EntityConverter, SerializedEntity } from "./EntityConverter";
 import type { JSONObject } from "./JSONObject";
 import type { Page } from "./Page";
+import { translate } from "./geo/TransformMatrix";
 
 interface ClipboardData extends JSONObject {
     entities: SerializedEntity[];

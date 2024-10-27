@@ -1,8 +1,8 @@
 import { Store } from "../lib/Store";
-import { Point } from "../lib/geo/Point";
-import { Rect } from "../lib/geo/Rect";
-import { scale, translate } from "../lib/geo/TransformMatrix";
 import { Viewport } from "./Viewport";
+import { Point } from "./geo/Point";
+import { Rect } from "./geo/Rect";
+import { scale, translate } from "./geo/TransformMatrix";
 
 export class ViewportStore extends Store<Viewport> {
     constructor(

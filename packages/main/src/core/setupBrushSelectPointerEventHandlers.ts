@@ -1,9 +1,9 @@
 import { assert } from "../lib/assert";
-import { Rect } from "../lib/geo/Rect";
 import type { App } from "./App";
 import type { CanvasPointerEvent } from "./ModeController";
 import { SelectEntityModeController } from "./SelectEntityModeController";
 import type { SelectEntityModeStateStore } from "./SelectEntityModeStateStore";
+import { Rect } from "./geo/Rect";
 
 export function setupBrushSelectPointerEventHandlers(
     app: App,

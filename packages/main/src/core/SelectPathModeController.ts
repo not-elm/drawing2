@@ -1,13 +1,13 @@
 import { PathEntity } from "../default/entity/PathEntity/PathEntity";
 import { assert } from "../lib/assert";
-import { Line } from "../lib/geo/Line";
-import { Point } from "../lib/geo/Point";
 import { randomId } from "../lib/randomId";
 import type { App } from "./App";
 import { type GraphEdge, GraphNode } from "./Graph";
 import { type CanvasPointerEvent, ModeController } from "./ModeController";
 import { SelectEntityModeController } from "./SelectEntityModeController";
 import { SelectPathModeStateStore } from "./SelectPathModeStateStore";
+import { Line } from "./geo/Line";
+import { Point } from "./geo/Point";
 import { setupMoveNodesPointerEventHandlers } from "./setupMoveNodesPointerEventHandlers";
 
 const NODE_CONTROL_HIT_AREA_RADIUS = 16;

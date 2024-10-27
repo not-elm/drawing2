@@ -1,7 +1,7 @@
 import type { Entity } from "../core/Entity";
 import type { Page } from "../core/Page";
+import type { Point } from "../core/geo/Point";
 import { assert } from "./assert";
-import type { Point } from "./geo/Point";
 
 interface HitTestResult {
     // Hit entities ordered by distance (Small distance first)

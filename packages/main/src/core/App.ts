@@ -1,6 +1,5 @@
 import type { ComponentType } from "react";
 import { assert } from "../lib/assert";
-import { Point } from "../lib/geo/Point";
 import { AppStateStore } from "./AppStateStore";
 import { CanvasStateStore } from "./CanvasStateStore";
 import { ClipboardService } from "./ClipboardService";
@@ -17,6 +16,7 @@ import { SelectEntityModeController } from "./SelectEntityModeController";
 import { SelectPathModeController } from "./SelectPathModeController";
 import { SnapGuideStore } from "./SnapGuideStore";
 import { ViewportStore } from "./ViewportStore";
+import { Point } from "./geo/Point";
 
 export class App {
     readonly entityConverter = new EntityConverterMap();

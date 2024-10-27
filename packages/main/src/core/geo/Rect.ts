@@ -1,5 +1,5 @@
-import { assert } from "../assert";
-import { dataclass } from "../dataclass";
+import { assert } from "../../lib/assert";
+import { dataclass } from "../../lib/dataclass";
 import { Line } from "./Line";
 import { Point } from "./Point";
 

@@ -3,8 +3,6 @@ import {
     PathEntity,
 } from "../default/entity/PathEntity/PathEntity";
 import { NewTextModeController } from "../default/mode/NewTextModeController";
-import { Point } from "../lib/geo/Point";
-import type { Rect } from "../lib/geo/Rect";
 import { normalizeAngle } from "../lib/normalizeAngle";
 import { testHitEntities } from "../lib/testHitEntities";
 import type { App } from "./App";
@@ -16,6 +14,8 @@ import {
     ScaleSelectionTransformController,
     TranslateSelectionTransformController,
 } from "./SelectionTransformController";
+import { Point } from "./geo/Point";
+import type { Rect } from "./geo/Rect";
 import { setupBrushSelectPointerEventHandlers } from "./setupBrushSelectPointerEventHandlers";
 import { setupCornerRadiusHandlePointerEventHandlers } from "./setupCornerRadiusHandlePointerEventHandlers";
 import { setupSelectionTransformPointerEventHandlers } from "./setupSelectionTransformPointerEventHandlers";

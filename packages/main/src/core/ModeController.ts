@@ -1,5 +1,5 @@
-import type { Point } from "../lib/geo/Point";
 import type { App } from "./App";
+import type { Point } from "./geo/Point";
 
 export class ModeController {
     onRegistered(app: App): void {}

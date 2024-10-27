@@ -1,11 +1,11 @@
 import { PathEntity } from "../default/entity/PathEntity/PathEntity";
 import { assert } from "../lib/assert";
-import { Line } from "../lib/geo/Line";
-import { Point } from "../lib/geo/Point";
-import { Rect } from "../lib/geo/Rect";
-import { translate } from "../lib/geo/TransformMatrix";
 import type { JSONObject } from "./JSONObject";
 import type { PageDraft } from "./PageDraft";
+import { Line } from "./geo/Line";
+import { Point } from "./geo/Point";
+import { Rect } from "./geo/Rect";
+import { translate } from "./geo/TransformMatrix";
 
 export abstract class Link {
     protected constructor(public readonly id: string) {}

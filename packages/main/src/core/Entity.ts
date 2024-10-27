@@ -1,12 +1,12 @@
-import type { Line } from "../lib/geo/Line";
-import type { Point } from "../lib/geo/Point";
-import type { Rect } from "../lib/geo/Rect";
-import type { TransformMatrix } from "../lib/geo/TransformMatrix";
 import type { App } from "./App";
 import type { SerializedEntity } from "./EntityConverter";
 import type { GraphEdge, GraphNode } from "./Graph";
 import type { JSONObject } from "./JSONObject";
 import type { CanvasPointerEvent } from "./ModeController";
+import type { Line } from "./geo/Line";
+import type { Point } from "./geo/Point";
+import type { Rect } from "./geo/Rect";
+import type { TransformMatrix } from "./geo/TransformMatrix";
 
 export interface EntityProps {
     id: string;

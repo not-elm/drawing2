@@ -1,4 +1,4 @@
-import { dataclass } from "../dataclass";
+import { dataclass } from "../../lib/dataclass";
 import { Point } from "./Point";
 import { Rect } from "./Rect";
 

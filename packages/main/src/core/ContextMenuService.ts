@@ -1,6 +1,6 @@
 import { type StateProvider, Store } from "../lib/Store";
-import { Point } from "../lib/geo/Point";
 import type { ViewportStore } from "./ViewportStore";
+import { Point } from "./geo/Point";
 
 export interface ContextMenuItem {
     title: string;

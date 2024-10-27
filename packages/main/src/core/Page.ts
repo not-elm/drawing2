@@ -1,9 +1,9 @@
 import { assert } from "../lib/assert";
-import type { Rect } from "../lib/geo/Rect";
 import type { Entity } from "./Entity";
 import type { EntityConverter, SerializedEntity } from "./EntityConverter";
 import type { JSONObject } from "./JSONObject";
 import { LinkCollection, type SerializedLink } from "./Link";
+import type { Rect } from "./geo/Rect";
 
 interface Props {
     entities: Map<string, Entity>;

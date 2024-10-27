@@ -1,6 +1,6 @@
 import { Store } from "../lib/Store";
-import { Rect } from "../lib/geo/Rect";
 import type { CornerRoundHandleData } from "./SelectEntityModeController";
+import { Rect } from "./geo/Rect";
 
 export class SelectEntityModeStateStore extends Store<{
     brushRect: Rect | null;

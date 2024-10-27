@@ -7,9 +7,9 @@ import {
 } from "../../core/ModeController";
 import { SelectEntityModeController } from "../../core/SelectEntityModeController";
 import { ScaleSelectionTransformController } from "../../core/SelectionTransformController";
+import { Rect } from "../../core/geo/Rect";
+import { translate } from "../../core/geo/TransformMatrix";
 import { setupSelectionTransformPointerEventHandlers } from "../../core/setupSelectionTransformPointerEventHandlers";
-import { Rect } from "../../lib/geo/Rect";
-import { translate } from "../../lib/geo/TransformMatrix";
 import { randomId } from "../../lib/randomId";
 import {
     PROPERTY_KEY_CORNER_RADIUS,
