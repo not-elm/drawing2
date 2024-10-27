@@ -27,7 +27,9 @@ export class CanvasState {
         if (selectedEntities.length === 0) return null;
 
         return Rect.union(
-            selectedEntities.map((entity) => entity.getBoundingRect()),
+            selectedEntities.map((entity) =>
+                entity.getShape().getBoundingRect(),
+            ),
         );
     }
 }

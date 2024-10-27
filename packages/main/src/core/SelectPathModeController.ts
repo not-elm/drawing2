@@ -31,6 +31,7 @@ export class SelectPathModeController extends ModeController {
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
         const control = this.getControlByPoint(app, ev.point);
         if (control === null) {
+            app.setMode(SelectEntityModeController.MODE_NAME);
             return;
         }
 
@@ -55,11 +56,7 @@ export class SelectPathModeController extends ModeController {
         if (control.type === "center-of-edge") {
             const entity = this.getPathEntity(app);
 
-            const newNode = new GraphNode(
-                randomId(),
-                control.point.x,
-                control.point.y,
-            );
+            const newNode = new GraphNode(randomId(), control.point);
 
             const graph = entity.graph.clone();
             graph.addEdge(control.edge.p1, newNode);
@@ -74,15 +71,6 @@ export class SelectPathModeController extends ModeController {
 
             setupMoveNodesPointerEventHandlers(app, ev, newPath, [newNode.id]);
         }
-    }
-
-    onCanvasDoubleClick(app: App, ev: CanvasPointerEvent) {
-        const entity = this.getPathEntity(app);
-
-        app.setMode(SelectEntityModeController.MODE_NAME);
-        app.canvasStateStore.unselectAll();
-        app.canvasStateStore.select(entity.props.id);
-        return;
     }
 
     onMouseMove(app: App, point: Point) {
@@ -150,12 +138,6 @@ export class SelectPathModeController extends ModeController {
     }
 
     private getPathEntity(app: App): PathEntity {
-        const mode = app.appStateStore.getState().mode;
-        assert(
-            mode === SelectPathModeController.MODE_NAME,
-            `Invalid mode: ${mode}`,
-        );
-
         const entity = app.canvasStateStore.getState().getSelectedEntities()[0];
         assert(entity instanceof PathEntity, `Invalid entity: ${entity}`);
 

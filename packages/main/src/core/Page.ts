@@ -33,7 +33,7 @@ export class Page implements Props {
                 );
                 return entity;
             })
-            .filter((entity) => entity.isOverlapWith(rect));
+            .filter((entity) => entity.getShape().isOverlapWith(rect));
     }
 
     serialize(): SerializedPage {

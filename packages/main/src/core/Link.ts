@@ -174,9 +174,13 @@ export class LinkToRect extends Link {
 
     apply(draft: PageDraft): void {
         const rectEntity = draft.getEntity(this.rectEntityId);
-        const rect = rectEntity.getBoundingRect();
+        const rect = rectEntity.getShape().getBoundingRect();
 
         const pathEntity = draft.getEntity(this.pathId);
+        assert(
+            pathEntity instanceof PathEntity,
+            `Entity is not a path: ${this.pathId}`,
+        );
         const node = pathEntity.getNodeById(this.nodeId);
         if (node === undefined) {
             draft.deleteLink(this.id);
@@ -257,6 +261,10 @@ export class LinkToEdge extends Link {
 
         const entity = draft.getEntity(this.entityId);
         const path = draft.getEntity(this.pathId);
+        assert(
+            path instanceof PathEntity,
+            `Entity is not a path: ${path.type}`,
+        );
 
         const p1 = path.getNodeById(this.p1Id);
         assert(
@@ -280,7 +288,7 @@ export class LinkToEdge extends Link {
         const px = -vy;
         const py = vx;
 
-        const rect = entity.getBoundingRect();
+        const rect = entity.getShape().getBoundingRect();
 
         const x = p1.x + vx * norm * this.r + px * this.distance;
         const y = p1.y + vy * norm * this.r + py * this.distance;
@@ -290,7 +298,7 @@ export class LinkToEdge extends Link {
         );
 
         draft.setEntity(newEntity);
-        this.lastRect = newEntity.getBoundingRect();
+        this.lastRect = newEntity.getShape().getBoundingRect();
     }
 
     serialize(): SerializedLinkToEdge {
@@ -320,7 +328,7 @@ export class LinkToEdge extends Link {
 
     private updateParameter(draft: PageDraft): void {
         const entity = draft.getEntity(this.entityId);
-        const rect = entity.getBoundingRect();
+        const rect = entity.getShape().getBoundingRect();
         if (this.lastRect.equals(rect)) return;
 
         const path = draft.getEntity(this.pathId);

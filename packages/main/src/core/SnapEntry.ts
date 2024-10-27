@@ -37,7 +37,7 @@ export function computeSnapEntry2D(
         if (ignoreEntityIds.has(otherEntity.props.id)) {
             continue;
         }
-        const otherBoundingRect = otherEntity.getBoundingRect();
+        const otherBoundingRect = otherEntity.getShape().getBoundingRect();
         const otherSnapPoints = [
             otherBoundingRect.topLeft,
             otherBoundingRect.topRight,

@@ -23,7 +23,7 @@ import { PROPERTY_KEY_STROKE_WIDTH } from "../../property/StrokeWidth";
 
 import { getMaxCornerRadius } from "../../../core/SelectEntityModeController";
 import { SelectPathModeController } from "../../../core/SelectPathModeController";
-import { Rect, type Shape } from "../../../core/shape/Shape";
+import type { Shape } from "../../../core/shape/Shape";
 
 export const PROPERTY_KEY_CORNER_RADIUS = "cornerRadius";
 export const PROPERTY_KEY_ARROW_HEAD_NODE_IDS = "arrowHeadNodeIds";
@@ -60,29 +60,13 @@ export class PathEntity extends Entity<Props> {
         );
     }
 
-    getBoundingRect(): Rect {
-        const xs = this.graph.nodes
-            .values()
-            .map((node) => node.x)
-            .toArray();
-        const ys = this.graph.nodes
-            .values()
-            .map((node) => node.y)
-            .toArray();
-
-        const x = Math.min(...xs);
-        const y = Math.min(...ys);
-        const width = Math.max(...xs) - Math.min(...xs);
-        const height = Math.max(...ys) - Math.min(...ys);
-
-        return Rect.of(x, y, width, height);
-    }
-
     transform(transform: TransformMatrix): PathEntity {
         const graph = this.graph.clone();
         for (const node of this.graph.nodes.values()) {
-            const newPoint = transform.apply(new Point(node.x, node.y));
-            graph.setNodePosition(node.id, newPoint.x, newPoint.y);
+            graph.setNodePosition(
+                node.id,
+                transform.apply(new Point(node.x, node.y)),
+            );
         }
 
         return new PathEntity(this.props, graph);
@@ -102,6 +86,13 @@ export class PathEntity extends Entity<Props> {
 
     getShape(): Shape {
         return this.graph;
+    }
+
+    setNodePosition(nodeId: string, position: Point): PathEntity {
+        const graph = this.graph.clone();
+        graph.setNodePosition(nodeId, position);
+
+        return new PathEntity(this.props, graph);
     }
 
     serialize(): SerializedEntity {
@@ -125,21 +116,13 @@ export class PathEntity extends Entity<Props> {
         } satisfies SerializedPathEntity;
     }
 
-    setNodePosition(nodeId: string, position: Point): PathEntity {
-        const graph = this.graph.clone();
-        graph.setNodePosition(nodeId, position.x, position.y);
-
-        return new PathEntity(this.props, graph);
-    }
-
     static deserialize(data: JSONObject): PathEntity {
         const serialized = data as unknown as SerializedPathEntity;
         const nodes = new Map(
             serialized.nodes.map((serializedNode) => {
                 const node = new GraphNode(
                     serializedNode.id,
-                    serializedNode.x,
-                    serializedNode.y,
+                    new Point(serializedNode.x, serializedNode.y),
                 );
                 return [node.id, node];
             }),

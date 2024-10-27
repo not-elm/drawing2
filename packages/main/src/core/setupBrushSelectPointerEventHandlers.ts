@@ -31,7 +31,7 @@ export function setupBrushSelectPointerEventHandlers(
             for (const entity of app.canvasStateStore
                 .getState()
                 .page.entities.values()) {
-                if (entity.isOverlapWith(rect)) {
+                if (entity.getShape().isOverlapWith(rect)) {
                     selectedEntityIds.add(entity.props.id);
                 }
             }

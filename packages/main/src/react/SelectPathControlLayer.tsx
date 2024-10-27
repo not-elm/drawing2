@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { SelectPathModeController } from "../core/SelectPathModeController";
+import { PathEntity } from "../default/entity/PathEntity/PathEntity";
 import { assert } from "../lib/assert";
 import { useStore } from "./hooks/useStore";
 import { useApp } from "./useApp";
@@ -32,6 +33,7 @@ export function SelectPathControlLayerInner({
 
     const entity = canvasState.page.entities.get(entityId);
     assert(entity !== undefined, `Entity not found: ${entityId}`);
+    assert(entity instanceof PathEntity, `Entity is not a path: ${entityId}`);
 
     return (
         <svg

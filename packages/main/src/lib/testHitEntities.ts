@@ -32,7 +32,9 @@ export function testHitEntities(
         const entity = page.entities.get(entityId);
         assert(entity !== undefined, `Entity not found: ${entityId}`);
 
-        const { point: hitPoint, distance } = entity.getDistance(point);
+        const { point: hitPoint, distance } = entity
+            .getShape()
+            .getDistance(point);
         if (distance <= margin) {
             const entry: HitTestResultEntry<Entity> = {
                 target: entity,

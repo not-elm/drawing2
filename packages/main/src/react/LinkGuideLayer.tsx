@@ -1,6 +1,7 @@
 import { LinkToEdge } from "../core/Link";
 import { SelectEntityModeController } from "../core/SelectEntityModeController";
 import { Point } from "../core/shape/Point";
+import { PathEntity } from "../default/entity/PathEntity/PathEntity";
 import { assert } from "../lib/assert";
 import { useStore } from "./hooks/useStore";
 import { useApp } from "./useApp";
@@ -36,10 +37,11 @@ export function LinkToEdgeGuide({ link }: { link: LinkToEdge }) {
 
     const entity = canvasState.page.entities.get(link.entityId);
     assert(entity !== undefined, `Entity ${link.entityId} not found`);
-    const rect = entity.getBoundingRect();
+    const rect = entity.getShape().getBoundingRect();
 
     const path = canvasState.page.entities.get(link.pathId);
     assert(path !== undefined, `Path ${link.pathId} not found`);
+    assert(path instanceof PathEntity, `Entity ${link.pathId} is not a path`);
 
     const p1 = path.getNodeById(link.p1Id);
     assert(p1 !== undefined, `Node ${link.p1Id} not found`);

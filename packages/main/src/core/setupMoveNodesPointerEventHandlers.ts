@@ -8,7 +8,7 @@ import type { Entity } from "./Entity";
 import type { CanvasPointerMoveEvent } from "./GestureRecognizer";
 import { LinkToRect } from "./Link";
 import type { CanvasPointerEvent } from "./ModeController";
-import type { GraphNode } from "./shape/Graph";
+import type { Graph, GraphNode } from "./shape/Graph";
 import { Line } from "./shape/Line";
 import { Point } from "./shape/Point";
 import { translate } from "./shape/TransformMatrix";
@@ -26,19 +26,19 @@ const SNAP_GUIDE_Y_AXIS = "editPath-yAxis";
 export function setupMoveNodesPointerEventHandlers(
     app: App,
     ev: CanvasPointerEvent,
-    entity: Entity,
+    path: Entity,
     nodeIds: string[],
 ) {
     app.historyManager.pause();
-    assert(entity instanceof PathEntity);
+    assert(path instanceof PathEntity);
 
     const originalNodes = nodeIds
-        .map((nodeId) => entity.getNodeById(nodeId))
+        .map((nodeId) => path.getNodeById(nodeId))
         .filter(isNotNullish);
 
     const oldLinkIds = app.canvasStateStore
         .getState()
-        .page.links.getByEntityId(entity.props.id)
+        .page.links.getByEntityId(path.props.id)
         .filter((link) => link instanceof LinkToRect)
         .filter((link) => nodeIds.includes(link.nodeId))
         .map((link) => link.id);
@@ -48,11 +48,16 @@ export function setupMoveNodesPointerEventHandlers(
     app.gestureRecognizer
         .addPointerMoveHandler(
             ev.pointerId,
-            getPointerMoveHandler(entity.props.id, nodeIds, originalNodes),
+            getPointerMoveHandler(
+                path.props.id,
+                nodeIds,
+                originalNodes,
+                path.graph,
+            ),
         )
         .addPointerUpHandler(
             ev.pointerId,
-            getPointerUpHandler(entity.props.id, nodeIds),
+            getPointerUpHandler(path.props.id, nodeIds),
         );
 }
 
@@ -60,6 +65,7 @@ function getPointerMoveHandler(
     entityId: string,
     nodeIds: string[],
     originalNodes: GraphNode[],
+    originalGraph: Graph,
 ) {
     return (app: App, ev: CanvasPointerMoveEvent) => {
         let transform = translate(
@@ -67,13 +73,13 @@ function getPointerMoveHandler(
             ev.point.y - ev.startPoint.y,
         );
 
-        const entity = app.canvasStateStore
+        const path = app.canvasStateStore
             .getState()
             .page.entities.get(entityId);
-        assert(entity !== undefined, `Entity not found: ${entityId}`);
-        assert(entity instanceof PathEntity);
+        assert(path !== undefined, `Entity not found: ${entityId}`);
+        assert(path instanceof PathEntity, `Entity is not a path: ${entityId}`);
 
-        const nodes = entity.getNodes();
+        const nodes = path.getNodes();
 
         // snap
         const xSnapResult = {
@@ -259,29 +265,34 @@ function getPointerMoveHandler(
         }
 
         app.canvasStateStore.edit((draft) => {
+            const graph = originalGraph.clone();
             for (const originalNode of originalNodes) {
-                draft.setPointPosition(
-                    entity.props.id,
+                graph.setNodePosition(
                     originalNode.id,
                     transform.apply(originalNode),
                 );
             }
+            const path = new PathEntity(
+                (draft.getEntity(entityId) as PathEntity).props,
+                graph,
+            );
+            draft.setEntity(path);
         });
     };
 }
 
 function getPointerUpHandler(entityId: string, nodeIds: string[]) {
     return (app: App, ev: CanvasPointerEvent) => {
-        const entity = app.canvasStateStore
+        const path = app.canvasStateStore
             .getState()
             .page.entities.get(entityId);
-        assert(entity !== undefined, `Entity not found: ${entityId}`);
-        assert(entity instanceof PathEntity);
+        assert(path !== undefined, `Entity not found: ${entityId}`);
+        assert(path instanceof PathEntity);
 
         const overlappedNodePairs: [GraphNode, GraphNode][] = [];
 
         for (const nodeId of nodeIds) {
-            const nodes = entity.getNodes();
+            const nodes = path.getNodes();
             const targetNode = nodes.find((node) => node.id === nodeId);
             assert(targetNode !== undefined);
             const otherNodes = nodes.filter((node) => node.id !== nodeId);
@@ -297,11 +308,11 @@ function getPointerUpHandler(entityId: string, nodeIds: string[]) {
                 }
             }
             if (overlappedNodePairs.length > 0) {
-                const graph = entity.graph.clone();
+                const graph = path.graph.clone();
                 for (const [otherNode, targetNode] of overlappedNodePairs) {
                     graph.mergeNodes(otherNode.id, targetNode.id);
                 }
-                const newEntity = new PathEntity(entity.props, graph);
+                const newEntity = new PathEntity(path.props, graph);
                 app.canvasStateStore.edit((draft) => {
                     draft.setEntities([newEntity]);
                 });
@@ -310,7 +321,7 @@ function getPointerUpHandler(entityId: string, nodeIds: string[]) {
 
         // Link to other entity
         if (nodeIds.length === 1) {
-            const targetNode = entity
+            const targetNode = path
                 .getNodes()
                 .find((node) => node.id === nodeIds[0]);
             assert(targetNode !== undefined, `Node not found: ${nodeIds[0]}`);
@@ -323,7 +334,7 @@ function getPointerUpHandler(entityId: string, nodeIds: string[]) {
             if (hit.entities.length > 0) {
                 const { target } = hit.entities[0];
 
-                registerLinkToRect(app, entity, targetNode, target);
+                registerLinkToRect(app, path, targetNode, target);
             }
         }
 

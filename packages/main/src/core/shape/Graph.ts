@@ -8,10 +8,9 @@ import { Shape } from "./Shape";
 export class GraphNode extends Point {
     constructor(
         public readonly id: string,
-        x: number,
-        y: number,
+        point: Point,
     ) {
-        super(x, y);
+        super(point.x, point.y);
     }
 }
 
@@ -21,14 +20,39 @@ export class GraphNode extends Point {
  */
 export class CrossPoint extends GraphNode {
     constructor(
-        public readonly p00: string,
-        public readonly p01: string,
-        public readonly p10: string,
-        public readonly p11: string,
-        x: number,
-        y: number,
+        public readonly edge1: GraphEdge,
+        public readonly edge2: GraphEdge,
+        point: Point,
     ) {
-        super(`${p00}-${p01}-${p10}-${p11}`, x, y);
+        super(`${edge1.id}-${edge2.id}`, point);
+    }
+
+    static create(edge1: GraphEdge, edge2: GraphEdge): GraphNode | null {
+        const { p1: p00, p2: p01 } = edge1;
+        const { p1: p10, p2: p11 } = edge2;
+        if (!isCross(p00, p01, p10, p11)) return null;
+
+        const dx1011 = p11.x - p10.x;
+        const dy1011 = p11.y - p10.y;
+
+        const dx1000 = p00.x - p10.x;
+        const dy1000 = p00.y - p10.y;
+        const cross_v1000_v1011 = Math.abs(dx1000 * dy1011 - dy1000 * dx1011);
+
+        const dx1001 = p01.x - p10.x;
+        const dy1001 = p01.y - p10.y;
+        const cross_v1001_v1011 = Math.abs(dx1001 * dy1011 - dy1001 * dx1011);
+
+        const x =
+            p10.x +
+            (cross_v1001_v1011 * dx1000 + cross_v1000_v1011 * dx1001) /
+                (cross_v1000_v1011 + cross_v1001_v1011);
+        const y =
+            p10.y +
+            (cross_v1001_v1011 * dy1000 + cross_v1000_v1011 * dy1001) /
+                (cross_v1000_v1011 + cross_v1001_v1011);
+
+        return new CrossPoint(edge1, edge2, new Point(x, y));
     }
 }
 
@@ -192,14 +216,16 @@ export class Graph extends Shape {
         return this;
     }
 
-    setNodePosition(nodeId: string, x: number, y: number): Graph {
+    setNodePosition(nodeId: string, newPosition: Point): Graph {
         const node = this.nodes.get(nodeId);
         assert(node !== undefined, `Node ${nodeId} is not found.`);
 
-        const newNode = new GraphNode(nodeId, x, y);
+        const newNode = new GraphNode(nodeId, newPosition);
         this.nodes.set(nodeId, newNode);
 
         this.normalized = false;
+
+        this.canonicalize();
         return this;
     }
 
@@ -239,7 +265,7 @@ export class Graph extends Shape {
             return new GraphPolygon([...this.nodes.values()]);
 
         const startNode = [...this.nodes.values()].reduce((n1, n2) =>
-            n1.y < n2.y ? n1 : n2,
+            n1.y < n2.y ? n1 : n1.x < n2.x ? n2 : n1,
         );
         let lastNode = startNode;
         const nodes: GraphNode[] = [startNode];
@@ -258,6 +284,11 @@ export class Graph extends Shape {
 
             nodes.push(node);
             lastNode = node;
+
+            if (nodes.length > this.nodes.size * 100) {
+                console.log(nodes);
+                throw new Error("Maybe in infinite loop.");
+            }
         }
 
         return new GraphPolygon(canonicalizeFace(nodes));
@@ -300,41 +331,23 @@ export class Graph extends Shape {
         const clone = this.clone();
 
         const edges = new Set(clone.getEdges());
-        const queue = new Set(edges);
-
         const newNodesMap = new Map<GraphEdge, GraphNode[]>();
 
-        while (queue.size > 0) {
-            const edge1 = queue.values().next().value;
-            assert(edge1 !== undefined, "Empty queue");
-            queue.delete(edge1);
-
+        for (const edge1 of edges) {
             for (const edge2 of edges) {
-                if (edge1 === edge2) continue;
-                if (edge1.p1.id > edge2.p1.id) continue;
+                if (edge1.p1.id >= edge2.p1.id) continue;
 
-                if (edge1.p1 === edge2.p1) continue;
-                if (edge1.p1 === edge2.p2) continue;
-                if (edge1.p2 === edge2.p1) continue;
-                if (edge1.p2 === edge2.p2) continue;
+                const crossPoint = CrossPoint.create(edge1, edge2);
+                if (crossPoint === null) continue;
 
-                if (isCross(edge1.p1, edge1.p2, edge2.p1, edge2.p2)) {
-                    const crossPoint = getCrossPoint(
-                        edge1.p1,
-                        edge1.p2,
-                        edge2.p1,
-                        edge2.p2,
-                    );
-
-                    newNodesMap.set(edge1, [
-                        ...(newNodesMap.get(edge1) ?? []),
-                        crossPoint,
-                    ]);
-                    newNodesMap.set(edge2, [
-                        ...(newNodesMap.get(edge2) ?? []),
-                        crossPoint,
-                    ]);
-                }
+                newNodesMap.set(edge1, [
+                    ...(newNodesMap.get(edge1) ?? []),
+                    crossPoint,
+                ]);
+                newNodesMap.set(edge2, [
+                    ...(newNodesMap.get(edge2) ?? []),
+                    crossPoint,
+                ]);
             }
         }
 
@@ -359,20 +372,20 @@ export class Graph extends Shape {
             }
         }
 
+        const nodes = new Map(clone.nodes);
         const nodeIdsToBeDeleted = new Set<string>();
         let flagDirty = true;
         while (flagDirty) {
             flagDirty = false;
 
-            for (const node of clone.nodes.values()) {
+            for (const node of nodes.values()) {
                 if (nodeIdsToBeDeleted.has(node.id)) continue;
 
                 const nextNodeIds = clone.edges
                     .get(node.id)
-                    ?.filter(
-                        (nextNodeId) => !nodeIdsToBeDeleted.has(nextNodeId),
-                    );
+                    ?.filter((nextNodeId) => nodes.has(nextNodeId));
                 if (nextNodeIds === undefined || nextNodeIds.length <= 1) {
+                    nodes.delete(node.id);
                     nodeIdsToBeDeleted.add(node.id);
                     flagDirty = true;
                 }
@@ -386,6 +399,26 @@ export class Graph extends Shape {
         clone.normalized = true;
         return clone;
     }
+
+    /**
+     * Canonicalize this graph
+     * - If a node is on an edge, that edge will be split.
+     * - If two edges are across, those edge will be left as they are.
+     * - Edges not closed are left as they are.
+     */
+    canonicalize(): void {
+        for (const node of this.nodes.values()) {
+            for (const edge of this.getEdges()) {
+                if (edge.p1.id === node.id || edge.p2.id === node.id) continue;
+
+                if (edge.contain(node)) {
+                    this.addEdge(edge.p1, node);
+                    this.addEdge(node, edge.p2);
+                    this.deleteEdge(edge.p1.id, edge.p2.id);
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -396,6 +429,8 @@ export class Graph extends Shape {
  * @param p11 The end point of the second line segment.
  */
 function isCross(p00: Point, p01: Point, p10: Point, p11: Point): boolean {
+    if (p00 === p10 || p00 === p11 || p01 === p10 || p01 === p11) return false;
+
     const dx0001 = p01.x - p00.x;
     const dy0001 = p01.y - p00.y;
 
@@ -422,39 +457,6 @@ function isCross(p00: Point, p01: Point, p10: Point, p11: Point): boolean {
     return (
         cross00010010 * cross00010011 < 0 && cross10111000 * cross10111001 < 0
     );
-}
-
-function getCrossPoint(
-    p00: GraphNode,
-    p01: GraphNode,
-    p10: GraphNode,
-    p11: GraphNode,
-): GraphNode {
-    const dx1011 = p11.x - p10.x;
-    const dy1011 = p11.y - p10.y;
-
-    const dx1000 = p00.x - p10.x;
-    const dy1000 = p00.y - p10.y;
-    const cross_v1000_v1011 = Math.abs(dx1000 * dy1011 - dy1000 * dx1011);
-
-    const dx1001 = p01.x - p10.x;
-    const dy1001 = p01.y - p10.y;
-    const cross_v1001_v1011 = Math.abs(dx1001 * dy1011 - dy1001 * dx1011);
-
-    const x =
-        p10.x +
-        (cross_v1001_v1011 * dx1000 + cross_v1000_v1011 * dx1001) /
-            (cross_v1000_v1011 + cross_v1001_v1011);
-    const y =
-        p10.y +
-        (cross_v1001_v1011 * dy1000 + cross_v1000_v1011 * dy1001) /
-            (cross_v1000_v1011 + cross_v1001_v1011);
-
-    return new CrossPoint(p00.id, p01.id, p10.id, p11.id, x, y);
-}
-
-export function getEdgeId(p0: string, p1: string): string {
-    return p0 < p1 ? `${p0}-${p1}` : `${p1}-${p0}`;
 }
 
 function canonicalizeFace(face: GraphNode[]): GraphNode[] {

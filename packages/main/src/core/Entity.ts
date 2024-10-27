@@ -2,9 +2,7 @@ import type { App } from "./App";
 import type { SerializedEntity } from "./EntityConverter";
 import type { JSONObject } from "./JSONObject";
 import type { CanvasPointerEvent } from "./ModeController";
-import type { GraphEdge, GraphNode } from "./shape/Graph";
-import type { Point } from "./shape/Point";
-import type { Rect, Shape } from "./shape/Shape";
+import type { Shape } from "./shape/Shape";
 import type { TransformMatrix } from "./shape/TransformMatrix";
 
 export interface EntityProps {
@@ -35,41 +33,6 @@ export abstract class Entity<P extends EntityProps = EntityProps> {
 
     getProperty<T = unknown>(propertyKey: string, defaultValue: T): T {
         return (this.props[propertyKey] as T | undefined) ?? defaultValue;
-    }
-
-    getNodes(): GraphNode[] {
-        return [];
-    }
-
-    getNodeById(nodeId: string): GraphNode | undefined {
-        return this.getNodes().find((node) => node.id === nodeId);
-    }
-
-    getEdges(): GraphEdge[] {
-        return [];
-    }
-
-    getBoundingRect(): Rect {
-        return this.getShape().getBoundingRect();
-    }
-
-    setNodePosition(nodeId: string, position: Point): Entity {
-        return this;
-    }
-
-    getDistance(point: Point): {
-        distance: number;
-        point: Point;
-    } {
-        return this.getShape().getDistance(point);
-    }
-
-    isOverlapWithEntity(other: Entity): boolean {
-        return other.getShape().isOverlapWith(this.getShape());
-    }
-
-    isOverlapWith(other: Shape): boolean {
-        return this.getShape().isOverlapWith(other);
     }
 
     static initialize(app: App): void {}
