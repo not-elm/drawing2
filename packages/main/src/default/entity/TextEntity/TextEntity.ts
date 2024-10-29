@@ -78,7 +78,7 @@ export class TextEntityHandle extends EntityHandle<TextEntity> {
 
     onTextEditEnd(entity: TextEntity, app: App) {
         if (entity.content === "") {
-            app.canvas.edit((draft) => draft.deleteEntity(entity.id));
+            app.canvas.edit((builder) => builder.deleteEntity(entity.id));
         }
     }
 
@@ -87,11 +87,11 @@ export class TextEntityHandle extends EntityHandle<TextEntity> {
         const newWidth = entity.sizingMode === "content" ? width : rect.width;
         const newHeight = height;
 
-        app.canvas.edit((draft) => {
-            draft.updateProperty([entity.id], "x", rect.left);
-            draft.updateProperty([entity.id], "y", rect.top);
-            draft.updateProperty([entity.id], "width", newWidth);
-            draft.updateProperty([entity.id], "height", newHeight);
+        app.canvas.edit((builder) => {
+            builder.updateProperty([entity.id], "x", rect.left);
+            builder.updateProperty([entity.id], "y", rect.top);
+            builder.updateProperty([entity.id], "width", newWidth);
+            builder.updateProperty([entity.id], "height", newHeight);
         });
     }
 }

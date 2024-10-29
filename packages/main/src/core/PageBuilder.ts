@@ -13,7 +13,7 @@ import type { Point } from "./shape/Point";
  * Mutable version of {@link Page}.
  * This class also records all changes applied to the original.
  */
-class PageDraftCore {
+export class PageBuilder {
     private readonly entities: Map<string, Entity>;
     public readonly entityIds: string[];
     public readonly dirtyEntityIds = new Set<string>();
@@ -30,7 +30,7 @@ class PageDraftCore {
         this.links = page.links.copy();
     }
 
-    toPage(): Page {
+    build(): Page {
         return new Page({
             entities: this.entities,
             entityIds: this.entityIds,
@@ -73,12 +73,7 @@ class PageDraftCore {
     deleteLink(linkId: string): void {
         this.links.delete(linkId);
     }
-}
 
-/**
- * PageDraft with some utility methods.
- */
-export class PageDraft extends PageDraftCore {
     setEntities(entities: Entity[]): void {
         for (const entity of entities) {
             this.setEntity(entity);

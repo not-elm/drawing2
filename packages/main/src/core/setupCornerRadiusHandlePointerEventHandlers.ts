@@ -70,8 +70,12 @@ function getPointerMoveHandler(
             maxValue,
         );
 
-        app.canvas.edit((draft) => {
-            draft.updateProperty([entityId], PROPERTY_KEY_CORNER_RADIUS, value);
+        app.canvas.edit((builder) => {
+            builder.updateProperty(
+                [entityId],
+                PROPERTY_KEY_CORNER_RADIUS,
+                value,
+            );
         });
     };
 }

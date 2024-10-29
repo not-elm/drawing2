@@ -74,8 +74,8 @@ export class PathEntityHandle extends EntityHandle<PathEntity> {
         //     const p0 = this.getNodes()[0];
         //     const p1 = this.getNodes()[1];
         //
-        //     app.canvasStateStore.edit((draft) => {
-        //         draft.setEntity(label);
+        //     app.canvasStateStore.edit((builder) => {
+        //         builder.setEntity(label);
         //         const linkToEdge = new LinkToEdge(
         //             randomId(),
         //             labelId,
@@ -83,7 +83,7 @@ export class PathEntityHandle extends EntityHandle<PathEntity> {
         //             p0.id,
         //             p1.id,
         //         );
-        //         draft.addLink(linkToEdge);
+        //         builder.addLink(linkToEdge);
         //     });
         //
         //     app.canvasStateStore.unselectAll();
@@ -184,8 +184,8 @@ export class PathEntityHandle extends EntityHandle<PathEntity> {
         const graph = PathEntityHandle.getGraph(entity);
         const maxCornerRadius = getMaxCornerRadius(graph.getOutline().points);
         if (maxCornerRadius < entity[PROPERTY_KEY_CORNER_RADIUS]) {
-            app.canvas.edit((draft) => {
-                draft.updateProperty(
+            app.canvas.edit((builder) => {
+                builder.updateProperty(
                     [entity.id],
                     PROPERTY_KEY_CORNER_RADIUS,
                     maxCornerRadius,

@@ -149,8 +149,8 @@ const TextViewInner = memo(function ShapeViewInner({
                         ev.target.setSelectionRange(0, ev.target.value.length);
                     }}
                     onChange={(ev) =>
-                        app.canvas.edit((draft) => {
-                            draft.updateProperty(
+                        app.canvas.edit((builder) => {
+                            builder.updateProperty(
                                 [shapeId],
                                 PROPERTY_KEY_CONTENT,
                                 ev.target.value,

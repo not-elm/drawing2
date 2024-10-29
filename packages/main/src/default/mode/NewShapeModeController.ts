@@ -65,9 +65,7 @@ export class NewShapeModeController extends ModeController {
         );
         app.gesture.addPointerUpHandler(ev.pointerId, (app, ev) => {
             if (ev.isTap) {
-                app.canvas.edit((draft) => {
-                    draft.deleteEntity(shape.id);
-                });
+                app.canvas.edit((builder) => builder.deleteEntity(shape.id));
             }
         });
     }
@@ -126,9 +124,7 @@ export class NewShapeModeController extends ModeController {
             [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]: [],
         };
 
-        app.canvas.edit((draft) => {
-            draft.setEntity(shape);
-        });
+        app.canvas.edit((builder) => builder.setEntity(shape));
         return shape;
     }
 }

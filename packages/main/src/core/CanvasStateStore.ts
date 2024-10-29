@@ -3,7 +3,7 @@ import type { App } from "./App";
 import { LinkCollection } from "./Link";
 import type { SelectedEntityChangeEvent } from "./ModeController";
 import { Page } from "./Page";
-import { PageDraft } from "./PageDraft";
+import { PageBuilder } from "./PageBuilder";
 import { cell, derived } from "./cell/ICell";
 import { Rect } from "./shape/Shape";
 
@@ -42,22 +42,22 @@ export class CanvasStateStore {
 
     constructor(private readonly app: App) {}
 
-    edit(updater: (draft: PageDraft) => void) {
-        const draft = new PageDraft(this.page.get(), this.app.entityHandle);
-        updater(draft);
-        for (const entityId of draft.deletedEntityIds) {
+    edit(updater: (builder: PageBuilder) => void) {
+        const builder = new PageBuilder(this.page.get(), this.app.entityHandle);
+        updater(builder);
+        for (const entityId of builder.deletedEntityIds) {
             this.page.get().links.deleteByEntityId(entityId);
         }
 
-        this.page.get().links.apply(draft, this.app.entityHandle);
-        for (const entityId of draft.deletedEntityIds) {
+        this.page.get().links.apply(builder, this.app.entityHandle);
+        for (const entityId of builder.deletedEntityIds) {
             this.page.get().links.deleteByEntityId(entityId);
         }
 
-        for (const entityId of draft.deletedEntityIds) {
+        for (const entityId of builder.deletedEntityIds) {
             this.app.canvas.unselect(entityId);
         }
-        this.setPage(draft.toPage());
+        this.setPage(builder.build());
     }
 
     setPage(page: Page) {

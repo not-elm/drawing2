@@ -113,8 +113,8 @@ export abstract class SelectionTransformController {
             );
         }
 
-        this.app.canvas.edit((draft) => {
-            draft.setEntities(
+        this.app.canvas.edit((builder) => {
+            builder.setEntities(
                 this.originalEntities.map((entity) =>
                     this.app.entityHandle.transform(entity, transform),
                 ),

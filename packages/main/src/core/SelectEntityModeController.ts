@@ -137,7 +137,7 @@ export class SelectEntityModeController extends ModeController {
             title: "線の端を矢印に",
             action: () => {
                 const entities = app.canvas.selectedEntities.get();
-                app.canvas.edit((draft) => {
+                app.canvas.edit((builder) => {
                     for (const entity of entities) {
                         if (!isPathEntity(entity)) continue;
                         const nodeIds = [
@@ -150,7 +150,7 @@ export class SelectEntityModeController extends ModeController {
                             })
                             .map(([nodeId, childIds]) => nodeId);
 
-                        draft.updateProperty(
+                        builder.updateProperty(
                             [entity.id],
                             PROPERTY_KEY_ARROW_HEAD_NODE_IDS,
                             nodeIds,
@@ -163,8 +163,8 @@ export class SelectEntityModeController extends ModeController {
             title: "線の端の矢印を消す",
             action: () => {
                 const selectedEntityIds = app.canvas.selectedEntityIds.get();
-                app.canvas.edit((draft) => {
-                    draft.updateProperty(
+                app.canvas.edit((builder) => {
+                    builder.updateProperty(
                         [...selectedEntityIds],
                         PROPERTY_KEY_ARROW_HEAD_NODE_IDS,
                         [],

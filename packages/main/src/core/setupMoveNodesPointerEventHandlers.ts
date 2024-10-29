@@ -47,7 +47,7 @@ export function setupMoveNodesPointerEventHandlers(
         .filter((link) => nodeIds.includes(link.nodeId))
         .map((link) => link.id);
 
-    app.canvas.edit((draft) => draft.deleteLinks(oldLinkIds));
+    app.canvas.edit((builder) => builder.deleteLinks(oldLinkIds));
 
     app.gesture
         .addPointerMoveHandler(
@@ -266,7 +266,7 @@ function getPointerMoveHandler(
             app.deleteSnapGuide(SNAP_GUIDE_Y_AXIS);
         }
 
-        app.canvas.edit((draft) => {
+        app.canvas.edit((builder) => {
             const graph = originalGraph.clone();
             for (const originalNode of originalNodes) {
                 graph.setNodePosition(
@@ -275,10 +275,10 @@ function getPointerMoveHandler(
                 );
             }
             const path = PathEntityHandle.setGraph(
-                draft.getEntity(entityId) as PathEntity,
+                builder.getEntity(entityId) as PathEntity,
                 graph,
             );
-            draft.setEntity(path);
+            builder.setEntity(path);
         });
     };
 }
@@ -313,9 +313,7 @@ function getPointerUpHandler(entityId: string, nodeIds: string[]) {
                     graph.mergeNodes(otherNode.id, targetNode.id);
                 }
                 const newEntity = PathEntityHandle.setGraph(path, graph);
-                app.canvas.edit((draft) => {
-                    draft.setEntities([newEntity]);
-                });
+                app.canvas.edit((builder) => builder.setEntities([newEntity]));
             }
         }
 

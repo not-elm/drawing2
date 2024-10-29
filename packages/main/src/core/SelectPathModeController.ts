@@ -54,9 +54,9 @@ export class SelectPathModeController extends ModeController {
 
         const entityIds = app.canvas.selectedEntityIds.get();
 
-        app.canvas.edit((draft) => {
+        app.canvas.edit((builder) => {
             for (const entityId of entityIds) {
-                const entity = draft.getEntity(entityId);
+                const entity = builder.getEntity(entityId);
                 assert(isPathEntity(entity), `Invalid entity: ${entity}`);
 
                 const graph = PathEntityHandle.getGraph(entity);
@@ -70,9 +70,9 @@ export class SelectPathModeController extends ModeController {
                     graph.deleteNode(nodeId);
                 }
                 if (graph.edges.size === 0) {
-                    draft.deleteEntity(entityId);
+                    builder.deleteEntity(entityId);
                 } else {
-                    draft.setEntities([
+                    builder.setEntities([
                         PathEntityHandle.setGraph(entity, graph),
                     ]);
                 }
@@ -122,9 +122,7 @@ export class SelectPathModeController extends ModeController {
 
             const newPath = PathEntityHandle.setGraph(control.path, graph);
 
-            app.canvas.edit((draft) => {
-                draft.setEntities([newPath]);
-            });
+            app.canvas.edit((builder) => builder.setEntities([newPath]));
 
             setupMoveNodesPointerEventHandlers(app, ev, newPath, [newNode.id]);
         }

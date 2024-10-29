@@ -205,8 +205,8 @@ export class App {
         const selectedEntityIds = this.canvas.selectedEntityIds.get();
         if (selectedEntityIds.size === 0) return;
 
-        this.canvas.edit((draft) => {
-            draft.deleteEntities(selectedEntityIds);
+        this.canvas.edit((builder) => {
+            builder.deleteEntities(selectedEntityIds);
         });
     }
 
@@ -215,8 +215,8 @@ export class App {
         if (selectedEntityIds.size === 0) {
             return;
         }
-        this.canvas.edit((draft) => {
-            draft.updateProperty([...selectedEntityIds], key, value);
+        this.canvas.edit((builder) => {
+            builder.updateProperty([...selectedEntityIds], key, value);
         });
     }
 
@@ -244,28 +244,28 @@ export class App {
         const selectedEntityIds = this.canvas.selectedEntityIds.get();
         if (selectedEntityIds.size === 0) return;
 
-        this.canvas.edit((draft) => draft.bringToFront(selectedEntityIds));
+        this.canvas.edit((builder) => builder.bringToFront(selectedEntityIds));
     }
 
     bringForward() {
         const selectedEntityIds = this.canvas.selectedEntityIds.get();
         if (selectedEntityIds.size === 0) return;
 
-        this.canvas.edit((draft) => draft.bringForward(selectedEntityIds));
+        this.canvas.edit((builder) => builder.bringForward(selectedEntityIds));
     }
 
     sendBackward() {
         const selectedEntityIds = this.canvas.selectedEntityIds.get();
         if (selectedEntityIds.size === 0) return;
 
-        this.canvas.edit((draft) => draft.sendBackward(selectedEntityIds));
+        this.canvas.edit((builder) => builder.sendBackward(selectedEntityIds));
     }
 
     sendToBack() {
         const selectedEntityIds = this.canvas.selectedEntityIds.get();
         if (selectedEntityIds.size === 0) return;
 
-        this.canvas.edit((draft) => draft.sendToBack(selectedEntityIds));
+        this.canvas.edit((builder) => builder.sendToBack(selectedEntityIds));
     }
 
     // Clipboard
@@ -285,10 +285,7 @@ export class App {
     async paste(): Promise<void> {
         const { entities } = await this.clipboard.paste();
 
-        this.canvas.edit((draft) => {
-            draft.setEntities(entities);
-            // draft.addDependencies(dependencies);
-        });
+        this.canvas.edit((builder) => builder.setEntities(entities));
         this.canvas.setSelectedEntityIds(entities.map((entity) => entity.id));
 
         // Copy pasted entities so that next paste operation will

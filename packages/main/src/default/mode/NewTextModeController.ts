@@ -62,9 +62,7 @@ export class NewTextModeController extends ModeController {
             sizingMode: "content",
         };
 
-        app.canvas.edit((draft) => {
-            draft.setEntity(text);
-        });
+        app.canvas.edit((builder) => builder.setEntity(text));
         return text;
     }
 }

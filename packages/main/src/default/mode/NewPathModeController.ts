@@ -87,9 +87,7 @@ export class NewPathModeController extends ModeController {
         ]);
         app.gesture.addPointerUpHandler(ev.pointerId, (app, ev) => {
             if (ev.isTap) {
-                app.canvas.edit((draft) => {
-                    draft.deleteEntity(path.id);
-                });
+                app.canvas.edit((builder) => builder.deleteEntity(path.id));
             }
         });
     }
@@ -128,9 +126,7 @@ export class NewPathModeController extends ModeController {
             [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]: [],
         };
 
-        app.canvas.edit((draft) => {
-            draft.setEntity(pathEntity);
-        });
+        app.canvas.edit((builder) => builder.setEntity(pathEntity));
         return pathEntity;
     }
 }
@@ -148,8 +144,8 @@ export function registerLinkToRect(
         return;
     }
 
-    app.canvas.edit((draft) =>
-        draft.addLink(
+    app.canvas.edit((builder) =>
+        builder.addLink(
             new LinkToRect(randomId(), nodeOwner.id, node.id, target.id),
         ),
     );
