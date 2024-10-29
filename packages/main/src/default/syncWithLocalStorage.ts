@@ -7,16 +7,14 @@ const DEBOUNCE_INTERVAL_IN_MS = 1000;
 export function syncWithLocalStorage(app: App) {
     let debounceTimerId: ReturnType<typeof setTimeout> | null = null;
 
-    app.canvasStateStore.addListener(() => {
+    app.canvasStateStore.page.addListener(() => {
         if (debounceTimerId !== null) {
             clearTimeout(debounceTimerId);
             debounceTimerId = null;
         }
 
         debounceTimerId = setTimeout(() => {
-            const serializedPage = app.canvasStateStore
-                .getState()
-                .page.serialize();
+            const serializedPage = app.canvasStateStore.page.get().serialize();
             localStorage.setItem(
                 LOCAL_STORAGE_KEY,
                 JSON.stringify(serializedPage),

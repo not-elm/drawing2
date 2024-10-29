@@ -2,8 +2,8 @@ import type { CSSObject } from "@emotion/styled";
 import { MathJax } from "better-react-mathjax";
 import { type ReactNode, memo } from "react";
 import { assert } from "../../../lib/assert";
+import { useAtom } from "../../../react/hooks/useAtom";
 import { useResizeObserver } from "../../../react/hooks/useResizeObserver";
-import { useStore } from "../../../react/hooks/useStore";
 import { useApp } from "../../../react/useApp";
 import { EditTextModeController } from "../../mode/EditTextModeController";
 import { Colors } from "../../property/Colors";
@@ -16,11 +16,12 @@ import { PROPERTY_KEY_CONTENT, type TextEntity } from "./TextEntity";
 export const TextView = memo(function ShapeView({
     entity,
 }: { entity: TextEntity }) {
-    const appState = useStore(useApp().appStateStore);
-    const canvasState = useStore(useApp().canvasStateStore);
+    const app = useApp();
+    const appState = useAtom(app.state);
+    const selectedEntityIds = useAtom(app.canvasStateStore.selectedEntityIds);
     const editing =
         appState.mode === EditTextModeController.MODE_NAME &&
-        canvasState.selectedEntityIds.has(entity.props.id);
+        selectedEntityIds.has(entity.props.id);
 
     const textAlignment = entity.props[PROPERTY_KEY_TEXT_ALIGNMENT_X];
     assert(textAlignment !== undefined, "Text alignment must not be null");

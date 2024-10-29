@@ -1,10 +1,10 @@
 import { useMemo } from "react";
-import { useStore } from "./hooks/useStore";
+import { useAtom } from "./hooks/useAtom";
 import { useApp } from "./useApp";
 
 export function Grid() {
     const app = useApp();
-    const viewport = useStore(app.viewportStore);
+    const viewport = useAtom(app.viewportStore.state);
 
     const canvas = useMemo(() => document.createElement("canvas"), []);
 

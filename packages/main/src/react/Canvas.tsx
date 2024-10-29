@@ -3,15 +3,15 @@ import { LinkGuideLayer } from "./LinkGuideLayer";
 import { SelectEntityControlLayer } from "./SelectEntityControlLayer";
 import { SelectPathControlLayer } from "./SelectPathControlLayer";
 import { SnapGuideLayer } from "./SnapGuideLayer";
+import { useAtom } from "./hooks/useAtom";
 import { useResizeObserver } from "./hooks/useResizeObserver";
-import { useStore } from "./hooks/useStore";
 import { useApp } from "./useApp";
 
 export function Canvas() {
     const app = useApp();
-    const { page } = useStore(app.canvasStateStore);
-    const viewport = useStore(app.viewportStore);
-    const appState = useStore(app.appStateStore);
+    const page = useAtom(app.canvasStateStore.page);
+    const viewport = useAtom(app.viewportStore.state);
+    const appState = useAtom(app.state);
 
     useEffect(() => {
         function handlePointerMove(ev: PointerEvent) {

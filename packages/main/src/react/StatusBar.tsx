@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
-import type { ViewportStore } from "../core/ViewportStore";
-import type { StateOf } from "../lib/Store";
-import { useStore } from "./hooks/useStore";
+import type { Viewport } from "../core/Viewport";
+import { useAtom } from "./hooks/useAtom";
 import { useApp } from "./useApp";
 
 const SIZE = 1000; // [ms]
@@ -27,9 +26,9 @@ export function monitorFPS() {
 
 export function StatusBar() {
     const app = useApp();
-    const appState = useStore(app.appStateStore);
-    const viewportRef = useRef<StateOf<ViewportStore>>(null as never);
-    viewportRef.current = useStore(app.viewportStore);
+    const appState = useAtom(app.state);
+    const viewportRef = useRef<Viewport>(null as never);
+    viewportRef.current = useAtom(app.viewportStore.state);
 
     const domRef = useRef<HTMLDivElement | null>(null);
     useEffect(() => {

@@ -13,8 +13,8 @@ export class GestureRecognizer {
     private readonly sessionIdsWithListener = new Set<number>();
 
     handlePointerDown(nativeEv: PointerEvent) {
-        const point = this.app.viewportStore
-            .getState()
+        const point = this.app.viewportStore.state
+            .get()
             .fromCanvasCoordinateTransform.apply(
                 new Point(nativeEv.clientX, nativeEv.clientY),
             );
@@ -35,8 +35,8 @@ export class GestureRecognizer {
         const session = this.sessions.get(nativeEv.pointerId);
         if (session === undefined) return;
 
-        const point = this.app.viewportStore
-            .getState()
+        const point = this.app.viewportStore.state
+            .get()
             .fromCanvasCoordinateTransform.apply(
                 new Point(nativeEv.clientX, nativeEv.clientY),
             );
@@ -67,8 +67,8 @@ export class GestureRecognizer {
         const session = this.sessions.get(nativeEv.pointerId);
         if (session === undefined) return;
 
-        const point = this.app.viewportStore
-            .getState()
+        const point = this.app.viewportStore.state
+            .get()
             .fromCanvasCoordinateTransform.apply(
                 new Point(nativeEv.clientX, nativeEv.clientY),
             );

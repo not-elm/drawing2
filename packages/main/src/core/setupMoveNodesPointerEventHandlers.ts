@@ -36,9 +36,9 @@ export function setupMoveNodesPointerEventHandlers(
         .map((nodeId) => path.getNodeById(nodeId))
         .filter(isNotNullish);
 
-    const oldLinkIds = app.canvasStateStore
-        .getState()
-        .page.links.getByEntityId(path.props.id)
+    const oldLinkIds = app.canvasStateStore.page
+        .get()
+        .links.getByEntityId(path.props.id)
         .filter((link) => link instanceof LinkToRect)
         .filter((link) => nodeIds.includes(link.nodeId))
         .map((link) => link.id);
@@ -73,9 +73,7 @@ function getPointerMoveHandler(
             ev.point.y - ev.startPoint.y,
         );
 
-        const path = app.canvasStateStore
-            .getState()
-            .page.entities.get(entityId);
+        const path = app.canvasStateStore.page.get().entities.get(entityId);
         assert(path !== undefined, `Entity not found: ${entityId}`);
         assert(path instanceof PathEntity, `Entity is not a path: ${entityId}`);
 
@@ -283,9 +281,7 @@ function getPointerMoveHandler(
 
 function getPointerUpHandler(entityId: string, nodeIds: string[]) {
     return (app: App, ev: CanvasPointerEvent) => {
-        const path = app.canvasStateStore
-            .getState()
-            .page.entities.get(entityId);
+        const path = app.canvasStateStore.page.get().entities.get(entityId);
         assert(path !== undefined, `Entity not found: ${entityId}`);
         assert(path instanceof PathEntity);
 
@@ -327,9 +323,9 @@ function getPointerUpHandler(entityId: string, nodeIds: string[]) {
             assert(targetNode !== undefined, `Node not found: ${nodeIds[0]}`);
 
             const hit = testHitEntities(
-                app.canvasStateStore.getState().page,
+                app.canvasStateStore.page.get(),
                 ev.point,
-                app.viewportStore.getState().scale,
+                app.viewportStore.state.get().scale,
             );
             if (hit.entities.length > 0) {
                 const { target } = hit.entities[0];

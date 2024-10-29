@@ -86,7 +86,7 @@ export class KeyboardManager {
      */
     handleKeyDown(ev: KeyboardEvent) {
         const platform = getPlatform();
-        const mode = this.app.appStateStore.getState().mode;
+        const mode = this.app.state.get().mode;
 
         for (const binding of this.bindings) {
             if (binding.key !== ev.key) continue;

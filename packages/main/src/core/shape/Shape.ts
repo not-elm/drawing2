@@ -4,7 +4,7 @@ import { Point } from "./Point";
 
 export abstract class Shape {
     /**
-     * Returns whether the shape overlaps with the line.
+     * Returns whether the given point is inside of this shape.
      */
     abstract contain(point: Point): boolean;
 

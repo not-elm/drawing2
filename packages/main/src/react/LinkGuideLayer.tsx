@@ -3,23 +3,22 @@ import { SelectEntityModeController } from "../core/SelectEntityModeController";
 import { Point } from "../core/shape/Point";
 import { PathEntity } from "../default/entity/PathEntity/PathEntity";
 import { assert } from "../lib/assert";
-import { useStore } from "./hooks/useStore";
+import { useAtom } from "./hooks/useAtom";
 import { useApp } from "./useApp";
 
 export function LinkGuideLayer() {
     const app = useApp();
-    const canvasState = useStore(app.canvasStateStore);
-    const mode = useStore(app.appStateStore).mode;
+    const page = useAtom(app.canvasStateStore.page);
+    const selectedEntityIds = useAtom(app.canvasStateStore.selectedEntityIds);
+    const { mode } = useAtom(app.state);
     if (mode !== SelectEntityModeController.MODE_NAME) return null;
 
-    if (canvasState.selectedEntityIds.size >= 2) return null;
+    if (selectedEntityIds.size >= 2) return null;
 
-    const selectedEntityId = canvasState.selectedEntityIds
-        .values()
-        .next().value;
+    const selectedEntityId = selectedEntityIds.values().next().value;
     if (selectedEntityId === undefined) return null;
 
-    const links = canvasState.page.links.getByEntityId(selectedEntityId);
+    const links = page.links.getByEntityId(selectedEntityId);
 
     return links.map((link) => {
         if (link instanceof LinkToEdge) {
@@ -32,14 +31,14 @@ export function LinkGuideLayer() {
 
 export function LinkToEdgeGuide({ link }: { link: LinkToEdge }) {
     const app = useApp();
-    const viewport = useStore(app.viewportStore);
-    const canvasState = useStore(app.canvasStateStore);
+    const viewport = useAtom(app.viewportStore.state);
+    const page = useAtom(app.canvasStateStore.page);
 
-    const entity = canvasState.page.entities.get(link.entityId);
+    const entity = page.entities.get(link.entityId);
     assert(entity !== undefined, `Entity ${link.entityId} not found`);
     const rect = entity.getShape().getBoundingRect();
 
-    const path = canvasState.page.entities.get(link.pathId);
+    const path = page.entities.get(link.pathId);
     assert(path !== undefined, `Path ${link.pathId} not found`);
     assert(path instanceof PathEntity, `Entity ${link.pathId} is not a path`);
 

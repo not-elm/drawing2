@@ -2,35 +2,35 @@ import { assert } from "../lib/assert";
 import type { App } from "./App";
 import type { CanvasPointerEvent } from "./ModeController";
 import { SelectEntityModeController } from "./SelectEntityModeController";
-import type { SelectEntityModeStateStore } from "./SelectEntityModeStateStore";
 
+import type { MutableAtom } from "./atom/Atom";
 import { Rect } from "./shape/Shape";
 
 export function setupBrushSelectPointerEventHandlers(
     app: App,
     ev: CanvasPointerEvent,
-    brushStore: SelectEntityModeStateStore,
+    brushRectAtom: MutableAtom<Rect | null>,
 ) {
-    const mode = app.appStateStore.getState().mode;
+    const { mode } = app.state.get();
     assert(
         mode === SelectEntityModeController.MODE_NAME,
         `Invalid mode: ${mode}`,
     );
 
     const originalSelectedEntityIds =
-        app.canvasStateStore.getState().selectedEntityIds;
+        app.canvasStateStore.selectedEntityIds.get();
 
-    brushStore.setBrushRect(new Rect(ev.point, ev.point));
+    brushRectAtom.set(new Rect(ev.point, ev.point));
 
     app.gestureRecognizer
         .addPointerMoveHandler(ev.pointerId, (app, ev) => {
             const rect = Rect.fromPoints(ev.startPoint, ev.point);
-            brushStore.setBrushRect(rect);
+            brushRectAtom.set(rect);
 
             const selectedEntityIds = new Set(originalSelectedEntityIds);
-            for (const entity of app.canvasStateStore
-                .getState()
-                .page.entities.values()) {
+            for (const entity of app.canvasStateStore.page
+                .get()
+                .entities.values()) {
                 if (entity.getShape().isOverlapWith(rect)) {
                     selectedEntityIds.add(entity.props.id);
                 }
@@ -39,6 +39,6 @@ export function setupBrushSelectPointerEventHandlers(
             app.canvasStateStore.setSelectedEntityIds(selectedEntityIds);
         })
         .addPointerUpHandler(ev.pointerId, () => {
-            brushStore.setBrushRect(null);
+            brushRectAtom.set(null);
         });
 }

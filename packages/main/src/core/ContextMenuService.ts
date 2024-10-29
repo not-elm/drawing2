@@ -1,5 +1,5 @@
-import { type StateProvider, Store } from "../lib/Store";
-import type { ViewportStore } from "./ViewportStore";
+import type { Viewport } from "./Viewport";
+import { type Atom, atom } from "./atom/Atom";
 import { Point } from "./shape/Point";
 
 export interface ContextMenuItem {
@@ -21,27 +21,25 @@ export interface ContextMenuState {
     positionInCanvas: Point;
 }
 
-export class ContextMenuService extends Store<ContextMenuState> {
+export class ContextMenuService {
     static CONTEXT_MENU_POSITION_MARGIN = 32;
 
-    constructor(
-        private readonly viewportStateProvider: StateProvider<ViewportStore>,
-    ) {
-        super({
-            items: [],
-            visible: false,
-            positionInCanvas: new Point(0, 0),
-        });
-    }
+    readonly state = atom<ContextMenuState>({
+        items: [],
+        visible: false,
+        positionInCanvas: new Point(0, 0),
+    });
+
+    constructor(private readonly viewport: Atom<Viewport>) {}
 
     /**
      * Add menu item to the context menu
      * @param item Menu item to add.
      */
     add(item: ContextMenuItem) {
-        this.setState({
-            ...this.state,
-            items: [...this.state.items, item],
+        this.state.set({
+            ...this.state.get(),
+            items: [...this.state.get().items, item],
         });
     }
 
@@ -50,8 +48,8 @@ export class ContextMenuService extends Store<ContextMenuState> {
      * @param positionInCanvas Position to show the context menu (in canvas coordinate).
      */
     show(positionInCanvas: Point) {
-        this.setState({
-            ...this.state,
+        this.state.set({
+            ...this.state.get(),
             visible: true,
             positionInCanvas,
         });
@@ -61,8 +59,8 @@ export class ContextMenuService extends Store<ContextMenuState> {
      * Hide context menu.
      */
     hide() {
-        this.setState({
-            ...this.state,
+        this.state.set({
+            ...this.state.get(),
             visible: false,
         });
     }
@@ -71,11 +69,11 @@ export class ContextMenuService extends Store<ContextMenuState> {
      *  Called when menu view is resized by browser's layout engine.
      */
     onMenuResize(width: number, height: number) {
-        const viewportRect = this.viewportStateProvider.getState().rect;
+        const viewportRect = this.viewport.get().rect;
         const x = Math.max(
             ContextMenuService.CONTEXT_MENU_POSITION_MARGIN,
             Math.min(
-                this.state.positionInCanvas.x,
+                this.state.get().positionInCanvas.x,
                 viewportRect.width -
                     width -
                     ContextMenuService.CONTEXT_MENU_POSITION_MARGIN,
@@ -84,15 +82,15 @@ export class ContextMenuService extends Store<ContextMenuState> {
         const y = Math.max(
             ContextMenuService.CONTEXT_MENU_POSITION_MARGIN,
             Math.min(
-                this.state.positionInCanvas.y,
+                this.state.get().positionInCanvas.y,
                 viewportRect.height -
                     height -
                     ContextMenuService.CONTEXT_MENU_POSITION_MARGIN,
             ),
         );
 
-        this.setState({
-            ...this.state,
+        this.state.set({
+            ...this.state.get(),
             positionInCanvas: new Point(x, y),
         });
     }

@@ -2,7 +2,7 @@ import { SelectEntityModeController } from "../core/SelectEntityModeController";
 import { Line } from "../core/shape/Line";
 import { Rect, type Shape } from "../core/shape/Shape";
 import type { TransformMatrix } from "../core/shape/TransformMatrix";
-import { useStore } from "./hooks/useStore";
+import { useAtom } from "./hooks/useAtom";
 import { useApp } from "./useApp";
 
 export function SelectEntityControlLayer() {
@@ -20,17 +20,17 @@ function SelectEntityControlLayerInner({
     modeController: SelectEntityModeController;
 }) {
     const app = useApp();
-    const appState = useStore(app.appStateStore);
-    const viewport = useStore(app.viewportStore);
-    const { brushRect } = useStore(modeController.store);
+    const appState = useAtom(app.state);
+    const viewport = useAtom(app.viewportStore.state);
+    const brushRect = useAtom(modeController.brushRect);
     const visibleCornerRoundHandles = modeController.computeControlLayerData(
         app,
         appState.pointerPosition,
     );
     if (appState.mode !== SelectEntityModeController.MODE_NAME) return null;
 
-    const entities = app.canvasStateStore.getState().getSelectedEntities();
-    const selectionRect = app.canvasStateStore.getState().getSelectionRect();
+    const entities = useAtom(app.canvasStateStore.selectedEntities);
+    const selectionRect = useAtom(app.canvasStateStore.selectionRect);
 
     const transformedSelectionRect =
         selectionRect === null ? null : viewport.transform.apply(selectionRect);

@@ -47,11 +47,11 @@ export class NewTextModeController extends ModeController {
             id: randomId(),
             rect,
             content: "",
-            [PROPERTY_KEY_TEXT_ALIGNMENT_X]: app.defaultPropertyStore
-                .getState()
+            [PROPERTY_KEY_TEXT_ALIGNMENT_X]: app.defaultPropertyStore.state
+                .get()
                 .getOrDefault(PROPERTY_KEY_TEXT_ALIGNMENT_X, "start"),
-            [PROPERTY_KEY_COLOR_ID]: app.defaultPropertyStore
-                .getState()
+            [PROPERTY_KEY_COLOR_ID]: app.defaultPropertyStore.state
+                .get()
                 .getOrDefault(PROPERTY_KEY_COLOR_ID, 0),
             sizingMode: "content",
         });

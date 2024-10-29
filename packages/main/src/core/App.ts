@@ -1,6 +1,6 @@
+import type * as csstype from "csstype";
 import type { ComponentType } from "react";
 import { assert } from "../lib/assert";
-import { AppStateStore } from "./AppStateStore";
 import { CanvasStateStore } from "./CanvasStateStore";
 import { ClipboardService } from "./ClipboardService";
 import { ContextMenuService } from "./ContextMenuService";
@@ -16,10 +16,21 @@ import { SelectEntityModeController } from "./SelectEntityModeController";
 import { SelectPathModeController } from "./SelectPathModeController";
 import { SnapGuideStore } from "./SnapGuideStore";
 import { ViewportStore } from "./ViewportStore";
+import { atom } from "./atom/Atom";
 import { Point } from "./shape/Point";
 
+interface AppState {
+    readonly mode: string;
+    readonly cursor: csstype.Property.Cursor;
+    readonly pointerPosition: Point;
+}
+
 export class App {
-    readonly appStateStore = new AppStateStore();
+    readonly state = atom<AppState>({
+        mode: SelectEntityModeController.MODE_NAME,
+        cursor: "default",
+        pointerPosition: new Point(0, 0),
+    });
 
     readonly entityConverter = new EntityConverterMap();
     readonly clipboardService = new ClipboardService(this.entityConverter);
@@ -29,7 +40,7 @@ export class App {
     readonly historyManager = new HistoryManager(this);
     readonly defaultPropertyStore = new DefaultPropertyStore();
     readonly keyboard = new KeyboardManager(this);
-    readonly contextMenu = new ContextMenuService(this.viewportStore);
+    readonly contextMenu = new ContextMenuService(this.viewportStore.state);
     private readonly modeControllers = new Map<string, ModeController>();
     private readonly entityViewMap = new Map<
         string,
@@ -121,7 +132,7 @@ export class App {
 
     getModeController(): ModeController {
         return (
-            this.getModeControllerByType(this.appStateStore.getState().mode) ??
+            this.getModeControllerByType(this.state.get().mode) ??
             this.defaultModeController
         );
     }
@@ -133,7 +144,7 @@ export class App {
     setMode(newMode: string) {
         let aborted = false;
         const ev: ModeChangeEvent = {
-            oldMode: this.appStateStore.getState().mode,
+            oldMode: this.state.get().mode,
             newMode,
             abort: () => {
                 aborted = true;
@@ -152,7 +163,7 @@ export class App {
         oldModeController.onBeforeExitMode(this, ev);
         if (aborted) return;
 
-        this.appStateStore.setMode(newMode);
+        this.state.set({ ...this.state.get(), mode: newMode });
         ev.abort = () => {
             throw new Error("Abort is called after mode change");
         };
@@ -193,8 +204,7 @@ export class App {
     // Edit
 
     deleteSelectedEntities() {
-        const selectedEntityIds =
-            this.canvasStateStore.getState().selectedEntityIds;
+        const selectedEntityIds = this.canvasStateStore.selectedEntityIds.get();
         if (selectedEntityIds.size === 0) return;
 
         this.canvasStateStore.edit((draft) => {
@@ -203,8 +213,7 @@ export class App {
     }
 
     updatePropertyForSelectedEntities(key: string, value: unknown) {
-        const selectedEntityIds =
-            this.canvasStateStore.getState().selectedEntityIds;
+        const selectedEntityIds = this.canvasStateStore.selectedEntityIds.get();
         if (selectedEntityIds.size === 0) {
             return;
         }
@@ -216,8 +225,7 @@ export class App {
     // Ordering
 
     bringToFront() {
-        const selectedEntityIds =
-            this.canvasStateStore.getState().selectedEntityIds;
+        const selectedEntityIds = this.canvasStateStore.selectedEntityIds.get();
         if (selectedEntityIds.size === 0) return;
 
         this.canvasStateStore.edit((draft) =>
@@ -226,8 +234,7 @@ export class App {
     }
 
     bringForward() {
-        const selectedEntityIds =
-            this.canvasStateStore.getState().selectedEntityIds;
+        const selectedEntityIds = this.canvasStateStore.selectedEntityIds.get();
         if (selectedEntityIds.size === 0) return;
 
         this.canvasStateStore.edit((draft) =>
@@ -236,8 +243,7 @@ export class App {
     }
 
     sendBackward() {
-        const selectedEntityIds =
-            this.canvasStateStore.getState().selectedEntityIds;
+        const selectedEntityIds = this.canvasStateStore.selectedEntityIds.get();
         if (selectedEntityIds.size === 0) return;
 
         this.canvasStateStore.edit((draft) =>
@@ -246,8 +252,7 @@ export class App {
     }
 
     sendToBack() {
-        const selectedEntityIds =
-            this.canvasStateStore.getState().selectedEntityIds;
+        const selectedEntityIds = this.canvasStateStore.selectedEntityIds.get();
         if (selectedEntityIds.size === 0) return;
 
         this.canvasStateStore.edit((draft) =>
@@ -258,12 +263,11 @@ export class App {
     // Clipboard
 
     copy() {
-        const selectedEntityIds =
-            this.canvasStateStore.getState().selectedEntityIds;
+        const selectedEntityIds = this.canvasStateStore.selectedEntityIds.get();
         if (selectedEntityIds.size === 0) return;
 
         this.clipboardService.copy(
-            this.canvasStateStore.getState().page,
+            this.canvasStateStore.page.get(),
             selectedEntityIds,
         );
     }
@@ -296,7 +300,7 @@ export class App {
      * @internal
      */
     handlePointerDown(ev: PointerEvent) {
-        if (this.contextMenu.getState().visible) {
+        if (this.contextMenu.state.get().visible) {
             this.contextMenu.hide();
             this.resetRequiredPointerUpCountBeforeDoubleClick();
             ev.preventDefault();
@@ -312,8 +316,8 @@ export class App {
         this.getModeController().onCanvasPointerDown(this, {
             pointerId: ev.pointerId,
             button: ev.button === MouseEventButton.MAIN ? "main" : "other",
-            point: this.viewportStore
-                .getState()
+            point: this.viewportStore.state
+                .get()
                 .fromCanvasCoordinateTransform.apply(
                     new Point(ev.clientX, ev.clientY),
                 ),
@@ -332,8 +336,8 @@ export class App {
         this.getModeController().onContextMenu(this, {
             pointerId: -1,
             button: "other",
-            point: this.viewportStore
-                .getState()
+            point: this.viewportStore.state
+                .get()
                 .fromCanvasCoordinateTransform.apply(
                     new Point(ev.clientX, ev.clientY),
                 ),
@@ -349,16 +353,16 @@ export class App {
      * @internal
      */
     handlePointerMove(ev: PointerEvent) {
-        if (this.contextMenu.getState().visible) return;
+        if (this.contextMenu.state.get().visible) return;
 
         this.gestureRecognizer.handlePointerMove(ev);
 
-        const point = this.viewportStore
-            .getState()
+        const point = this.viewportStore.state
+            .get()
             .fromCanvasCoordinateTransform.apply(
                 new Point(ev.clientX, ev.clientY),
             );
-        this.appStateStore.setPointerPosition(point);
+        this.state.set({ ...this.state.get(), pointerPosition: point });
         this.getModeController().getCursor(this);
     }
 
@@ -367,7 +371,7 @@ export class App {
      * @internal
      */
     handlePointerUp(ev: PointerEvent) {
-        if (this.contextMenu.getState().visible) return;
+        if (this.contextMenu.state.get().visible) return;
         if (this.requiredPointerUpCountBeforeDoubleClick > 0) {
             this.requiredPointerUpCountBeforeDoubleClick -= 1;
         }
@@ -380,14 +384,14 @@ export class App {
      * @internal
      */
     handleDoubleClick(ev: MouseEvent) {
-        if (this.contextMenu.getState().visible) return;
+        if (this.contextMenu.state.get().visible) return;
         if (this.requiredPointerUpCountBeforeDoubleClick > 0) return;
 
         this.getModeController().onCanvasDoubleClick(this, {
             pointerId: -1,
             button: "main",
-            point: this.viewportStore
-                .getState()
+            point: this.viewportStore.state
+                .get()
                 .fromCanvasCoordinateTransform.apply(
                     new Point(ev.clientX, ev.clientY),
                 ),
@@ -399,7 +403,7 @@ export class App {
     }
 
     handleScroll(deltaCanvasX: number, deltaCanvasY: number) {
-        if (this.contextMenu.getState().visible) return;
+        if (this.contextMenu.state.get().visible) return;
 
         this.viewportStore.movePosition(deltaCanvasX, deltaCanvasY);
     }
@@ -409,7 +413,7 @@ export class App {
         centerCanvasX: number,
         centerCanvasY: number,
     ) {
-        if (this.contextMenu.getState().visible) return;
+        if (this.contextMenu.state.get().visible) return;
 
         this.viewportStore.setScale(newScale, centerCanvasX, centerCanvasY);
     }
@@ -419,15 +423,13 @@ export class App {
      * @internal
      */
     handleKeyDown(ev: KeyboardEvent) {
-        if (this.contextMenu.getState().visible) return;
+        if (this.contextMenu.state.get().visible) return;
 
         this.keyboard.handleKeyDown(ev);
     }
 
     handleEntityResize(entityId: string, width: number, height: number) {
-        const entity = this.canvasStateStore
-            .getState()
-            .page.entities.get(entityId);
+        const entity = this.canvasStateStore.page.get().entities.get(entityId);
         assert(entity !== undefined, `Entity ${entityId} is not found`);
 
         entity.onViewResize(this, width, height);

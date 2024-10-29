@@ -1,12 +1,12 @@
 import styled from "@emotion/styled";
 import { Card } from "./Card";
+import { useAtom } from "./hooks/useAtom";
 import { useResizeObserver } from "./hooks/useResizeObserver";
-import { useStore } from "./hooks/useStore";
 import { useApp } from "./useApp";
 
 export function ContextMenuLayer() {
     const app = useApp();
-    const contextMenuState = useStore(app.contextMenu);
+    const contextMenuState = useAtom(app.contextMenu.state);
 
     const resizeObserverRef = useResizeObserver((entry) => {
         app.contextMenu.onMenuResize(

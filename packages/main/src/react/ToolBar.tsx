@@ -1,7 +1,7 @@
 import type { LiHTMLAttributes, ReactNode } from "react";
 import { Button } from "./Button";
 import { Card } from "./Card";
-import { useStore } from "./hooks/useStore";
+import { useAtom } from "./hooks/useAtom";
 import { useApp } from "./useApp";
 
 function ToolBar({
@@ -42,7 +42,7 @@ function ToolBarButton({
     children?: ReactNode;
 }) {
     const app = useApp();
-    const appState = useStore(app.appStateStore);
+    const appState = useAtom(app.state);
 
     return (
         <ToolBarItem>

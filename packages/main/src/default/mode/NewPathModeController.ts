@@ -7,6 +7,7 @@ import {
 } from "../../core/ModeController";
 import type { Page } from "../../core/Page";
 import { SelectEntityModeController } from "../../core/SelectEntityModeController";
+import { SelectPathModeController } from "../../core/SelectPathModeController";
 import { setupMoveNodesPointerEventHandlers } from "../../core/setupMoveNodesPointerEventHandlers";
 import { Graph, GraphNode } from "../../core/shape/Graph";
 import { Line } from "../../core/shape/Line";
@@ -55,9 +56,9 @@ export class NewPathModeController extends ModeController {
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
         app.historyManager.pause();
         const hit = testHitEntities(
-            app.canvasStateStore.getState().page,
+            app.canvasStateStore.page.get(),
             ev.point,
-            app.viewportStore.getState().scale,
+            app.viewportStore.state.get().scale,
         );
 
         const path = this.insertNewPath(
@@ -70,7 +71,7 @@ export class NewPathModeController extends ModeController {
             registerLinkToRect(app, path, path.getNodes()[0], target);
         }
 
-        app.setMode(SelectEntityModeController.MODE_NAME);
+        app.setMode(SelectPathModeController.MODE_NAME);
         app.canvasStateStore.unselectAll();
         app.canvasStateStore.select(path.props.id);
 
@@ -95,17 +96,17 @@ export class NewPathModeController extends ModeController {
         const pathEntity = new PathEntity(
             {
                 id: randomId(),
-                [PROPERTY_KEY_COLOR_ID]: app.defaultPropertyStore
-                    .getState()
+                [PROPERTY_KEY_COLOR_ID]: app.defaultPropertyStore.state
+                    .get()
                     .getOrDefault(PROPERTY_KEY_COLOR_ID, 0),
-                [PROPERTY_KEY_STROKE_STYLE]: app.defaultPropertyStore
-                    .getState()
+                [PROPERTY_KEY_STROKE_STYLE]: app.defaultPropertyStore.state
+                    .get()
                     .getOrDefault(PROPERTY_KEY_STROKE_STYLE, "solid"),
-                [PROPERTY_KEY_STROKE_WIDTH]: app.defaultPropertyStore
-                    .getState()
+                [PROPERTY_KEY_STROKE_WIDTH]: app.defaultPropertyStore.state
+                    .get()
                     .getOrDefault(PROPERTY_KEY_STROKE_WIDTH, 2),
-                [PROPERTY_KEY_FILL_STYLE]: app.defaultPropertyStore
-                    .getState()
+                [PROPERTY_KEY_FILL_STYLE]: app.defaultPropertyStore.state
+                    .get()
                     .getOrDefault(PROPERTY_KEY_FILL_STYLE, "none"),
                 [PROPERTY_KEY_CORNER_RADIUS]: 0,
                 [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]: [],
@@ -129,7 +130,7 @@ export function registerLinkToRect(
     if (nodeOwner.props.id === target.props.id) {
         return;
     }
-    if (isOwnedLabel(app.canvasStateStore.getState().page, nodeOwner, target)) {
+    if (isOwnedLabel(app.canvasStateStore.page.get(), nodeOwner, target)) {
         return;
     }
 

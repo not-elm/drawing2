@@ -1,4 +1,4 @@
-import { Store } from "../lib/Store";
+import { atom } from "./atom/Atom";
 
 class DefaultProperties {
     constructor(private properties: Record<string, unknown>) {}
@@ -14,12 +14,10 @@ class DefaultProperties {
     }
 }
 
-export class DefaultPropertyStore extends Store<DefaultProperties> {
-    constructor() {
-        super(new DefaultProperties({}));
-    }
+export class DefaultPropertyStore {
+    readonly state = atom(new DefaultProperties({}));
 
     set(key: string, value: unknown) {
-        this.setState(this.state.set(key, value));
+        this.state.set(this.state.get().set(key, value));
     }
 }

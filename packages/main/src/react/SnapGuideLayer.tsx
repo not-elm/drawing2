@@ -1,10 +1,10 @@
-import { useStore } from "./hooks/useStore";
+import { useAtom } from "./hooks/useAtom";
 import { useApp } from "./useApp";
 
 export function SnapGuideLayer() {
     const app = useApp();
-    const viewport = useStore(app.viewportStore);
-    const snapGuideState = useStore(app.snapGuideStore);
+    const viewport = useAtom(app.viewportStore.state);
+    const snapGuideState = useAtom(app.snapGuideStore.state);
     const guides = [...snapGuideState.guides.values()];
     if (guides.length === 0) return null;
 

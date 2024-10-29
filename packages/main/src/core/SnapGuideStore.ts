@@ -1,26 +1,20 @@
-import { Store } from "../lib/Store";
 import type { SnapGuide } from "./SnapEntry";
+import { atom } from "./atom/Atom";
 
-interface SnapGuideState {
-    guides: Map<string, SnapGuide>;
-}
-
-export class SnapGuideStore extends Store<SnapGuideState> {
-    constructor() {
-        super({
-            guides: new Map(),
-        });
-    }
+export class SnapGuideStore {
+    readonly state = atom({
+        guides: new Map<string, SnapGuide>(),
+    });
 
     setSnapGuide(key: string, guide: SnapGuide) {
-        const newGuides = new Map(this.state.guides);
+        const newGuides = new Map(this.state.get().guides);
         newGuides.set(key, guide);
-        this.setState({ guides: newGuides });
+        this.state.set({ guides: newGuides });
     }
 
     deleteSnapGuide(key: string) {
-        const newGuides = new Map(this.state.guides);
+        const newGuides = new Map(this.state.get().guides);
         newGuides.delete(key);
-        this.setState({ guides: newGuides });
+        this.state.set({ guides: newGuides });
     }
 }

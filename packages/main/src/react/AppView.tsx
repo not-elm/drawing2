@@ -59,10 +59,13 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                         overflow: "clip",
                         "--color-ui-foreground": "#404040",
                         "--color-ui-primary": "#3680f4",
+                        "--color-ui-primary-hover": "#b0c5fb",
                         "--color-ui-background": "#fff",
                         "--color-ui-background-hover": "#f0f0f0",
                         "--color-ui-selected": "var(--color-ui-primary)",
                         "--color-selection": "var(--color-ui-primary)",
+                        "--color-selection-hover":
+                            "var(--color-ui-primary-hover)",
 
                         // Disable mobile browser's default touch gestures (pan, zoom)
                         // to prevent conflicts with our event handling such as "pointermove".

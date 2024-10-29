@@ -1,29 +1,34 @@
-import { Store } from "../lib/Store";
 import { assert } from "../lib/assert";
 import type { App } from "./App";
-import type { Entity } from "./Entity";
 import { LinkCollection } from "./Link";
 import { Page } from "./Page";
 import { PageDraft } from "./PageDraft";
 
+import type { SelectedEntityChangeEvent } from "./ModeController";
+import { atom, derived } from "./atom/Atom";
 import { Rect } from "./shape/Shape";
 
-export class CanvasState {
-    constructor(
-        readonly page: Page,
-        readonly selectedEntityIds: ReadonlySet<string>,
-    ) {}
+export class CanvasStateStore {
+    public readonly page = atom(
+        new Page({
+            entities: new Map(),
+            entityIds: [],
+            links: LinkCollection.create(),
+        }),
+    );
 
-    getSelectedEntities(): Entity[] {
-        return Array.from(this.selectedEntityIds).map((id) => {
-            const entity = this.page.entities.get(id);
+    public readonly selectedEntityIds = atom<ReadonlySet<string>>(new Set());
+
+    public readonly selectedEntities = derived(() => {
+        return Array.from(this.selectedEntityIds.get()).map((id) => {
+            const entity = this.page.get().entities.get(id);
             assert(entity !== undefined, `Entity ${id} not found`);
             return entity;
         });
-    }
+    });
 
-    getSelectionRect(): Rect | null {
-        const selectedEntities = this.getSelectedEntities();
+    public readonly selectionRect = derived(() => {
+        const selectedEntities = this.selectedEntities.get();
         if (selectedEntities.length === 0) return null;
 
         return Rect.union(
@@ -31,40 +36,20 @@ export class CanvasState {
                 entity.getShape().getBoundingRect(),
             ),
         );
-    }
-}
+    });
 
-export class CanvasStateStore extends Store<CanvasState> {
-    constructor(private readonly app: App) {
-        super(
-            new CanvasState(
-                new Page({
-                    entities: new Map(),
-                    entityIds: [],
-                    links: LinkCollection.create(),
-                }),
-                new Set(),
-            ),
-        );
-    }
-
-    /**
-     * @internal Exposed only for history rollback
-     */
-    setState(newState: CanvasState) {
-        super.setState(newState);
-    }
+    constructor(private readonly app: App) {}
 
     edit(updater: (draft: PageDraft) => void) {
-        const draft = new PageDraft(this.state.page);
+        const draft = new PageDraft(this.page.get());
         updater(draft);
         for (const entityId of draft.deletedEntityIds) {
-            this.state.page.links.deleteByEntityId(entityId);
+            this.page.get().links.deleteByEntityId(entityId);
         }
 
-        this.state.page.links.apply(draft);
+        this.page.get().links.apply(draft);
         for (const entityId of draft.deletedEntityIds) {
-            this.state.page.links.deleteByEntityId(entityId);
+            this.page.get().links.deleteByEntityId(entityId);
         }
 
         for (const entityId of draft.deletedEntityIds) {
@@ -74,36 +59,42 @@ export class CanvasStateStore extends Store<CanvasState> {
     }
 
     setPage(page: Page) {
-        this.setState(new CanvasState(page, this.state.selectedEntityIds));
+        this.page.set(page);
     }
 
     select(entityId: string) {
-        const entityIds = new Set(this.state.selectedEntityIds);
+        const entityIds = new Set(this.selectedEntityIds.get());
         entityIds.add(entityId);
-        this.setState(new CanvasState(this.state.page, entityIds));
+        this.setSelectedEntityIds(entityIds);
     }
 
     unselect(entityId: string) {
-        const entityIds = new Set(this.state.selectedEntityIds);
+        const entityIds = new Set(this.selectedEntityIds.get());
         if (!entityIds.has(entityId)) return;
         entityIds.delete(entityId);
-        this.setState(new CanvasState(this.state.page, entityIds));
+        this.setSelectedEntityIds(entityIds);
     }
 
     selectAll() {
-        return this.setState(
-            new CanvasState(
-                this.state.page,
-                new Set(this.state.page.entityIds),
-            ),
-        );
+        this.setSelectedEntityIds(new Set(this.page.get().entityIds));
     }
 
     unselectAll() {
-        this.setState(new CanvasState(this.state.page, new Set()));
+        this.setSelectedEntityIds(new Set());
     }
 
     setSelectedEntityIds(entityIds: Iterable<string>) {
-        this.setState(new CanvasState(this.state.page, new Set(entityIds)));
+        const ev: SelectedEntityChangeEvent = {
+            oldSelectedEntityIds: this.selectedEntityIds.get(),
+            newSelectedEntityIds: new Set(entityIds),
+        };
+
+        this.app
+            .getModeController()
+            .onBeforeSelectedEntitiesChange(this.app, ev);
+        this.selectedEntityIds.set(ev.newSelectedEntityIds);
+        this.app
+            .getModeController()
+            .onAfterSelectedEntitiesChange(this.app, ev);
     }
 }

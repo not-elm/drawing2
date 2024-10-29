@@ -31,17 +31,13 @@ export class EditTextModeController extends ModeController {
     }
 
     onAfterEnterMode(app: App, ev: ModeChangeEvent) {
-        for (const entity of app.canvasStateStore
-            .getState()
-            .getSelectedEntities()) {
+        for (const entity of app.canvasStateStore.selectedEntities.get()) {
             entity.onTextEditStart(app);
         }
     }
 
     onBeforeExitMode(app: App, ev: ModeChangeEvent) {
-        for (const entity of app.canvasStateStore
-            .getState()
-            .getSelectedEntities()) {
+        for (const entity of app.canvasStateStore.selectedEntities.get()) {
             entity.onTextEditEnd(app);
         }
         app.historyManager.resume();

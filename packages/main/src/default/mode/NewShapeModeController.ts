@@ -86,17 +86,17 @@ export class NewShapeModeController extends ModeController {
         const shape = new PathEntity(
             {
                 id: randomId(),
-                [PROPERTY_KEY_COLOR_ID]: app.defaultPropertyStore
-                    .getState()
+                [PROPERTY_KEY_COLOR_ID]: app.defaultPropertyStore.state
+                    .get()
                     .getOrDefault(PROPERTY_KEY_COLOR_ID, 0),
-                [PROPERTY_KEY_STROKE_STYLE]: app.defaultPropertyStore
-                    .getState()
+                [PROPERTY_KEY_STROKE_STYLE]: app.defaultPropertyStore.state
+                    .get()
                     .getOrDefault(PROPERTY_KEY_STROKE_STYLE, "solid"),
-                [PROPERTY_KEY_STROKE_WIDTH]: app.defaultPropertyStore
-                    .getState()
+                [PROPERTY_KEY_STROKE_WIDTH]: app.defaultPropertyStore.state
+                    .get()
                     .getOrDefault(PROPERTY_KEY_STROKE_WIDTH, 2),
-                [PROPERTY_KEY_FILL_STYLE]: app.defaultPropertyStore
-                    .getState()
+                [PROPERTY_KEY_FILL_STYLE]: app.defaultPropertyStore.state
+                    .get()
                     .getOrDefault(PROPERTY_KEY_FILL_STYLE, "none"),
                 [PROPERTY_KEY_CORNER_RADIUS]: 0,
                 [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]: [],
