@@ -2,13 +2,12 @@ import {
     PathEntityHandle,
     isPathEntity,
 } from "../default/entity/PathEntity/PathEntity";
+import type { JSONValue } from "../lib/JSONObject";
 import { assert } from "../lib/assert";
 import type { Entity, EntityHandleMap } from "./Entity";
-import type { JSONValue } from "./JSONObject";
 import type { Link, LinkCollection } from "./Link";
 import { Page } from "./Page";
 import type { Point } from "./shape/Point";
-import type { TransformMatrix } from "./shape/TransformMatrix";
 
 /**
  * Mutable version of {@link Page}.
@@ -89,13 +88,6 @@ export class PageDraft extends PageDraftCore {
     deleteEntities(entityIds: ReadonlySet<string>): void {
         for (const entityId of entityIds) {
             this.deleteEntity(entityId);
-        }
-    }
-
-    transformEntities(entityIds: string[], transform: TransformMatrix) {
-        for (const entityId of entityIds) {
-            const entity = this.getEntity(entityId);
-            this.setEntity(this.entityHandle.transform(entity, transform));
         }
     }
 

@@ -1,7 +1,7 @@
+import type { JSONObject } from "../lib/JSONObject";
 import { assert } from "../lib/assert";
 import { randomId } from "../lib/randomId";
 import type { Entity, EntityHandleMap } from "./Entity";
-import type { JSONObject } from "./JSONObject";
 import type { Page } from "./Page";
 import { translate } from "./shape/TransformMatrix";
 

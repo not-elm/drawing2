@@ -25,13 +25,11 @@ export class HistoryManager {
     private processing = false;
 
     constructor(private readonly app: App) {
-        this.app.canvasStateStore.page.addListener(
-            this.handleCanvasStateStoreChange,
-        );
+        this.app.canvas.page.addListener(this.handleCanvasStateStoreChange);
         this.currentState = {
-            page: app.canvasStateStore.page.get(),
-            selectedEntityIds: app.canvasStateStore.selectedEntityIds.get(),
-            mode: app.state.get().mode,
+            page: app.canvas.page.get(),
+            selectedEntityIds: app.canvas.selectedEntityIds.get(),
+            mode: app.mode.get(),
         };
     }
 
@@ -58,10 +56,9 @@ export class HistoryManager {
     private handleCanvasStateStoreChange = () => {
         const lastState = this.currentState;
         this.currentState = {
-            page: this.app.canvasStateStore.page.get(),
-            selectedEntityIds:
-                this.app.canvasStateStore.selectedEntityIds.get(),
-            mode: this.app.state.get().mode,
+            page: this.app.canvas.page.get(),
+            selectedEntityIds: this.app.canvas.selectedEntityIds.get(),
+            mode: this.app.mode.get(),
         };
 
         if (this.paused) {
@@ -96,10 +93,8 @@ export class HistoryManager {
 
         this.processing = true;
         try {
-            this.app.canvasStateStore.setPage(prevState.page);
-            this.app.canvasStateStore.setSelectedEntityIds(
-                prevState.selectedEntityIds,
-            );
+            this.app.canvas.setPage(prevState.page);
+            this.app.canvas.setSelectedEntityIds(prevState.selectedEntityIds);
             this.app.setMode(prevState.mode);
         } catch (e) {
             console.error(e);
@@ -125,10 +120,8 @@ export class HistoryManager {
 
         this.processing = true;
         try {
-            this.app.canvasStateStore.setPage(nestState.page);
-            this.app.canvasStateStore.setSelectedEntityIds(
-                nestState.selectedEntityIds,
-            );
+            this.app.canvas.setPage(nestState.page);
+            this.app.canvas.setSelectedEntityIds(nestState.selectedEntityIds);
             this.app.setMode(nestState.mode);
         } finally {
             this.processing = false;

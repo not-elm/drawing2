@@ -2,9 +2,9 @@ import {
     PathEntityHandle,
     isPathEntity,
 } from "../default/entity/PathEntity/PathEntity";
+import type { JSONObject } from "../lib/JSONObject";
 import { assert } from "../lib/assert";
 import type { EntityHandleMap } from "./Entity";
-import type { JSONObject } from "./JSONObject";
 import type { PageDraft } from "./PageDraft";
 import { Line } from "./shape/Line";
 import { Point } from "./shape/Point";

@@ -26,7 +26,7 @@ import { PROPERTY_KEY_STROKE_STYLE } from "../property/StrokeStyle";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../property/StrokeWidth";
 
 export class NewPathModeController extends ModeController {
-    static readonly MODE_NAME = "new-path";
+    static readonly type = "new-path";
 
     onRegistered(app: App) {
         app.keyboard.addBinding({
@@ -35,31 +35,31 @@ export class NewPathModeController extends ModeController {
             metaKey: false,
             ctrlKey: false,
             action: (app, ev) => {
-                app.setMode(NewPathModeController.MODE_NAME);
+                app.setMode(NewPathModeController.type);
             },
         });
         app.keyboard.addBinding({
             key: "l",
             action: (app, ev) => {
-                app.setMode(NewPathModeController.MODE_NAME);
+                app.setMode(NewPathModeController.type);
             },
         });
         app.keyboard.addBinding({
             key: "Escape",
-            mode: [NewPathModeController.MODE_NAME],
+            mode: [NewPathModeController.type],
             action: (app, ev) => {
-                app.canvasStateStore.unselectAll();
-                app.setMode(SelectEntityModeController.MODE_NAME);
+                app.canvas.unselectAll();
+                app.setMode(SelectEntityModeController.type);
             },
         });
     }
 
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
-        app.historyManager.pause();
+        app.history.pause();
         const hit = testHitEntities(
-            app.canvasStateStore.page.get(),
+            app.canvas.page.get(),
             ev.point,
-            app.viewportStore.state.get().scale,
+            app.viewport.get().scale,
             app.entityHandle,
         );
 
@@ -78,16 +78,16 @@ export class NewPathModeController extends ModeController {
             );
         }
 
-        app.setMode(SelectPathModeController.MODE_NAME);
-        app.canvasStateStore.unselectAll();
-        app.canvasStateStore.select(path.id);
+        app.setMode(SelectPathModeController.type);
+        app.canvas.unselectAll();
+        app.canvas.select(path.id);
 
         setupMoveNodesPointerEventHandlers(app, ev, path, [
             PathEntityHandle.getNodes(path)[1].id,
         ]);
-        app.gestureRecognizer.addPointerUpHandler(ev.pointerId, (app, ev) => {
+        app.gesture.addPointerUpHandler(ev.pointerId, (app, ev) => {
             if (ev.isTap) {
-                app.canvasStateStore.edit((draft) => {
+                app.canvas.edit((draft) => {
                     draft.deleteEntity(path.id);
                 });
             }
@@ -108,23 +108,27 @@ export class NewPathModeController extends ModeController {
                 { id: node2.id, x: node2.x, y: node2.y },
             ],
             edges: [[node1.id, node2.id]],
-            [PROPERTY_KEY_COLOR_ID]: app.defaultPropertyStore.state
-                .get()
-                .getOrDefault(PROPERTY_KEY_COLOR_ID, 0),
-            [PROPERTY_KEY_STROKE_STYLE]: app.defaultPropertyStore.state
-                .get()
-                .getOrDefault(PROPERTY_KEY_STROKE_STYLE, "solid"),
-            [PROPERTY_KEY_STROKE_WIDTH]: app.defaultPropertyStore.state
-                .get()
-                .getOrDefault(PROPERTY_KEY_STROKE_WIDTH, 2),
-            [PROPERTY_KEY_FILL_STYLE]: app.defaultPropertyStore.state
-                .get()
-                .getOrDefault(PROPERTY_KEY_FILL_STYLE, "none"),
+            [PROPERTY_KEY_COLOR_ID]: app.getSelectedPropertyValue(
+                PROPERTY_KEY_COLOR_ID,
+                0,
+            ),
+            [PROPERTY_KEY_STROKE_STYLE]: app.getSelectedPropertyValue(
+                PROPERTY_KEY_STROKE_STYLE,
+                "solid",
+            ),
+            [PROPERTY_KEY_STROKE_WIDTH]: app.getSelectedPropertyValue(
+                PROPERTY_KEY_STROKE_WIDTH,
+                2,
+            ),
+            [PROPERTY_KEY_FILL_STYLE]: app.getSelectedPropertyValue(
+                PROPERTY_KEY_FILL_STYLE,
+                "none",
+            ),
             [PROPERTY_KEY_CORNER_RADIUS]: 0,
             [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]: [],
         };
 
-        app.canvasStateStore.edit((draft) => {
+        app.canvas.edit((draft) => {
             draft.setEntity(pathEntity);
         });
         return pathEntity;
@@ -140,11 +144,11 @@ export function registerLinkToRect(
     if (nodeOwner.id === target.id) {
         return;
     }
-    if (isOwnedLabel(app.canvasStateStore.page.get(), nodeOwner, target)) {
+    if (isOwnedLabel(app.canvas.page.get(), nodeOwner, target)) {
         return;
     }
 
-    app.canvasStateStore.edit((draft) =>
+    app.canvas.edit((draft) =>
         draft.addLink(
             new LinkToRect(randomId(), nodeOwner.id, node.id, target.id),
         ),

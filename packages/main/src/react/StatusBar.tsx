@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { Viewport } from "../core/Viewport";
-import { useAtom } from "./hooks/useAtom";
+import { useCell } from "./hooks/useCell";
 import { useApp } from "./useApp";
 
 const SIZE = 1000; // [ms]
@@ -26,9 +26,9 @@ export function monitorFPS() {
 
 export function StatusBar() {
     const app = useApp();
-    const appState = useAtom(app.state);
+    const mode = useCell(app.mode);
     const viewportRef = useRef<Viewport>(null as never);
-    viewportRef.current = useAtom(app.viewportStore.state);
+    viewportRef.current = useCell(app.viewport);
 
     const domRef = useRef<HTMLDivElement | null>(null);
     useEffect(() => {
@@ -62,7 +62,7 @@ export function StatusBar() {
                 )}, h:${viewport.rect.height.toFixed(0)}), ${(
                     viewport.scale * 100
                 ).toFixed(0)}%`,
-                `Mode: ${JSON.stringify(appState.mode)}`,
+                `Mode: ${JSON.stringify(mode)}`,
                 `FPS: ${fps}`,
             ].join("\n");
         }, 200);
@@ -70,7 +70,7 @@ export function StatusBar() {
         return () => {
             clearInterval(timerId);
         };
-    }, [appState]);
+    }, [mode]);
 
     useEffect(() => {
         const dom = document.createElement("div");

@@ -19,14 +19,11 @@ export function StrokeStylePropertySection() {
             PROPERTY_KEY_STROKE_STYLE,
             strokeStyle,
         );
-        app.defaultPropertyStore.set(PROPERTY_KEY_STROKE_STYLE, strokeStyle);
+        app.setSelectedPropertyValue(PROPERTY_KEY_STROKE_STYLE, strokeStyle);
     };
 
     const visible = useVisibleFlag({
-        modes: [
-            NewPathModeController.MODE_NAME,
-            NewShapeModeController.MODE_NAME,
-        ],
+        modes: [NewPathModeController.type, NewShapeModeController.type],
         propertyKeys: [PROPERTY_KEY_STROKE_STYLE],
     });
     if (!visible) return null;

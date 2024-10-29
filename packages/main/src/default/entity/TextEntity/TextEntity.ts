@@ -4,9 +4,9 @@ import {
     type Entity,
     EntityHandle,
     type EntityTapEvent,
+    type TransformEvent,
 } from "../../../core/Entity";
 import { Rect } from "../../../core/shape/Shape";
-import type { TransformMatrix } from "../../../core/shape/TransformMatrix";
 import { EditTextModeController } from "../../mode/EditTextModeController";
 import { type ColorId, PROPERTY_KEY_COLOR_ID } from "../../property/Colors";
 import {
@@ -45,14 +45,14 @@ export class TextEntityHandle extends EntityHandle<TextEntity> {
         return TextView;
     }
 
-    transform(entity: TextEntity, transform: TransformMatrix): TextEntity {
+    onTransform(entity: TextEntity, ev: TransformEvent): TextEntity {
         const oldRect = Rect.of(
             entity.x,
             entity.y,
             entity.width,
             entity.height,
         );
-        const newRect = transform.apply(oldRect);
+        const newRect = ev.transform.apply(oldRect);
         const newSizingMode =
             newRect.width !== oldRect.width || newRect.height !== oldRect.height
                 ? "fixed"
@@ -72,13 +72,13 @@ export class TextEntityHandle extends EntityHandle<TextEntity> {
             ev.previousSelectedEntities.size === 1 &&
             ev.previousSelectedEntities.has(entity.id)
         ) {
-            app.setMode(EditTextModeController.MODE_NAME);
+            app.setMode(EditTextModeController.type);
         }
     }
 
     onTextEditEnd(entity: TextEntity, app: App) {
         if (entity.content === "") {
-            app.canvasStateStore.edit((draft) => draft.deleteEntity(entity.id));
+            app.canvas.edit((draft) => draft.deleteEntity(entity.id));
         }
     }
 
@@ -87,7 +87,7 @@ export class TextEntityHandle extends EntityHandle<TextEntity> {
         const newWidth = entity.sizingMode === "content" ? width : rect.width;
         const newHeight = height;
 
-        app.canvasStateStore.edit((draft) => {
+        app.canvas.edit((draft) => {
             draft.updateProperty([entity.id], "x", rect.left);
             draft.updateProperty([entity.id], "y", rect.top);
             draft.updateProperty([entity.id], "width", newWidth);

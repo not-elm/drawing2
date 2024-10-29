@@ -1,6 +1,6 @@
+import type { JSONObject } from "../lib/JSONObject";
 import { assert } from "../lib/assert";
 import type { Entity, EntityHandleMap } from "./Entity";
-import type { JSONObject } from "./JSONObject";
 import { LinkCollection, type SerializedLink } from "./Link";
 
 import type { Rect } from "./shape/Shape";

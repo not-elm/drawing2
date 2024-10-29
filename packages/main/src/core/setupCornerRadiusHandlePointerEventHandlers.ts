@@ -19,7 +19,7 @@ export function setupCornerRadiusHandlePointerEventHandlers(
     entity: PathEntity,
     handle: CornerRoundHandleData,
 ) {
-    app.historyManager.pause();
+    app.history.pause();
 
     const dx = handle.handlePosition.x - handle.node.x;
     const dy = handle.handlePosition.y - handle.node.y;
@@ -27,7 +27,7 @@ export function setupCornerRadiusHandlePointerEventHandlers(
     const ix = dx / norm;
     const iy = dy / norm;
 
-    app.gestureRecognizer
+    app.gesture
         .addPointerMoveHandler(
             ev.pointerId,
             getPointerMoveHandler(
@@ -53,7 +53,7 @@ function getPointerMoveHandler(
     cornerAngle: number,
 ) {
     return (app: App, ev: CanvasPointerMoveEvent) => {
-        const entity = app.canvasStateStore.page.get().entities.get(entityId);
+        const entity = app.canvas.page.get().entities.get(entityId);
         assert(entity !== undefined, `entity not found: ${entityId}`);
         assert(isPathEntity(entity));
         const maxValue = getMaxCornerRadius(
@@ -70,7 +70,7 @@ function getPointerMoveHandler(
             maxValue,
         );
 
-        app.canvasStateStore.edit((draft) => {
+        app.canvas.edit((draft) => {
             draft.updateProperty([entityId], PROPERTY_KEY_CORNER_RADIUS, value);
         });
     };
@@ -78,6 +78,6 @@ function getPointerMoveHandler(
 
 function getPointerUpHandler() {
     return (app: App, ev: CanvasPointerEvent) => {
-        app.historyManager.resume();
+        app.history.resume();
     };
 }

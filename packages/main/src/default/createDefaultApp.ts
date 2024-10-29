@@ -11,19 +11,19 @@ export function createDefaultApp(): App {
     const app = new App();
 
     app.addModeController(
-        NewShapeModeController.MODE_NAME,
+        NewShapeModeController.type,
         new NewShapeModeController(),
     )
         .addModeController(
-            NewPathModeController.MODE_NAME,
+            NewPathModeController.type,
             new NewPathModeController(),
         )
         .addModeController(
-            NewTextModeController.MODE_NAME,
+            NewTextModeController.type,
             new NewTextModeController(),
         )
         .addModeController(
-            EditTextModeController.MODE_NAME,
+            EditTextModeController.type,
             new EditTextModeController(),
         )
         .registerEntityHandle(new PathEntityHandle())

@@ -86,13 +86,13 @@ export class KeyboardManager {
      */
     handleKeyDown(ev: KeyboardEvent) {
         const platform = getPlatform();
-        const mode = this.app.state.get().mode;
+        const mode = this.app.mode.get();
 
         for (const binding of this.bindings) {
             if (binding.key !== ev.key) continue;
             if (
                 binding.enableInEditTextMode !== true &&
-                mode === EditTextModeController.MODE_NAME
+                mode === EditTextModeController.type
             ) {
                 continue;
             }

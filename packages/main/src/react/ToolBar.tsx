@@ -1,7 +1,7 @@
 import type { LiHTMLAttributes, ReactNode } from "react";
 import { Button } from "./Button";
 import { Card } from "./Card";
-import { useAtom } from "./hooks/useAtom";
+import { useCell } from "./hooks/useCell";
 import { useApp } from "./useApp";
 
 function ToolBar({
@@ -42,13 +42,13 @@ function ToolBarButton({
     children?: ReactNode;
 }) {
     const app = useApp();
-    const appState = useAtom(app.state);
+    const currentMode = useCell(app.mode);
 
     return (
         <ToolBarItem>
             <Button
                 css={{ width: 48, height: 48 }}
-                aria-checked={appState.mode === mode}
+                aria-checked={currentMode === mode}
                 onPointerDown={() => app.setMode(mode)}
             >
                 {children}

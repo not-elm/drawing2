@@ -1,62 +1,69 @@
 import type * as csstype from "csstype";
 import type { ComponentType } from "react";
+import type { JSONValue } from "../lib/JSONObject";
 import { assert } from "../lib/assert";
 import { CanvasStateStore } from "./CanvasStateStore";
 import { ClipboardService } from "./ClipboardService";
 import { ContextMenuService } from "./ContextMenuService";
-import { DefaultPropertyStore } from "./DefaultPropertyStore";
 import { type Entity, type EntityHandle, EntityHandleMap } from "./Entity";
-import { GestureRecognizer } from "./GestureRecognizer";
+import { GestureRecognizer, MouseEventButton } from "./GestureRecognizer";
 import { HistoryManager } from "./HistoryManager";
-import type { JSONValue } from "./JSONObject";
 import { KeyboardManager } from "./KeyboardManager";
 import type { ModeChangeEvent, ModeController } from "./ModeController";
-import { MouseEventButton } from "./MouseEventButton";
 import { SelectEntityModeController } from "./SelectEntityModeController";
 import { SelectPathModeController } from "./SelectPathModeController";
-import { SnapGuideStore } from "./SnapGuideStore";
-import { ViewportStore } from "./ViewportStore";
-import { atom } from "./atom/Atom";
+import type { SnapGuide } from "./SnapEntry";
+import { SnapGuideMap } from "./SnapGuideMap";
+import { Viewport } from "./Viewport";
+import { cell } from "./cell/ICell";
 import { Point } from "./shape/Point";
+import { Rect } from "./shape/Shape";
 
-interface AppState {
-    readonly mode: string;
-    readonly cursor: csstype.Property.Cursor;
-    readonly pointerPosition: Point;
+class SelectedProperties {
+    constructor(private properties: Record<string, unknown>) {}
+
+    set(key: string, value: unknown): SelectedProperties {
+        return new SelectedProperties({ ...this.properties, [key]: value });
+    }
+
+    getOrDefault<T>(key: string, defaultValue: T): T {
+        return key in this.properties
+            ? (this.properties[key] as T)
+            : defaultValue;
+    }
 }
 
 export class App {
     readonly entityHandle = new EntityHandleMap();
 
-    readonly state = atom<AppState>({
-        mode: SelectEntityModeController.MODE_NAME,
-        cursor: "default",
-        pointerPosition: new Point(0, 0),
-    });
+    readonly mode = cell(SelectEntityModeController.type);
+    readonly cursor = cell<csstype.Property.Cursor>("default");
+    readonly pointerPosition = cell(new Point(0, 0));
+    readonly viewport = cell(new Viewport(Rect.of(0, 0, 1, 1), 1));
+    readonly selectedProperties = cell(new SelectedProperties({}));
+    readonly snapGuideMap = cell(new SnapGuideMap());
+    readonly modeControllers = cell(new Map<string, ModeController>());
 
-    readonly clipboardService = new ClipboardService(this.entityHandle);
-    readonly canvasStateStore = new CanvasStateStore(this);
-    readonly viewportStore = new ViewportStore();
-    readonly gestureRecognizer = new GestureRecognizer(this);
-    readonly historyManager = new HistoryManager(this);
-    readonly defaultPropertyStore = new DefaultPropertyStore();
+    readonly clipboard = new ClipboardService(this.entityHandle);
+    readonly canvas = new CanvasStateStore(this);
+    readonly gesture = new GestureRecognizer(this);
+    readonly history = new HistoryManager(this);
     readonly keyboard = new KeyboardManager(this);
-    readonly contextMenu = new ContextMenuService(this.viewportStore.state);
-    private readonly modeControllers = new Map<string, ModeController>();
-    private readonly defaultModeController = new SelectEntityModeController();
+    readonly contextMenu = new ContextMenuService(this.viewport);
 
-    // TODO: Move to SelectMode package
-    readonly snapGuideStore = new SnapGuideStore();
+    private readonly defaultModeController = new SelectEntityModeController(
+        this,
+    );
 
     private requiredPointerUpCountBeforeDoubleClick = 0;
 
     constructor() {
         this.addModeController(
-            SelectEntityModeController.MODE_NAME,
+            SelectEntityModeController.type,
             this.defaultModeController,
         );
         this.addModeController(
-            SelectPathModeController.MODE_NAME,
+            SelectPathModeController.type,
             new SelectPathModeController(),
         );
 
@@ -64,13 +71,13 @@ export class App {
             key: "z",
             metaKey: true,
             shiftKey: false,
-            action: () => this.historyManager.undo(),
+            action: () => this.history.undo(),
         });
         this.keyboard.addBinding({
             key: "z",
             metaKey: true,
             shiftKey: true,
-            action: () => this.historyManager.redo(),
+            action: () => this.history.redo(),
         });
         this.keyboard.addBinding({
             key: "x",
@@ -92,13 +99,13 @@ export class App {
             key: "z",
             ctrlKey: true,
             shiftKey: false,
-            action: () => this.historyManager.undo(),
+            action: () => this.history.undo(),
         });
         this.keyboard.addBinding({
             key: "z",
             ctrlKey: true,
             shiftKey: true,
-            action: () => this.historyManager.redo(),
+            action: () => this.history.redo(),
         });
         this.keyboard.addBinding({
             key: "x",
@@ -118,30 +125,43 @@ export class App {
     }
 
     addModeController(type: string, controller: ModeController): App {
+        const modeControllers = this.modeControllers.get();
         assert(
-            !this.modeControllers.has(type),
+            !modeControllers.has(type),
             `Mode ${type} is already registered`,
         );
-        this.modeControllers.set(type, controller);
+        const newModeControllers = new Map(modeControllers);
+        newModeControllers.set(type, controller);
+        this.modeControllers.set(newModeControllers);
         controller.onRegistered(this);
         return this;
     }
 
     getModeController(): ModeController {
         return (
-            this.getModeControllerByType(this.state.get().mode) ??
+            this.getModeControllerByType(this.mode.get()) ??
             this.defaultModeController
         );
     }
 
+    getModeControllerByClass<T extends ModeController>(cls: {
+        type: string;
+        new (...args: never[]): T;
+    }): T {
+        const controller = this.getModeControllerByType(cls.type);
+        assert(controller !== undefined, `Mode ${cls.type} is not found`);
+
+        return controller as T;
+    }
+
     getModeControllerByType(type: string): ModeController | null {
-        return this.modeControllers.get(type) ?? null;
+        return this.modeControllers.get().get(type) ?? null;
     }
 
     setMode(newMode: string) {
         let aborted = false;
         const ev: ModeChangeEvent = {
-            oldMode: this.state.get().mode,
+            oldMode: this.mode.get(),
             newMode,
             abort: () => {
                 aborted = true;
@@ -160,7 +180,7 @@ export class App {
         oldModeController.onBeforeExitMode(this, ev);
         if (aborted) return;
 
-        this.state.set({ ...this.state.get(), mode: newMode });
+        this.mode.set(newMode);
         ev.abort = () => {
             throw new Error("Abort is called after mode change");
         };
@@ -182,72 +202,79 @@ export class App {
     // Edit
 
     deleteSelectedEntities() {
-        const selectedEntityIds = this.canvasStateStore.selectedEntityIds.get();
+        const selectedEntityIds = this.canvas.selectedEntityIds.get();
         if (selectedEntityIds.size === 0) return;
 
-        this.canvasStateStore.edit((draft) => {
+        this.canvas.edit((draft) => {
             draft.deleteEntities(selectedEntityIds);
         });
     }
 
     updatePropertyForSelectedEntities(key: string, value: JSONValue) {
-        const selectedEntityIds = this.canvasStateStore.selectedEntityIds.get();
+        const selectedEntityIds = this.canvas.selectedEntityIds.get();
         if (selectedEntityIds.size === 0) {
             return;
         }
-        this.canvasStateStore.edit((draft) => {
+        this.canvas.edit((draft) => {
             draft.updateProperty([...selectedEntityIds], key, value);
         });
+    }
+
+    getSelectedPropertyValue<T>(key: string, defaultValue: T): T {
+        return this.selectedProperties.get().getOrDefault(key, defaultValue);
+    }
+
+    setSelectedPropertyValue<T>(key: string, value: T) {
+        this.selectedProperties.set(
+            this.selectedProperties.get().set(key, value),
+        );
+    }
+
+    setSnapGuide(key: string, guide: SnapGuide) {
+        this.snapGuideMap.set(this.snapGuideMap.get().setSnapGuide(key, guide));
+    }
+
+    deleteSnapGuide(key: string) {
+        this.snapGuideMap.set(this.snapGuideMap.get().deleteSnapGuide(key));
     }
 
     // Ordering
 
     bringToFront() {
-        const selectedEntityIds = this.canvasStateStore.selectedEntityIds.get();
+        const selectedEntityIds = this.canvas.selectedEntityIds.get();
         if (selectedEntityIds.size === 0) return;
 
-        this.canvasStateStore.edit((draft) =>
-            draft.bringToFront(selectedEntityIds),
-        );
+        this.canvas.edit((draft) => draft.bringToFront(selectedEntityIds));
     }
 
     bringForward() {
-        const selectedEntityIds = this.canvasStateStore.selectedEntityIds.get();
+        const selectedEntityIds = this.canvas.selectedEntityIds.get();
         if (selectedEntityIds.size === 0) return;
 
-        this.canvasStateStore.edit((draft) =>
-            draft.bringForward(selectedEntityIds),
-        );
+        this.canvas.edit((draft) => draft.bringForward(selectedEntityIds));
     }
 
     sendBackward() {
-        const selectedEntityIds = this.canvasStateStore.selectedEntityIds.get();
+        const selectedEntityIds = this.canvas.selectedEntityIds.get();
         if (selectedEntityIds.size === 0) return;
 
-        this.canvasStateStore.edit((draft) =>
-            draft.sendBackward(selectedEntityIds),
-        );
+        this.canvas.edit((draft) => draft.sendBackward(selectedEntityIds));
     }
 
     sendToBack() {
-        const selectedEntityIds = this.canvasStateStore.selectedEntityIds.get();
+        const selectedEntityIds = this.canvas.selectedEntityIds.get();
         if (selectedEntityIds.size === 0) return;
 
-        this.canvasStateStore.edit((draft) =>
-            draft.sendToBack(selectedEntityIds),
-        );
+        this.canvas.edit((draft) => draft.sendToBack(selectedEntityIds));
     }
 
     // Clipboard
 
     copy() {
-        const selectedEntityIds = this.canvasStateStore.selectedEntityIds.get();
+        const selectedEntityIds = this.canvas.selectedEntityIds.get();
         if (selectedEntityIds.size === 0) return;
 
-        this.clipboardService.copy(
-            this.canvasStateStore.page.get(),
-            selectedEntityIds,
-        );
+        this.clipboard.copy(this.canvas.page.get(), selectedEntityIds);
     }
 
     async cut() {
@@ -256,19 +283,41 @@ export class App {
     }
 
     async paste(): Promise<void> {
-        const { entities } = await this.clipboardService.paste();
+        const { entities } = await this.clipboard.paste();
 
-        this.canvasStateStore.edit((draft) => {
+        this.canvas.edit((draft) => {
             draft.setEntities(entities);
             // draft.addDependencies(dependencies);
         });
-        this.canvasStateStore.setSelectedEntityIds(
-            entities.map((entity) => entity.id),
-        );
+        this.canvas.setSelectedEntityIds(entities.map((entity) => entity.id));
 
         // Copy pasted entities so that next paste operation will
         // create a new copy of entities in different position
         this.copy();
+    }
+
+    // Viewport
+
+    moveViewport(deltaCanvasX: number, deltaCanvasY: number) {
+        this.viewport.set(this.viewport.get().move(deltaCanvasX, deltaCanvasY));
+    }
+
+    scaleViewport(
+        newScale: number,
+        centerCanvasX: number,
+        centerCanvasY: number,
+    ) {
+        this.viewport.set(
+            this.viewport
+                .get()
+                .setScale(newScale, centerCanvasX, centerCanvasY),
+        );
+    }
+
+    resizeViewport(canvasWidth: number, canvasHeight: number) {
+        this.viewport.set(
+            this.viewport.get().resize(canvasWidth, canvasHeight),
+        );
     }
 
     // Event handlers
@@ -289,12 +338,12 @@ export class App {
         // drag operation with other buttons
         if (ev.button !== MouseEventButton.MAIN) return;
 
-        this.gestureRecognizer.handlePointerDown(ev);
+        this.gesture.handlePointerDown(ev);
 
         this.getModeController().onCanvasPointerDown(this, {
             pointerId: ev.pointerId,
             button: ev.button === MouseEventButton.MAIN ? "main" : "other",
-            point: this.viewportStore.state
+            point: this.viewport
                 .get()
                 .fromCanvasCoordinateTransform.apply(
                     new Point(ev.clientX, ev.clientY),
@@ -309,12 +358,12 @@ export class App {
     handleContextMenu(ev: MouseEvent) {
         ev.preventDefault();
 
-        if (this.gestureRecognizer.inPointerEventSession()) return;
+        if (this.gesture.inPointerEventSession()) return;
 
         this.getModeController().onContextMenu(this, {
             pointerId: -1,
             button: "other",
-            point: this.viewportStore.state
+            point: this.viewport
                 .get()
                 .fromCanvasCoordinateTransform.apply(
                     new Point(ev.clientX, ev.clientY),
@@ -333,14 +382,14 @@ export class App {
     handlePointerMove(ev: PointerEvent) {
         if (this.contextMenu.state.get().visible) return;
 
-        this.gestureRecognizer.handlePointerMove(ev);
+        this.gesture.handlePointerMove(ev);
 
-        const point = this.viewportStore.state
+        const point = this.viewport
             .get()
             .fromCanvasCoordinateTransform.apply(
                 new Point(ev.clientX, ev.clientY),
             );
-        this.state.set({ ...this.state.get(), pointerPosition: point });
+        this.pointerPosition.set(point);
         this.getModeController().getCursor(this);
     }
 
@@ -354,7 +403,7 @@ export class App {
             this.requiredPointerUpCountBeforeDoubleClick -= 1;
         }
 
-        this.gestureRecognizer.handlePointerUp(ev);
+        this.gesture.handlePointerUp(ev);
     }
 
     /**
@@ -368,7 +417,7 @@ export class App {
         this.getModeController().onCanvasDoubleClick(this, {
             pointerId: -1,
             button: "main",
-            point: this.viewportStore.state
+            point: this.viewport
                 .get()
                 .fromCanvasCoordinateTransform.apply(
                     new Point(ev.clientX, ev.clientY),
@@ -383,7 +432,7 @@ export class App {
     handleScroll(deltaCanvasX: number, deltaCanvasY: number) {
         if (this.contextMenu.state.get().visible) return;
 
-        this.viewportStore.movePosition(deltaCanvasX, deltaCanvasY);
+        this.moveViewport(deltaCanvasX, deltaCanvasY);
     }
 
     handleScale(
@@ -393,7 +442,7 @@ export class App {
     ) {
         if (this.contextMenu.state.get().visible) return;
 
-        this.viewportStore.setScale(newScale, centerCanvasX, centerCanvasY);
+        this.scaleViewport(newScale, centerCanvasX, centerCanvasY);
     }
 
     /**
@@ -407,7 +456,7 @@ export class App {
     }
 
     handleEntityResize(entityId: string, width: number, height: number) {
-        const entity = this.canvasStateStore.page.get().entities.get(entityId);
+        const entity = this.canvas.page.get().entities.get(entityId);
         assert(entity !== undefined, `Entity ${entityId} is not found`);
 
         this.entityHandle

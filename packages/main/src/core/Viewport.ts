@@ -8,7 +8,7 @@ export class Viewport {
         public scale: number,
     ) {}
 
-    movePosition(deltaCanvasX: number, deltaCanvasY: number): Viewport {
+    move(deltaCanvasX: number, deltaCanvasY: number): Viewport {
         return new Viewport(
             translate(deltaCanvasX, deltaCanvasY).apply(this.rect),
             this.scale,
@@ -32,7 +32,7 @@ export class Viewport {
         return new Viewport(new Rect(p0, p1), newScale);
     }
 
-    setSize(width: number, height: number): Viewport {
+    resize(width: number, height: number): Viewport {
         return new Viewport(
             Rect.fromSize(
                 this.rect.topLeft,

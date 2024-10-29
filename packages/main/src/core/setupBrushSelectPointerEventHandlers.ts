@@ -1,44 +1,33 @@
-import { assert } from "../lib/assert";
 import type { App } from "./App";
 import type { CanvasPointerEvent } from "./ModeController";
-import { SelectEntityModeController } from "./SelectEntityModeController";
 
-import type { MutableAtom } from "./atom/Atom";
+import type { Cell } from "./cell/ICell";
 import { Rect } from "./shape/Shape";
 
 export function setupBrushSelectPointerEventHandlers(
     app: App,
     ev: CanvasPointerEvent,
-    brushRectAtom: MutableAtom<Rect | null>,
+    brushRect: Cell<Rect | null>,
 ) {
-    const { mode } = app.state.get();
-    assert(
-        mode === SelectEntityModeController.MODE_NAME,
-        `Invalid mode: ${mode}`,
-    );
+    const originalSelectedEntityIds = app.canvas.selectedEntityIds.get();
 
-    const originalSelectedEntityIds =
-        app.canvasStateStore.selectedEntityIds.get();
+    brushRect.set(new Rect(ev.point, ev.point));
 
-    brushRectAtom.set(new Rect(ev.point, ev.point));
-
-    app.gestureRecognizer
+    app.gesture
         .addPointerMoveHandler(ev.pointerId, (app, ev) => {
             const rect = Rect.fromPoints(ev.startPoint, ev.point);
-            brushRectAtom.set(rect);
+            brushRect.set(rect);
 
             const selectedEntityIds = new Set(originalSelectedEntityIds);
-            for (const entity of app.canvasStateStore.page
-                .get()
-                .entities.values()) {
+            for (const entity of app.canvas.page.get().entities.values()) {
                 if (app.entityHandle.getShape(entity).isOverlapWith(rect)) {
                     selectedEntityIds.add(entity.id);
                 }
             }
 
-            app.canvasStateStore.setSelectedEntityIds(selectedEntityIds);
+            app.canvas.setSelectedEntityIds(selectedEntityIds);
         })
         .addPointerUpHandler(ev.pointerId, () => {
-            brushRectAtom.set(null);
+            brushRect.set(null);
         });
 }

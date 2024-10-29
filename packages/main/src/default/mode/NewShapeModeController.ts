@@ -22,21 +22,21 @@ import { PROPERTY_KEY_STROKE_STYLE } from "../property/StrokeStyle";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../property/StrokeWidth";
 
 export class NewShapeModeController extends ModeController {
-    static readonly MODE_NAME = "new-shape";
+    static readonly type = "new-shape";
 
     onRegistered(app: App) {
         app.keyboard.addBinding({
             key: "r",
             action: (app, ev) => {
-                app.setMode(NewShapeModeController.MODE_NAME);
+                app.setMode(NewShapeModeController.type);
             },
         });
         app.keyboard.addBinding({
             key: "Escape",
-            mode: [NewShapeModeController.MODE_NAME],
+            mode: [NewShapeModeController.type],
             action: (app, ev) => {
-                app.canvasStateStore.unselectAll();
-                app.setMode(SelectEntityModeController.MODE_NAME);
+                app.canvas.unselectAll();
+                app.setMode(SelectEntityModeController.type);
             },
         });
     }
@@ -45,12 +45,12 @@ export class NewShapeModeController extends ModeController {
         const p0 = ev.point;
         const p1 = translate(1, 1).apply(ev.point);
 
-        app.historyManager.pause();
+        app.history.pause();
         const shape = this.insertNewShape(app, new Rect(p0, p1));
 
-        app.setMode(SelectEntityModeController.MODE_NAME);
-        app.canvasStateStore.unselectAll();
-        app.canvasStateStore.select(shape.id);
+        app.setMode(SelectEntityModeController.type);
+        app.canvas.unselectAll();
+        app.canvas.select(shape.id);
 
         setupSelectionTransformPointerEventHandlers(
             app,
@@ -63,9 +63,9 @@ export class NewShapeModeController extends ModeController {
                 "bottom",
             ),
         );
-        app.gestureRecognizer.addPointerUpHandler(ev.pointerId, (app, ev) => {
+        app.gesture.addPointerUpHandler(ev.pointerId, (app, ev) => {
             if (ev.isTap) {
-                app.canvasStateStore.edit((draft) => {
+                app.canvas.edit((draft) => {
                     draft.deleteEntity(shape.id);
                 });
             }
@@ -106,23 +106,27 @@ export class NewShapeModeController extends ModeController {
                 [bottomRightNode.id, bottomLeftNode.id],
                 [bottomLeftNode.id, topLeftNode.id],
             ],
-            [PROPERTY_KEY_COLOR_ID]: app.defaultPropertyStore.state
-                .get()
-                .getOrDefault(PROPERTY_KEY_COLOR_ID, 0),
-            [PROPERTY_KEY_STROKE_STYLE]: app.defaultPropertyStore.state
-                .get()
-                .getOrDefault(PROPERTY_KEY_STROKE_STYLE, "solid"),
-            [PROPERTY_KEY_STROKE_WIDTH]: app.defaultPropertyStore.state
-                .get()
-                .getOrDefault(PROPERTY_KEY_STROKE_WIDTH, 2),
-            [PROPERTY_KEY_FILL_STYLE]: app.defaultPropertyStore.state
-                .get()
-                .getOrDefault(PROPERTY_KEY_FILL_STYLE, "none"),
+            [PROPERTY_KEY_COLOR_ID]: app.getSelectedPropertyValue(
+                PROPERTY_KEY_COLOR_ID,
+                0,
+            ),
+            [PROPERTY_KEY_STROKE_STYLE]: app.getSelectedPropertyValue(
+                PROPERTY_KEY_STROKE_STYLE,
+                "solid",
+            ),
+            [PROPERTY_KEY_STROKE_WIDTH]: app.getSelectedPropertyValue(
+                PROPERTY_KEY_STROKE_WIDTH,
+                2,
+            ),
+            [PROPERTY_KEY_FILL_STYLE]: app.getSelectedPropertyValue(
+                PROPERTY_KEY_FILL_STYLE,
+                "none",
+            ),
             [PROPERTY_KEY_CORNER_RADIUS]: 0,
             [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]: [],
         };
 
-        app.canvasStateStore.edit((draft) => {
+        app.canvas.edit((draft) => {
             draft.setEntity(shape);
         });
         return shape;

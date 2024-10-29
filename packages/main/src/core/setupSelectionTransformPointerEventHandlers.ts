@@ -7,9 +7,9 @@ export function setupSelectionTransformPointerEventHandlers(
     ev: CanvasPointerEvent,
     transformController: SelectionTransformController,
 ) {
-    app.historyManager.pause();
+    app.history.pause();
 
-    app.gestureRecognizer
+    app.gesture
         .addPointerMoveHandler(ev.pointerId, (app, ev) => {
             transformController.move(ev.point, {
                 constraint: ev.shiftKey,
@@ -18,6 +18,6 @@ export function setupSelectionTransformPointerEventHandlers(
         })
         .addPointerUpHandler(ev.pointerId, () => {
             transformController.complete();
-            app.historyManager.resume();
+            app.history.resume();
         });
 }

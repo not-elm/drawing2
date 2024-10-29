@@ -4,11 +4,11 @@ import { LinkCollection } from "./Link";
 import type { SelectedEntityChangeEvent } from "./ModeController";
 import { Page } from "./Page";
 import { PageDraft } from "./PageDraft";
-import { atom, derived } from "./atom/Atom";
+import { cell, derived } from "./cell/ICell";
 import { Rect } from "./shape/Shape";
 
 export class CanvasStateStore {
-    public readonly page = atom(
+    public readonly page = cell(
         new Page({
             entities: new Map(),
             entityIds: [],
@@ -16,26 +16,29 @@ export class CanvasStateStore {
         }),
     );
 
-    public readonly selectedEntityIds = atom<ReadonlySet<string>>(new Set());
+    public readonly selectedEntityIds = cell<ReadonlySet<string>>(new Set());
 
     public readonly selectedEntities = derived(() => {
-        return Array.from(this.selectedEntityIds.get()).map((id) => {
-            const entity = this.page.get().entities.get(id);
+        const page = this.page.get();
+        const selectedEntityIds = this.selectedEntityIds.get();
+
+        return Array.from(selectedEntityIds).map((id) => {
+            const entity = page.entities.get(id);
             assert(entity !== undefined, `Entity ${id} not found`);
             return entity;
         });
-    });
+    }, "selectedEntities");
 
     public readonly selectionRect = derived(() => {
         const selectedEntities = this.selectedEntities.get();
-        if (selectedEntities.length === 0) return null;
 
+        if (selectedEntities.length === 0) return null;
         return Rect.union(
             selectedEntities.map((entity) =>
                 this.app.entityHandle.getShape(entity).getBoundingRect(),
             ),
         );
-    });
+    }, "selectionRect");
 
     constructor(private readonly app: App) {}
 
@@ -52,12 +55,18 @@ export class CanvasStateStore {
         }
 
         for (const entityId of draft.deletedEntityIds) {
-            this.app.canvasStateStore.unselect(entityId);
+            this.app.canvas.unselect(entityId);
         }
         this.setPage(draft.toPage());
     }
 
     setPage(page: Page) {
+        const selectedEntities = new Set(
+            [...this.selectedEntityIds.get()].filter((id) =>
+                page.entities.has(id),
+            ),
+        );
+        this.selectedEntityIds.set(selectedEntities);
         this.page.set(page);
     }
 

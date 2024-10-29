@@ -39,7 +39,7 @@ export abstract class SelectionTransformController {
         public readonly app: App,
         protected readonly initialPoint: Point,
     ) {
-        this.originalEntities = app.canvasStateStore.selectedEntities.get();
+        this.originalEntities = app.canvas.selectedEntities.get();
     }
 
     /**
@@ -107,29 +107,27 @@ export abstract class SelectionTransformController {
         );
 
         if (snap) {
-            this.app.snapGuideStore.setSnapGuide(
+            this.app.setSnapGuide(
                 "selectionTransform",
                 this.computeSnapGuide(transformedSnapPoints),
             );
         }
 
-        this.app.canvasStateStore.edit((draft) => {
-            draft.setEntities(this.originalEntities);
-            draft.transformEntities(
-                [...this.app.canvasStateStore.selectedEntityIds.get()],
-                transform,
+        this.app.canvas.edit((draft) => {
+            draft.setEntities(
+                this.originalEntities.map((entity) =>
+                    this.app.entityHandle.transform(entity, transform),
+                ),
             );
         });
     }
 
     complete() {
-        this.app.snapGuideStore.deleteSnapGuide("selectionTransform");
+        this.app.deleteSnapGuide("selectionTransform");
         const entityIds = this.originalEntities.map((entity) => entity.id);
 
         for (const entityId of entityIds) {
-            const entity = this.app.canvasStateStore.page
-                .get()
-                .entities.get(entityId);
+            const entity = this.app.canvas.page.get().entities.get(entityId);
             assert(entity !== undefined, `Entity must exist: ${entityId}`);
 
             this.app.entityHandle
@@ -158,10 +156,10 @@ export abstract class SelectionTransformController {
         };
         for (const snapPoint of snapPoints.x) {
             const entry = computeSnapEntry2D(
-                this.app.canvasStateStore.page.get(),
-                this.app.viewportStore.state.get(),
+                this.app.canvas.page.get(),
+                this.app.viewport.get(),
                 transform.apply(snapPoint),
-                this.app.canvasStateStore.selectedEntityIds.get(),
+                this.app.canvas.selectedEntityIds.get(),
                 this.app.entityHandle,
                 SNAP_DISTANCE_THRESHOLD,
             );
@@ -172,10 +170,10 @@ export abstract class SelectionTransformController {
 
         for (const snapPoint of snapPoints.y) {
             const entry = computeSnapEntry2D(
-                this.app.canvasStateStore.page.get(),
-                this.app.viewportStore.state.get(),
+                this.app.canvas.page.get(),
+                this.app.viewport.get(),
                 transform.apply(snapPoint),
-                this.app.canvasStateStore.selectedEntityIds.get(),
+                this.app.canvas.selectedEntityIds.get(),
                 this.app.entityHandle,
                 SNAP_DISTANCE_THRESHOLD,
             );
@@ -211,8 +209,8 @@ export abstract class SelectionTransformController {
     }
 
     private computeSnapGuide(snapPoints: SnapPoints): SnapGuide {
-        const page = this.app.canvasStateStore.page.get();
-        const viewport = this.app.viewportStore.state.get();
+        const page = this.app.canvas.page.get();
+        const viewport = this.app.viewport.get();
 
         const snapGuide: SnapGuide = {
             points: [],
@@ -223,7 +221,7 @@ export abstract class SelectionTransformController {
                 page,
                 viewport,
                 snapPoint,
-                this.app.canvasStateStore.selectedEntityIds.get(),
+                this.app.canvas.selectedEntityIds.get(),
                 this.app.entityHandle,
                 1,
             );
@@ -255,7 +253,7 @@ export abstract class SelectionTransformController {
                 page,
                 viewport,
                 snapPoint,
-                this.app.canvasStateStore.selectedEntityIds.get(),
+                this.app.canvas.selectedEntityIds.get(),
                 this.app.entityHandle,
                 1,
             );

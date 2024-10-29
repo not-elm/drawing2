@@ -3,15 +3,15 @@ import { LinkGuideLayer } from "./LinkGuideLayer";
 import { SelectEntityControlLayer } from "./SelectEntityControlLayer";
 import { SelectPathControlLayer } from "./SelectPathControlLayer";
 import { SnapGuideLayer } from "./SnapGuideLayer";
-import { useAtom } from "./hooks/useAtom";
+import { useCell } from "./hooks/useCell";
 import { useResizeObserver } from "./hooks/useResizeObserver";
 import { useApp } from "./useApp";
 
 export function Canvas() {
     const app = useApp();
-    const page = useAtom(app.canvasStateStore.page);
-    const viewport = useAtom(app.viewportStore.state);
-    const appState = useAtom(app.state);
+    const page = useCell(app.canvas.page);
+    const viewport = useCell(app.viewport);
+    const cursor = useCell(app.cursor);
 
     useEffect(() => {
         function handlePointerMove(ev: PointerEvent) {
@@ -52,10 +52,7 @@ export function Canvas() {
     );
 
     const resizeObserverRef = useResizeObserver((entry) => {
-        app.viewportStore.setViewportSize(
-            entry.contentRect.width,
-            entry.contentRect.height,
-        );
+        app.resizeViewport(entry.contentRect.width, entry.contentRect.height);
     });
 
     return (
@@ -67,7 +64,7 @@ export function Canvas() {
                 overflow: "clip",
                 pointerEvents: "all",
                 background: "#f9fafc",
-                cursor: appState.cursor,
+                cursor,
                 ">*": {
                     pointerEvents: "none",
                 },

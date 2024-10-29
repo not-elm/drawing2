@@ -6,15 +6,15 @@ import {
     isPathEntity,
 } from "../default/entity/PathEntity/PathEntity";
 import { assert } from "../lib/assert";
-import { useAtom } from "./hooks/useAtom";
+import { useCell } from "./hooks/useCell";
 import { useApp } from "./useApp";
 
 export function LinkGuideLayer() {
     const app = useApp();
-    const page = useAtom(app.canvasStateStore.page);
-    const selectedEntityIds = useAtom(app.canvasStateStore.selectedEntityIds);
-    const { mode } = useAtom(app.state);
-    if (mode !== SelectEntityModeController.MODE_NAME) return null;
+    const page = useCell(app.canvas.page);
+    const selectedEntityIds = useCell(app.canvas.selectedEntityIds);
+    const mode = useCell(app.mode);
+    if (mode !== SelectEntityModeController.type) return null;
 
     if (selectedEntityIds.size >= 2) return null;
 
@@ -34,8 +34,8 @@ export function LinkGuideLayer() {
 
 export function LinkToEdgeGuide({ link }: { link: LinkToEdge }) {
     const app = useApp();
-    const viewport = useAtom(app.viewportStore.state);
-    const page = useAtom(app.canvasStateStore.page);
+    const viewport = useCell(app.viewport);
+    const page = useCell(app.canvas.page);
 
     const entity = page.entities.get(link.entityId);
     assert(entity !== undefined, `Entity ${link.entityId} not found`);

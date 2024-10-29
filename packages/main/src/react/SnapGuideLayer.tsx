@@ -1,12 +1,11 @@
-import { useAtom } from "./hooks/useAtom";
+import { useCell } from "./hooks/useCell";
 import { useApp } from "./useApp";
 
 export function SnapGuideLayer() {
     const app = useApp();
-    const viewport = useAtom(app.viewportStore.state);
-    const snapGuideState = useAtom(app.snapGuideStore.state);
-    const guides = [...snapGuideState.guides.values()];
-    if (guides.length === 0) return null;
+    const viewport = useCell(app.viewport);
+    const snapGuideMap = useCell(app.snapGuideMap);
+    const guides = [...snapGuideMap.guides.values()];
 
     return (
         <svg

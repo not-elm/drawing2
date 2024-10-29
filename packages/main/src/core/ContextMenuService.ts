@@ -1,5 +1,5 @@
 import type { Viewport } from "./Viewport";
-import { type Atom, atom } from "./atom/Atom";
+import { type ICell, cell } from "./cell/ICell";
 import { Point } from "./shape/Point";
 
 export interface ContextMenuItem {
@@ -24,13 +24,13 @@ export interface ContextMenuState {
 export class ContextMenuService {
     static CONTEXT_MENU_POSITION_MARGIN = 32;
 
-    readonly state = atom<ContextMenuState>({
+    readonly state = cell<ContextMenuState>({
         items: [],
         visible: false,
         positionInCanvas: new Point(0, 0),
     });
 
-    constructor(private readonly viewport: Atom<Viewport>) {}
+    constructor(private readonly viewport: ICell<Viewport>) {}
 
     /**
      * Add menu item to the context menu

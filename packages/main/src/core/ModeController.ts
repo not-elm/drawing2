@@ -3,6 +3,8 @@ import type { App } from "./App";
 import type { Point } from "./shape/Point";
 
 export class ModeController {
+    static readonly type: string;
+
     /**
      * Returns the mouse cursor type. Any CSS cursor type is allowed.
      */
@@ -25,9 +27,7 @@ export class ModeController {
     ): void {}
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {}
     onContextMenu(app: App, ev: CanvasPointerEvent): void {
-        app.contextMenu.show(
-            app.viewportStore.state.get().transform.apply(ev.point),
-        );
+        app.contextMenu.show(app.viewport.get().transform.apply(ev.point));
     }
     onCanvasDoubleClick(app: App, ev: CanvasPointerEvent): void {}
 }

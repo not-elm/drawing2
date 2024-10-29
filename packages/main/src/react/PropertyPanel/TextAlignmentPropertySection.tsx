@@ -37,12 +37,12 @@ export function TextAlignmentPropertySection() {
             PROPERTY_KEY_TEXT_ALIGNMENT_Y,
             alignmentY,
         );
-        app.defaultPropertyStore.set(PROPERTY_KEY_TEXT_ALIGNMENT_X, alignmentX);
-        app.defaultPropertyStore.set(PROPERTY_KEY_TEXT_ALIGNMENT_Y, alignmentY);
+        app.setSelectedPropertyValue(PROPERTY_KEY_TEXT_ALIGNMENT_X, alignmentX);
+        app.setSelectedPropertyValue(PROPERTY_KEY_TEXT_ALIGNMENT_Y, alignmentY);
     };
 
     const visible = useVisibleFlag({
-        modes: [NewTextModeController.MODE_NAME],
+        modes: [NewTextModeController.type],
         propertyKeys: [
             PROPERTY_KEY_TEXT_ALIGNMENT_X,
             PROPERTY_KEY_TEXT_ALIGNMENT_Y,

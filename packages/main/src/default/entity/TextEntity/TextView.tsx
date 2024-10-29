@@ -2,7 +2,7 @@ import type { CSSObject } from "@emotion/styled";
 import { MathJax } from "better-react-mathjax";
 import { type ReactNode, memo } from "react";
 import { assert } from "../../../lib/assert";
-import { useAtom } from "../../../react/hooks/useAtom";
+import { useCell } from "../../../react/hooks/useCell";
 import { useResizeObserver } from "../../../react/hooks/useResizeObserver";
 import { useApp } from "../../../react/useApp";
 import { EditTextModeController } from "../../mode/EditTextModeController";
@@ -18,10 +18,10 @@ export const TextView = memo(function ShapeView({
     entity,
 }: { entity: TextEntity }) {
     const app = useApp();
-    const appState = useAtom(app.state);
-    const selectedEntityIds = useAtom(app.canvasStateStore.selectedEntityIds);
+    const mode = useCell(app.mode);
+    const selectedEntityIds = useCell(app.canvas.selectedEntityIds);
     const editing =
-        appState.mode === EditTextModeController.MODE_NAME &&
+        mode === EditTextModeController.type &&
         selectedEntityIds.has(entity.id);
 
     const textAlignment = entity[PROPERTY_KEY_TEXT_ALIGNMENT_X];
@@ -149,7 +149,7 @@ const TextViewInner = memo(function ShapeViewInner({
                         ev.target.setSelectionRange(0, ev.target.value.length);
                     }}
                     onChange={(ev) =>
-                        app.canvasStateStore.edit((draft) => {
+                        app.canvas.edit((draft) => {
                             draft.updateProperty(
                                 [shapeId],
                                 PROPERTY_KEY_CONTENT,

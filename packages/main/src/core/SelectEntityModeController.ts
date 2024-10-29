@@ -17,7 +17,7 @@ import {
     ScaleSelectionTransformController,
     TranslateSelectionTransformController,
 } from "./SelectionTransformController";
-import { atom } from "./atom/Atom";
+import { type ICell, cell, derived } from "./cell/ICell";
 import { setupBrushSelectPointerEventHandlers } from "./setupBrushSelectPointerEventHandlers";
 import { setupCornerRadiusHandlePointerEventHandlers } from "./setupCornerRadiusHandlePointerEventHandlers";
 import { setupSelectionTransformPointerEventHandlers } from "./setupSelectionTransformPointerEventHandlers";
@@ -26,45 +26,84 @@ import { Point } from "./shape/Point";
 import type { Rect } from "./shape/Shape";
 
 export class SelectEntityModeController extends ModeController {
-    static readonly MODE_NAME = "select-entity";
+    static readonly type = "select-entity";
 
-    readonly brushRect = atom<Rect | null>(null);
+    readonly brushRect = cell<Rect | null>(null);
+    readonly controlLayerData: ICell<CornerRoundHandleData[]>;
+
+    constructor(readonly app: App) {
+        super();
+
+        // Static initializer doesn't work since this depends on this.app
+        this.controlLayerData = derived(() => {
+            const pointerPosition = this.app.pointerPosition.get();
+            const selectedEntities = this.app.canvas.selectedEntities.get();
+
+            if (
+                selectedEntities.length !== 1 ||
+                !isPathEntity(selectedEntities[0])
+            ) {
+                return [];
+            }
+            const entity = selectedEntities[0];
+
+            const handles = getCornerRoundHandleData(
+                PathEntityHandle.getGraph(entity).getOutline().points,
+                entity[PROPERTY_KEY_CORNER_RADIUS],
+            );
+
+            const visibleHandles: CornerRoundHandleData[] = [];
+            for (const handle of handles) {
+                if (
+                    isPointInTriangle(pointerPosition, [
+                        handle.previousNode,
+                        handle.node,
+                        handle.nextNode,
+                    ])
+                ) {
+                    visibleHandles.push(handle);
+                }
+            }
+
+            return visibleHandles;
+        });
+    }
 
     onRegistered(app: App): void {
         app.keyboard.addBinding({
             key: "a",
             metaKey: true,
             action: (app, ev) => {
-                app.setMode(SelectEntityModeController.MODE_NAME);
-                app.canvasStateStore.selectAll();
+                app.setMode(SelectEntityModeController.type);
+                app.canvas.selectAll();
             },
         });
         app.keyboard.addBinding({
             key: "a",
             ctrlKey: true,
             action: (app, ev) => {
-                app.setMode(SelectEntityModeController.MODE_NAME);
-                app.canvasStateStore.selectAll();
+                app.setMode(SelectEntityModeController.type);
+                app.canvas.selectAll();
             },
         });
 
         app.keyboard.addBinding({
             key: "Escape",
-            mode: [SelectEntityModeController.MODE_NAME],
+            mode: [SelectEntityModeController.type],
             action: (app, ev) => {
-                app.canvasStateStore.unselectAll();
+                app.canvas.unselectAll();
             },
         });
         app.keyboard.addBinding({
             key: "Backspace",
-            mode: [SelectEntityModeController.MODE_NAME],
+            mode: [SelectEntityModeController.type],
             action: (app, ev) => {
                 app.deleteSelectedEntities();
             },
         });
         app.keyboard.addBinding({
             key: "Delete",
-            mode: [SelectEntityModeController.MODE_NAME],
+            mode: [SelectEntityModeController.type],
             action: (app, ev) => {
                 app.deleteSelectedEntities();
             },
@@ -97,8 +136,8 @@ export class SelectEntityModeController extends ModeController {
         app.contextMenu.add({
             title: "線の端を矢印に",
             action: () => {
-                const entities = app.canvasStateStore.selectedEntities.get();
-                app.canvasStateStore.edit((draft) => {
+                const entities = app.canvas.selectedEntities.get();
+                app.canvas.edit((draft) => {
                     for (const entity of entities) {
                         if (!isPathEntity(entity)) continue;
                         const nodeIds = [
@@ -123,9 +162,8 @@ export class SelectEntityModeController extends ModeController {
         app.contextMenu.add({
             title: "線の端の矢印を消す",
             action: () => {
-                const selectedEntityIds =
-                    app.canvasStateStore.selectedEntityIds.get();
-                app.canvasStateStore.edit((draft) => {
+                const selectedEntityIds = app.canvas.selectedEntityIds.get();
+                app.canvas.edit((draft) => {
                     draft.updateProperty(
                         [...selectedEntityIds],
                         PROPERTY_KEY_ARROW_HEAD_NODE_IDS,
@@ -144,9 +182,9 @@ export class SelectEntityModeController extends ModeController {
         }
 
         const hitResult = testHitEntities(
-            app.canvasStateStore.page.get(),
+            app.canvas.page.get(),
             ev.point,
-            app.viewportStore.state.get().scale,
+            app.viewport.get().scale,
             app.entityHandle,
         );
         const result = hitResult.entities.at(0);
@@ -155,18 +193,18 @@ export class SelectEntityModeController extends ModeController {
             return;
         }
 
-        if (!ev.shiftKey) app.canvasStateStore.unselectAll();
+        if (!ev.shiftKey) app.canvas.unselectAll();
 
         setupBrushSelectPointerEventHandlers(app, ev, this.brushRect);
     }
 
     onCanvasDoubleClick(app: App, ev: CanvasPointerEvent) {
-        app.setMode(NewTextModeController.MODE_NAME);
+        app.setMode(NewTextModeController.type);
         app.getModeController().onCanvasPointerDown(app, ev);
     }
 
     getCursor(app: App): Property.Cursor {
-        const handle = this.getHandleType(app, app.state.get().pointerPosition);
+        const handle = this.getHandleType(app, app.pointerPosition.get());
         if (handle !== null) {
             switch (handle.type) {
                 case "TopLeftHandle":
@@ -192,79 +230,45 @@ export class SelectEntityModeController extends ModeController {
 
     onContextMenu(app: App, ev: CanvasPointerEvent) {
         const hitResult = testHitEntities(
-            app.canvasStateStore.page.get(),
+            app.canvas.page.get(),
             ev.point,
-            app.viewportStore.state.get().scale,
+            app.viewport.get().scale,
             app.entityHandle,
         );
         const result = hitResult.entities.at(0);
         if (result !== undefined) {
             const entityId = result.target.id;
-            if (!app.canvasStateStore.selectedEntityIds.get().has(entityId)) {
-                app.canvasStateStore.unselectAll();
-                app.canvasStateStore.select(result.target.id);
+            if (!app.canvas.selectedEntityIds.get().has(entityId)) {
+                app.canvas.unselectAll();
+                app.canvas.select(result.target.id);
             }
         }
 
         super.onContextMenu(app, ev);
     }
 
-    computeControlLayerData(
-        app: App,
-        pointerPosition: Point,
-    ): CornerRoundHandleData[] {
-        const selectedEntities = app.canvasStateStore.selectedEntities.get();
-        if (
-            selectedEntities.length !== 1 ||
-            !isPathEntity(selectedEntities[0])
-        ) {
-            return [];
-        }
-        const entity = selectedEntities[0];
-
-        const handles = getCornerRoundHandleData(
-            PathEntityHandle.getGraph(entity).getOutline().points,
-            entity[PROPERTY_KEY_CORNER_RADIUS],
-        );
-
-        const visibleHandles: CornerRoundHandleData[] = [];
-        for (const handle of handles) {
-            if (
-                isPointInTriangle(pointerPosition, [
-                    handle.previousNode,
-                    handle.node,
-                    handle.nextNode,
-                ])
-            ) {
-                visibleHandles.push(handle);
-            }
-        }
-
-        return visibleHandles;
-    }
-
     private onCanvasTap(app: App, ev: CanvasPointerEvent) {
         const hitEntity = testHitEntities(
-            app.canvasStateStore.page.get(),
+            app.canvas.page.get(),
             ev.point,
-            app.viewportStore.state.get().scale,
+            app.viewport.get().scale,
             app.entityHandle,
         ).entities.at(0);
 
         if (hitEntity !== undefined) {
             const previousSelectedEntityIds =
-                app.canvasStateStore.selectedEntityIds.get();
+                app.canvas.selectedEntityIds.get();
 
             const selectedOnlyThisEntity =
                 previousSelectedEntityIds.size === 1 &&
                 previousSelectedEntityIds.has(hitEntity.target.id);
 
             if (ev.shiftKey) {
-                app.canvasStateStore.unselect(hitEntity.target.id);
+                app.canvas.unselect(hitEntity.target.id);
             } else {
                 if (!selectedOnlyThisEntity) {
-                    app.canvasStateStore.unselectAll();
-                    app.canvasStateStore.select(hitEntity.target.id);
+                    app.canvas.unselectAll();
+                    app.canvas.select(hitEntity.target.id);
                 }
             }
 
@@ -275,7 +279,7 @@ export class SelectEntityModeController extends ModeController {
                     previousSelectedEntities: previousSelectedEntityIds,
                 });
         } else {
-            if (!ev.shiftKey) app.canvasStateStore.unselectAll();
+            if (!ev.shiftKey) app.canvas.unselectAll();
         }
     }
 
@@ -284,18 +288,17 @@ export class SelectEntityModeController extends ModeController {
         ev: CanvasPointerEvent,
         entity: Entity,
     ) {
-        const previousSelectedEntities =
-            app.canvasStateStore.selectedEntityIds.get();
+        const previousSelectedEntities = app.canvas.selectedEntityIds.get();
 
-        if (!ev.shiftKey) app.canvasStateStore.unselectAll();
-        app.canvasStateStore.select(entity.id);
+        if (!ev.shiftKey) app.canvas.unselectAll();
+        app.canvas.select(entity.id);
 
         setupSelectionTransformPointerEventHandlers(
             app,
             ev,
             new TranslateSelectionTransformController(app, ev.point),
         );
-        app.gestureRecognizer.addPointerUpHandler(ev.pointerId, (app, ev) => {
+        app.gesture.addPointerUpHandler(ev.pointerId, (app, ev) => {
             if (ev.isTap) {
                 app.entityHandle
                     .getHandle(entity)
@@ -441,7 +444,7 @@ export class SelectEntityModeController extends ModeController {
             }
         }
 
-        app.gestureRecognizer.addPointerUpHandler(ev.pointerId, (app, ev) => {
+        app.gesture.addPointerUpHandler(ev.pointerId, (app, ev) => {
             if (ev.isTap) {
                 this.onCanvasTap(app, ev);
             }
@@ -453,8 +456,8 @@ export class SelectEntityModeController extends ModeController {
         point: Point,
         margin = 8,
     ): HandleType | null {
-        const marginInCanvas = margin / app.viewportStore.state.get().scale;
-        const selectedEntities = app.canvasStateStore.selectedEntities.get();
+        const marginInCanvas = margin / app.viewport.get().scale;
+        const selectedEntities = app.canvas.selectedEntities.get();
         if (
             selectedEntities.length === 1 &&
             isPathEntity(selectedEntities[0])
@@ -482,7 +485,7 @@ export class SelectEntityModeController extends ModeController {
             }
         }
 
-        const selectionRect = app.canvasStateStore.selectionRect.get();
+        const selectionRect = app.canvas.selectionRect.get();
         if (selectionRect === null) return null;
 
         const hitAreaX = testHitWithRange(

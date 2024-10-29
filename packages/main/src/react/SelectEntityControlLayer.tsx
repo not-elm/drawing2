@@ -2,35 +2,27 @@ import { SelectEntityModeController } from "../core/SelectEntityModeController";
 import { Line } from "../core/shape/Line";
 import { Rect, type Shape } from "../core/shape/Shape";
 import type { TransformMatrix } from "../core/shape/TransformMatrix";
-import { useAtom } from "./hooks/useAtom";
+import { useCell } from "./hooks/useCell";
 import { useApp } from "./useApp";
 
 export function SelectEntityControlLayer() {
     const app = useApp();
+    const mode = useCell(app.mode);
+    if (mode !== SelectEntityModeController.type) return null;
 
-    const modeController = app.getModeController();
-    if (!(modeController instanceof SelectEntityModeController)) return null;
-
-    return <SelectEntityControlLayerInner modeController={modeController} />;
+    return <SelectEntityControlLayerInner />;
 }
 
-function SelectEntityControlLayerInner({
-    modeController,
-}: {
-    modeController: SelectEntityModeController;
-}) {
+function SelectEntityControlLayerInner() {
     const app = useApp();
-    const appState = useAtom(app.state);
-    const viewport = useAtom(app.viewportStore.state);
-    const brushRect = useAtom(modeController.brushRect);
-    const visibleCornerRoundHandles = modeController.computeControlLayerData(
-        app,
-        appState.pointerPosition,
+    const modeController = app.getModeControllerByClass(
+        SelectEntityModeController,
     );
-    if (appState.mode !== SelectEntityModeController.MODE_NAME) return null;
-
-    const entities = useAtom(app.canvasStateStore.selectedEntities);
-    const selectionRect = useAtom(app.canvasStateStore.selectionRect);
+    const brushRect = useCell(modeController.brushRect);
+    const visibleCornerRoundHandles = useCell(modeController.controlLayerData);
+    const viewport = useCell(app.viewport);
+    const entities = useCell(app.canvas.selectedEntities);
+    const selectionRect = useCell(app.canvas.selectionRect);
 
     const transformedSelectionRect =
         selectionRect === null ? null : viewport.transform.apply(selectionRect);

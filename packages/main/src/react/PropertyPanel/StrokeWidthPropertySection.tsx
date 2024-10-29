@@ -16,14 +16,11 @@ export function StrokeWidthPropertySection() {
             PROPERTY_KEY_STROKE_WIDTH,
             strokeWidth,
         );
-        app.defaultPropertyStore.set(PROPERTY_KEY_STROKE_WIDTH, strokeWidth);
+        app.setSelectedPropertyValue(PROPERTY_KEY_STROKE_WIDTH, strokeWidth);
     };
 
     const visible = useVisibleFlag({
-        modes: [
-            NewPathModeController.MODE_NAME,
-            NewShapeModeController.MODE_NAME,
-        ],
+        modes: [NewPathModeController.type, NewShapeModeController.type],
         propertyKeys: [PROPERTY_KEY_STROKE_WIDTH],
     });
     if (!visible) return null;

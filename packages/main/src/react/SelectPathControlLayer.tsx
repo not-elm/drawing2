@@ -1,30 +1,28 @@
 import type { ReactNode } from "react";
 import { SelectPathModeController } from "../core/SelectPathModeController";
-import { useAtom } from "./hooks/useAtom";
+import { useCell } from "./hooks/useCell";
 import { useApp } from "./useApp";
 
 export function SelectPathControlLayer() {
     const app = useApp();
+    const mode = useCell(app.mode);
+    if (mode !== SelectPathModeController.type) return null;
 
-    const modeController = app.getModeController();
-    if (!(modeController instanceof SelectPathModeController)) return null;
-
-    return <SelectPathControlLayerInner modeController={modeController} />;
+    return <SelectPathControlLayerInner />;
 }
 
-export function SelectPathControlLayerInner({
-    modeController,
-}: {
-    modeController: SelectPathModeController;
-}) {
+export function SelectPathControlLayerInner() {
     const app = useApp();
-    const appState = useAtom(app.state);
-    const viewport = useAtom(app.viewportStore.state);
+    const modeController = app.getModeControllerByClass(
+        SelectPathModeController,
+    );
+    const pointerPosition = useCell(app.pointerPosition);
+    const viewport = useCell(app.viewport);
+    const selectedEdgeIds = useCell(modeController.selectedEdgeIds);
+    const selectedNodeIds = useCell(modeController.selectedNodeIds);
+
     const { edges, nodes, highlightedItemIds, highlightCenterOfEdgeHandle } =
-        modeController.computeControlLayerData(app, appState.pointerPosition);
-    const selectedEdgeIds = useAtom(modeController.selectedEdgeIds);
-    const selectedNodeIds = useAtom(modeController.selectedNodeIds);
-    if (appState.mode !== SelectPathModeController.MODE_NAME) return null;
+        SelectPathModeController.computeControlLayerData(app, pointerPosition);
 
     return (
         <svg

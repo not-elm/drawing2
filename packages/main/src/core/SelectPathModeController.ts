@@ -13,7 +13,7 @@ import {
     type SelectedEntityChangeEvent,
 } from "./ModeController";
 import { SelectEntityModeController } from "./SelectEntityModeController";
-import { atom } from "./atom/Atom";
+import { cell } from "./cell/ICell";
 import { setupMoveNodesPointerEventHandlers } from "./setupMoveNodesPointerEventHandlers";
 import { type GraphEdge, GraphNode } from "./shape/Graph";
 import { Line } from "./shape/Line";
@@ -23,27 +23,27 @@ const NODE_CONTROL_HIT_AREA_RADIUS = 16;
 const EDGE_CONTROL_HIT_AREA_WIDTH = 16;
 
 export class SelectPathModeController extends ModeController {
-    readonly selectedEdgeIds = atom(new Set<string>());
-    readonly selectedNodeIds = atom(new Set<string>());
+    static readonly type = "select-path";
 
-    static readonly MODE_NAME = "select-path";
+    readonly selectedEdgeIds = cell(new Set<string>());
+    readonly selectedNodeIds = cell(new Set<string>());
 
     onRegistered(app: App) {
         app.keyboard.addBinding({
             key: "Escape",
-            mode: [SelectPathModeController.MODE_NAME],
+            mode: [SelectPathModeController.type],
             action: (app, ev) => {
-                app.setMode(SelectEntityModeController.MODE_NAME);
+                app.setMode(SelectEntityModeController.type);
             },
         });
         app.keyboard.addBinding({
             key: "Delete",
-            mode: [SelectPathModeController.MODE_NAME],
+            mode: [SelectPathModeController.type],
             action: (app, ev) => this.deleteSelectedItem(app),
         });
         app.keyboard.addBinding({
             key: "Backspace",
-            mode: [SelectPathModeController.MODE_NAME],
+            mode: [SelectPathModeController.type],
             action: (app, ev) => this.deleteSelectedItem(app),
         });
     }
@@ -52,9 +52,9 @@ export class SelectPathModeController extends ModeController {
         const selectedEdgeIds = this.selectedEdgeIds.get();
         const selectedNodeIds = this.selectedNodeIds.get();
 
-        const entityIds = app.canvasStateStore.selectedEntityIds.get();
+        const entityIds = app.canvas.selectedEntityIds.get();
 
-        app.canvasStateStore.edit((draft) => {
+        app.canvas.edit((draft) => {
             for (const entityId of entityIds) {
                 const entity = draft.getEntity(entityId);
                 assert(isPathEntity(entity), `Invalid entity: ${entity}`);
@@ -81,11 +81,14 @@ export class SelectPathModeController extends ModeController {
     }
 
     onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
-        const control = this.getControlByPoint(app, ev.point);
+        const control = SelectPathModeController.getControlByPoint(
+            app,
+            ev.point,
+        );
         if (control === null) {
             this.selectedEdgeIds.set(new Set());
             this.selectedNodeIds.set(new Set());
-            app.setMode(SelectEntityModeController.MODE_NAME);
+            app.setMode(SelectEntityModeController.type);
             return;
         }
 
@@ -119,7 +122,7 @@ export class SelectPathModeController extends ModeController {
 
             const newPath = PathEntityHandle.setGraph(control.path, graph);
 
-            app.canvasStateStore.edit((draft) => {
+            app.canvas.edit((draft) => {
                 draft.setEntities([newPath]);
             });
 
@@ -136,27 +139,27 @@ export class SelectPathModeController extends ModeController {
 
     onAfterSelectedEntitiesChange(app: App, ev: SelectedEntityChangeEvent) {
         if (ev.newSelectedEntityIds.size === 0) {
-            app.setMode(SelectEntityModeController.MODE_NAME);
+            app.setMode(SelectEntityModeController.type);
         }
     }
 
-    private updateSelectedItemState(
-        oldSelectedEntityIds: ReadonlySet<string>,
-        newSelectedEntityIds: ReadonlySet<string>,
-    ) {
-        if (
-            oldSelectedEntityIds.size !== 1 ||
-            newSelectedEntityIds.size !== 1 ||
-            oldSelectedEntityIds.values().next().value !==
-                newSelectedEntityIds.values().next().value
-        ) {
-            this.selectedEdgeIds.set(new Set());
-            this.selectedNodeIds.set(new Set());
-            return;
+    getCursor(app: App): Property.Cursor {
+        const control = SelectPathModeController.getControlByPoint(
+            app,
+            app.pointerPosition.get(),
+        );
+        if (control === null) return "default";
+
+        switch (control.type) {
+            case "node":
+            case "edge":
+                return "grab";
+            case "center-of-edge":
+                return "crosshair";
         }
     }
 
-    computeControlLayerData(
+    static computeControlLayerData(
         app: App,
         pointerPoint: Point,
     ): {
@@ -165,7 +168,7 @@ export class SelectPathModeController extends ModeController {
         highlightedItemIds: Set<string>;
         highlightCenterOfEdgeHandle: boolean;
     } {
-        const entities = app.canvasStateStore.selectedEntities.get();
+        const entities = app.canvas.selectedEntities.get();
         if (entities.length === 0) {
             return {
                 edges: [],
@@ -185,7 +188,10 @@ export class SelectPathModeController extends ModeController {
             };
         }
 
-        const control = this.getControlByPoint(app, pointerPoint);
+        const control = SelectPathModeController.getControlByPoint(
+            app,
+            pointerPoint,
+        );
         if (control === null) {
             const graph = PathEntityHandle.getGraph(path);
             return {
@@ -227,24 +233,8 @@ export class SelectPathModeController extends ModeController {
         }
     }
 
-    getCursor(app: App): Property.Cursor {
-        const control = this.getControlByPoint(
-            app,
-            app.state.get().pointerPosition,
-        );
-        if (control === null) return "default";
-
-        switch (control.type) {
-            case "node":
-            case "edge":
-                return "grab";
-            case "center-of-edge":
-                return "crosshair";
-        }
-    }
-
-    private getControlByPoint(app: App, point: Point): Control | null {
-        const entities = app.canvasStateStore.selectedEntities.get();
+    static getControlByPoint(app: App, point: Point): Control | null {
+        const entities = app.canvas.selectedEntities.get();
         if (entities.length !== 1) return null;
 
         const path = entities[0];
@@ -275,6 +265,22 @@ export class SelectPathModeController extends ModeController {
         }
 
         return null;
+    }
+
+    private updateSelectedItemState(
+        oldSelectedEntityIds: ReadonlySet<string>,
+        newSelectedEntityIds: ReadonlySet<string>,
+    ) {
+        if (
+            oldSelectedEntityIds.size !== 1 ||
+            newSelectedEntityIds.size !== 1 ||
+            oldSelectedEntityIds.values().next().value !==
+                newSelectedEntityIds.values().next().value
+        ) {
+            this.selectedEdgeIds.set(new Set());
+            this.selectedNodeIds.set(new Set());
+            return;
+        }
     }
 }
 

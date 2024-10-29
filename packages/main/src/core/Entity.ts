@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
+import type { JSONObject, JSONValue } from "../lib/JSONObject";
 import { assert } from "../lib/assert";
 import type { App } from "./App";
-import type { JSONObject, JSONValue } from "./JSONObject";
 import type { CanvasPointerEvent } from "./ModeController";
 import type { Shape } from "./shape/Shape";
 import type { TransformMatrix } from "./shape/TransformMatrix";
@@ -14,8 +14,9 @@ export interface Entity extends JSONObject {
 export abstract class EntityHandle<T extends Entity> {
     abstract type: string;
 
-    abstract transform(entity: T, transform: TransformMatrix): T;
-
+    /**
+     * Returns the shape of this entity.
+     */
     abstract getShape(entity: T): Shape;
 
     abstract getView(): ComponentType<{ entity: T }>;
@@ -53,6 +54,10 @@ export abstract class EntityHandle<T extends Entity> {
      */
     onTextEditEnd(entity: T, app: App): void {}
 
+    onTransform(entity: T, ev: TransformEvent): T {
+        return entity;
+    }
+
     /**
      * Called when a transform session happened in select-entity mode is ended.
      */
@@ -63,14 +68,6 @@ export abstract class EntityHandle<T extends Entity> {
      *  event is not called when this entity is resized by user interaction.
      */
     onViewResize(entity: T, app: App, width: number, height: number): void {}
-}
-
-export interface EntityTapEvent extends CanvasPointerEvent {
-    /**
-     * Entity IDs that are already selected before this tap event happened.
-     * Entities that are newly selected by this tap event are not included.
-     */
-    previousSelectedEntities: ReadonlySet<string>;
 }
 
 export class EntityHandleMap {
@@ -95,7 +92,9 @@ export class EntityHandleMap {
     }
 
     transform<T extends Entity>(entity: T, transform: TransformMatrix): T {
-        return this.getHandle(entity).transform(entity, transform);
+        return this.getHandle(entity).onTransform(entity, {
+            transform,
+        });
     }
 
     isPropertySupported(entity: Entity, propertyKey: string): boolean {
@@ -121,4 +120,16 @@ export class EntityHandleMap {
             defaultValue,
         );
     }
+}
+
+export interface EntityTapEvent extends CanvasPointerEvent {
+    /**
+     * Entity IDs that are already selected before this tap event happened.
+     * Entities that are newly selected by this tap event are not included.
+     */
+    previousSelectedEntities: ReadonlySet<string>;
+}
+
+export interface TransformEvent {
+    transform: TransformMatrix;
 }

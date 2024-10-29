@@ -25,11 +25,11 @@ export function FillModePropertySection() {
             PROPERTY_KEY_FILL_STYLE,
             fillStyle,
         );
-        app.defaultPropertyStore.set(PROPERTY_KEY_FILL_STYLE, fillStyle);
+        app.setSelectedPropertyValue(PROPERTY_KEY_FILL_STYLE, fillStyle);
     };
 
     const visible = useVisibleFlag({
-        modes: [NewShapeModeController.MODE_NAME],
+        modes: [NewShapeModeController.type],
         propertyKeys: [PROPERTY_KEY_FILL_STYLE],
     });
     if (!visible) return null;

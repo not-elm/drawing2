@@ -33,23 +33,23 @@ export function setupMoveNodesPointerEventHandlers(
     path: Entity,
     nodeIds: string[],
 ) {
-    app.historyManager.pause();
+    app.history.pause();
     assert(isPathEntity(path));
 
     const originalNodes = nodeIds
         .map((nodeId) => PathEntityHandle.getNodeById(path, nodeId))
         .filter(isNotNullish);
 
-    const oldLinkIds = app.canvasStateStore.page
+    const oldLinkIds = app.canvas.page
         .get()
         .links.getByEntityId(path.id)
         .filter((link) => link instanceof LinkToRect)
         .filter((link) => nodeIds.includes(link.nodeId))
         .map((link) => link.id);
 
-    app.canvasStateStore.edit((draft) => draft.deleteLinks(oldLinkIds));
+    app.canvas.edit((draft) => draft.deleteLinks(oldLinkIds));
 
-    app.gestureRecognizer
+    app.gesture
         .addPointerMoveHandler(
             ev.pointerId,
             getPointerMoveHandler(
@@ -77,7 +77,7 @@ function getPointerMoveHandler(
             ev.point.y - ev.startPoint.y,
         );
 
-        const path = app.canvasStateStore.page.get().entities.get(entityId);
+        const path = app.canvas.page.get().entities.get(entityId);
         assert(path !== undefined, `Entity not found: ${entityId}`);
         assert(isPathEntity(path), `Entity is not a path: ${entityId}`);
 
@@ -194,12 +194,12 @@ function getPointerMoveHandler(
                 lines.push(new Line(originalNode, newPoint));
             }
 
-            app.snapGuideStore.setSnapGuide(SNAP_GUIDE_KEY_ANGLE, {
+            app.setSnapGuide(SNAP_GUIDE_KEY_ANGLE, {
                 points,
                 lines,
             });
         } else {
-            app.snapGuideStore.deleteSnapGuide(SNAP_GUIDE_KEY_ANGLE);
+            app.deleteSnapGuide(SNAP_GUIDE_KEY_ANGLE);
         }
 
         const xSnapGuidePoints: Point[] = [];
@@ -226,12 +226,12 @@ function getPointerMoveHandler(
             );
         }
         if (xSnapGuidePoints.length > 0) {
-            app.snapGuideStore.setSnapGuide(SNAP_GUIDE_X_AXIS, {
+            app.setSnapGuide(SNAP_GUIDE_X_AXIS, {
                 points: xSnapGuidePoints,
                 lines: xSnapGuideLines,
             });
         } else {
-            app.snapGuideStore.deleteSnapGuide(SNAP_GUIDE_X_AXIS);
+            app.deleteSnapGuide(SNAP_GUIDE_X_AXIS);
         }
 
         const ySnapGuidePoints: Point[] = [];
@@ -258,15 +258,15 @@ function getPointerMoveHandler(
             );
         }
         if (ySnapGuidePoints.length > 0) {
-            app.snapGuideStore.setSnapGuide(SNAP_GUIDE_Y_AXIS, {
+            app.setSnapGuide(SNAP_GUIDE_Y_AXIS, {
                 points: ySnapGuidePoints,
                 lines: ySnapGuideLines,
             });
         } else {
-            app.snapGuideStore.deleteSnapGuide(SNAP_GUIDE_Y_AXIS);
+            app.deleteSnapGuide(SNAP_GUIDE_Y_AXIS);
         }
 
-        app.canvasStateStore.edit((draft) => {
+        app.canvas.edit((draft) => {
             const graph = originalGraph.clone();
             for (const originalNode of originalNodes) {
                 graph.setNodePosition(
@@ -285,7 +285,7 @@ function getPointerMoveHandler(
 
 function getPointerUpHandler(entityId: string, nodeIds: string[]) {
     return (app: App, ev: CanvasPointerEvent) => {
-        const path = app.canvasStateStore.page.get().entities.get(entityId);
+        const path = app.canvas.page.get().entities.get(entityId);
         assert(path !== undefined, `Entity not found: ${entityId}`);
         assert(isPathEntity(path));
 
@@ -313,7 +313,7 @@ function getPointerUpHandler(entityId: string, nodeIds: string[]) {
                     graph.mergeNodes(otherNode.id, targetNode.id);
                 }
                 const newEntity = PathEntityHandle.setGraph(path, graph);
-                app.canvasStateStore.edit((draft) => {
+                app.canvas.edit((draft) => {
                     draft.setEntities([newEntity]);
                 });
             }
@@ -327,9 +327,9 @@ function getPointerUpHandler(entityId: string, nodeIds: string[]) {
             assert(targetNode !== undefined, `Node not found: ${nodeIds[0]}`);
 
             const hit = testHitEntities(
-                app.canvasStateStore.page.get(),
+                app.canvas.page.get(),
                 ev.point,
-                app.viewportStore.state.get().scale,
+                app.viewport.get().scale,
                 app.entityHandle,
             );
             if (hit.entities.length > 0) {
@@ -339,9 +339,9 @@ function getPointerUpHandler(entityId: string, nodeIds: string[]) {
             }
         }
 
-        app.historyManager.resume();
-        app.snapGuideStore.deleteSnapGuide(SNAP_GUIDE_KEY_ANGLE);
-        app.snapGuideStore.deleteSnapGuide(SNAP_GUIDE_X_AXIS);
-        app.snapGuideStore.deleteSnapGuide(SNAP_GUIDE_Y_AXIS);
+        app.history.resume();
+        app.deleteSnapGuide(SNAP_GUIDE_KEY_ANGLE);
+        app.deleteSnapGuide(SNAP_GUIDE_X_AXIS);
+        app.deleteSnapGuide(SNAP_GUIDE_Y_AXIS);
     };
 }

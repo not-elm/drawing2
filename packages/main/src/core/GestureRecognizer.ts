@@ -1,7 +1,6 @@
 import { assert } from "../lib/assert";
 import type { App } from "./App";
 import type { CanvasPointerEvent } from "./ModeController";
-import { MouseEventButton } from "./MouseEventButton";
 import { Point } from "./shape/Point";
 
 const THRESHOLD_CLICK_DURATION_IN_MILLI = 200;
@@ -13,7 +12,7 @@ export class GestureRecognizer {
     private readonly sessionIdsWithListener = new Set<number>();
 
     handlePointerDown(nativeEv: PointerEvent) {
-        const point = this.app.viewportStore.state
+        const point = this.app.viewport
             .get()
             .fromCanvasCoordinateTransform.apply(
                 new Point(nativeEv.clientX, nativeEv.clientY),
@@ -35,7 +34,7 @@ export class GestureRecognizer {
         const session = this.sessions.get(nativeEv.pointerId);
         if (session === undefined) return;
 
-        const point = this.app.viewportStore.state
+        const point = this.app.viewport
             .get()
             .fromCanvasCoordinateTransform.apply(
                 new Point(nativeEv.clientX, nativeEv.clientY),
@@ -67,7 +66,7 @@ export class GestureRecognizer {
         const session = this.sessions.get(nativeEv.pointerId);
         if (session === undefined) return;
 
-        const point = this.app.viewportStore.state
+        const point = this.app.viewport
             .get()
             .fromCanvasCoordinateTransform.apply(
                 new Point(nativeEv.clientX, nativeEv.clientY),
@@ -162,3 +161,11 @@ interface PointerEventSession {
     pointerMoveHandlers: Set<(app: App, ev: CanvasPointerMoveEvent) => void>;
     pointerUpHandlers: Set<(app: App, ev: CanvasPointerUpEvent) => void>;
 }
+
+export const MouseEventButton = {
+    MAIN: 0,
+    AUXILIARY: 1,
+    SECONDARY: 2,
+    FOURTH: 3,
+    FIFTH: 4,
+};

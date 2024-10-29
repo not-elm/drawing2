@@ -89,23 +89,17 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                     >
                         <ToolBar>
                             <ToolBar.Button
-                                mode={SelectEntityModeController.MODE_NAME}
+                                mode={SelectEntityModeController.type}
                             >
                                 Select
                             </ToolBar.Button>
-                            <ToolBar.Button
-                                mode={NewShapeModeController.MODE_NAME}
-                            >
+                            <ToolBar.Button mode={NewShapeModeController.type}>
                                 Rect
                             </ToolBar.Button>
-                            <ToolBar.Button
-                                mode={NewPathModeController.MODE_NAME}
-                            >
+                            <ToolBar.Button mode={NewPathModeController.type}>
                                 Line
                             </ToolBar.Button>
-                            <ToolBar.Button
-                                mode={NewTextModeController.MODE_NAME}
-                            >
+                            <ToolBar.Button mode={NewTextModeController.type}>
                                 Text
                             </ToolBar.Button>
                         </ToolBar>

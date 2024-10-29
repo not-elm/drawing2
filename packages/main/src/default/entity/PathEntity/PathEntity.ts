@@ -3,10 +3,10 @@ import {
     type Entity,
     EntityHandle,
     type EntityTapEvent,
+    type TransformEvent,
 } from "../../../core/Entity";
 import { Graph, GraphNode } from "../../../core/shape/Graph";
 import { Point } from "../../../core/shape/Point";
-import type { TransformMatrix } from "../../../core/shape/TransformMatrix";
 import { assert } from "../../../lib/assert";
 import { type ColorId, PROPERTY_KEY_COLOR_ID } from "../../property/Colors";
 import {
@@ -52,54 +52,11 @@ export class PathEntityHandle extends EntityHandle<PathEntity> {
         return PathView;
     }
 
-    transform(entity: PathEntity, transform: TransformMatrix): PathEntity {
-        const graph = PathEntityHandle.getGraph(entity);
-        for (const node of graph.nodes.values()) {
-            graph.setNodePosition(
-                node.id,
-                transform.apply(new Point(node.x, node.y)),
-            );
-        }
-
-        return PathEntityHandle.setGraph(entity, graph);
-    }
-
-    static getNodes(entity: PathEntity): GraphNode[] {
-        return entity.nodes.map(
-            ({ id, x, y }) => new GraphNode(id, new Point(x, y)),
-        );
-    }
-
-    static getNodeById(
-        entity: PathEntity,
-        nodeId: string,
-    ): GraphNode | undefined {
-        const data = entity.nodes.find((node) => node.id === nodeId);
-        if (!data) return undefined;
-
-        return new GraphNode(data.id, new Point(data.x, data.y));
-    }
-
-    static setNodePosition(
-        entity: PathEntity,
-        nodeId: string,
-        position: Point,
-    ): PathEntity {
-        return {
-            ...entity,
-            nodes: entity.nodes.map((node) =>
-                node.id === nodeId
-                    ? { ...node, x: position.x, y: position.y }
-                    : node,
-            ),
-        };
-    }
-
     onTap(entity: PathEntity, app: App, ev: EntityTapEvent) {
         if (ev.previousSelectedEntities.has(entity.id)) {
-            app.canvasStateStore.unselectAll();
-            app.canvasStateStore.select(entity.id);
-            app.setMode(SelectPathModeController.MODE_NAME);
+            app.canvas.unselectAll();
+            app.canvas.select(entity.id);
+            app.setMode(SelectPathModeController.type);
         }
         // if (
         //     ev.previousSelectedEntities.size === 1 &&
@@ -135,22 +92,51 @@ export class PathEntityHandle extends EntityHandle<PathEntity> {
         // }
     }
 
+    onTransform(entity: PathEntity, ev: TransformEvent): PathEntity {
+        const graph = PathEntityHandle.getGraph(entity);
+        for (const node of graph.nodes.values()) {
+            graph.setNodePosition(
+                node.id,
+                ev.transform.apply(new Point(node.x, node.y)),
+            );
+        }
+
+        return PathEntityHandle.setGraph(entity, graph);
+    }
+
     onTransformEnd(entity: PathEntity, app: App) {
         this.constraintCornerRadius(entity, app);
     }
 
-    private constraintCornerRadius(entity: PathEntity, app: App) {
-        const graph = PathEntityHandle.getGraph(entity);
-        const maxCornerRadius = getMaxCornerRadius(graph.getOutline().points);
-        if (maxCornerRadius < entity[PROPERTY_KEY_CORNER_RADIUS]) {
-            app.canvasStateStore.edit((draft) => {
-                draft.updateProperty(
-                    [entity.id],
-                    PROPERTY_KEY_CORNER_RADIUS,
-                    maxCornerRadius,
-                );
-            });
-        }
+    static getNodes(entity: PathEntity): GraphNode[] {
+        return entity.nodes.map(
+            ({ id, x, y }) => new GraphNode(id, new Point(x, y)),
+        );
+    }
+
+    static getNodeById(
+        entity: PathEntity,
+        nodeId: string,
+    ): GraphNode | undefined {
+        const data = entity.nodes.find((node) => node.id === nodeId);
+        if (!data) return undefined;
+
+        return new GraphNode(data.id, new Point(data.x, data.y));
+    }
+
+    static setNodePosition(
+        entity: PathEntity,
+        nodeId: string,
+        position: Point,
+    ): PathEntity {
+        return {
+            ...entity,
+            nodes: entity.nodes.map((node) =>
+                node.id === nodeId
+                    ? { ...node, x: position.x, y: position.y }
+                    : node,
+            ),
+        };
     }
 
     static getGraph(entity: PathEntity): Graph {
@@ -192,6 +178,20 @@ export class PathEntityHandle extends EntityHandle<PathEntity> {
             })),
             edges: graph.getEdges().map((edge) => [edge.p1.id, edge.p2.id]),
         };
+    }
+
+    private constraintCornerRadius(entity: PathEntity, app: App) {
+        const graph = PathEntityHandle.getGraph(entity);
+        const maxCornerRadius = getMaxCornerRadius(graph.getOutline().points);
+        if (maxCornerRadius < entity[PROPERTY_KEY_CORNER_RADIUS]) {
+            app.canvas.edit((draft) => {
+                draft.updateProperty(
+                    [entity.id],
+                    PROPERTY_KEY_CORNER_RADIUS,
+                    maxCornerRadius,
+                );
+            });
+        }
     }
 }
 

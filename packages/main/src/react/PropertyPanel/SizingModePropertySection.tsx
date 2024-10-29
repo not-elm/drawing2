@@ -18,11 +18,11 @@ export function SizingModePropertySection() {
             PROPERTY_KEY_SIZING_MODE,
             sizingMode,
         );
-        app.defaultPropertyStore.set(PROPERTY_KEY_SIZING_MODE, sizingMode);
+        app.setSelectedPropertyValue(PROPERTY_KEY_SIZING_MODE, sizingMode);
     };
 
     const visible = useVisibleFlag({
-        modes: [NewTextModeController.MODE_NAME],
+        modes: [NewTextModeController.type],
         propertyKeys: [PROPERTY_KEY_SIZING_MODE],
     });
     if (!visible) return null;
