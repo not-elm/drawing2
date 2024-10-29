@@ -94,10 +94,12 @@ export function Canvas() {
                     transformOrigin: `${viewport.rect.left}px ${viewport.rect.top}px`,
                 }}
             >
-                {page.getEntitiesInRect(viewport.rect).map((entity) => {
-                    const View = app.getEntityView(entity);
-                    return <View entity={entity} key={entity.props.id} />;
-                })}
+                {page
+                    .getEntitiesInRect(viewport.rect, app.entityHandle)
+                    .map((entity) => {
+                        const View = app.getEntityView(entity);
+                        return <View entity={entity} key={entity.id} />;
+                    })}
             </div>
 
             <SelectEntityControlLayer />

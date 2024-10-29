@@ -1,17 +1,16 @@
 import { assert } from "../lib/assert";
 import { randomId } from "../lib/randomId";
-import type { Entity } from "./Entity";
-import type { EntityConverter, SerializedEntity } from "./EntityConverter";
+import type { Entity, EntityHandleMap } from "./Entity";
 import type { JSONObject } from "./JSONObject";
 import type { Page } from "./Page";
 import { translate } from "./shape/TransformMatrix";
 
 interface ClipboardData extends JSONObject {
-    entities: SerializedEntity[];
+    entities: Entity[];
 }
 
 export class ClipboardService {
-    constructor(private readonly entityConverter: EntityConverter) {}
+    constructor(private readonly entityHandle: EntityHandleMap) {}
 
     copy(page: Page, entityIds: ReadonlySet<string>): Promise<void> {
         const entitiesInOrder: Entity[] = [];
@@ -25,7 +24,7 @@ export class ClipboardService {
         }
 
         const data: ClipboardData = {
-            entities: entitiesInOrder.map((entity) => entity.serialize()),
+            entities: entitiesInOrder,
         };
 
         return navigator.clipboard.writeText(JSON.stringify(data));
@@ -40,17 +39,18 @@ export class ClipboardService {
 
             const idMap = new Map<string, string>();
 
-            const entities = data.entities
-                .map((data) => this.entityConverter.deserialize(data))
-                .map((entity) => {
-                    // Renew IDs
-                    const newId = randomId();
-                    idMap.set(entity.props.id, newId);
-                    entity.props.id = newId;
+            const entities = data.entities.map((entity) => {
+                // Renew IDs
+                const newId = randomId();
+                idMap.set(entity.id, newId);
+                const newEntity = { ...entity, id: newId };
 
-                    // Move entities a little bit to avoid overlapping with copy sources
-                    return entity.transform(translate(10, 10));
-                });
+                // Move entities a little bit to avoid overlapping with copy sources
+                return this.entityHandle.transform(
+                    newEntity,
+                    translate(10, 10),
+                );
+            });
 
             return {
                 entities,

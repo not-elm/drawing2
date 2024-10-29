@@ -6,7 +6,7 @@ import {
 import { SelectEntityModeController } from "../../core/SelectEntityModeController";
 import { Rect } from "../../core/shape/Shape";
 import { randomId } from "../../lib/randomId";
-import { TextEntity } from "../entity/TextEntity/TextEntity";
+import type { TextEntity } from "../entity/TextEntity/TextEntity";
 import { PROPERTY_KEY_COLOR_ID } from "../property/Colors";
 import { PROPERTY_KEY_TEXT_ALIGNMENT_X } from "../property/TextAlignment";
 import { EditTextModeController } from "./EditTextModeController";
@@ -35,7 +35,7 @@ export class NewTextModeController extends ModeController {
         app.historyManager.pause();
         const text = this.insertNewText(app, Rect.fromSize(ev.point, 1, 1));
         app.canvasStateStore.unselectAll();
-        app.canvasStateStore.select(text.props.id);
+        app.canvasStateStore.select(text.id);
         app.setMode(EditTextModeController.MODE_NAME);
 
         // To leave focus at the new text entity
@@ -43,9 +43,13 @@ export class NewTextModeController extends ModeController {
     }
 
     private insertNewText(app: App, rect: Rect): TextEntity {
-        const text = new TextEntity({
+        const text: TextEntity = {
+            type: "text",
             id: randomId(),
-            rect,
+            x: rect.left,
+            y: rect.top,
+            width: rect.width,
+            height: rect.height,
             content: "",
             [PROPERTY_KEY_TEXT_ALIGNMENT_X]: app.defaultPropertyStore.state
                 .get()
@@ -54,7 +58,7 @@ export class NewTextModeController extends ModeController {
                 .get()
                 .getOrDefault(PROPERTY_KEY_COLOR_ID, 0),
             sizingMode: "content",
-        });
+        };
 
         app.canvasStateStore.edit((draft) => {
             draft.setEntity(text);

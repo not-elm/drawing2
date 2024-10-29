@@ -5,10 +5,10 @@ import { CanvasStateStore } from "./CanvasStateStore";
 import { ClipboardService } from "./ClipboardService";
 import { ContextMenuService } from "./ContextMenuService";
 import { DefaultPropertyStore } from "./DefaultPropertyStore";
-import type { Entity } from "./Entity";
-import { type EntityConverter, EntityConverterMap } from "./EntityConverter";
+import { type Entity, type EntityHandle, EntityHandleMap } from "./Entity";
 import { GestureRecognizer } from "./GestureRecognizer";
 import { HistoryManager } from "./HistoryManager";
+import type { JSONValue } from "./JSONObject";
 import { KeyboardManager } from "./KeyboardManager";
 import type { ModeChangeEvent, ModeController } from "./ModeController";
 import { MouseEventButton } from "./MouseEventButton";
@@ -26,14 +26,15 @@ interface AppState {
 }
 
 export class App {
+    readonly entityHandle = new EntityHandleMap();
+
     readonly state = atom<AppState>({
         mode: SelectEntityModeController.MODE_NAME,
         cursor: "default",
         pointerPosition: new Point(0, 0),
     });
 
-    readonly entityConverter = new EntityConverterMap();
-    readonly clipboardService = new ClipboardService(this.entityConverter);
+    readonly clipboardService = new ClipboardService(this.entityHandle);
     readonly canvasStateStore = new CanvasStateStore(this);
     readonly viewportStore = new ViewportStore();
     readonly gestureRecognizer = new GestureRecognizer(this);
@@ -42,10 +43,6 @@ export class App {
     readonly keyboard = new KeyboardManager(this);
     readonly contextMenu = new ContextMenuService(this.viewportStore.state);
     private readonly modeControllers = new Map<string, ModeController>();
-    private readonly entityViewMap = new Map<
-        string,
-        ComponentType<{ entity: Entity }>
-    >();
     private readonly defaultModeController = new SelectEntityModeController();
 
     // TODO: Move to SelectMode package
@@ -173,32 +170,13 @@ export class App {
         newModeController.onAfterEnterMode(this, ev);
     }
 
-    registerEntityConverter<T extends string>(
-        type: string,
-        converter: EntityConverter<T>,
-    ): App {
-        this.entityConverter.register(type, converter);
-        return this;
-    }
-
-    registerEntityView<E extends Entity>(
-        type: string,
-        component: ComponentType<{ entity: E }>,
-    ): App {
-        this.entityViewMap.set(
-            type,
-            component as ComponentType<{ entity: Entity }>,
-        );
+    registerEntityHandle<E extends Entity>(handle: EntityHandle<E>): App {
+        this.entityHandle.set(handle);
         return this;
     }
 
     getEntityView<E extends Entity>(entity: E): ComponentType<{ entity: E }> {
-        const view = this.entityViewMap.get(entity.type);
-        assert(
-            view !== undefined,
-            `No view found for entity type ${entity.constructor.name}`,
-        );
-        return view as ComponentType<{ entity: E }>;
+        return this.entityHandle.getHandle(entity).getView();
     }
 
     // Edit
@@ -212,7 +190,7 @@ export class App {
         });
     }
 
-    updatePropertyForSelectedEntities(key: string, value: unknown) {
+    updatePropertyForSelectedEntities(key: string, value: JSONValue) {
         const selectedEntityIds = this.canvasStateStore.selectedEntityIds.get();
         if (selectedEntityIds.size === 0) {
             return;
@@ -285,7 +263,7 @@ export class App {
             // draft.addDependencies(dependencies);
         });
         this.canvasStateStore.setSelectedEntityIds(
-            entities.map((entity) => entity.props.id),
+            entities.map((entity) => entity.id),
         );
 
         // Copy pasted entities so that next paste operation will
@@ -432,7 +410,9 @@ export class App {
         const entity = this.canvasStateStore.page.get().entities.get(entityId);
         assert(entity !== undefined, `Entity ${entityId} is not found`);
 
-        entity.onViewResize(this, width, height);
+        this.entityHandle
+            .getHandle(entity)
+            .onViewResize(entity, this, width, height);
     }
 
     /**

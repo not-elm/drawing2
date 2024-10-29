@@ -1,4 +1,8 @@
-import { PathEntity } from "../default/entity/PathEntity/PathEntity";
+import {
+    type PathEntity,
+    PathEntityHandle,
+    isPathEntity,
+} from "../default/entity/PathEntity/PathEntity";
 import { registerLinkToRect } from "../default/mode/NewPathModeController";
 import { assert } from "../lib/assert";
 import { isNotNullish } from "../lib/isNullish";
@@ -30,15 +34,15 @@ export function setupMoveNodesPointerEventHandlers(
     nodeIds: string[],
 ) {
     app.historyManager.pause();
-    assert(path instanceof PathEntity);
+    assert(isPathEntity(path));
 
     const originalNodes = nodeIds
-        .map((nodeId) => path.getNodeById(nodeId))
+        .map((nodeId) => PathEntityHandle.getNodeById(path, nodeId))
         .filter(isNotNullish);
 
     const oldLinkIds = app.canvasStateStore.page
         .get()
-        .links.getByEntityId(path.props.id)
+        .links.getByEntityId(path.id)
         .filter((link) => link instanceof LinkToRect)
         .filter((link) => nodeIds.includes(link.nodeId))
         .map((link) => link.id);
@@ -49,15 +53,15 @@ export function setupMoveNodesPointerEventHandlers(
         .addPointerMoveHandler(
             ev.pointerId,
             getPointerMoveHandler(
-                path.props.id,
+                path.id,
                 nodeIds,
                 originalNodes,
-                path.graph,
+                PathEntityHandle.getGraph(path),
             ),
         )
         .addPointerUpHandler(
             ev.pointerId,
-            getPointerUpHandler(path.props.id, nodeIds),
+            getPointerUpHandler(path.id, nodeIds),
         );
 }
 
@@ -75,9 +79,9 @@ function getPointerMoveHandler(
 
         const path = app.canvasStateStore.page.get().entities.get(entityId);
         assert(path !== undefined, `Entity not found: ${entityId}`);
-        assert(path instanceof PathEntity, `Entity is not a path: ${entityId}`);
+        assert(isPathEntity(path), `Entity is not a path: ${entityId}`);
 
-        const nodes = path.getNodes();
+        const nodes = PathEntityHandle.getNodes(path);
 
         // snap
         const xSnapResult = {
@@ -270,8 +274,8 @@ function getPointerMoveHandler(
                     transform.apply(originalNode),
                 );
             }
-            const path = new PathEntity(
-                (draft.getEntity(entityId) as PathEntity).props,
+            const path = PathEntityHandle.setGraph(
+                draft.getEntity(entityId) as PathEntity,
                 graph,
             );
             draft.setEntity(path);
@@ -283,12 +287,12 @@ function getPointerUpHandler(entityId: string, nodeIds: string[]) {
     return (app: App, ev: CanvasPointerEvent) => {
         const path = app.canvasStateStore.page.get().entities.get(entityId);
         assert(path !== undefined, `Entity not found: ${entityId}`);
-        assert(path instanceof PathEntity);
+        assert(isPathEntity(path));
 
         const overlappedNodePairs: [GraphNode, GraphNode][] = [];
 
         for (const nodeId of nodeIds) {
-            const nodes = path.getNodes();
+            const nodes = PathEntityHandle.getNodes(path);
             const targetNode = nodes.find((node) => node.id === nodeId);
             assert(targetNode !== undefined);
             const otherNodes = nodes.filter((node) => node.id !== nodeId);
@@ -304,11 +308,11 @@ function getPointerUpHandler(entityId: string, nodeIds: string[]) {
                 }
             }
             if (overlappedNodePairs.length > 0) {
-                const graph = path.graph.clone();
+                const graph = PathEntityHandle.getGraph(path);
                 for (const [otherNode, targetNode] of overlappedNodePairs) {
                     graph.mergeNodes(otherNode.id, targetNode.id);
                 }
-                const newEntity = new PathEntity(path.props, graph);
+                const newEntity = PathEntityHandle.setGraph(path, graph);
                 app.canvasStateStore.edit((draft) => {
                     draft.setEntities([newEntity]);
                 });
@@ -317,15 +321,16 @@ function getPointerUpHandler(entityId: string, nodeIds: string[]) {
 
         // Link to other entity
         if (nodeIds.length === 1) {
-            const targetNode = path
-                .getNodes()
-                .find((node) => node.id === nodeIds[0]);
+            const targetNode = PathEntityHandle.getNodes(path).find(
+                (node) => node.id === nodeIds[0],
+            );
             assert(targetNode !== undefined, `Node not found: ${nodeIds[0]}`);
 
             const hit = testHitEntities(
                 app.canvasStateStore.page.get(),
                 ev.point,
                 app.viewportStore.state.get().scale,
+                app.entityHandle,
             );
             if (hit.entities.length > 0) {
                 const { target } = hit.entities[0];

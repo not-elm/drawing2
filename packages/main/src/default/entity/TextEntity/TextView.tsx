@@ -6,7 +6,8 @@ import { useAtom } from "../../../react/hooks/useAtom";
 import { useResizeObserver } from "../../../react/hooks/useResizeObserver";
 import { useApp } from "../../../react/useApp";
 import { EditTextModeController } from "../../mode/EditTextModeController";
-import { Colors } from "../../property/Colors";
+import { Colors, PROPERTY_KEY_COLOR_ID } from "../../property/Colors";
+import { PROPERTY_KEY_SIZING_MODE } from "../../property/SizingMode";
 import {
     PROPERTY_KEY_TEXT_ALIGNMENT_X,
     type TextAlignment,
@@ -21,26 +22,26 @@ export const TextView = memo(function ShapeView({
     const selectedEntityIds = useAtom(app.canvasStateStore.selectedEntityIds);
     const editing =
         appState.mode === EditTextModeController.MODE_NAME &&
-        selectedEntityIds.has(entity.props.id);
+        selectedEntityIds.has(entity.id);
 
-    const textAlignment = entity.props[PROPERTY_KEY_TEXT_ALIGNMENT_X];
+    const textAlignment = entity[PROPERTY_KEY_TEXT_ALIGNMENT_X];
     assert(textAlignment !== undefined, "Text alignment must not be null");
 
     return (
         <div
             style={{
-                transform: `translate(${entity.props.rect.left}px, ${entity.props.rect.top}px)`,
+                transform: `translate(${entity.x}px, ${entity.y}px)`,
             }}
             css={{ position: "absolute" }}
         >
             <TextViewInner
                 editing={editing}
-                shapeId={entity.props.id}
-                width={entity.props.rect.width}
-                sizingMode={entity.props.sizingMode}
-                color={Colors[entity.props.colorId]}
+                shapeId={entity.id}
+                width={entity.width}
+                sizingMode={entity[PROPERTY_KEY_SIZING_MODE]}
+                color={Colors[entity[PROPERTY_KEY_COLOR_ID]]}
                 textAlignment={textAlignment}
-                content={entity.props.content}
+                content={entity[PROPERTY_KEY_CONTENT]}
             />
         </div>
     );

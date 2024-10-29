@@ -17,7 +17,8 @@ import { testHitEntities } from "../../lib/testHitEntities";
 import {
     PROPERTY_KEY_ARROW_HEAD_NODE_IDS,
     PROPERTY_KEY_CORNER_RADIUS,
-    PathEntity,
+    type PathEntity,
+    PathEntityHandle,
 } from "../entity/PathEntity/PathEntity";
 import { PROPERTY_KEY_COLOR_ID } from "../property/Colors";
 import { PROPERTY_KEY_FILL_STYLE } from "../property/FillStyle";
@@ -59,6 +60,7 @@ export class NewPathModeController extends ModeController {
             app.canvasStateStore.page.get(),
             ev.point,
             app.viewportStore.state.get().scale,
+            app.entityHandle,
         );
 
         const path = this.insertNewPath(
@@ -68,20 +70,25 @@ export class NewPathModeController extends ModeController {
 
         if (hit.entities.length > 0) {
             const { target } = hit.entities[0];
-            registerLinkToRect(app, path, path.getNodes()[0], target);
+            registerLinkToRect(
+                app,
+                path,
+                PathEntityHandle.getNodes(path)[0],
+                target,
+            );
         }
 
         app.setMode(SelectPathModeController.MODE_NAME);
         app.canvasStateStore.unselectAll();
-        app.canvasStateStore.select(path.props.id);
+        app.canvasStateStore.select(path.id);
 
         setupMoveNodesPointerEventHandlers(app, ev, path, [
-            path.getNodes()[1].id,
+            PathEntityHandle.getNodes(path)[1].id,
         ]);
         app.gestureRecognizer.addPointerUpHandler(ev.pointerId, (app, ev) => {
             if (ev.isTap) {
                 app.canvasStateStore.edit((draft) => {
-                    draft.deleteEntity(path.props.id);
+                    draft.deleteEntity(path.id);
                 });
             }
         });
@@ -93,26 +100,29 @@ export class NewPathModeController extends ModeController {
         const graph = Graph.create();
         graph.addEdge(node1, node2);
 
-        const pathEntity = new PathEntity(
-            {
-                id: randomId(),
-                [PROPERTY_KEY_COLOR_ID]: app.defaultPropertyStore.state
-                    .get()
-                    .getOrDefault(PROPERTY_KEY_COLOR_ID, 0),
-                [PROPERTY_KEY_STROKE_STYLE]: app.defaultPropertyStore.state
-                    .get()
-                    .getOrDefault(PROPERTY_KEY_STROKE_STYLE, "solid"),
-                [PROPERTY_KEY_STROKE_WIDTH]: app.defaultPropertyStore.state
-                    .get()
-                    .getOrDefault(PROPERTY_KEY_STROKE_WIDTH, 2),
-                [PROPERTY_KEY_FILL_STYLE]: app.defaultPropertyStore.state
-                    .get()
-                    .getOrDefault(PROPERTY_KEY_FILL_STYLE, "none"),
-                [PROPERTY_KEY_CORNER_RADIUS]: 0,
-                [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]: [],
-            },
-            graph,
-        );
+        const pathEntity: PathEntity = {
+            id: randomId(),
+            type: "path",
+            nodes: [
+                { id: node1.id, x: node1.x, y: node1.y },
+                { id: node2.id, x: node2.x, y: node2.y },
+            ],
+            edges: [[node1.id, node2.id]],
+            [PROPERTY_KEY_COLOR_ID]: app.defaultPropertyStore.state
+                .get()
+                .getOrDefault(PROPERTY_KEY_COLOR_ID, 0),
+            [PROPERTY_KEY_STROKE_STYLE]: app.defaultPropertyStore.state
+                .get()
+                .getOrDefault(PROPERTY_KEY_STROKE_STYLE, "solid"),
+            [PROPERTY_KEY_STROKE_WIDTH]: app.defaultPropertyStore.state
+                .get()
+                .getOrDefault(PROPERTY_KEY_STROKE_WIDTH, 2),
+            [PROPERTY_KEY_FILL_STYLE]: app.defaultPropertyStore.state
+                .get()
+                .getOrDefault(PROPERTY_KEY_FILL_STYLE, "none"),
+            [PROPERTY_KEY_CORNER_RADIUS]: 0,
+            [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]: [],
+        };
 
         app.canvasStateStore.edit((draft) => {
             draft.setEntity(pathEntity);
@@ -127,7 +137,7 @@ export function registerLinkToRect(
     node: GraphNode,
     target: Entity,
 ) {
-    if (nodeOwner.props.id === target.props.id) {
+    if (nodeOwner.id === target.id) {
         return;
     }
     if (isOwnedLabel(app.canvasStateStore.page.get(), nodeOwner, target)) {
@@ -136,21 +146,15 @@ export function registerLinkToRect(
 
     app.canvasStateStore.edit((draft) =>
         draft.addLink(
-            new LinkToRect(
-                randomId(),
-                nodeOwner.props.id,
-                node.id,
-                target.props.id,
-            ),
+            new LinkToRect(randomId(), nodeOwner.id, node.id, target.id),
         ),
     );
 }
 
 function isOwnedLabel(page: Page, nodeOwner: Entity, label: Entity): boolean {
     return page.links
-        .getByEntityId(nodeOwner.props.id)
+        .getByEntityId(nodeOwner.id)
         .some(
-            (link) =>
-                link instanceof LinkToEdge && link.entityId === label.props.id,
+            (link) => link instanceof LinkToEdge && link.entityId === label.id,
         );
 }

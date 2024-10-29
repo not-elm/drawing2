@@ -1,5 +1,4 @@
 import type { App } from "../core/App";
-import type { EntityConverter } from "../core/EntityConverter";
 import { Page, type SerializedPage } from "../core/Page";
 
 const DEBOUNCE_INTERVAL_IN_MS = 1000;
@@ -22,7 +21,7 @@ export function syncWithLocalStorage(app: App) {
         }, DEBOUNCE_INTERVAL_IN_MS);
     });
 
-    const page = loadFromLocalStorage(app.entityConverter);
+    const page = loadFromLocalStorage();
 
     if (page !== null) {
         app.canvasStateStore.setPage(page);
@@ -30,13 +29,13 @@ export function syncWithLocalStorage(app: App) {
     }
 }
 
-function loadFromLocalStorage(entityConverter: EntityConverter): Page | null {
+function loadFromLocalStorage(): Page | null {
     try {
         const data = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (data === null) return null;
 
         const serializedPage: SerializedPage = JSON.parse(data);
-        const page = Page.deserialize(serializedPage, entityConverter);
+        const page = Page.deserialize(serializedPage);
 
         return page;
     } catch (e) {

@@ -1,6 +1,8 @@
 import {
     PROPERTY_KEY_CORNER_RADIUS,
-    PathEntity,
+    type PathEntity,
+    PathEntityHandle,
+    isPathEntity,
 } from "../default/entity/PathEntity/PathEntity";
 import { assert } from "../lib/assert";
 import type { App } from "./App";
@@ -29,10 +31,14 @@ export function setupCornerRadiusHandlePointerEventHandlers(
         .addPointerMoveHandler(
             ev.pointerId,
             getPointerMoveHandler(
-                entity.props.id,
+                entity.id,
                 ix,
                 iy,
-                entity.getProperty(PROPERTY_KEY_CORNER_RADIUS, 0),
+                app.entityHandle.getProperty(
+                    entity,
+                    PROPERTY_KEY_CORNER_RADIUS,
+                    0,
+                ),
                 handle.cornerAngle,
             ),
         )
@@ -49,8 +55,10 @@ function getPointerMoveHandler(
     return (app: App, ev: CanvasPointerMoveEvent) => {
         const entity = app.canvasStateStore.page.get().entities.get(entityId);
         assert(entity !== undefined, `entity not found: ${entityId}`);
-        assert(entity instanceof PathEntity);
-        const maxValue = getMaxCornerRadius(entity.graph.getOutline().points);
+        assert(isPathEntity(entity));
+        const maxValue = getMaxCornerRadius(
+            PathEntityHandle.getGraph(entity).getOutline().points,
+        );
 
         const dx = ev.point.x - ev.startPoint.x;
         const dy = ev.point.y - ev.startPoint.y;

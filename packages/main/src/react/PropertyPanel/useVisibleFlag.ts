@@ -20,7 +20,7 @@ export function useVisibleFlag(
     if (
         selectedEntities.some((entity) =>
             propertyKeys.some((propertyKey) =>
-                entity.isPropertySupported(propertyKey),
+                app.entityHandle.isPropertySupported(entity, propertyKey),
             ),
         )
     ) {

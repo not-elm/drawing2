@@ -1,4 +1,4 @@
-import type { Entity } from "../core/Entity";
+import type { Entity, EntityHandleMap } from "../core/Entity";
 import type { Page } from "../core/Page";
 import type { Point } from "../core/shape/Point";
 import { assert } from "./assert";
@@ -23,6 +23,7 @@ export function testHitEntities(
     page: Page,
     point: Point,
     scale: number,
+    entityHandle: EntityHandleMap,
     marginInCanvas = 8,
 ): HitTestResult {
     const margin = marginInCanvas / scale;
@@ -32,8 +33,8 @@ export function testHitEntities(
         const entity = page.entities.get(entityId);
         assert(entity !== undefined, `Entity not found: ${entityId}`);
 
-        const { point: hitPoint, distance } = entity
-            .getShape()
+        const { point: hitPoint, distance } = entityHandle
+            .getShape(entity)
             .getDistance(point);
         if (distance <= margin) {
             const entry: HitTestResultEntry<Entity> = {

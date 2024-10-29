@@ -14,7 +14,7 @@ import { randomId } from "../../lib/randomId";
 import {
     PROPERTY_KEY_ARROW_HEAD_NODE_IDS,
     PROPERTY_KEY_CORNER_RADIUS,
-    PathEntity,
+    type PathEntity,
 } from "../entity/PathEntity/PathEntity";
 import { PROPERTY_KEY_COLOR_ID } from "../property/Colors";
 import { PROPERTY_KEY_FILL_STYLE } from "../property/FillStyle";
@@ -50,7 +50,7 @@ export class NewShapeModeController extends ModeController {
 
         app.setMode(SelectEntityModeController.MODE_NAME);
         app.canvasStateStore.unselectAll();
-        app.canvasStateStore.select(shape.props.id);
+        app.canvasStateStore.select(shape.id);
 
         setupSelectionTransformPointerEventHandlers(
             app,
@@ -66,7 +66,7 @@ export class NewShapeModeController extends ModeController {
         app.gestureRecognizer.addPointerUpHandler(ev.pointerId, (app, ev) => {
             if (ev.isTap) {
                 app.canvasStateStore.edit((draft) => {
-                    draft.deleteEntity(shape.props.id);
+                    draft.deleteEntity(shape.id);
                 });
             }
         });
@@ -83,26 +83,44 @@ export class NewShapeModeController extends ModeController {
         graph.addEdge(bottomRightNode, bottomLeftNode);
         graph.addEdge(bottomLeftNode, topLeftNode);
 
-        const shape = new PathEntity(
-            {
-                id: randomId(),
-                [PROPERTY_KEY_COLOR_ID]: app.defaultPropertyStore.state
-                    .get()
-                    .getOrDefault(PROPERTY_KEY_COLOR_ID, 0),
-                [PROPERTY_KEY_STROKE_STYLE]: app.defaultPropertyStore.state
-                    .get()
-                    .getOrDefault(PROPERTY_KEY_STROKE_STYLE, "solid"),
-                [PROPERTY_KEY_STROKE_WIDTH]: app.defaultPropertyStore.state
-                    .get()
-                    .getOrDefault(PROPERTY_KEY_STROKE_WIDTH, 2),
-                [PROPERTY_KEY_FILL_STYLE]: app.defaultPropertyStore.state
-                    .get()
-                    .getOrDefault(PROPERTY_KEY_FILL_STYLE, "none"),
-                [PROPERTY_KEY_CORNER_RADIUS]: 0,
-                [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]: [],
-            },
-            graph,
-        );
+        const shape: PathEntity = {
+            id: randomId(),
+            type: "path",
+            nodes: [
+                { id: topLeftNode.id, x: topLeftNode.x, y: topLeftNode.y },
+                { id: topRightNode.id, x: topRightNode.x, y: topRightNode.y },
+                {
+                    id: bottomRightNode.id,
+                    x: bottomRightNode.x,
+                    y: bottomRightNode.y,
+                },
+                {
+                    id: bottomLeftNode.id,
+                    x: bottomLeftNode.x,
+                    y: bottomLeftNode.y,
+                },
+            ],
+            edges: [
+                [topLeftNode.id, topRightNode.id],
+                [topRightNode.id, bottomRightNode.id],
+                [bottomRightNode.id, bottomLeftNode.id],
+                [bottomLeftNode.id, topLeftNode.id],
+            ],
+            [PROPERTY_KEY_COLOR_ID]: app.defaultPropertyStore.state
+                .get()
+                .getOrDefault(PROPERTY_KEY_COLOR_ID, 0),
+            [PROPERTY_KEY_STROKE_STYLE]: app.defaultPropertyStore.state
+                .get()
+                .getOrDefault(PROPERTY_KEY_STROKE_STYLE, "solid"),
+            [PROPERTY_KEY_STROKE_WIDTH]: app.defaultPropertyStore.state
+                .get()
+                .getOrDefault(PROPERTY_KEY_STROKE_WIDTH, 2),
+            [PROPERTY_KEY_FILL_STYLE]: app.defaultPropertyStore.state
+                .get()
+                .getOrDefault(PROPERTY_KEY_FILL_STYLE, "none"),
+            [PROPERTY_KEY_CORNER_RADIUS]: 0,
+            [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]: [],
+        };
 
         app.canvasStateStore.edit((draft) => {
             draft.setEntity(shape);

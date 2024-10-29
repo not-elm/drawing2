@@ -18,7 +18,11 @@ export function useSelectedPropertyValue<T = unknown>(
     const values = new Set(
         selectedEntities
             .map((entity) =>
-                entity.getProperty<T | undefined>(propertyKey, undefined),
+                app.entityHandle.getProperty<T | undefined>(
+                    entity,
+                    propertyKey,
+                    undefined,
+                ),
             )
             .filter(isNotNullish),
     ) as Set<ColorId>;

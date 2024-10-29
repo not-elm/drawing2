@@ -1,7 +1,10 @@
 import { LinkToEdge } from "../core/Link";
 import { SelectEntityModeController } from "../core/SelectEntityModeController";
 import { Point } from "../core/shape/Point";
-import { PathEntity } from "../default/entity/PathEntity/PathEntity";
+import {
+    PathEntityHandle,
+    isPathEntity,
+} from "../default/entity/PathEntity/PathEntity";
 import { assert } from "../lib/assert";
 import { useAtom } from "./hooks/useAtom";
 import { useApp } from "./useApp";
@@ -36,16 +39,16 @@ export function LinkToEdgeGuide({ link }: { link: LinkToEdge }) {
 
     const entity = page.entities.get(link.entityId);
     assert(entity !== undefined, `Entity ${link.entityId} not found`);
-    const rect = entity.getShape().getBoundingRect();
+    const rect = app.entityHandle.getShape(entity).getBoundingRect();
 
     const path = page.entities.get(link.pathId);
     assert(path !== undefined, `Path ${link.pathId} not found`);
-    assert(path instanceof PathEntity, `Entity ${link.pathId} is not a path`);
+    assert(isPathEntity(path), `Entity ${link.pathId} is not a path`);
 
-    const p1 = path.getNodeById(link.p1Id);
+    const p1 = PathEntityHandle.getNodeById(path, link.p1Id);
     assert(p1 !== undefined, `Node ${link.p1Id} not found`);
 
-    const p2 = path.getNodeById(link.p2Id);
+    const p2 = PathEntityHandle.getNodeById(path, link.p2Id);
     assert(p2 !== undefined, `Node ${link.p2Id} not found`);
 
     const linkPointX = p1.x * (1 - link.r) + p2.x * link.r;

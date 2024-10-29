@@ -1,12 +1,10 @@
 import type { App } from "../../../core/App";
 import {
-    Entity,
-    type EntityProps,
+    type Entity,
+    EntityHandle,
     type EntityTapEvent,
 } from "../../../core/Entity";
-import type { SerializedEntity } from "../../../core/EntityConverter";
-import type { JSONObject } from "../../../core/JSONObject";
-import { Graph, type GraphEdge, GraphNode } from "../../../core/shape/Graph";
+import { Graph, GraphNode } from "../../../core/shape/Graph";
 import { Point } from "../../../core/shape/Point";
 import type { TransformMatrix } from "../../../core/shape/TransformMatrix";
 import { assert } from "../../../lib/assert";
@@ -21,15 +19,20 @@ import {
 } from "../../property/StrokeStyle";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../../property/StrokeWidth";
 
+import type { ComponentType } from "react";
 import { getMaxCornerRadius } from "../../../core/SelectEntityModeController";
 import { SelectPathModeController } from "../../../core/SelectPathModeController";
 import type { Shape } from "../../../core/shape/Shape";
+import { PathView } from "./PathView";
 
 export const PROPERTY_KEY_CORNER_RADIUS = "cornerRadius";
 export const PROPERTY_KEY_ARROW_HEAD_NODE_IDS = "arrowHeadNodeIds";
 
-interface Props extends EntityProps {
-    id: string;
+export interface PathEntity extends Entity {
+    readonly type: "path";
+    readonly id: string;
+    nodes: { id: string; x: number; y: number }[];
+    edges: [string, string][];
     [PROPERTY_KEY_COLOR_ID]: ColorId;
     [PROPERTY_KEY_STROKE_STYLE]: StrokeStyle;
     [PROPERTY_KEY_STROKE_WIDTH]: number;
@@ -38,132 +41,64 @@ interface Props extends EntityProps {
     [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]: string[];
 }
 
-export class PathEntity extends Entity<Props> {
-    readonly type = "path";
+export class PathEntityHandle extends EntityHandle<PathEntity> {
+    public readonly type = "path";
 
-    constructor(
-        props: Props,
-        readonly graph: Graph,
-    ) {
-        super(props);
+    getShape(entity: PathEntity): Shape {
+        return PathEntityHandle.getGraph(entity);
     }
 
-    setProperty(propertyKey: string, value: unknown): PathEntity {
-        if (!this.isPropertySupported(propertyKey)) return this;
-
-        return new PathEntity(
-            {
-                ...this.props,
-                [propertyKey]: value,
-            },
-            this.graph,
-        );
+    getView(): ComponentType<{ entity: PathEntity }> {
+        return PathView;
     }
 
-    transform(transform: TransformMatrix): PathEntity {
-        const graph = this.graph.clone();
-        for (const node of this.graph.nodes.values()) {
+    transform(entity: PathEntity, transform: TransformMatrix): PathEntity {
+        const graph = PathEntityHandle.getGraph(entity);
+        for (const node of graph.nodes.values()) {
             graph.setNodePosition(
                 node.id,
                 transform.apply(new Point(node.x, node.y)),
             );
         }
 
-        return new PathEntity(this.props, graph);
+        return PathEntityHandle.setGraph(entity, graph);
     }
 
-    getNodes(): GraphNode[] {
-        return [...this.graph.nodes.values()];
+    static getNodes(entity: PathEntity): GraphNode[] {
+        return entity.nodes.map(
+            ({ id, x, y }) => new GraphNode(id, new Point(x, y)),
+        );
     }
 
-    getNodeById(nodeId: string): GraphNode | undefined {
-        return this.graph.nodes.get(nodeId);
+    static getNodeById(
+        entity: PathEntity,
+        nodeId: string,
+    ): GraphNode | undefined {
+        const data = entity.nodes.find((node) => node.id === nodeId);
+        if (!data) return undefined;
+
+        return new GraphNode(data.id, new Point(data.x, data.y));
     }
 
-    getEdges(): GraphEdge[] {
-        return this.graph.getEdges();
-    }
-
-    getShape(): Shape {
-        return this.graph;
-    }
-
-    setNodePosition(nodeId: string, position: Point): PathEntity {
-        const graph = this.graph.clone();
-        graph.setNodePosition(nodeId, position);
-
-        return new PathEntity(this.props, graph);
-    }
-
-    serialize(): SerializedEntity {
+    static setNodePosition(
+        entity: PathEntity,
+        nodeId: string,
+        position: Point,
+    ): PathEntity {
         return {
-            id: this.props.id,
-            type: "path",
-            nodes: [...this.graph.nodes.values()].map((node) => ({
-                id: node.id,
-                x: node.x,
-                y: node.y,
-            })),
-            edges: this.graph
-                .getEdges()
-                .map((edge) => [edge.p1.id, edge.p2.id]),
-            colorId: this.props.colorId,
-            strokeStyle: this.props.strokeStyle,
-            strokeWidth: this.props.strokeWidth,
-            fillStyle: this.props.fillStyle,
-            cornerRadius: this.props.cornerRadius,
-            arrowHeadNodeIds: this.props.arrowHeadNodeIds,
-        } satisfies SerializedPathEntity;
+            ...entity,
+            nodes: entity.nodes.map((node) =>
+                node.id === nodeId
+                    ? { ...node, x: position.x, y: position.y }
+                    : node,
+            ),
+        };
     }
 
-    static deserialize(data: JSONObject): PathEntity {
-        const serialized = data as unknown as SerializedPathEntity;
-        const nodes = new Map(
-            serialized.nodes.map((serializedNode) => {
-                const node = new GraphNode(
-                    serializedNode.id,
-                    new Point(serializedNode.x, serializedNode.y),
-                );
-                return [node.id, node];
-            }),
-        );
-
-        const graph = Graph.create();
-        for (const edge of serialized.edges) {
-            const node1 = nodes.get(edge[0]);
-            assert(
-                node1 !== undefined,
-                `node ${edge[0]} is not found in path ${serialized.id}`,
-            );
-
-            const node2 = nodes.get(edge[1]);
-            assert(
-                node2 !== undefined,
-                `node ${edge[1]} is not found in path ${serialized.id}`,
-            );
-
-            graph.addEdge(node1, node2);
-        }
-
-        return new PathEntity(
-            {
-                id: serialized.id,
-                [PROPERTY_KEY_COLOR_ID]: serialized.colorId,
-                [PROPERTY_KEY_STROKE_STYLE]: serialized.strokeStyle,
-                [PROPERTY_KEY_STROKE_WIDTH]: serialized.strokeWidth,
-                [PROPERTY_KEY_FILL_STYLE]: serialized.fillStyle,
-                [PROPERTY_KEY_CORNER_RADIUS]: serialized.cornerRadius,
-                [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]:
-                    serialized.arrowHeadNodeIds ?? [],
-            },
-            graph,
-        );
-    }
-
-    onTap(app: App, ev: EntityTapEvent) {
-        if (ev.previousSelectedEntities.has(this.props.id)) {
+    onTap(entity: PathEntity, app: App, ev: EntityTapEvent) {
+        if (ev.previousSelectedEntities.has(entity.id)) {
             app.canvasStateStore.unselectAll();
-            app.canvasStateStore.select(this.props.id);
+            app.canvasStateStore.select(entity.id);
             app.setMode(SelectPathModeController.MODE_NAME);
         }
         // if (
@@ -200,39 +135,66 @@ export class PathEntity extends Entity<Props> {
         // }
     }
 
-    onTransformEnd(app: App) {
-        this.constraintCornerRadius(app);
+    onTransformEnd(entity: PathEntity, app: App) {
+        this.constraintCornerRadius(entity, app);
     }
 
-    private constraintCornerRadius(app: App) {
-        const maxCornerRadius = getMaxCornerRadius(
-            this.graph.getOutline().points,
-        );
-        if (maxCornerRadius < this.props[PROPERTY_KEY_CORNER_RADIUS]) {
+    private constraintCornerRadius(entity: PathEntity, app: App) {
+        const graph = PathEntityHandle.getGraph(entity);
+        const maxCornerRadius = getMaxCornerRadius(graph.getOutline().points);
+        if (maxCornerRadius < entity[PROPERTY_KEY_CORNER_RADIUS]) {
             app.canvasStateStore.edit((draft) => {
                 draft.updateProperty(
-                    [this.props.id],
+                    [entity.id],
                     PROPERTY_KEY_CORNER_RADIUS,
                     maxCornerRadius,
                 );
             });
         }
     }
+
+    static getGraph(entity: PathEntity): Graph {
+        const nodes = new Map<string, GraphNode>();
+        for (const node of PathEntityHandle.getNodes(entity)) {
+            nodes.set(
+                node.id,
+                new GraphNode(node.id, new Point(node.x, node.y)),
+            );
+        }
+
+        const graph = Graph.create();
+        for (const edge of entity.edges) {
+            const node1 = nodes.get(edge[0]);
+            assert(
+                node1 !== undefined,
+                `node ${edge[0]} is not found in path ${entity.id}`,
+            );
+
+            const node2 = nodes.get(edge[1]);
+            assert(
+                node2 !== undefined,
+                `node ${edge[1]} is not found in path ${entity.id}`,
+            );
+
+            graph.addEdge(node1, node2);
+        }
+
+        return graph;
+    }
+
+    static setGraph(entity: PathEntity, graph: Graph): PathEntity {
+        return {
+            ...entity,
+            nodes: [...graph.nodes.values()].map((node) => ({
+                id: node.id,
+                x: node.x,
+                y: node.y,
+            })),
+            edges: graph.getEdges().map((edge) => [edge.p1.id, edge.p2.id]),
+        };
+    }
 }
 
-interface SerializedPathEntity extends JSONObject {
-    id: string;
-    type: "path";
-    nodes: {
-        id: string;
-        x: number;
-        y: number;
-    }[];
-    edges: [string, string][];
-    colorId: ColorId;
-    strokeStyle: StrokeStyle;
-    strokeWidth: number;
-    fillStyle: FillStyle;
-    cornerRadius: number;
-    arrowHeadNodeIds: string[];
+export function isPathEntity(entity: Entity): entity is PathEntity {
+    return entity.type === "path";
 }

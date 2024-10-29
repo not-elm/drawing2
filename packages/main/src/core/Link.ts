@@ -1,5 +1,9 @@
-import { PathEntity } from "../default/entity/PathEntity/PathEntity";
+import {
+    PathEntityHandle,
+    isPathEntity,
+} from "../default/entity/PathEntity/PathEntity";
 import { assert } from "../lib/assert";
+import type { EntityHandleMap } from "./Entity";
 import type { JSONObject } from "./JSONObject";
 import type { PageDraft } from "./PageDraft";
 import { Line } from "./shape/Line";
@@ -19,7 +23,7 @@ export abstract class Link {
     /**
      * Applies the link to the draft.
      */
-    abstract apply(draft: PageDraft): void;
+    abstract apply(draft: PageDraft, entityHandle: EntityHandleMap): void;
 
     abstract serialize(): SerializedLink;
 }
@@ -96,7 +100,7 @@ export class LinkCollection {
         }
     }
 
-    apply(draft: PageDraft): void {
+    apply(draft: PageDraft, entityHandle: EntityHandleMap): void {
         let evaluatedDirtyIds = new Set<string>();
 
         while (evaluatedDirtyIds.size < draft.dirtyEntityIds.size) {
@@ -117,7 +121,7 @@ export class LinkCollection {
             for (const linkId of linkIds) {
                 const link = this.linkById.get(linkId);
                 assert(link !== undefined, `Link not found: ${linkId}`);
-                link.apply(draft);
+                link.apply(draft, entityHandle);
             }
 
             evaluatedDirtyIds = newDirtyIds;
@@ -172,16 +176,16 @@ export class LinkToRect extends Link {
         return [this.rectEntityId, this.pathId];
     }
 
-    apply(draft: PageDraft): void {
+    apply(draft: PageDraft, entityHandle: EntityHandleMap): void {
         const rectEntity = draft.getEntity(this.rectEntityId);
-        const rect = rectEntity.getShape().getBoundingRect();
+        const rect = entityHandle.getShape(rectEntity).getBoundingRect();
 
         const pathEntity = draft.getEntity(this.pathId);
         assert(
-            pathEntity instanceof PathEntity,
+            isPathEntity(pathEntity),
             `Entity is not a path: ${this.pathId}`,
         );
-        const node = pathEntity.getNodeById(this.nodeId);
+        const node = PathEntityHandle.getNodeById(pathEntity, this.nodeId);
         if (node === undefined) {
             draft.deleteLink(this.id);
             return;
@@ -256,27 +260,18 @@ export class LinkToEdge extends Link {
         return [this.entityId, this.pathId];
     }
 
-    apply(draft: PageDraft): void {
-        this.updateParameter(draft);
+    apply(draft: PageDraft, entityHandle: EntityHandleMap): void {
+        this.updateParameter(draft, entityHandle);
 
         const entity = draft.getEntity(this.entityId);
         const path = draft.getEntity(this.pathId);
-        assert(
-            path instanceof PathEntity,
-            `Entity is not a path: ${path.type}`,
-        );
+        assert(isPathEntity(path), `Entity is not a path: ${path.type}`);
 
-        const p1 = path.getNodeById(this.p1Id);
-        assert(
-            p1 !== undefined,
-            `Node not found: ${this.p1Id} in ${path.props.id}`,
-        );
+        const p1 = PathEntityHandle.getNodeById(path, this.p1Id);
+        assert(p1 !== undefined, `Node not found: ${this.p1Id} in ${path.id}`);
 
-        const p2 = path.getNodeById(this.p2Id);
-        assert(
-            p2 !== undefined,
-            `Node not found: ${this.p2Id} in ${path.props.id}`,
-        );
+        const p2 = PathEntityHandle.getNodeById(path, this.p2Id);
+        assert(p2 !== undefined, `Node not found: ${this.p2Id} in ${path.id}`);
 
         const norm = Math.hypot(p2.x - p1.x, p2.y - p1.y);
 
@@ -288,17 +283,18 @@ export class LinkToEdge extends Link {
         const px = -vy;
         const py = vx;
 
-        const rect = entity.getShape().getBoundingRect();
+        const rect = entityHandle.getShape(entity).getBoundingRect();
 
         const x = p1.x + vx * norm * this.r + px * this.distance;
         const y = p1.y + vy * norm * this.r + py * this.distance;
 
-        const newEntity = entity.transform(
+        const newEntity = entityHandle.transform(
+            entity,
             translate(x - rect.center.x, y - rect.center.y),
         );
 
         draft.setEntity(newEntity);
-        this.lastRect = newEntity.getShape().getBoundingRect();
+        this.lastRect = entityHandle.getShape(newEntity).getBoundingRect();
     }
 
     serialize(): SerializedLinkToEdge {
@@ -326,18 +322,18 @@ export class LinkToEdge extends Link {
         );
     }
 
-    private updateParameter(draft: PageDraft): void {
+    private updateParameter(
+        draft: PageDraft,
+        entityHandle: EntityHandleMap,
+    ): void {
         const entity = draft.getEntity(this.entityId);
-        const rect = entity.getShape().getBoundingRect();
+        const rect = entityHandle.getShape(entity).getBoundingRect();
         if (this.lastRect.equals(rect)) return;
 
         const path = draft.getEntity(this.pathId);
-        assert(
-            path instanceof PathEntity,
-            `Entity is not a path: ${this.pathId}`,
-        );
+        assert(isPathEntity(path), `Entity is not a path: ${this.pathId}`);
 
-        const points = path.graph.getOutline().points;
+        const points = PathEntityHandle.getGraph(path).getOutline().points;
         if (points.length === 0) return;
 
         const entries = [];

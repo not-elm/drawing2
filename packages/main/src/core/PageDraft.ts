@@ -1,6 +1,10 @@
-import { PathEntity } from "../default/entity/PathEntity/PathEntity";
+import {
+    PathEntityHandle,
+    isPathEntity,
+} from "../default/entity/PathEntity/PathEntity";
 import { assert } from "../lib/assert";
-import type { Entity } from "./Entity";
+import type { Entity, EntityHandleMap } from "./Entity";
+import type { JSONValue } from "./JSONObject";
 import type { Link, LinkCollection } from "./Link";
 import { Page } from "./Page";
 import type { Point } from "./shape/Point";
@@ -18,7 +22,10 @@ class PageDraftCore {
     public readonly deletedEntityIds = new Set<string>();
     public readonly links: LinkCollection;
 
-    constructor(page: Page) {
+    constructor(
+        page: Page,
+        readonly entityHandle: EntityHandleMap,
+    ) {
         this.entities = new Map(page.entities);
         this.entityIds = [...page.entityIds];
         this.links = page.links.copy();
@@ -39,14 +46,14 @@ class PageDraftCore {
     }
 
     setEntity(entity: Entity): void {
-        if (!this.entities.has(entity.props.id)) {
-            this.entityIds.push(entity.props.id);
+        if (!this.entities.has(entity.id)) {
+            this.entityIds.push(entity.id);
         }
-        this.entities.set(entity.props.id, entity);
+        this.entities.set(entity.id, entity);
 
-        this.dirtyEntityIds.add(entity.props.id);
-        this.updatedEntityIds.add(entity.props.id);
-        this.deletedEntityIds.delete(entity.props.id);
+        this.dirtyEntityIds.add(entity.id);
+        this.updatedEntityIds.add(entity.id);
+        this.deletedEntityIds.delete(entity.id);
     }
 
     deleteEntity(entityId: string): void {
@@ -88,23 +95,23 @@ export class PageDraft extends PageDraftCore {
     transformEntities(entityIds: string[], transform: TransformMatrix) {
         for (const entityId of entityIds) {
             const entity = this.getEntity(entityId);
-            this.setEntity(entity.transform(transform));
+            this.setEntity(this.entityHandle.transform(entity, transform));
         }
     }
 
     setPointPosition(pathId: string, nodeId: string, point: Point) {
         const entity = this.getEntity(pathId);
         assert(
-            entity instanceof PathEntity,
+            isPathEntity(entity),
             `Entity ${pathId} is not a path: ${entity.type}`,
         );
-        this.setEntity(entity.setNodePosition(nodeId, point));
+        this.setEntity(PathEntityHandle.setNodePosition(entity, nodeId, point));
     }
 
-    updateProperty(entityIds: string[], key: string, value: unknown) {
+    updateProperty(entityIds: string[], key: string, value: JSONValue) {
         for (const entityId of entityIds) {
             const entity = this.getEntity(entityId);
-            this.setEntity(entity.setProperty(key, value));
+            this.setEntity(this.entityHandle.setProperty(entity, key, value));
         }
     }
 
@@ -252,7 +259,11 @@ export class PageDraft extends PageDraftCore {
             const otherEntity = this.getEntity(entityId);
             assert(otherEntity !== undefined, `Entity ${entityId} not found`);
 
-            if (refEntity.getShape().isOverlapWith(otherEntity.getShape())) {
+            if (
+                this.entityHandle
+                    .getShape(refEntity)
+                    .isOverlapWith(this.entityHandle.getShape(otherEntity))
+            ) {
                 return { entityId: entityId, globalIndex };
             }
         }
@@ -284,7 +295,11 @@ export class PageDraft extends PageDraftCore {
 
             const otherEntity = this.getEntity(entityId);
 
-            if (refEntity.getShape().isOverlapWith(otherEntity.getShape())) {
+            if (
+                this.entityHandle
+                    .getShape(refEntity)
+                    .isOverlapWith(this.entityHandle.getShape(otherEntity))
+            ) {
                 return { entityId: entityId, globalIndex };
             }
         }

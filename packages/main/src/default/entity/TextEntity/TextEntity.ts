@@ -1,8 +1,11 @@
+import type { ComponentType } from "react";
 import type { App } from "../../../core/App";
-import { Entity, type EntityTapEvent } from "../../../core/Entity";
-import type { SerializedEntity } from "../../../core/EntityConverter";
-import type { JSONObject } from "../../../core/JSONObject";
-import { Rect, type Shape } from "../../../core/shape/Shape";
+import {
+    type Entity,
+    EntityHandle,
+    type EntityTapEvent,
+} from "../../../core/Entity";
+import { Rect } from "../../../core/shape/Shape";
 import type { TransformMatrix } from "../../../core/shape/TransformMatrix";
 import { EditTextModeController } from "../../mode/EditTextModeController";
 import { type ColorId, PROPERTY_KEY_COLOR_ID } from "../../property/Colors";
@@ -14,120 +17,85 @@ import {
     PROPERTY_KEY_TEXT_ALIGNMENT_X,
     type TextAlignment,
 } from "../../property/TextAlignment";
+import { TextView } from "./TextView";
 
 export const PROPERTY_KEY_CONTENT = "content";
 
-export class TextEntity extends Entity<{
-    id: string;
-    // If sizingMode=auto, width and height will be automatically set by application
-    rect: Rect;
+export interface TextEntity extends Entity {
+    readonly type: "text";
+    readonly id: string;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
     [PROPERTY_KEY_SIZING_MODE]: SizingMode;
     [PROPERTY_KEY_TEXT_ALIGNMENT_X]: TextAlignment;
     [PROPERTY_KEY_COLOR_ID]: ColorId;
     [PROPERTY_KEY_CONTENT]: string;
-}> {
-    readonly type = "text";
+}
 
-    transform(transform: TransformMatrix) {
-        const oldRect = this.props.rect;
-        const newRect = transform.apply(this.props.rect);
+export class TextEntityHandle extends EntityHandle<TextEntity> {
+    public readonly type = "text";
+
+    getShape(entity: TextEntity): Rect {
+        return Rect.of(entity.x, entity.y, entity.width, entity.height);
+    }
+
+    getView(): ComponentType<{ entity: TextEntity }> {
+        return TextView;
+    }
+
+    transform(entity: TextEntity, transform: TransformMatrix): TextEntity {
+        const oldRect = Rect.of(
+            entity.x,
+            entity.y,
+            entity.width,
+            entity.height,
+        );
+        const newRect = transform.apply(oldRect);
         const newSizingMode =
             newRect.width !== oldRect.width || newRect.height !== oldRect.height
                 ? "fixed"
-                : this.props[PROPERTY_KEY_SIZING_MODE];
-
-        return new TextEntity({
-            ...this.props,
-            rect: newRect,
-            [PROPERTY_KEY_SIZING_MODE]: newSizingMode,
-        });
-    }
-
-    serialize(): SerializedEntity {
+                : entity[PROPERTY_KEY_SIZING_MODE];
         return {
-            id: this.props.id,
-            type: "text",
-            x: this.props.rect.left,
-            y: this.props.rect.top,
-            width: this.props.rect.width,
-            height: this.props.rect.height,
-            sizingMode: this.props.sizingMode,
-            textAlignment: this.props[PROPERTY_KEY_TEXT_ALIGNMENT_X],
-            content: this.props.content,
-        } satisfies SerializedTextEntity;
+            ...entity,
+            x: newRect.left,
+            y: newRect.top,
+            width: newRect.width,
+            height: newRect.height,
+            [PROPERTY_KEY_SIZING_MODE]: newSizingMode,
+        };
     }
 
-    setProperty(propertyKey: string, value: unknown): TextEntity {
-        if (!this.isPropertySupported(propertyKey)) return this;
-
-        return new TextEntity({
-            ...this.props,
-            [propertyKey]: value,
-        });
-    }
-
-    static deserialize(data: JSONObject): TextEntity {
-        const serialized = data as unknown as SerializedTextEntity;
-
-        return new TextEntity({
-            id: serialized.id,
-            rect: Rect.of(
-                serialized.x,
-                serialized.y,
-                serialized.width,
-                serialized.height,
-            ),
-            sizingMode: serialized.sizingMode,
-            [PROPERTY_KEY_TEXT_ALIGNMENT_X]: serialized.textAlignment,
-            [PROPERTY_KEY_COLOR_ID]: 0,
-            content: serialized.content,
-        });
-    }
-
-    getShape(): Shape {
-        return this.props.rect;
-    }
-
-    onTap(app: App, ev: EntityTapEvent) {
+    onTap(entity: TextEntity, app: App, ev: EntityTapEvent) {
         if (
             ev.previousSelectedEntities.size === 1 &&
-            ev.previousSelectedEntities.has(this.props.id)
+            ev.previousSelectedEntities.has(entity.id)
         ) {
             app.setMode(EditTextModeController.MODE_NAME);
         }
     }
 
-    onTextEditEnd(app: App) {
-        if (this.props.content === "") {
-            app.canvasStateStore.edit((draft) =>
-                draft.deleteEntity(this.props.id),
-            );
+    onTextEditEnd(entity: TextEntity, app: App) {
+        if (entity.content === "") {
+            app.canvasStateStore.edit((draft) => draft.deleteEntity(entity.id));
         }
     }
 
-    onViewResize(app: App, width: number, height: number) {
-        const newWidth =
-            this.props.sizingMode === "content" ? width : this.props.rect.width;
+    onViewResize(entity: TextEntity, app: App, width: number, height: number) {
+        const rect = this.getShape(entity);
+        const newWidth = entity.sizingMode === "content" ? width : rect.width;
         const newHeight = height;
 
-        app.canvasStateStore.edit((draft) =>
-            draft.updateProperty(
-                [this.props.id],
-                "rect",
-                Rect.fromSize(this.props.rect.topLeft, newWidth, newHeight),
-            ),
-        );
+        app.canvasStateStore.edit((draft) => {
+            draft.updateProperty([entity.id], "x", rect.left);
+            draft.updateProperty([entity.id], "y", rect.top);
+            draft.updateProperty([entity.id], "width", newWidth);
+            draft.updateProperty([entity.id], "height", newHeight);
+        });
     }
 }
 
-interface SerializedTextEntity extends SerializedEntity {
-    id: string;
-    type: "text";
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    sizingMode: SizingMode;
-    textAlignment: TextAlignment;
-    content: string;
+export function isTextEntity(entity: Entity): entity is TextEntity {
+    return entity.type === "text";
 }

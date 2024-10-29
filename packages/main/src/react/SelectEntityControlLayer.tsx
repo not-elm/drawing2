@@ -64,13 +64,13 @@ function SelectEntityControlLayerInner({
             )}
             {entities.map((entity) => (
                 <path
-                    key={entity.props.id}
+                    key={entity.id}
                     css={{
                         stroke: "var(--color-selection)",
                         fill: "none",
                     }}
                     d={convertGeometryToPathDefinition(
-                        entity.getShape(), // TODO: これはOutlineじゃない!
+                        app.entityHandle.getShape(entity),
                         viewport.transform,
                     )}
                     strokeWidth={1}

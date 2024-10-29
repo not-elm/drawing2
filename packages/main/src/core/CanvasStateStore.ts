@@ -1,10 +1,9 @@
 import { assert } from "../lib/assert";
 import type { App } from "./App";
 import { LinkCollection } from "./Link";
+import type { SelectedEntityChangeEvent } from "./ModeController";
 import { Page } from "./Page";
 import { PageDraft } from "./PageDraft";
-
-import type { SelectedEntityChangeEvent } from "./ModeController";
 import { atom, derived } from "./atom/Atom";
 import { Rect } from "./shape/Shape";
 
@@ -33,7 +32,7 @@ export class CanvasStateStore {
 
         return Rect.union(
             selectedEntities.map((entity) =>
-                entity.getShape().getBoundingRect(),
+                this.app.entityHandle.getShape(entity).getBoundingRect(),
             ),
         );
     });
@@ -41,13 +40,13 @@ export class CanvasStateStore {
     constructor(private readonly app: App) {}
 
     edit(updater: (draft: PageDraft) => void) {
-        const draft = new PageDraft(this.page.get());
+        const draft = new PageDraft(this.page.get(), this.app.entityHandle);
         updater(draft);
         for (const entityId of draft.deletedEntityIds) {
             this.page.get().links.deleteByEntityId(entityId);
         }
 
-        this.page.get().links.apply(draft);
+        this.page.get().links.apply(draft, this.app.entityHandle);
         for (const entityId of draft.deletedEntityIds) {
             this.page.get().links.deleteByEntityId(entityId);
         }

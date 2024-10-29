@@ -2,7 +2,9 @@ import type { Property } from "csstype";
 import {
     PROPERTY_KEY_ARROW_HEAD_NODE_IDS,
     PROPERTY_KEY_CORNER_RADIUS,
-    PathEntity,
+    type PathEntity,
+    PathEntityHandle,
+    isPathEntity,
 } from "../default/entity/PathEntity/PathEntity";
 import { NewTextModeController } from "../default/mode/NewTextModeController";
 import { assert } from "../lib/assert";
@@ -98,15 +100,19 @@ export class SelectEntityModeController extends ModeController {
                 const entities = app.canvasStateStore.selectedEntities.get();
                 app.canvasStateStore.edit((draft) => {
                     for (const entity of entities) {
-                        if (!(entity instanceof PathEntity)) continue;
-                        const nodeIds = [...entity.graph.edges.entries()]
+                        if (!isPathEntity(entity)) continue;
+                        const nodeIds = [
+                            ...PathEntityHandle.getGraph(
+                                entity,
+                            ).edges.entries(),
+                        ]
                             .filter(([nodeId, childIds]) => {
                                 return childIds.length === 1;
                             })
                             .map(([nodeId, childIds]) => nodeId);
 
                         draft.updateProperty(
-                            [entity.props.id],
+                            [entity.id],
                             PROPERTY_KEY_ARROW_HEAD_NODE_IDS,
                             nodeIds,
                         );
@@ -141,6 +147,7 @@ export class SelectEntityModeController extends ModeController {
             app.canvasStateStore.page.get(),
             ev.point,
             app.viewportStore.state.get().scale,
+            app.entityHandle,
         );
         const result = hitResult.entities.at(0);
         if (result !== undefined) {
@@ -188,13 +195,14 @@ export class SelectEntityModeController extends ModeController {
             app.canvasStateStore.page.get(),
             ev.point,
             app.viewportStore.state.get().scale,
+            app.entityHandle,
         );
         const result = hitResult.entities.at(0);
         if (result !== undefined) {
-            const entityId = result.target.props.id;
+            const entityId = result.target.id;
             if (!app.canvasStateStore.selectedEntityIds.get().has(entityId)) {
                 app.canvasStateStore.unselectAll();
-                app.canvasStateStore.select(result.target.props.id);
+                app.canvasStateStore.select(result.target.id);
             }
         }
 
@@ -208,15 +216,15 @@ export class SelectEntityModeController extends ModeController {
         const selectedEntities = app.canvasStateStore.selectedEntities.get();
         if (
             selectedEntities.length !== 1 ||
-            !(selectedEntities[0] instanceof PathEntity)
+            !isPathEntity(selectedEntities[0])
         ) {
             return [];
         }
         const entity = selectedEntities[0];
 
         const handles = getCornerRoundHandleData(
-            entity.graph.getOutline().points,
-            entity.getProperty(PROPERTY_KEY_CORNER_RADIUS, 0),
+            PathEntityHandle.getGraph(entity).getOutline().points,
+            entity[PROPERTY_KEY_CORNER_RADIUS],
         );
 
         const visibleHandles: CornerRoundHandleData[] = [];
@@ -240,6 +248,7 @@ export class SelectEntityModeController extends ModeController {
             app.canvasStateStore.page.get(),
             ev.point,
             app.viewportStore.state.get().scale,
+            app.entityHandle,
         ).entities.at(0);
 
         if (hitEntity !== undefined) {
@@ -248,21 +257,23 @@ export class SelectEntityModeController extends ModeController {
 
             const selectedOnlyThisEntity =
                 previousSelectedEntityIds.size === 1 &&
-                previousSelectedEntityIds.has(hitEntity.target.props.id);
+                previousSelectedEntityIds.has(hitEntity.target.id);
 
             if (ev.shiftKey) {
-                app.canvasStateStore.unselect(hitEntity.target.props.id);
+                app.canvasStateStore.unselect(hitEntity.target.id);
             } else {
                 if (!selectedOnlyThisEntity) {
                     app.canvasStateStore.unselectAll();
-                    app.canvasStateStore.select(hitEntity.target.props.id);
+                    app.canvasStateStore.select(hitEntity.target.id);
                 }
             }
 
-            hitEntity.target.onTap(app, {
-                ...ev,
-                previousSelectedEntities: previousSelectedEntityIds,
-            });
+            app.entityHandle
+                .getHandle(hitEntity.target)
+                .onTap(hitEntity.target, app, {
+                    ...ev,
+                    previousSelectedEntities: previousSelectedEntityIds,
+                });
         } else {
             if (!ev.shiftKey) app.canvasStateStore.unselectAll();
         }
@@ -277,7 +288,7 @@ export class SelectEntityModeController extends ModeController {
             app.canvasStateStore.selectedEntityIds.get();
 
         if (!ev.shiftKey) app.canvasStateStore.unselectAll();
-        app.canvasStateStore.select(entity.props.id);
+        app.canvasStateStore.select(entity.id);
 
         setupSelectionTransformPointerEventHandlers(
             app,
@@ -286,7 +297,9 @@ export class SelectEntityModeController extends ModeController {
         );
         app.gestureRecognizer.addPointerUpHandler(ev.pointerId, (app, ev) => {
             if (ev.isTap) {
-                entity.onTap(app, { ...ev, previousSelectedEntities });
+                app.entityHandle
+                    .getHandle(entity)
+                    .onTap(entity, app, { ...ev, previousSelectedEntities });
             }
         });
     }
@@ -444,13 +457,13 @@ export class SelectEntityModeController extends ModeController {
         const selectedEntities = app.canvasStateStore.selectedEntities.get();
         if (
             selectedEntities.length === 1 &&
-            selectedEntities[0] instanceof PathEntity
+            isPathEntity(selectedEntities[0])
         ) {
             const entity = selectedEntities[0];
 
             const handles = getCornerRoundHandleData(
-                entity.graph.getOutline().points,
-                entity.getProperty(PROPERTY_KEY_CORNER_RADIUS, 0),
+                PathEntityHandle.getGraph(entity).getOutline().points,
+                entity[PROPERTY_KEY_CORNER_RADIUS],
             );
 
             for (const handle of handles) {

@@ -1,6 +1,5 @@
 import { assert } from "../lib/assert";
-import type { Entity } from "./Entity";
-import type { EntityConverter, SerializedEntity } from "./EntityConverter";
+import type { Entity, EntityHandleMap } from "./Entity";
 import type { JSONObject } from "./JSONObject";
 import { LinkCollection, type SerializedLink } from "./Link";
 
@@ -23,7 +22,7 @@ export class Page implements Props {
         this.links = props.links;
     }
 
-    getEntitiesInRect(rect: Rect): Entity[] {
+    getEntitiesInRect(rect: Rect, entityHandle: EntityHandleMap): Entity[] {
         return this.entityIds
             .map((entityId) => {
                 const entity = this.entities.get(entityId);
@@ -33,7 +32,9 @@ export class Page implements Props {
                 );
                 return entity;
             })
-            .filter((entity) => entity.getShape().isOverlapWith(rect));
+            .filter((entity) =>
+                entityHandle.getShape(entity).isOverlapWith(rect),
+            );
     }
 
     serialize(): SerializedPage {
@@ -45,31 +46,24 @@ export class Page implements Props {
                     `Entity with id ${entityId} not found`,
                 );
 
-                return entity.serialize();
+                return entity;
             }),
             links: this.links.serialize(),
         };
     }
 
-    static deserialize(
-        page: SerializedPage,
-        entityConverter: EntityConverter,
-    ): Page {
-        const entities = page.entities.map((data) =>
-            entityConverter.deserialize(data),
-        );
-
+    static deserialize(page: SerializedPage): Page {
         return new Page({
             entities: new Map(
-                entities.map((entity) => [entity.props.id, entity]),
+                page.entities.map((entity) => [entity.id, entity]),
             ),
-            entityIds: entities.map((entity) => entity.props.id),
+            entityIds: page.entities.map((entity) => entity.id),
             links: LinkCollection.deserialize(page.links),
         });
     }
 }
 
 export interface SerializedPage extends JSONObject {
-    entities: SerializedEntity[];
+    entities: Entity[];
     links: SerializedLink[];
 }

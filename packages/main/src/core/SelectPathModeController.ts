@@ -1,5 +1,9 @@
 import type { Property } from "csstype";
-import { PathEntity } from "../default/entity/PathEntity/PathEntity";
+import {
+    type PathEntity,
+    PathEntityHandle,
+    isPathEntity,
+} from "../default/entity/PathEntity/PathEntity";
 import { assert } from "../lib/assert";
 import { randomId } from "../lib/randomId";
 import type { App } from "./App";
@@ -53,12 +57,9 @@ export class SelectPathModeController extends ModeController {
         app.canvasStateStore.edit((draft) => {
             for (const entityId of entityIds) {
                 const entity = draft.getEntity(entityId);
-                assert(
-                    entity instanceof PathEntity,
-                    `Invalid entity: ${entity}`,
-                );
+                assert(isPathEntity(entity), `Invalid entity: ${entity}`);
 
-                const graph = entity.graph.clone();
+                const graph = PathEntityHandle.getGraph(entity);
                 const edges = graph
                     .getEdges()
                     .filter((edge) => selectedEdgeIds.has(edge.id));
@@ -71,7 +72,9 @@ export class SelectPathModeController extends ModeController {
                 if (graph.edges.size === 0) {
                     draft.deleteEntity(entityId);
                 } else {
-                    draft.setEntities([new PathEntity(entity.props, graph)]);
+                    draft.setEntities([
+                        PathEntityHandle.setGraph(entity, graph),
+                    ]);
                 }
             }
         });
@@ -109,12 +112,12 @@ export class SelectPathModeController extends ModeController {
 
             const newNode = new GraphNode(randomId(), control.point);
 
-            const graph = control.path.graph.clone();
+            const graph = PathEntityHandle.getGraph(control.path);
             graph.addEdge(control.edge.p1, newNode);
             graph.addEdge(control.edge.p2, newNode);
             graph.deleteEdge(control.edge.p1.id, control.edge.p2.id);
 
-            const newPath = new PathEntity(control.path.props, graph);
+            const newPath = PathEntityHandle.setGraph(control.path, graph);
 
             app.canvasStateStore.edit((draft) => {
                 draft.setEntities([newPath]);
@@ -173,7 +176,7 @@ export class SelectPathModeController extends ModeController {
         }
 
         const path = entities[0];
-        if (!(path instanceof PathEntity)) {
+        if (!isPathEntity(path)) {
             return {
                 edges: [],
                 nodes: [],
@@ -184,9 +187,10 @@ export class SelectPathModeController extends ModeController {
 
         const control = this.getControlByPoint(app, pointerPoint);
         if (control === null) {
+            const graph = PathEntityHandle.getGraph(path);
             return {
-                edges: path.graph.getEdges(),
-                nodes: Array.from(path.graph.nodes.values()),
+                edges: graph.getEdges(),
+                nodes: Array.from(graph.nodes.values()),
                 highlightedItemIds: new Set(),
                 highlightCenterOfEdgeHandle: false,
             };
@@ -194,25 +198,28 @@ export class SelectPathModeController extends ModeController {
 
         switch (control.type) {
             case "node": {
+                const graph = PathEntityHandle.getGraph(path);
                 return {
-                    edges: path.graph.getEdges(),
-                    nodes: Array.from(path.graph.nodes.values()),
+                    edges: graph.getEdges(),
+                    nodes: Array.from(graph.nodes.values()),
                     highlightedItemIds: new Set([control.node.id]),
                     highlightCenterOfEdgeHandle: false,
                 };
             }
             case "edge": {
+                const graph = PathEntityHandle.getGraph(path);
                 return {
-                    edges: path.graph.getEdges(),
-                    nodes: Array.from(path.graph.nodes.values()),
+                    edges: graph.getEdges(),
+                    nodes: Array.from(graph.nodes.values()),
                     highlightedItemIds: new Set([control.edge.id]),
                     highlightCenterOfEdgeHandle: false,
                 };
             }
             case "center-of-edge": {
+                const graph = PathEntityHandle.getGraph(path);
                 return {
-                    edges: path.graph.getEdges(),
-                    nodes: Array.from(path.graph.nodes.values()),
+                    edges: graph.getEdges(),
+                    nodes: Array.from(graph.nodes.values()),
                     highlightedItemIds: new Set([control.edge.id]),
                     highlightCenterOfEdgeHandle: true,
                 };
@@ -241,16 +248,18 @@ export class SelectPathModeController extends ModeController {
         if (entities.length !== 1) return null;
 
         const path = entities[0];
-        if (!(path instanceof PathEntity)) return null;
+        if (!isPathEntity(path)) return null;
 
-        for (const node of path.graph.nodes.values()) {
+        const graph = PathEntityHandle.getGraph(path);
+
+        for (const node of graph.nodes.values()) {
             const distance = Math.hypot(node.x - point.x, node.y - point.y);
             if (distance < NODE_CONTROL_HIT_AREA_RADIUS) {
                 return { type: "node", path, node };
             }
         }
 
-        for (const edge of path.graph.getEdges()) {
+        for (const edge of graph.getEdges()) {
             const { p1, p2 } = edge;
             const center = new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
             const distance = Math.hypot(center.x - point.x, center.y - point.y);

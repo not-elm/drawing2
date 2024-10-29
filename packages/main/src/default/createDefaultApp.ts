@@ -1,8 +1,6 @@
 import { App } from "../core/App";
-import { PathEntity } from "./entity/PathEntity/PathEntity";
-import { PathView } from "./entity/PathEntity/PathView";
-import { TextEntity } from "./entity/TextEntity/TextEntity";
-import { TextView } from "./entity/TextEntity/TextView";
+import { PathEntityHandle } from "./entity/PathEntity/PathEntity";
+import { TextEntityHandle } from "./entity/TextEntity/TextEntity";
 import { EditTextModeController } from "./mode/EditTextModeController";
 import { NewPathModeController } from "./mode/NewPathModeController";
 import { NewShapeModeController } from "./mode/NewShapeModeController";
@@ -28,24 +26,8 @@ export function createDefaultApp(): App {
             EditTextModeController.MODE_NAME,
             new EditTextModeController(),
         )
-        .registerEntityView("path", PathView)
-        .registerEntityConverter("path", {
-            deserialize(data) {
-                return PathEntity.deserialize(data);
-            },
-            serialize(entity) {
-                return entity.serialize();
-            },
-        })
-        .registerEntityView("text", TextView)
-        .registerEntityConverter("text", {
-            deserialize(data) {
-                return TextEntity.deserialize(data);
-            },
-            serialize(entity) {
-                return entity.serialize();
-            },
-        });
+        .registerEntityHandle(new PathEntityHandle())
+        .registerEntityHandle(new TextEntityHandle());
 
     syncWithLocalStorage(app);
 

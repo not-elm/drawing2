@@ -4,6 +4,7 @@ import {
     getMaxCornerRadius,
 } from "../../../core/SelectEntityModeController";
 import type { Graph, GraphNode } from "../../../core/shape/Graph";
+import { useApp } from "../../../react/useApp";
 import {
     type ColorId,
     ColorPaletteBackground,
@@ -24,6 +25,7 @@ import {
     PROPERTY_KEY_ARROW_HEAD_NODE_IDS,
     PROPERTY_KEY_CORNER_RADIUS,
     type PathEntity,
+    PathEntityHandle,
 } from "./PathEntity";
 
 export const STROKE_WIDTH_BASE = 5;
@@ -31,7 +33,8 @@ export const STROKE_WIDTH_BASE = 5;
 export const PathView = memo(function PathView({
     entity,
 }: { entity: PathEntity }) {
-    const rect = entity.getShape().getBoundingRect();
+    const app = useApp();
+    const rect = app.entityHandle.getShape(entity).getBoundingRect();
 
     return (
         <div
@@ -41,21 +44,15 @@ export const PathView = memo(function PathView({
             css={{ position: "absolute" }}
         >
             <PathViewInner
-                colorId={entity.getProperty(PROPERTY_KEY_COLOR_ID, 0)}
-                strokeStyle={entity.getProperty(
-                    PROPERTY_KEY_STROKE_STYLE,
-                    "solid",
-                )}
-                strokeWidth={entity.getProperty(PROPERTY_KEY_STROKE_WIDTH, 2)}
-                fillStyle={entity.getProperty(PROPERTY_KEY_FILL_STYLE, "none")}
-                graph={entity.graph}
+                colorId={entity[PROPERTY_KEY_COLOR_ID]}
+                strokeStyle={entity[PROPERTY_KEY_STROKE_STYLE]}
+                strokeWidth={entity[PROPERTY_KEY_STROKE_WIDTH]}
+                fillStyle={entity[PROPERTY_KEY_FILL_STYLE]}
+                graph={PathEntityHandle.getGraph(entity)}
                 top={rect.top}
                 left={rect.left}
-                cornerRadius={entity.getProperty(PROPERTY_KEY_CORNER_RADIUS, 0)}
-                arrowHeadNodeIds={entity.getProperty(
-                    PROPERTY_KEY_ARROW_HEAD_NODE_IDS,
-                    [],
-                )}
+                cornerRadius={entity[PROPERTY_KEY_CORNER_RADIUS]}
+                arrowHeadNodeIds={entity[PROPERTY_KEY_ARROW_HEAD_NODE_IDS]}
             />
         </div>
     );
