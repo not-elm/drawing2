@@ -1,7 +1,10 @@
 import { type WheelEventHandler, useCallback, useEffect } from "react";
 import { LinkGuideLayer } from "./LinkGuideLayer";
+import { SelectByBrushControlLayer } from "./SelectByBrushControlLayer";
 import { SelectEntityControlLayer } from "./SelectEntityControlLayer";
 import { SelectPathControlLayer } from "./SelectPathControlLayer";
+import { SelectedEntityOutlineLayer } from "./SelectedEntityOutlineLayer";
+import { SelectionRectLayer } from "./SelectionRectLayer";
 import { SnapGuideLayer } from "./SnapGuideLayer";
 import { useCell } from "./hooks/useCell";
 import { useResizeObserver } from "./hooks/useResizeObserver";
@@ -99,8 +102,11 @@ export function Canvas() {
                     })}
             </div>
 
+            <SelectedEntityOutlineLayer />
+            <SelectionRectLayer />
             <SelectEntityControlLayer />
             <SelectPathControlLayer />
+            <SelectByBrushControlLayer />
             <LinkGuideLayer />
             <SnapGuideLayer />
         </div>

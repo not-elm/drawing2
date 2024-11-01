@@ -13,10 +13,10 @@ import {
     type SelectedEntityChangeEvent,
 } from "../ModeController";
 import { cell } from "../cell/ICell";
-import { setupMoveNodesPointerEventHandlers } from "../setupMoveNodesPointerEventHandlers";
 import { type GraphEdge, GraphNode } from "../shape/Graph";
 import { Line } from "../shape/Line";
 import { Point } from "../shape/Point";
+import { MoveNodeModeController } from "./MoveNodeModeController";
 import { SelectEntityModeController } from "./SelectEntityModeController";
 
 const NODE_CONTROL_HIT_AREA_RADIUS = 16;
@@ -95,24 +95,16 @@ export class SelectPathModeController extends ModeController {
         if (control.type === "node") {
             this.selectedEdgeIds.set(new Set());
             this.selectedNodeIds.set(new Set([control.node.id]));
-            setupMoveNodesPointerEventHandlers(app, ev, control.path, [
-                control.node.id,
-            ]);
+            app.setMode(MoveNodeModeController.type);
         }
 
         if (control.type === "edge") {
             this.selectedEdgeIds.set(new Set([control.edge.id]));
             this.selectedNodeIds.set(new Set());
-            setupMoveNodesPointerEventHandlers(app, ev, control.path, [
-                control.edge.p1.id,
-                control.edge.p2.id,
-            ]);
+            app.setMode(MoveNodeModeController.type);
         }
 
         if (control.type === "center-of-edge") {
-            this.selectedEdgeIds.set(new Set([control.edge.id]));
-            this.selectedNodeIds.set(new Set());
-
             const newNode = new GraphNode(randomId(), control.point);
 
             const graph = PathEntityHandle.getGraph(control.path);
@@ -124,7 +116,9 @@ export class SelectPathModeController extends ModeController {
 
             app.canvas.edit((builder) => builder.setEntities([newPath]));
 
-            setupMoveNodesPointerEventHandlers(app, ev, newPath, [newNode.id]);
+            this.selectedEdgeIds.set(new Set());
+            this.selectedNodeIds.set(new Set([newNode.id]));
+            app.setMode(MoveNodeModeController.type);
         }
     }
 

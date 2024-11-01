@@ -15,7 +15,9 @@ import { SnapGuideMap } from "./SnapGuideMap";
 import { Viewport } from "./Viewport";
 import { cell } from "./cell/ICell";
 import { MoveEntityModeController } from "./mode/MoveEntityModeController";
+import { MoveNodeModeController } from "./mode/MoveNodeModeController";
 import { ResizeEntityModeController } from "./mode/ResizeEntityModeController";
+import { SelectByBrushModeController } from "./mode/SelectByBrushModeController";
 import { SelectEntityModeController } from "./mode/SelectEntityModeController";
 import { SelectPathModeController } from "./mode/SelectPathModeController";
 import { Point } from "./shape/Point";
@@ -71,6 +73,14 @@ export class App {
         this.addModeController(
             ResizeEntityModeController.type,
             new ResizeEntityModeController(this),
+        );
+        this.addModeController(
+            MoveNodeModeController.type,
+            new MoveNodeModeController(this),
+        );
+        this.addModeController(
+            SelectByBrushModeController.type,
+            new SelectByBrushModeController(this),
         );
 
         this.keyboard.addBinding({

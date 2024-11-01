@@ -13,19 +13,18 @@ import { testHitEntities } from "../../lib/testHitEntities";
 import type { App } from "../App";
 import type { Entity } from "../Entity";
 import { type CanvasPointerEvent, ModeController } from "../ModeController";
-import { type ICell, cell, derived } from "../cell/ICell";
-import { setupBrushSelectPointerEventHandlers } from "../setupBrushSelectPointerEventHandlers";
+import { type ICell, derived } from "../cell/ICell";
 import { setupCornerRadiusHandlePointerEventHandlers } from "../setupCornerRadiusHandlePointerEventHandlers";
 import type { GraphNode } from "../shape/Graph";
 import { Point } from "../shape/Point";
 import type { Rect } from "../shape/Shape";
 import { MoveEntityModeController } from "./MoveEntityModeController";
 import { ResizeEntityModeController } from "./ResizeEntityModeController";
+import { SelectByBrushModeController } from "./SelectByBrushModeController";
 
 export class SelectEntityModeController extends ModeController {
     static readonly type = "select-entity";
 
-    readonly brushRect = cell<Rect | null>(null);
     readonly controlLayerData: ICell<CornerRoundHandleData[]>;
 
     constructor(readonly app: App) {
@@ -192,7 +191,8 @@ export class SelectEntityModeController extends ModeController {
 
         if (!ev.shiftKey) app.canvas.unselectAll();
 
-        setupBrushSelectPointerEventHandlers(app, ev, this.brushRect);
+        app.setMode(SelectByBrushModeController.type);
+        // setupBrushSelectPointerEventHandlers(app, ev, this.brushRect);
     }
 
     onPointerMove(app: App, ev: CanvasPointerEvent) {

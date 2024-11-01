@@ -5,7 +5,7 @@ import {
     type EntityTapEvent,
     type TransformEvent,
 } from "../../../core/Entity";
-import { Graph, GraphNode } from "../../../core/shape/Graph";
+import { Graph, type GraphEdge, GraphNode } from "../../../core/shape/Graph";
 import { Point } from "../../../core/shape/Point";
 import { assert } from "../../../lib/assert";
 import { type ColorId, PROPERTY_KEY_COLOR_ID } from "../../property/Colors";
@@ -112,6 +112,17 @@ export class PathEntityHandle extends EntityHandle<PathEntity> {
         return entity.nodes.map(
             ({ id, x, y }) => new GraphNode(id, new Point(x, y)),
         );
+    }
+
+    static getEdgeById(
+        entity: PathEntity,
+        edgeId: string,
+    ): GraphEdge | undefined {
+        return PathEntityHandle.getGraph(entity)
+            .getEdges()
+            .find((edge) => {
+                return edge.id === edgeId;
+            });
     }
 
     static getNodeById(

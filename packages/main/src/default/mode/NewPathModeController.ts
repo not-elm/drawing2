@@ -6,9 +6,9 @@ import {
     ModeController,
 } from "../../core/ModeController";
 import type { Page } from "../../core/Page";
+import { MoveNodeModeController } from "../../core/mode/MoveNodeModeController";
 import { SelectEntityModeController } from "../../core/mode/SelectEntityModeController";
 import { SelectPathModeController } from "../../core/mode/SelectPathModeController";
-import { setupMoveNodesPointerEventHandlers } from "../../core/setupMoveNodesPointerEventHandlers";
 import { Graph, GraphNode } from "../../core/shape/Graph";
 import { Line } from "../../core/shape/Line";
 import { translate } from "../../core/shape/TransformMatrix";
@@ -82,9 +82,11 @@ export class NewPathModeController extends ModeController {
         app.canvas.unselectAll();
         app.canvas.select(path.id);
 
-        setupMoveNodesPointerEventHandlers(app, ev, path, [
-            PathEntityHandle.getNodes(path)[1].id,
-        ]);
+        app.getModeControllerByClass(
+            SelectPathModeController,
+        ).selectedNodeIds.set(new Set([PathEntityHandle.getNodes(path)[1].id]));
+
+        app.setMode(MoveNodeModeController.type);
         app.gesture.addPointerUpHandler(ev.pointerId, (app, ev) => {
             if (ev.isTap) {
                 app.canvas.edit((builder) => builder.deleteEntity(path.id));
