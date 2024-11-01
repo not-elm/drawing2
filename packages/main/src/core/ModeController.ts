@@ -1,6 +1,12 @@
 import type { App } from "./App";
 import type { Point } from "./shape/Point";
 
+export interface ModeControllerFactory {
+    readonly type: string;
+    new (app: App): ModeController;
+    onRegistered?(app: App): void;
+}
+
 /**
  * Mode controller has the responsibility to handle user interactions in a specific mode.
  */

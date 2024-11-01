@@ -4,9 +4,8 @@ import {
     type CanvasPointerEvent,
     ModeController,
 } from "../../core/ModeController";
-import { SelectEntityModeController } from "../../core/SelectEntityModeController";
-import { ScaleSelectionTransformController } from "../../core/SelectionTransformController";
-import { setupSelectionTransformPointerEventHandlers } from "../../core/setupSelectionTransformPointerEventHandlers";
+import { ResizeEntityModeController } from "../../core/mode/ResizeEntityModeController";
+import { SelectEntityModeController } from "../../core/mode/SelectEntityModeController";
 import { Graph, GraphNode } from "../../core/shape/Graph";
 import { Rect } from "../../core/shape/Shape";
 import { translate } from "../../core/shape/TransformMatrix";
@@ -52,17 +51,7 @@ export class NewShapeModeController extends ModeController {
         app.canvas.unselectAll();
         app.canvas.select(shape.id);
 
-        setupSelectionTransformPointerEventHandlers(
-            app,
-            ev,
-            new ScaleSelectionTransformController(
-                app,
-                p1,
-                p0,
-                "right",
-                "bottom",
-            ),
-        );
+        app.setMode(ResizeEntityModeController.type);
         app.gesture.addPointerUpHandler(ev.pointerId, (app, ev) => {
             if (ev.isTap) {
                 app.canvas.edit((builder) => builder.deleteEntity(shape.id));

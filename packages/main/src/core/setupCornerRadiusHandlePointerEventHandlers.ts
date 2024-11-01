@@ -11,7 +11,7 @@ import type { CanvasPointerEvent } from "./ModeController";
 import {
     type CornerRoundHandleData,
     getMaxCornerRadius,
-} from "./SelectEntityModeController";
+} from "./mode/SelectEntityModeController";
 
 export function setupCornerRadiusHandlePointerEventHandlers(
     app: App,

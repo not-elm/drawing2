@@ -2,7 +2,7 @@ import { memo } from "react";
 import {
     getCornerRoundHandleData,
     getMaxCornerRadius,
-} from "../../../core/SelectEntityModeController";
+} from "../../../core/mode/SelectEntityModeController";
 import type { Graph, GraphNode } from "../../../core/shape/Graph";
 import { useApp } from "../../../react/useApp";
 import {

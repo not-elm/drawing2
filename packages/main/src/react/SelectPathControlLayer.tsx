@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { SelectPathModeController } from "../core/SelectPathModeController";
+import { SelectPathModeController } from "../core/mode/SelectPathModeController";
 import { useCell } from "./hooks/useCell";
 import { useApp } from "./useApp";
 

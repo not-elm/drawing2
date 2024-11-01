@@ -1,5 +1,5 @@
 import { LinkToEdge } from "../core/Link";
-import { SelectEntityModeController } from "../core/SelectEntityModeController";
+import { SelectEntityModeController } from "../core/mode/SelectEntityModeController";
 import { Point } from "../core/shape/Point";
 import {
     PathEntityHandle,

@@ -1,4 +1,4 @@
-import { SelectEntityModeController } from "../../core/SelectEntityModeController";
+import { SelectEntityModeController } from "../../core/mode/SelectEntityModeController";
 import { useCell } from "../hooks/useCell";
 import { useApp } from "../useApp";
 

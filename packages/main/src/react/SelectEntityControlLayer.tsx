@@ -1,4 +1,4 @@
-import { SelectEntityModeController } from "../core/SelectEntityModeController";
+import { SelectEntityModeController } from "../core/mode/SelectEntityModeController";
 import { Line } from "../core/shape/Line";
 import { Rect, type Shape } from "../core/shape/Shape";
 import type { TransformMatrix } from "../core/shape/TransformMatrix";

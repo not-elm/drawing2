@@ -1,7 +1,7 @@
 import { MathJaxContext } from "better-react-mathjax";
 import { useEffect, useRef } from "react";
 import type { App } from "../core/App";
-import { SelectEntityModeController } from "../core/SelectEntityModeController";
+import { SelectEntityModeController } from "../core/mode/SelectEntityModeController";
 import { createDefaultApp } from "../default/createDefaultApp";
 import { NewPathModeController } from "../default/mode/NewPathModeController";
 import { NewShapeModeController } from "../default/mode/NewShapeModeController";

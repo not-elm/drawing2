@@ -6,8 +6,8 @@ import {
     ModeController,
 } from "../../core/ModeController";
 import type { Page } from "../../core/Page";
-import { SelectEntityModeController } from "../../core/SelectEntityModeController";
-import { SelectPathModeController } from "../../core/SelectPathModeController";
+import { SelectEntityModeController } from "../../core/mode/SelectEntityModeController";
+import { SelectPathModeController } from "../../core/mode/SelectPathModeController";
 import { setupMoveNodesPointerEventHandlers } from "../../core/setupMoveNodesPointerEventHandlers";
 import { Graph, GraphNode } from "../../core/shape/Graph";
 import { Line } from "../../core/shape/Line";

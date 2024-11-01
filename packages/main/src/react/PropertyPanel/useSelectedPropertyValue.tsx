@@ -1,4 +1,4 @@
-import { SelectEntityModeController } from "../../core/SelectEntityModeController";
+import { SelectEntityModeController } from "../../core/mode/SelectEntityModeController";
 import type { ColorId } from "../../default/property/Colors";
 import { isNotNullish } from "../../lib/isNullish";
 import { useCell } from "../hooks/useCell";

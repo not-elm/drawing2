@@ -20,8 +20,8 @@ import {
 import { PROPERTY_KEY_STROKE_WIDTH } from "../../property/StrokeWidth";
 
 import type { ComponentType } from "react";
-import { getMaxCornerRadius } from "../../../core/SelectEntityModeController";
-import { SelectPathModeController } from "../../../core/SelectPathModeController";
+import { getMaxCornerRadius } from "../../../core/mode/SelectEntityModeController";
+import { SelectPathModeController } from "../../../core/mode/SelectPathModeController";
 import type { Shape } from "../../../core/shape/Shape";
 import { PathView } from "./PathView";
 

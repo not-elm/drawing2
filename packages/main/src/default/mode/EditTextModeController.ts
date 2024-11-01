@@ -4,7 +4,7 @@ import {
     type ModeChangeEvent,
     ModeController,
 } from "../../core/ModeController";
-import { SelectEntityModeController } from "../../core/SelectEntityModeController";
+import { SelectEntityModeController } from "../../core/mode/SelectEntityModeController";
 
 export class EditTextModeController extends ModeController {
     static readonly type = "edit-text";

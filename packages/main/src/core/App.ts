@@ -10,12 +10,14 @@ import { GestureRecognizer, MouseEventButton } from "./GestureRecognizer";
 import { HistoryManager } from "./HistoryManager";
 import { KeyboardManager } from "./KeyboardManager";
 import type { ModeChangeEvent, ModeController } from "./ModeController";
-import { SelectEntityModeController } from "./SelectEntityModeController";
-import { SelectPathModeController } from "./SelectPathModeController";
 import type { SnapGuide } from "./SnapEntry";
 import { SnapGuideMap } from "./SnapGuideMap";
 import { Viewport } from "./Viewport";
 import { cell } from "./cell/ICell";
+import { MoveEntityModeController } from "./mode/MoveEntityModeController";
+import { ResizeEntityModeController } from "./mode/ResizeEntityModeController";
+import { SelectEntityModeController } from "./mode/SelectEntityModeController";
+import { SelectPathModeController } from "./mode/SelectPathModeController";
 import { Point } from "./shape/Point";
 import { Rect } from "./shape/Shape";
 
@@ -51,20 +53,24 @@ export class App {
     readonly keyboard = new KeyboardManager(this);
     readonly contextMenu = new ContextMenuService(this.viewport);
 
-    private readonly defaultModeController = new SelectEntityModeController(
-        this,
-    );
-
     private requiredPointerUpCountBeforeDoubleClick = 0;
 
     constructor() {
         this.addModeController(
             SelectEntityModeController.type,
-            this.defaultModeController,
+            new SelectEntityModeController(this),
         );
         this.addModeController(
             SelectPathModeController.type,
             new SelectPathModeController(),
+        );
+        this.addModeController(
+            MoveEntityModeController.type,
+            new MoveEntityModeController(this),
+        );
+        this.addModeController(
+            ResizeEntityModeController.type,
+            new ResizeEntityModeController(this),
         );
 
         this.keyboard.addBinding({
@@ -138,10 +144,9 @@ export class App {
     }
 
     getModeController(): ModeController {
-        return (
-            this.getModeControllerByType(this.mode.get()) ??
-            this.defaultModeController
-        );
+        const controller = this.getModeControllerByType(this.mode.get());
+        assert(controller !== null, `Mode ${this.mode.get()} is not found`);
+        return controller;
     }
 
     getModeControllerByClass<T extends ModeController>(cls: {
@@ -314,6 +319,14 @@ export class App {
     resizeViewport(canvasWidth: number, canvasHeight: number) {
         this.viewport.set(
             this.viewport.get().resize(canvasWidth, canvasHeight),
+        );
+    }
+
+    getEntitiesInViewport(): Entity[] {
+        const viewportRect = this.viewport.get().rect;
+
+        return [...this.canvas.page.get().entities.values()].filter((entity) =>
+            viewportRect.isOverlapWith(this.entityHandle.getShape(entity)),
         );
     }
 

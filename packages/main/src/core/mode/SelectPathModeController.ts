@@ -3,21 +3,21 @@ import {
     type PathEntity,
     PathEntityHandle,
     isPathEntity,
-} from "../default/entity/PathEntity/PathEntity";
-import { assert } from "../lib/assert";
-import { randomId } from "../lib/randomId";
-import type { App } from "./App";
+} from "../../default/entity/PathEntity/PathEntity";
+import { assert } from "../../lib/assert";
+import { randomId } from "../../lib/randomId";
+import type { App } from "../App";
 import {
     type CanvasPointerEvent,
     ModeController,
     type SelectedEntityChangeEvent,
-} from "./ModeController";
+} from "../ModeController";
+import { cell } from "../cell/ICell";
+import { setupMoveNodesPointerEventHandlers } from "../setupMoveNodesPointerEventHandlers";
+import { type GraphEdge, GraphNode } from "../shape/Graph";
+import { Line } from "../shape/Line";
+import { Point } from "../shape/Point";
 import { SelectEntityModeController } from "./SelectEntityModeController";
-import { cell } from "./cell/ICell";
-import { setupMoveNodesPointerEventHandlers } from "./setupMoveNodesPointerEventHandlers";
-import { type GraphEdge, GraphNode } from "./shape/Graph";
-import { Line } from "./shape/Line";
-import { Point } from "./shape/Point";
 
 const NODE_CONTROL_HIT_AREA_RADIUS = 16;
 const EDGE_CONTROL_HIT_AREA_WIDTH = 16;

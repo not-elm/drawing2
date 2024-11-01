@@ -5,25 +5,22 @@ import {
     type PathEntity,
     PathEntityHandle,
     isPathEntity,
-} from "../default/entity/PathEntity/PathEntity";
-import { NewTextModeController } from "../default/mode/NewTextModeController";
-import { assert } from "../lib/assert";
-import { normalizeAngle } from "../lib/normalizeAngle";
-import { testHitEntities } from "../lib/testHitEntities";
-import type { App } from "./App";
-import type { Entity } from "./Entity";
-import { type CanvasPointerEvent, ModeController } from "./ModeController";
-import {
-    ScaleSelectionTransformController,
-    TranslateSelectionTransformController,
-} from "./SelectionTransformController";
-import { type ICell, cell, derived } from "./cell/ICell";
-import { setupBrushSelectPointerEventHandlers } from "./setupBrushSelectPointerEventHandlers";
-import { setupCornerRadiusHandlePointerEventHandlers } from "./setupCornerRadiusHandlePointerEventHandlers";
-import { setupSelectionTransformPointerEventHandlers } from "./setupSelectionTransformPointerEventHandlers";
-import type { GraphNode } from "./shape/Graph";
-import { Point } from "./shape/Point";
-import type { Rect } from "./shape/Shape";
+} from "../../default/entity/PathEntity/PathEntity";
+import { NewTextModeController } from "../../default/mode/NewTextModeController";
+import { assert } from "../../lib/assert";
+import { normalizeAngle } from "../../lib/normalizeAngle";
+import { testHitEntities } from "../../lib/testHitEntities";
+import type { App } from "../App";
+import type { Entity } from "../Entity";
+import { type CanvasPointerEvent, ModeController } from "../ModeController";
+import { type ICell, cell, derived } from "../cell/ICell";
+import { setupBrushSelectPointerEventHandlers } from "../setupBrushSelectPointerEventHandlers";
+import { setupCornerRadiusHandlePointerEventHandlers } from "../setupCornerRadiusHandlePointerEventHandlers";
+import type { GraphNode } from "../shape/Graph";
+import { Point } from "../shape/Point";
+import type { Rect } from "../shape/Shape";
+import { MoveEntityModeController } from "./MoveEntityModeController";
+import { ResizeEntityModeController } from "./ResizeEntityModeController";
 
 export class SelectEntityModeController extends ModeController {
     static readonly type = "select-entity";
@@ -272,11 +269,7 @@ export class SelectEntityModeController extends ModeController {
         if (!ev.shiftKey) app.canvas.unselectAll();
         app.canvas.select(entity.id);
 
-        setupSelectionTransformPointerEventHandlers(
-            app,
-            ev,
-            new TranslateSelectionTransformController(app, ev.point),
-        );
+        app.setMode(MoveEntityModeController.type);
         app.gesture.addPointerUpHandler(ev.pointerId, (app, ev) => {
             if (ev.isTap) {
                 app.entityHandle
@@ -293,123 +286,39 @@ export class SelectEntityModeController extends ModeController {
     ) {
         switch (handle.type) {
             case "TopLeftHandle": {
-                setupSelectionTransformPointerEventHandlers(
-                    app,
-                    ev,
-                    new ScaleSelectionTransformController(
-                        app,
-                        ev.point,
-                        handle.selectionRect.bottomRight,
-                        "left",
-                        "top",
-                    ),
-                );
+                app.setMode(ResizeEntityModeController.type);
                 break;
             }
             case "TopHandle": {
-                setupSelectionTransformPointerEventHandlers(
-                    app,
-                    ev,
-                    new ScaleSelectionTransformController(
-                        app,
-                        ev.point,
-                        handle.selectionRect.bottomCenter,
-                        "center",
-                        "top",
-                    ),
-                );
+                app.setMode(ResizeEntityModeController.type);
                 break;
             }
             case "TopRightHandle": {
-                setupSelectionTransformPointerEventHandlers(
-                    app,
-                    ev,
-                    new ScaleSelectionTransformController(
-                        app,
-                        ev.point,
-                        handle.selectionRect.bottomLeft,
-                        "right",
-                        "top",
-                    ),
-                );
+                app.setMode(ResizeEntityModeController.type);
                 break;
             }
             case "LeftHandle": {
-                setupSelectionTransformPointerEventHandlers(
-                    app,
-                    ev,
-                    new ScaleSelectionTransformController(
-                        app,
-                        ev.point,
-                        handle.selectionRect.centerRight,
-                        "left",
-                        "center",
-                    ),
-                );
+                app.setMode(ResizeEntityModeController.type);
                 break;
             }
             case "RightHandle": {
-                setupSelectionTransformPointerEventHandlers(
-                    app,
-                    ev,
-                    new ScaleSelectionTransformController(
-                        app,
-                        ev.point,
-                        handle.selectionRect.centerLeft,
-                        "right",
-                        "center",
-                    ),
-                );
+                app.setMode(ResizeEntityModeController.type);
                 break;
             }
             case "BottomLeftHandle": {
-                setupSelectionTransformPointerEventHandlers(
-                    app,
-                    ev,
-                    new ScaleSelectionTransformController(
-                        app,
-                        ev.point,
-                        handle.selectionRect.topRight,
-                        "left",
-                        "bottom",
-                    ),
-                );
+                app.setMode(ResizeEntityModeController.type);
                 break;
             }
             case "BottomHandle": {
-                setupSelectionTransformPointerEventHandlers(
-                    app,
-                    ev,
-                    new ScaleSelectionTransformController(
-                        app,
-                        ev.point,
-                        handle.selectionRect.topCenter,
-                        "center",
-                        "bottom",
-                    ),
-                );
+                app.setMode(ResizeEntityModeController.type);
                 break;
             }
             case "BottomRightHandle": {
-                setupSelectionTransformPointerEventHandlers(
-                    app,
-                    ev,
-                    new ScaleSelectionTransformController(
-                        app,
-                        ev.point,
-                        handle.selectionRect.topLeft,
-                        "right",
-                        "bottom",
-                    ),
-                );
+                app.setMode(ResizeEntityModeController.type);
                 break;
             }
             case "CenterHandle": {
-                setupSelectionTransformPointerEventHandlers(
-                    app,
-                    ev,
-                    new TranslateSelectionTransformController(app, ev.point),
-                );
+                app.setMode(MoveEntityModeController.type);
                 break;
             }
             case "CornerRadiusHandle": {

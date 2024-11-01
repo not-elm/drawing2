@@ -3,6 +3,7 @@ import type { JSONObject, JSONValue } from "../lib/JSONObject";
 import { assert } from "../lib/assert";
 import type { App } from "./App";
 import type { CanvasPointerEvent } from "./ModeController";
+import type { Point } from "./shape/Point";
 import type { Shape } from "./shape/Shape";
 import type { TransformMatrix } from "./shape/TransformMatrix";
 
@@ -37,6 +38,22 @@ export abstract class EntityHandle<T extends Entity> {
         return propertyKey in entity
             ? (entity[propertyKey as keyof T] as U)
             : defaultValue;
+    }
+
+    /**
+     * Returns snap points of this entity.
+     * Snap points are used in snapping during entity transformation.
+     * @param entity the entity
+     */
+    getSnapPoints(entity: T): Point[] {
+        const rect = this.getShape(entity).getBoundingRect();
+        return [
+            rect.topLeft,
+            rect.topRight,
+            rect.bottomLeft,
+            rect.bottomRight,
+            rect.center,
+        ];
     }
 
     /**
@@ -119,6 +136,10 @@ export class EntityHandleMap {
             propertyKey,
             defaultValue,
         );
+    }
+
+    getSnapPoints(entity: Entity): Point[] {
+        return this.getHandle(entity).getSnapPoints(entity);
     }
 }
 

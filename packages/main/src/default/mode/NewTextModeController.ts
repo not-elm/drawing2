@@ -3,7 +3,7 @@ import {
     type CanvasPointerEvent,
     ModeController,
 } from "../../core/ModeController";
-import { SelectEntityModeController } from "../../core/SelectEntityModeController";
+import { SelectEntityModeController } from "../../core/mode/SelectEntityModeController";
 import { Rect } from "../../core/shape/Shape";
 import { randomId } from "../../lib/randomId";
 import type { TextEntity } from "../entity/TextEntity/TextEntity";
