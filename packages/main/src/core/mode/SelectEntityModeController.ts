@@ -270,7 +270,7 @@ export class SelectEntityModeController extends ModeController {
         app.canvas.select(entity.id);
 
         app.setMode(MoveEntityModeController.type);
-        app.gesture.addPointerUpHandler(ev.pointerId, (app, ev) => {
+        app.gesture.addPointerUpHandlerForPointer(ev.pointerId, (app, ev) => {
             if (ev.isTap) {
                 app.entityHandle
                     .getHandle(entity)
@@ -285,34 +285,13 @@ export class SelectEntityModeController extends ModeController {
         handle: HandleType,
     ) {
         switch (handle.type) {
-            case "TopLeftHandle": {
-                app.setMode(ResizeEntityModeController.type);
-                break;
-            }
-            case "TopHandle": {
-                app.setMode(ResizeEntityModeController.type);
-                break;
-            }
-            case "TopRightHandle": {
-                app.setMode(ResizeEntityModeController.type);
-                break;
-            }
-            case "LeftHandle": {
-                app.setMode(ResizeEntityModeController.type);
-                break;
-            }
-            case "RightHandle": {
-                app.setMode(ResizeEntityModeController.type);
-                break;
-            }
-            case "BottomLeftHandle": {
-                app.setMode(ResizeEntityModeController.type);
-                break;
-            }
-            case "BottomHandle": {
-                app.setMode(ResizeEntityModeController.type);
-                break;
-            }
+            case "TopLeftHandle":
+            case "TopHandle":
+            case "TopRightHandle":
+            case "LeftHandle":
+            case "RightHandle":
+            case "BottomLeftHandle":
+            case "BottomHandle":
             case "BottomRightHandle": {
                 app.setMode(ResizeEntityModeController.type);
                 break;
@@ -332,7 +311,7 @@ export class SelectEntityModeController extends ModeController {
             }
         }
 
-        app.gesture.addPointerUpHandler(ev.pointerId, (app, ev) => {
+        app.gesture.addPointerUpHandlerForPointer(ev.pointerId, (app, ev) => {
             if (ev.isTap) {
                 this.onCanvasTap(app, ev);
             }

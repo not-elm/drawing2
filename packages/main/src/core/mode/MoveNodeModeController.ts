@@ -5,13 +5,14 @@ import {
 } from "../../default/entity/PathEntity/PathEntity";
 import { assert } from "../../lib/assert";
 import type { App } from "../App";
+import type { CanvasPointerUpEvent } from "../GestureRecognizer";
 import {
     type CanvasPointerEvent,
     type ModeChangeEvent,
     ModeController,
     type SelectedEntityChangeEvent,
 } from "../ModeController";
-import type { Graph, GraphNode } from "../shape/Graph";
+import type { GraphNode } from "../shape/Graph";
 import { Line } from "../shape/Line";
 import { Point } from "../shape/Point";
 import { translate } from "../shape/TransformMatrix";
@@ -28,13 +29,12 @@ const EPSILON = 1e-6;
 export class MoveNodeModeController extends ModeController {
     static readonly type = "move-node";
 
-    protected startPoint = new Point(0, 0);
-    protected originalEntity: PathEntity = null as never;
-    protected originalGraph: Graph = null as never;
-    protected originalNodes = new Set<GraphNode>();
-    protected originalOtherNodes = new Set<GraphNode>();
+    private startPoint = new Point(0, 0);
+    private originalEntity: PathEntity = null as never;
+    private originalNodes = new Set<GraphNode>();
+    private originalOtherNodes = new Set<GraphNode>();
 
-    constructor(protected readonly app: App) {
+    constructor(private readonly app: App) {
         super();
     }
 
@@ -81,7 +81,6 @@ export class MoveNodeModeController extends ModeController {
 
         this.startPoint = app.pointerPosition.get();
         this.originalEntity = originalEntity;
-        this.originalGraph = originalGraph;
         this.originalNodes = originalNodes;
         this.originalOtherNodes = otherNodes;
     }
@@ -117,7 +116,17 @@ export class MoveNodeModeController extends ModeController {
         });
     }
 
-    onPointerUp(app: App, ev: CanvasPointerEvent): void {
+    onPointerUp(app: App, ev: CanvasPointerUpEvent): void {
+        const rect = app.entityHandle
+            .getShape(this.originalEntity)
+            .getBoundingRect();
+
+        if (ev.isTap && rect.width === 1 && rect.height === 1) {
+            app.canvas.edit((builder) => {
+                builder.deleteEntity(this.originalEntity.id);
+            });
+        }
+
         app.setMode(SelectPathModeController.type);
     }
 

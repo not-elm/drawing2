@@ -10,6 +10,12 @@ export class GestureRecognizer {
 
     private readonly sessions = new Map<number, PointerEventSession>();
     private readonly sessionIdsWithListener = new Set<number>();
+    private readonly pointerMoveHandlers = new Set<
+        (app: App, ev: CanvasPointerMoveEvent) => void
+    >();
+    private readonly pointerUpHandlers = new Set<
+        (app: App, ev: CanvasPointerUpEvent) => void
+    >();
 
     handlePointerDown(nativeEv: PointerEvent) {
         const point = this.app.viewport
@@ -18,11 +24,9 @@ export class GestureRecognizer {
                 new Point(nativeEv.clientX, nativeEv.clientY),
             );
 
-        const timestamp = performance.now();
-
         this.sessions.set(nativeEv.pointerId, {
             pointerId: nativeEv.pointerId,
-            startAt: timestamp,
+            startAt: performance.now(),
             startPoint: point,
             lastPoint: point,
             pointerMoveHandlers: new Set(),
@@ -34,64 +38,66 @@ export class GestureRecognizer {
         const session = this.sessions.get(nativeEv.pointerId);
         if (session === undefined) return;
 
-        const point = this.app.viewport
-            .get()
-            .fromCanvasCoordinateTransform.apply(
-                new Point(nativeEv.clientX, nativeEv.clientY),
-            );
+        const ev: CanvasPointerMoveEvent = {
+            point: this.app.viewport
+                .get()
+                .fromCanvasCoordinateTransform.apply(
+                    new Point(nativeEv.clientX, nativeEv.clientY),
+                ),
+            button:
+                nativeEv.button === MouseEventButton.MAIN ? "main" : "other",
+            pointerId: nativeEv.pointerId,
+            shiftKey: nativeEv.shiftKey,
+            ctrlKey: nativeEv.ctrlKey,
+            metaKey: nativeEv.metaKey,
+            preventDefault: (): void => {
+                throw new Error("Function not implemented.");
+            },
+            startPoint: session.startPoint,
+            lastPoint: session.lastPoint,
+        };
 
         for (const handler of session.pointerMoveHandlers) {
-            handler(this.app, {
-                point,
-                button:
-                    nativeEv.button === MouseEventButton.MAIN
-                        ? "main"
-                        : "other",
-                pointerId: nativeEv.pointerId,
-                shiftKey: nativeEv.shiftKey,
-                ctrlKey: nativeEv.ctrlKey,
-                metaKey: nativeEv.metaKey,
-                preventDefault: (): void => {
-                    throw new Error("Function not implemented.");
-                },
-                startPoint: session.startPoint,
-                lastPoint: session.lastPoint,
-            });
+            handler(this.app, ev);
+        }
+        for (const handler of this.pointerMoveHandlers) {
+            handler(this.app, ev);
         }
 
-        session.lastPoint = point;
+        session.lastPoint = ev.point;
     }
 
     handlePointerUp(nativeEv: PointerEvent) {
         const session = this.sessions.get(nativeEv.pointerId);
         if (session === undefined) return;
 
-        const point = this.app.viewport
-            .get()
-            .fromCanvasCoordinateTransform.apply(
-                new Point(nativeEv.clientX, nativeEv.clientY),
-            );
+        const ev: CanvasPointerUpEvent = {
+            point: this.app.viewport
+                .get()
+                .fromCanvasCoordinateTransform.apply(
+                    new Point(nativeEv.clientX, nativeEv.clientY),
+                ),
+            button:
+                nativeEv.button === MouseEventButton.MAIN ? "main" : "other",
+            pointerId: nativeEv.pointerId,
+            shiftKey: nativeEv.shiftKey,
+            ctrlKey: nativeEv.ctrlKey,
+            metaKey: nativeEv.metaKey,
+            preventDefault: (): void => {
+                throw new Error("Function not implemented.");
+            },
+            startPoint: session.startPoint,
+            lastPoint: session.lastPoint,
+            isTap:
+                performance.now() - session.startAt <
+                THRESHOLD_CLICK_DURATION_IN_MILLI,
+        };
 
-        const endAt = performance.now();
         for (const handler of session.pointerUpHandlers) {
-            handler(this.app, {
-                point,
-                button:
-                    nativeEv.button === MouseEventButton.MAIN
-                        ? "main"
-                        : "other",
-                pointerId: nativeEv.pointerId,
-                shiftKey: nativeEv.shiftKey,
-                ctrlKey: nativeEv.ctrlKey,
-                metaKey: nativeEv.metaKey,
-                preventDefault: (): void => {
-                    throw new Error("Function not implemented.");
-                },
-                startPoint: session.startPoint,
-                lastPoint: session.lastPoint,
-                isTap:
-                    endAt - session.startAt < THRESHOLD_CLICK_DURATION_IN_MILLI,
-            });
+            handler(this.app, ev);
+        }
+        for (const handler of this.pointerUpHandlers) {
+            handler(this.app, ev);
         }
 
         this.sessions.delete(nativeEv.pointerId);
@@ -99,6 +105,34 @@ export class GestureRecognizer {
     }
 
     addPointerMoveHandler(
+        handler: (app: App, ev: CanvasPointerMoveEvent) => void,
+    ): GestureRecognizer {
+        this.pointerMoveHandlers.add(handler);
+        return this;
+    }
+
+    addPointerUpHandler(
+        handler: (app: App, ev: CanvasPointerUpEvent) => void,
+    ): GestureRecognizer {
+        this.pointerUpHandlers.add(handler);
+        return this;
+    }
+
+    deletePointerMoveHandler(
+        handler: (app: App, ev: CanvasPointerMoveEvent) => void,
+    ): GestureRecognizer {
+        this.pointerMoveHandlers.delete(handler);
+        return this;
+    }
+
+    deletePointerUpHandler(
+        handler: (app: App, ev: CanvasPointerUpEvent) => void,
+    ): GestureRecognizer {
+        this.pointerUpHandlers.delete(handler);
+        return this;
+    }
+
+    addPointerMoveHandlerForPointer(
         pointerId: number,
         handler: (app: App, ev: CanvasPointerMoveEvent) => void,
     ): GestureRecognizer {
@@ -113,7 +147,7 @@ export class GestureRecognizer {
         return this;
     }
 
-    addPointerUpHandler(
+    addPointerUpHandlerForPointer(
         pointerId: number,
         handler: (app: App, ev: CanvasPointerUpEvent) => void,
     ): GestureRecognizer {

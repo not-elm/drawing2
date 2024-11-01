@@ -1,4 +1,8 @@
 import type { App } from "./App";
+import type {
+    CanvasPointerMoveEvent,
+    CanvasPointerUpEvent,
+} from "./GestureRecognizer";
 import type { Point } from "./shape/Point";
 
 export interface ModeControllerFactory {
@@ -13,9 +17,9 @@ export interface ModeControllerFactory {
 export class ModeController {
     static readonly type: string;
 
-    onPointerMove(app: App, ev: CanvasPointerEvent): void {}
+    onPointerMove(app: App, ev: CanvasPointerMoveEvent): void {}
     onPointerDown(app: App, ev: CanvasPointerEvent): void {}
-    onPointerUp(app: App, ev: CanvasPointerEvent): void {}
+    onPointerUp(app: App, ev: CanvasPointerUpEvent): void {}
 
     onContextMenu(app: App, ev: CanvasPointerEvent): void {
         app.contextMenu.show(app.viewport.get().transform.apply(ev.point));

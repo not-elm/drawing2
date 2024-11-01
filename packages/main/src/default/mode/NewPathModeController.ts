@@ -87,11 +87,6 @@ export class NewPathModeController extends ModeController {
         ).selectedNodeIds.set(new Set([PathEntityHandle.getNodes(path)[1].id]));
 
         app.setMode(MoveNodeModeController.type);
-        app.gesture.addPointerUpHandler(ev.pointerId, (app, ev) => {
-            if (ev.isTap) {
-                app.canvas.edit((builder) => builder.deleteEntity(path.id));
-            }
-        });
     }
 
     private insertNewPath(app: App, line: Line): PathEntity {

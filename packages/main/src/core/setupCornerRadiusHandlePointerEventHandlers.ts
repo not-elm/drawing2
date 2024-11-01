@@ -28,7 +28,7 @@ export function setupCornerRadiusHandlePointerEventHandlers(
     const iy = dy / norm;
 
     app.gesture
-        .addPointerMoveHandler(
+        .addPointerMoveHandlerForPointer(
             ev.pointerId,
             getPointerMoveHandler(
                 entity.id,
@@ -42,7 +42,7 @@ export function setupCornerRadiusHandlePointerEventHandlers(
                 handle.cornerAngle,
             ),
         )
-        .addPointerUpHandler(ev.pointerId, getPointerUpHandler());
+        .addPointerUpHandlerForPointer(ev.pointerId, getPointerUpHandler());
 }
 
 function getPointerMoveHandler(

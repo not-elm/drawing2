@@ -138,6 +138,13 @@ export class App {
             ctrlKey: true,
             action: () => this.paste(),
         });
+
+        this.gesture.addPointerMoveHandler((app, ev) => {
+            app.getModeController().onPointerMove(app, ev);
+        });
+        this.gesture.addPointerUpHandler((app, ev) => {
+            app.getModeController().onPointerUp(app, ev);
+        });
     }
 
     addModeController(type: string, controller: ModeController): App {
@@ -401,29 +408,14 @@ export class App {
      */
     handlePointerMove(ev: PointerEvent) {
         if (this.contextMenu.state.get().visible) return;
-
         this.gesture.handlePointerMove(ev);
-
-        const point = this.viewport
-            .get()
-            .fromCanvasCoordinateTransform.apply(
-                new Point(ev.clientX, ev.clientY),
-            );
-        this.pointerPosition.set(point);
-
-        this.getModeController().onPointerMove(this, {
-            pointerId: ev.pointerId,
-            button: ev.button === MouseEventButton.MAIN ? "main" : "other",
-            point: this.viewport
+        this.pointerPosition.set(
+            this.viewport
                 .get()
                 .fromCanvasCoordinateTransform.apply(
                     new Point(ev.clientX, ev.clientY),
                 ),
-            shiftKey: ev.shiftKey,
-            metaKey: ev.metaKey,
-            ctrlKey: ev.ctrlKey,
-            preventDefault: () => ev.preventDefault(),
-        });
+        );
     }
 
     /**
@@ -435,21 +427,7 @@ export class App {
         if (this.requiredPointerUpCountBeforeDoubleClick > 0) {
             this.requiredPointerUpCountBeforeDoubleClick -= 1;
         }
-
         this.gesture.handlePointerUp(ev);
-        this.getModeController().onPointerUp(this, {
-            pointerId: ev.pointerId,
-            button: ev.button === MouseEventButton.MAIN ? "main" : "other",
-            point: this.viewport
-                .get()
-                .fromCanvasCoordinateTransform.apply(
-                    new Point(ev.clientX, ev.clientY),
-                ),
-            shiftKey: ev.shiftKey,
-            metaKey: ev.metaKey,
-            ctrlKey: ev.ctrlKey,
-            preventDefault: () => ev.preventDefault(),
-        });
     }
 
     /**

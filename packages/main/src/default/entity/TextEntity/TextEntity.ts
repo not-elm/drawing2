@@ -3,7 +3,7 @@ import type { App } from "../../../core/App";
 import {
     type Entity,
     EntityHandle,
-    type EntityTapEvent,
+    type TapEntityEvent,
     type TransformEvent,
 } from "../../../core/Entity";
 import { Rect } from "../../../core/shape/Shape";
@@ -67,7 +67,7 @@ export class TextEntityHandle extends EntityHandle<TextEntity> {
         };
     }
 
-    onTap(entity: TextEntity, app: App, ev: EntityTapEvent) {
+    onTap(entity: TextEntity, app: App, ev: TapEntityEvent) {
         if (
             ev.previousSelectedEntities.size === 1 &&
             ev.previousSelectedEntities.has(entity.id)

@@ -52,11 +52,6 @@ export class NewShapeModeController extends ModeController {
         app.canvas.select(shape.id);
 
         app.setMode(ResizeEntityModeController.type);
-        app.gesture.addPointerUpHandler(ev.pointerId, (app, ev) => {
-            if (ev.isTap) {
-                app.canvas.edit((builder) => builder.deleteEntity(shape.id));
-            }
-        });
     }
 
     private insertNewShape(app: App, rect: Rect): Entity {

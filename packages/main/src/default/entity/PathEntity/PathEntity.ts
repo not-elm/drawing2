@@ -2,7 +2,7 @@ import type { App } from "../../../core/App";
 import {
     type Entity,
     EntityHandle,
-    type EntityTapEvent,
+    type TapEntityEvent,
     type TransformEvent,
 } from "../../../core/Entity";
 import { Graph, type GraphEdge, GraphNode } from "../../../core/shape/Graph";
@@ -52,7 +52,7 @@ export class PathEntityHandle extends EntityHandle<PathEntity> {
         return PathView;
     }
 
-    onTap(entity: PathEntity, app: App, ev: EntityTapEvent) {
+    onTap(entity: PathEntity, app: App, ev: TapEntityEvent) {
         if (ev.previousSelectedEntities.has(entity.id)) {
             app.canvas.unselectAll();
             app.canvas.select(entity.id);

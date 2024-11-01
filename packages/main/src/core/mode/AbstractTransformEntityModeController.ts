@@ -1,7 +1,10 @@
 import type { App } from "../App";
 import type { Entity } from "../Entity";
+import type {
+    CanvasPointerMoveEvent,
+    CanvasPointerUpEvent,
+} from "../GestureRecognizer";
 import {
-    type CanvasPointerEvent,
     type ModeChangeEvent,
     ModeController,
     type SelectedEntityChangeEvent,
@@ -42,7 +45,7 @@ export abstract class AbstractTransformEntityModeController extends ModeControll
         this.originalEntities = Array.from(app.canvas.selectedEntities.get());
     }
 
-    onPointerMove(app: App, ev: CanvasPointerEvent): void {
+    onPointerMove(app: App, ev: CanvasPointerMoveEvent): void {
         let point = ev.point;
         let snapAxis: Axis | null = null;
         if (ev.ctrlKey) {
@@ -71,7 +74,7 @@ export abstract class AbstractTransformEntityModeController extends ModeControll
         });
     }
 
-    onPointerUp(app: App, ev: CanvasPointerEvent): void {
+    onPointerUp(app: App, ev: CanvasPointerUpEvent): void {
         app.setMode(SelectEntityModeController.type);
     }
 

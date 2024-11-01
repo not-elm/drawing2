@@ -1,4 +1,5 @@
 import type { App } from "../App";
+import type { CanvasPointerUpEvent } from "../GestureRecognizer";
 import type { ModeChangeEvent } from "../ModeController";
 import { Point } from "../shape/Point";
 import { type TransformMatrix, scale } from "../shape/TransformMatrix";
@@ -79,6 +80,21 @@ export class ResizeEntityModeController extends AbstractTransformEntityModeContr
                 this.resizeInYAxis = true;
             }
         }
+    }
+
+    onPointerUp(app: App, ev: CanvasPointerUpEvent): void {
+        if (
+            ev.isTap &&
+            this.originalEntities.length === 1 &&
+            this.originalSelectionRect.width === 1 &&
+            this.originalSelectionRect.height === 1
+        ) {
+            app.canvas.edit((builder) => {
+                builder.deleteEntity(this.originalEntities[0].id);
+            });
+        }
+
+        super.onPointerUp(app, ev);
     }
 
     protected getSnapPoints(point: Point) {

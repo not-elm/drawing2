@@ -59,7 +59,7 @@ export abstract class EntityHandle<T extends Entity> {
     /**
      * Called when this entity is tapped. This event is called only in select mode.
      */
-    onTap(entity: T, app: App, ev: EntityTapEvent): void {}
+    onTap(entity: T, app: App, ev: TapEntityEvent): void {}
 
     /**
      *  Called when text edit in this entity is started
@@ -143,7 +143,7 @@ export class EntityHandleMap {
     }
 }
 
-export interface EntityTapEvent extends CanvasPointerEvent {
+export interface TapEntityEvent extends CanvasPointerEvent {
     /**
      * Entity IDs that are already selected before this tap event happened.
      * Entities that are newly selected by this tap event are not included.
