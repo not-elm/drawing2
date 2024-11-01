@@ -54,7 +54,7 @@ export class NewPathModeController extends ModeController {
         });
     }
 
-    onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
+    onPointerDown(app: App, ev: CanvasPointerEvent): void {
         app.history.pause();
         const hit = testHitEntities(
             app.canvas.page.get(),

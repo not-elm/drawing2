@@ -174,7 +174,7 @@ export class SelectEntityModeController extends ModeController {
         });
     }
 
-    onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
+    onPointerDown(app: App, ev: CanvasPointerEvent): void {
         const handle = this.getHandleType(app, ev.point);
         if (handle !== null) {
             this.onSelectionPointerDown(app, ev, handle);
@@ -198,34 +198,13 @@ export class SelectEntityModeController extends ModeController {
         setupBrushSelectPointerEventHandlers(app, ev, this.brushRect);
     }
 
-    onCanvasDoubleClick(app: App, ev: CanvasPointerEvent) {
-        app.setMode(NewTextModeController.type);
-        app.getModeController().onCanvasPointerDown(app, ev);
+    onPointerMove(app: App, ev: CanvasPointerEvent) {
+        app.cursor.set(this.getCursor(app));
     }
 
-    getCursor(app: App): Property.Cursor {
-        const handle = this.getHandleType(app, app.pointerPosition.get());
-        if (handle !== null) {
-            switch (handle.type) {
-                case "TopLeftHandle":
-                case "BottomRightHandle":
-                    return "nwse-resize";
-                case "TopHandle":
-                case "BottomHandle":
-                    return "ns-resize";
-                case "TopRightHandle":
-                case "BottomLeftHandle":
-                    return "nesw-resize";
-                case "LeftHandle":
-                case "RightHandle":
-                    return "ew-resize";
-                case "CenterHandle":
-                default:
-                    return "default";
-            }
-        } else {
-            return "default";
-        }
+    onDoubleClick(app: App, ev: CanvasPointerEvent) {
+        app.setMode(NewTextModeController.type);
+        app.getModeController().onPointerDown(app, ev);
     }
 
     onContextMenu(app: App, ev: CanvasPointerEvent) {
@@ -574,6 +553,31 @@ export class SelectEntityModeController extends ModeController {
         }
 
         return null;
+    }
+
+    private getCursor(app: App): Property.Cursor {
+        const handle = this.getHandleType(app, app.pointerPosition.get());
+        if (handle !== null) {
+            switch (handle.type) {
+                case "TopLeftHandle":
+                case "BottomRightHandle":
+                    return "nwse-resize";
+                case "TopHandle":
+                case "BottomHandle":
+                    return "ns-resize";
+                case "TopRightHandle":
+                case "BottomLeftHandle":
+                    return "nesw-resize";
+                case "LeftHandle":
+                case "RightHandle":
+                    return "ew-resize";
+                case "CenterHandle":
+                default:
+                    return "default";
+            }
+        } else {
+            return "default";
+        }
     }
 }
 

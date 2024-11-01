@@ -41,7 +41,7 @@ export class NewShapeModeController extends ModeController {
         });
     }
 
-    onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
+    onPointerDown(app: App, ev: CanvasPointerEvent): void {
         const p0 = ev.point;
         const p1 = translate(1, 1).apply(ev.point);
 

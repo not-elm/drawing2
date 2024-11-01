@@ -337,7 +337,7 @@ export class App {
 
         this.gesture.handlePointerDown(ev);
 
-        this.getModeController().onCanvasPointerDown(this, {
+        this.getModeController().onPointerDown(this, {
             pointerId: ev.pointerId,
             button: ev.button === MouseEventButton.MAIN ? "main" : "other",
             point: this.viewport
@@ -387,7 +387,20 @@ export class App {
                 new Point(ev.clientX, ev.clientY),
             );
         this.pointerPosition.set(point);
-        this.getModeController().getCursor(this);
+
+        this.getModeController().onPointerMove(this, {
+            pointerId: ev.pointerId,
+            button: ev.button === MouseEventButton.MAIN ? "main" : "other",
+            point: this.viewport
+                .get()
+                .fromCanvasCoordinateTransform.apply(
+                    new Point(ev.clientX, ev.clientY),
+                ),
+            shiftKey: ev.shiftKey,
+            metaKey: ev.metaKey,
+            ctrlKey: ev.ctrlKey,
+            preventDefault: () => ev.preventDefault(),
+        });
     }
 
     /**
@@ -401,6 +414,19 @@ export class App {
         }
 
         this.gesture.handlePointerUp(ev);
+        this.getModeController().onPointerUp(this, {
+            pointerId: ev.pointerId,
+            button: ev.button === MouseEventButton.MAIN ? "main" : "other",
+            point: this.viewport
+                .get()
+                .fromCanvasCoordinateTransform.apply(
+                    new Point(ev.clientX, ev.clientY),
+                ),
+            shiftKey: ev.shiftKey,
+            metaKey: ev.metaKey,
+            ctrlKey: ev.ctrlKey,
+            preventDefault: () => ev.preventDefault(),
+        });
     }
 
     /**
@@ -411,7 +437,7 @@ export class App {
         if (this.contextMenu.state.get().visible) return;
         if (this.requiredPointerUpCountBeforeDoubleClick > 0) return;
 
-        this.getModeController().onCanvasDoubleClick(this, {
+        this.getModeController().onDoubleClick(this, {
             pointerId: -1,
             button: "main",
             point: this.viewport

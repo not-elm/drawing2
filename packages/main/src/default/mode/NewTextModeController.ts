@@ -31,7 +31,7 @@ export class NewTextModeController extends ModeController {
         });
     }
 
-    onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
+    onPointerDown(app: App, ev: CanvasPointerEvent): void {
         app.history.pause();
         const text = this.insertNewText(app, Rect.fromSize(ev.point, 1, 1));
         app.canvas.unselectAll();

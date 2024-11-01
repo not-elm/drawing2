@@ -80,7 +80,7 @@ export class SelectPathModeController extends ModeController {
         });
     }
 
-    onCanvasPointerDown(app: App, ev: CanvasPointerEvent): void {
+    onPointerDown(app: App, ev: CanvasPointerEvent): void {
         const control = SelectPathModeController.getControlByPoint(
             app,
             ev.point,
@@ -128,6 +128,10 @@ export class SelectPathModeController extends ModeController {
         }
     }
 
+    onPointerMove(app: App, ev: CanvasPointerEvent) {
+        app.cursor.set(this.getCursor(app));
+    }
+
     onBeforeSelectedEntitiesChange(app: App, ev: SelectedEntityChangeEvent) {
         this.updateSelectedItemState(
             ev.oldSelectedEntityIds,
@@ -138,22 +142,6 @@ export class SelectPathModeController extends ModeController {
     onAfterSelectedEntitiesChange(app: App, ev: SelectedEntityChangeEvent) {
         if (ev.newSelectedEntityIds.size === 0) {
             app.setMode(SelectEntityModeController.type);
-        }
-    }
-
-    getCursor(app: App): Property.Cursor {
-        const control = SelectPathModeController.getControlByPoint(
-            app,
-            app.pointerPosition.get(),
-        );
-        if (control === null) return "default";
-
-        switch (control.type) {
-            case "node":
-            case "edge":
-                return "grab";
-            case "center-of-edge":
-                return "crosshair";
         }
     }
 
@@ -278,6 +266,22 @@ export class SelectPathModeController extends ModeController {
             this.selectedEdgeIds.set(new Set());
             this.selectedNodeIds.set(new Set());
             return;
+        }
+    }
+
+    private getCursor(app: App): Property.Cursor {
+        const control = SelectPathModeController.getControlByPoint(
+            app,
+            app.pointerPosition.get(),
+        );
+        if (control === null) return "default";
+
+        switch (control.type) {
+            case "node":
+            case "edge":
+                return "grab";
+            case "center-of-edge":
+                return "crosshair";
         }
     }
 }

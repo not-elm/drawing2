@@ -1,0 +1,153 @@
+機能要件一覧
+
+- Viewport
+    - 起動時にViewportが(0,0,1.0)になっている
+    - ズームイン・アウト
+        - ctrlを押しながらのマウスホイールでズームイン・アウトする
+        - ズームイン・アウトの中心はマウスカーソルの位置
+    - ドラッグ
+        - ホイールドラッグで画面を移動する
+        - スクロールで画面を移動する
+- select-entityモード
+    - 起動時に選択モードに入っている
+    - select-entityモードでのpointerDown時の選択状態変化
+        - 選択範囲内にある選択中のEntity上でのpointerDownの場合
+            - shiftが押されている場合
+                - 選択状態は変化しない
+            - shiftが押されていない場合
+                - 選択状態は変化しない
+        - 選択範囲内にある未選択のEntity上でのpointerDownの場合
+            - shiftが押されている場合
+                - 選択状態は変化しない
+            - shiftが押されていない場合
+                - pointerDownされたEntityを選択する
+                - それ以外のEntityの選択を解除する
+        - 選択範囲内のCanvas上でのPointerDownの場合
+            - 選択状態は変化しない
+        - 選択範囲外にある未選択のEntity上でのpointerDownの場合
+            - shiftが押されている場合
+                - pointerDownされたEntityを選択する
+                - それ以外のEntityの選択状態は変化しない
+            - shiftが押されていない場合
+                - pointerDownされたEntityを選択する
+                - それ以外のEntityの選択を解除する
+        - 選択範囲外のCanvas上でのPointerDownの場合
+            - shiftが押されている場合
+                - 選択状態は変化しない
+            - shiftが押されていない場合
+                - 全てのEntityの選択を解除する
+    - pointerDown時のモード変化
+        - 選択範囲のリサイズハンドル上でのpointerDownの場合
+            - Resizeモードに移行する
+        - 選択範囲内でのPointerDownの場合
+            - Translateモードに移行する
+        - 選択範囲外にある未選択のEntity上でのpointerDownの場合
+            - Entityを選択したうえで、Translateモードに移行する
+        - 選択範囲外のCanvas上でのPointerDownの場合
+            - 範囲選択モードに移行する
+    - Entityをtapしたとき、そのEntityがpointerDown前から選択されていた場合、select-pathモードに移行する
+- 範囲選択モード
+    - pointerMoveで選択範囲が変化する
+    - 選択範囲に入ったオブジェクトが選択される
+    - 選択範囲から出たオブジェクトが、範囲選択開始前から選択されていなければ選択解除される
+    - 選択範囲から出たオブジェクトが、範囲選択開始前から選択されていれば選択されたままとなる
+    - pointerUpで範囲選択モードを終了し、select-entityモードに移行する
+    - TODO: 範囲選択中にshiftキーの状態が変化した場合の処理
+    - TODO: 範囲選択中にモードの切替が発生した場合の処理
+- Translateモード
+    - pointerMoveで選択中のEntityが移動する
+    - pointerUpでTranslateモードを終了し、select-entityモードに移行する
+    - shiftキーが押された場合、水平または垂直方向の移動量が大きい方向へ移動を制限する
+- Resizeモード
+    - pointerMoveで選択中のEntityがリサイズする
+    - pointerUpでResizeモードを終了し、select-entityモードに移行する
+    - shiftキーが押された場合、もとのアスペクト比を維持する
+- select-pathモード
+    - pointerDown時のモード変化
+        - pathの中点でのpointerDownの場合
+            - pathにnodeを挿入する
+            - 挿入したnodeを選択する
+            - move-nodeモードに移行する
+        - path上でのpointerDownの場合
+            - pathの両端のnodeを選択する
+            - move-nodeモードに移行する
+        - node上でのpointerDownの場合
+            - nodeを選択する
+            - move-nodeモードに移行する
+        - canvas上でのpointerDownの場合
+            - select-pathモードを終了しselect-entityモードへ移行する
+- move-nodeモード
+    - pointerMove
+        - 選択中のnodeを移動する
+        - 水平垂直方向に選択されていないnodeがある場合スナップする
+        - shiftキーが押されている場合、ドラッグ開始位置から見て45度単位の移動に制限する
+    - pointerUpでmove-nodeモードを終了し、select-pathモードに移行する
+- new-shapeモード
+    - pointerDownで
+        - ポインタの位置に1x1の四角形を挿入する
+        - 挿入したEntityを選択する
+        - Resizeモードへ移行する
+- new-pathモード
+    - pointerDownで
+        - ポインタの位置に1x1の線分を挿入する
+        - 挿入したEntityを選択する
+        - Resizeモードへ移行する
+- new-textモード
+    - pointerDownで
+        - ポインタの位置にTextEntityを挿入する
+        - 挿入したEntityを選択する
+        - edit-textモードへ移行する
+- edit-textモード
+    - テキストが編集できる
+    - Canvas上でのPointerDownですべての選択を解除しselect-entityモードに移行する
+    - EscapeキーでTextEntityの選択を維持したままselect-entityモードに移行する
+    - モードから抜ける際にTextEntityの中身が空文字列の場合、TextEntityを削除する
+- PropertyPanel
+    - colorId
+        - 選択しているEntityのcolorIdが変わる
+        - デフォルトのcolorIdが変わる
+    - fill-mode
+        - 選択しているEntityのfill-modeが変化する
+        - デフォルトのfill-modeが変化する
+    - stroke-mode
+        - 選択しているEntityのstroke-modeが変化する
+        - デフォルトのstroke-modeが変化する
+    - stroke-width
+        - 選択しているEntityのstroke-widthが変化する
+        - デフォルトのstroke-widthが変化する
+    - text-alignment
+        - 選択しているEntityのtext-alignmentが変化する
+        - デフォルトのtext-alignmentが変化する
+    - sizing-mode
+        - 選択しているEntityのsizing-modeが変化する
+        - デフォルトのsizing-modeが変化する
+- ContextMenu
+    - モードによらず右クリックでコンテキストメニューが表示される
+    - 画面右端で右クリックした場合、左側に表示される
+    - 画面下端で右クリックした場合、上側に表示される
+    - 最前面へ
+        - 選択中のEntity全てが、選択されていないEntityよりも前面に持ってくる
+        - 選択中のEntity同士の順序が維持される
+        - すでに選択中のEntity全てが最前面にある場合は何もおこらない
+    - ひとつ前へ
+        - 選択されていないEntityのうちで、選択中のEntityと重なっているものの中から最も後ろにあるEntityを選び、選択中のEntity全てを、選ばれたEntityよりも前に持ってくる
+        - すでに条件を満たしているEntityのz-indexは変化しない
+        - 選択中のEntity同士の順序を維持する
+        - すでに選択中のEntity全てが最前面にある場合は何もおこらない
+    - ひとつ後ろへ
+        - 選択されていないEntityのうちで、選択中のEntityと重なっているものの中から最も手前にあるEntityを選び、選択中のEntity全てを、選ばれたEntityよりも後ろに持ってくる
+        - すでに条件を満たしているEntityのz-indexは変化しない
+        - 選択中のEntity同士の順序を維持する
+        - すでに選択中のEntity全てが最背面にある場合は何もおこらない
+    - 最背面へ
+        - 選択中のEntity全てが、選択されていないEntityよりも背面に持ってくる
+        - 選択中のEntity同士の順序が維持される
+        - すでに選択中のEntity全てが最背面にある場合は何もおこらない
+- Undo/Redo
+    - TODO
+
+
+- 範囲選択モード・リサイズモードなど、モーダルだが現在はModeとして扱われていないものの取り扱いを整理する
+    - そもそもModeとして扱うべきか? マルチタップに対応するならモーダルではない?
+        - タッチ点単位ではモードとして捉えられる
+
