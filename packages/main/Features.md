@@ -1,51 +1,5 @@
 機能要件一覧
 
-- Viewport
-    - 起動時にViewportが(0,0,1.0)になっている
-    - ズームイン・アウト
-        - ctrlを押しながらのマウスホイールでズームイン・アウトする
-        - ズームイン・アウトの中心はマウスカーソルの位置
-    - ドラッグ
-        - ホイールドラッグで画面を移動する
-        - スクロールで画面を移動する
-- select-entityモード
-    - 起動時に選択モードに入っている
-    - select-entityモードでのpointerDown時の選択状態変化
-        - 選択範囲内にある選択中のEntity上でのpointerDownの場合
-            - shiftが押されている場合
-                - 選択状態は変化しない
-            - shiftが押されていない場合
-                - 選択状態は変化しない
-        - 選択範囲内にある未選択のEntity上でのpointerDownの場合
-            - shiftが押されている場合
-                - 選択状態は変化しない
-            - shiftが押されていない場合
-                - pointerDownされたEntityを選択する
-                - それ以外のEntityの選択を解除する
-        - 選択範囲内のCanvas上でのPointerDownの場合
-            - 選択状態は変化しない
-        - 選択範囲外にある未選択のEntity上でのpointerDownの場合
-            - shiftが押されている場合
-                - pointerDownされたEntityを選択する
-                - それ以外のEntityの選択状態は変化しない
-            - shiftが押されていない場合
-                - pointerDownされたEntityを選択する
-                - それ以外のEntityの選択を解除する
-        - 選択範囲外のCanvas上でのPointerDownの場合
-            - shiftが押されている場合
-                - 選択状態は変化しない
-            - shiftが押されていない場合
-                - 全てのEntityの選択を解除する
-    - pointerDown時のモード変化
-        - 選択範囲のリサイズハンドル上でのpointerDownの場合
-            - Resizeモードに移行する
-        - 選択範囲内でのPointerDownの場合
-            - Translateモードに移行する
-        - 選択範囲外にある未選択のEntity上でのpointerDownの場合
-            - Entityを選択したうえで、Translateモードに移行する
-        - 選択範囲外のCanvas上でのPointerDownの場合
-            - 範囲選択モードに移行する
-    - Entityをtapしたとき、そのEntityがpointerDown前から選択されていた場合、select-pathモードに移行する
 - 範囲選択モード
     - pointerMoveで選択範囲が変化する
     - 選択範囲に入ったオブジェクトが選択される
@@ -145,6 +99,8 @@
         - すでに選択中のEntity全てが最背面にある場合は何もおこらない
 - Undo/Redo
     - TODO
+- PathEntity
+    - Entityをtapしたとき、そのEntityがpointerDown前から選択されていた場合、select-pathモードに移行する
 
 
 - 範囲選択モード・リサイズモードなど、モーダルだが現在はModeとして扱われていないものの取り扱いを整理する

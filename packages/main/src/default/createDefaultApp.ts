@@ -7,7 +7,13 @@ import { NewShapeModeController } from "./mode/NewShapeModeController";
 import { NewTextModeController } from "./mode/NewTextModeController";
 import { syncWithLocalStorage } from "./syncWithLocalStorage";
 
-export function createDefaultApp(): App {
+export function createDefaultApp(
+    option: {
+        enableSyncWithLocalStorage?: boolean;
+    } = {},
+): App {
+    const { enableSyncWithLocalStorage = true } = option;
+
     const app = new App();
 
     app.addModeController(
@@ -29,7 +35,9 @@ export function createDefaultApp(): App {
         .registerEntityHandle(new PathEntityHandle())
         .registerEntityHandle(new TextEntityHandle());
 
-    syncWithLocalStorage(app);
+    if (enableSyncWithLocalStorage) {
+        syncWithLocalStorage(app);
+    }
 
     return app;
 }

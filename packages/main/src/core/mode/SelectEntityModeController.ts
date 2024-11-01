@@ -171,11 +171,7 @@ export class SelectEntityModeController extends ModeController {
     }
 
     onPointerDown(app: App, ev: CanvasPointerEvent): void {
-        const handle = this.getHandleType(app, ev.point);
-        if (handle !== null) {
-            this.onSelectionPointerDown(app, ev, handle);
-            return;
-        }
+        const selectedEntityIds = app.canvas.selectedEntityIds.get();
 
         const hitResult = testHitEntities(
             app.canvas.page.get(),
@@ -184,7 +180,18 @@ export class SelectEntityModeController extends ModeController {
             app.entityHandle,
         );
         const result = hitResult.entities.at(0);
-        if (result !== undefined) {
+        if (result !== undefined && !selectedEntityIds.has(result.target.id)) {
+            this.onEntityPointerDown(app, ev, result.target);
+            return;
+        }
+
+        const handle = this.getHandleType(app, ev.point);
+        if (handle !== null) {
+            this.onSelectionPointerDown(app, ev, handle);
+            return;
+        }
+
+        if (result !== undefined && selectedEntityIds.has(result.target.id)) {
             this.onEntityPointerDown(app, ev, result.target);
             return;
         }

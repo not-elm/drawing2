@@ -6,9 +6,9 @@ import { SelectPathControlLayer } from "./SelectPathControlLayer";
 import { SelectedEntityOutlineLayer } from "./SelectedEntityOutlineLayer";
 import { SelectionRectLayer } from "./SelectionRectLayer";
 import { SnapGuideLayer } from "./SnapGuideLayer";
+import { useApp } from "./hooks/useApp";
 import { useCell } from "./hooks/useCell";
 import { useResizeObserver } from "./hooks/useResizeObserver";
-import { useApp } from "./useApp";
 
 export function Canvas() {
     const app = useApp();

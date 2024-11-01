@@ -17,7 +17,7 @@ import { StrokeWidthPropertySection } from "./PropertyPanel/StrokeWidthPropertyS
 import { TextAlignmentPropertySection } from "./PropertyPanel/TextAlignmentPropertySection";
 import { StatusBar } from "./StatusBar";
 import { ToolBar } from "./ToolBar";
-import { AppProvider } from "./useApp";
+import { AppProvider } from "./hooks/useApp";
 
 export function AppView({ app: controlledApp }: { app?: App }) {
     const appRef = useRef<App>(null as never);

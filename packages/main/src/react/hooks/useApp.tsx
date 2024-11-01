@@ -1,5 +1,5 @@
 import { type ReactNode, createContext, useContext } from "react";
-import type { App } from "../core/App";
+import type { App } from "../../core/App";
 
 const context = createContext<App>(null as never);
 

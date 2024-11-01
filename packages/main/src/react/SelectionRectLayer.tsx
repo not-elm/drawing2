@@ -2,8 +2,8 @@ import { MoveEntityModeController } from "../core/mode/MoveEntityModeController"
 import { ResizeEntityModeController } from "../core/mode/ResizeEntityModeController";
 import { SelectByBrushModeController } from "../core/mode/SelectByBrushModeController";
 import { SelectEntityModeController } from "../core/mode/SelectEntityModeController";
+import { useApp } from "./hooks/useApp";
 import { useCell } from "./hooks/useCell";
-import { useApp } from "./useApp";
 
 export function SelectionRectLayer() {
     const app = useApp();

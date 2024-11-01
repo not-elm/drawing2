@@ -1,6 +1,6 @@
 import { SelectByBrushModeController } from "../core/mode/SelectByBrushModeController";
+import { useApp } from "./hooks/useApp";
 import { useCell } from "./hooks/useCell";
-import { useApp } from "./useApp";
 
 export function SelectByBrushControlLayer() {
     const app = useApp();

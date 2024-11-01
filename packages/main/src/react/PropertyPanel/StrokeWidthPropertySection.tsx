@@ -3,7 +3,7 @@ import { NewShapeModeController } from "../../default/mode/NewShapeModeControlle
 import { PROPERTY_KEY_STROKE_WIDTH } from "../../default/property/StrokeWidth";
 import { Button } from "../Button";
 import { Card } from "../Card";
-import { useApp } from "../useApp";
+import { useApp } from "../hooks/useApp";
 import { useSelectedPropertyValue } from "./useSelectedPropertyValue";
 import { useVisibleFlag } from "./useVisibleFlag";
 

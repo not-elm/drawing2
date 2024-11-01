@@ -4,7 +4,7 @@ import {
     type TextAlignment,
 } from "../../default/property/TextAlignment";
 import { Card } from "../Card";
-import { useApp } from "../useApp";
+import { useApp } from "../hooks/useApp";
 
 import { NewTextModeController } from "../../default/mode/NewTextModeController";
 import { useSelectedPropertyValue } from "./useSelectedPropertyValue";

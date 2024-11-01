@@ -5,8 +5,8 @@ import { Graph } from "../core/shape/Graph";
 import { Line } from "../core/shape/Line";
 import { Rect, type Shape } from "../core/shape/Shape";
 import type { TransformMatrix } from "../core/shape/TransformMatrix";
+import { useApp } from "./hooks/useApp";
 import { useCell } from "./hooks/useCell";
-import { useApp } from "./useApp";
 
 export function SelectedEntityOutlineLayer() {
     const app = useApp();

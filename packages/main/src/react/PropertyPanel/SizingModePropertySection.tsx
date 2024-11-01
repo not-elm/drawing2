@@ -5,7 +5,7 @@ import {
 } from "../../default/property/SizingMode";
 import { Button } from "../Button";
 import { Card } from "../Card";
-import { useApp } from "../useApp";
+import { useApp } from "../hooks/useApp";
 import { useSelectedPropertyValue } from "./useSelectedPropertyValue";
 import { useVisibleFlag } from "./useVisibleFlag";
 

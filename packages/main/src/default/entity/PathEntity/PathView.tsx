@@ -4,7 +4,7 @@ import {
     getMaxCornerRadius,
 } from "../../../core/mode/SelectEntityModeController";
 import type { Graph, GraphNode } from "../../../core/shape/Graph";
-import { useApp } from "../../../react/useApp";
+import { useApp } from "../../../react/hooks/useApp";
 import {
     type ColorId,
     ColorPaletteBackground,

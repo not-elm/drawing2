@@ -353,7 +353,7 @@ export class App {
      * Handle native `pointerdown` events
      * @internal
      */
-    handlePointerDown(ev: PointerEvent) {
+    handlePointerDown(ev: NativePointerEvent) {
         if (this.contextMenu.state.get().visible) {
             this.contextMenu.hide();
             this.resetRequiredPointerUpCountBeforeDoubleClick();
@@ -406,9 +406,8 @@ export class App {
      * Handle native `pointermove` events
      * @internal
      */
-    handlePointerMove(ev: PointerEvent) {
+    handlePointerMove(ev: NativePointerEvent) {
         if (this.contextMenu.state.get().visible) return;
-        this.gesture.handlePointerMove(ev);
         this.pointerPosition.set(
             this.viewport
                 .get()
@@ -416,6 +415,7 @@ export class App {
                     new Point(ev.clientX, ev.clientY),
                 ),
         );
+        this.gesture.handlePointerMove(ev);
     }
 
     /**
@@ -510,4 +510,15 @@ export class App {
     private resetRequiredPointerUpCountBeforeDoubleClick() {
         this.requiredPointerUpCountBeforeDoubleClick = 3;
     }
+}
+
+export interface NativePointerEvent {
+    button: number;
+    preventDefault: () => void;
+    pointerId: number;
+    clientX: number;
+    clientY: number;
+    shiftKey: boolean;
+    metaKey: boolean;
+    ctrlKey: boolean;
 }

@@ -10,7 +10,10 @@ export class Viewport {
 
     move(deltaCanvasX: number, deltaCanvasY: number): Viewport {
         return new Viewport(
-            translate(deltaCanvasX, deltaCanvasY).apply(this.rect),
+            translate(
+                deltaCanvasX / this.scale,
+                deltaCanvasY / this.scale,
+            ).apply(this.rect),
             this.scale,
         );
     }

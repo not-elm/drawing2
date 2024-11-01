@@ -1,5 +1,5 @@
 import { assert } from "../lib/assert";
-import type { App } from "./App";
+import type { App, NativePointerEvent } from "./App";
 import type { CanvasPointerEvent } from "./ModeController";
 import { Point } from "./shape/Point";
 
@@ -17,7 +17,7 @@ export class GestureRecognizer {
         (app: App, ev: CanvasPointerUpEvent) => void
     >();
 
-    handlePointerDown(nativeEv: PointerEvent) {
+    handlePointerDown(nativeEv: NativePointerEvent) {
         const point = this.app.viewport
             .get()
             .fromCanvasCoordinateTransform.apply(
@@ -34,16 +34,15 @@ export class GestureRecognizer {
         });
     }
 
-    handlePointerMove(nativeEv: PointerEvent) {
+    handlePointerMove(nativeEv: NativePointerEvent) {
         const session = this.sessions.get(nativeEv.pointerId);
-        if (session === undefined) return;
-
+        const point = this.app.viewport
+            .get()
+            .fromCanvasCoordinateTransform.apply(
+                new Point(nativeEv.clientX, nativeEv.clientY),
+            );
         const ev: CanvasPointerMoveEvent = {
-            point: this.app.viewport
-                .get()
-                .fromCanvasCoordinateTransform.apply(
-                    new Point(nativeEv.clientX, nativeEv.clientY),
-                ),
+            point,
             button:
                 nativeEv.button === MouseEventButton.MAIN ? "main" : "other",
             pointerId: nativeEv.pointerId,
@@ -53,18 +52,19 @@ export class GestureRecognizer {
             preventDefault: (): void => {
                 throw new Error("Function not implemented.");
             },
-            startPoint: session.startPoint,
-            lastPoint: session.lastPoint,
+            startPoint: session?.startPoint ?? point,
+            lastPoint: session?.lastPoint ?? point,
         };
 
-        for (const handler of session.pointerMoveHandlers) {
-            handler(this.app, ev);
+        if (session !== undefined) {
+            for (const handler of session.pointerMoveHandlers) {
+                handler(this.app, ev);
+            }
+            session.lastPoint = ev.point;
         }
         for (const handler of this.pointerMoveHandlers) {
             handler(this.app, ev);
         }
-
-        session.lastPoint = ev.point;
     }
 
     handlePointerUp(nativeEv: PointerEvent) {

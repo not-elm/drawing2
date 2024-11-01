@@ -1,8 +1,8 @@
 import { SelectEntityModeController } from "../../core/mode/SelectEntityModeController";
 import type { ColorId } from "../../default/property/Colors";
 import { isNotNullish } from "../../lib/isNullish";
+import { useApp } from "../hooks/useApp";
 import { useCell } from "../hooks/useCell";
-import { useApp } from "../useApp";
 
 export function useSelectedPropertyValue<T = unknown>(
     propertyKey: string,

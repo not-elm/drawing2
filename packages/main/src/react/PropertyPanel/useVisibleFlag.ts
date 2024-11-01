@@ -1,6 +1,6 @@
 import { SelectEntityModeController } from "../../core/mode/SelectEntityModeController";
+import { useApp } from "../hooks/useApp";
 import { useCell } from "../hooks/useCell";
-import { useApp } from "../useApp";
 
 export function useVisibleFlag(
     condition: {

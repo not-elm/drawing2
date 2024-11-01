@@ -5,7 +5,7 @@ import {
 } from "../../default/property/Colors";
 import { Button } from "../Button";
 import { Card } from "../Card";
-import { useApp } from "../useApp";
+import { useApp } from "../hooks/useApp";
 import { useSelectedPropertyValue } from "./useSelectedPropertyValue";
 
 export function useSelectedColorId() {

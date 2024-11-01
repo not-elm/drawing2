@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { Viewport } from "../core/Viewport";
+import { useApp } from "./hooks/useApp";
 import { useCell } from "./hooks/useCell";
-import { useApp } from "./useApp";
 
 const SIZE = 1000; // [ms]
 

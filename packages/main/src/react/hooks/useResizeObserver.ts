@@ -6,7 +6,7 @@ import {
     useState,
 } from "react";
 
-export const ResizeObserverEventEmitter = new (class {
+class ResizeObserverEventEmitter {
     private observer: ResizeObserver;
     private readonly handlerMap = new WeakMap<
         Element,
@@ -54,7 +54,15 @@ export const ResizeObserverEventEmitter = new (class {
             }
         }
     }
-})();
+}
+
+let instance: ResizeObserverEventEmitter | null = null;
+function getInstance() {
+    if (instance === null) {
+        instance = new ResizeObserverEventEmitter();
+    }
+    return instance;
+}
 
 export function useResizeObserver(
     handler: (entry: ResizeObserverEntry) => void,
@@ -71,10 +79,10 @@ export function useResizeObserver(
     useEffect(() => {
         if (element === null) return;
 
-        ResizeObserverEventEmitter.addListener(element, callback);
+        getInstance().addListener(element, callback);
 
         return () => {
-            ResizeObserverEventEmitter.removeListener(element, callback);
+            getInstance().removeListener(element, callback);
         };
     }, [element, callback]);
 

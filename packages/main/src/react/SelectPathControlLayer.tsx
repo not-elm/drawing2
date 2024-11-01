@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { SelectPathModeController } from "../core/mode/SelectPathModeController";
+import { useApp } from "./hooks/useApp";
 import { useCell } from "./hooks/useCell";
-import { useApp } from "./useApp";
 
 export function SelectPathControlLayer() {
     const app = useApp();
