@@ -233,6 +233,7 @@ export class MoveNodeModeController extends ModeController {
             this.app.deleteSnapGuide(ConstraintGuideKey);
         }
     }
+
     private updateSnapGuide(point: Point): void {
         const transform = translate(
             point.x - this.startPoint.x,

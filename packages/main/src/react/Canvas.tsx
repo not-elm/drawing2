@@ -1,5 +1,6 @@
 import { type WheelEventHandler, useCallback, useEffect } from "react";
 import { LinkGuideLayer } from "./LinkGuideLayer";
+import { NewPathControlLayer } from "./NewPathControlLayer";
 import { SelectByBrushControlLayer } from "./SelectByBrushControlLayer";
 import { SelectEntityControlLayer } from "./SelectEntityControlLayer";
 import { SelectPathControlLayer } from "./SelectPathControlLayer";
@@ -107,6 +108,7 @@ export function Canvas() {
             <SelectEntityControlLayer />
             <SelectPathControlLayer />
             <SelectByBrushControlLayer />
+            <NewPathControlLayer />
             <LinkGuideLayer />
             <SnapGuideLayer />
         </div>

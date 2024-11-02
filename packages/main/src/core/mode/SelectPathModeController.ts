@@ -9,6 +9,7 @@ import { randomId } from "../../lib/randomId";
 import type { App } from "../App";
 import {
     type CanvasPointerEvent,
+    type ModeChangeEvent,
     ModeController,
     type SelectedEntityChangeEvent,
 } from "../ModeController";
@@ -80,6 +81,10 @@ export class SelectPathModeController extends ModeController {
         });
     }
 
+    onAfterEnterMode(app: App, ev: ModeChangeEvent) {
+        app.cursor.set(this.getCursor(app));
+    }
+
     onPointerDown(app: App, ev: CanvasPointerEvent): void {
         const control = SelectPathModeController.getControlByPoint(
             app,
@@ -148,18 +153,9 @@ export class SelectPathModeController extends ModeController {
         highlightedItemIds: Set<string>;
         highlightCenterOfEdgeHandle: boolean;
     } {
-        const entities = app.canvas.selectedEntities.get();
-        if (entities.length === 0) {
-            return {
-                edges: [],
-                nodes: [],
-                highlightedItemIds: new Set(),
-                highlightCenterOfEdgeHandle: false,
-            };
-        }
-
-        const path = entities[0];
-        if (!isPathEntity(path)) {
+        const path =
+            SelectPathModeController.getSelectedSinglePathEntityOrNull(app);
+        if (path === null) {
             return {
                 edges: [],
                 nodes: [],
@@ -245,6 +241,16 @@ export class SelectPathModeController extends ModeController {
         }
 
         return null;
+    }
+
+    static getSelectedSinglePathEntityOrNull(app: App): PathEntity | null {
+        const entities = app.canvas.selectedEntities.get();
+        if (entities.length !== 1) return null;
+
+        const path = entities[0];
+        if (!isPathEntity(path)) return null;
+
+        return path;
     }
 
     private updateSelectedItemState(

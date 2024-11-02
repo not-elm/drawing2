@@ -22,7 +22,7 @@ export function createDefaultApp(
     )
         .addModeController(
             NewPathModeController.type,
-            new NewPathModeController(),
+            new NewPathModeController(app),
         )
         .addModeController(
             NewTextModeController.type,

@@ -152,6 +152,12 @@ export class Graph extends Shape {
         this.deleteNode(sourceNodeId);
     }
 
+    addNode(node: GraphNode): Graph {
+        this.nodes.set(node.id, node);
+        this.canonicalize();
+        return this;
+    }
+
     addEdge(node1: GraphNode, node2: GraphNode): Graph {
         if (this.edges.get(node1.id)?.includes(node2.id)) return this;
 
@@ -403,10 +409,26 @@ export class Graph extends Shape {
     /**
      * Canonicalize this graph
      * - If a node is on an edge, that edge will be split.
+     * - If a node is overlapped with another, those node will be merged.
      * - If two edges are across, those edge will be left as they are.
      * - Edges not closed are left as they are.
      */
     canonicalize(): void {
+        const nodes = new Set(this.nodes.values());
+        for (const n1 of nodes) {
+            if (!this.nodes.has(n1.id)) continue; // This node has been merged
+
+            for (const n2 of nodes) {
+                if (!this.nodes.has(n2.id)) continue; // This node has been merged
+                if (n1.id >= n2.id) continue;
+
+                if (Math.hypot(n1.x - n2.x, n1.y - n2.y) < 1e-6) {
+                    this.mergeNodes(n1.id, n2.id);
+                    break;
+                }
+            }
+        }
+
         for (const node of this.nodes.values()) {
             for (const edge of this.getEdges()) {
                 if (edge.p1.id === node.id || edge.p2.id === node.id) continue;

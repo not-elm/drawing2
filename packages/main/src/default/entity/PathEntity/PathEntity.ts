@@ -151,23 +151,18 @@ export class PathEntityHandle extends EntityHandle<PathEntity> {
     }
 
     static getGraph(entity: PathEntity): Graph {
-        const nodes = new Map<string, GraphNode>();
-        for (const node of PathEntityHandle.getNodes(entity)) {
-            nodes.set(
-                node.id,
-                new GraphNode(node.id, new Point(node.x, node.y)),
-            );
-        }
-
         const graph = Graph.create();
+        for (const node of PathEntityHandle.getNodes(entity)) {
+            graph.addNode(node);
+        }
         for (const edge of entity.edges) {
-            const node1 = nodes.get(edge[0]);
+            const node1 = graph.nodes.get(edge[0]);
             assert(
                 node1 !== undefined,
                 `node ${edge[0]} is not found in path ${entity.id}`,
             );
 
-            const node2 = nodes.get(edge[1]);
+            const node2 = graph.nodes.get(edge[1]);
             assert(
                 node2 !== undefined,
                 `node ${edge[1]} is not found in path ${entity.id}`,
