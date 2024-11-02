@@ -5,7 +5,6 @@ import {
     AbstractTransformEntityModeController,
     type Axis,
 } from "./AbstractTransformEntityModeController";
-import { SelectEntityModeController } from "./SelectEntityModeController";
 
 export class MoveEntityModeController extends AbstractTransformEntityModeController {
     static readonly type = "move-entity";
@@ -14,9 +13,7 @@ export class MoveEntityModeController extends AbstractTransformEntityModeControl
         app.keyboard.addBinding({
             key: "Escape",
             mode: [MoveEntityModeController.type],
-            action: () => {
-                app.setMode(SelectEntityModeController.type);
-            },
+            action: () => this.abort(),
         });
     }
 

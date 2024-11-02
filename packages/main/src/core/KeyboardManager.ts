@@ -1,5 +1,5 @@
 import { EditTextModeController } from "../default/mode/EditTextModeController";
-import type { App } from "./App";
+import type { App, NativeKeyboardEvent } from "./App";
 
 export interface KeyboardBinging {
     /**
@@ -84,7 +84,7 @@ export class KeyboardManager {
      * Handles native `keydown` events and triggers the corresponding binding if needed
      * @internal
      */
-    handleKeyDown(ev: KeyboardEvent) {
+    handleKeyDown(ev: NativeKeyboardEvent) {
         const platform = getPlatform();
         const mode = this.app.mode.get();
 

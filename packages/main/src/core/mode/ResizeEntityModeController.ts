@@ -7,7 +7,6 @@ import {
     AbstractTransformEntityModeController,
     type Axis,
 } from "./AbstractTransformEntityModeController";
-import { SelectEntityModeController } from "./SelectEntityModeController";
 
 const MARGIN = 16;
 
@@ -21,9 +20,7 @@ export class ResizeEntityModeController extends AbstractTransformEntityModeContr
         app.keyboard.addBinding({
             key: "Escape",
             mode: [ResizeEntityModeController.type],
-            action: () => {
-                app.setMode(SelectEntityModeController.type);
-            },
+            action: () => this.abort(),
         });
     }
 
@@ -32,14 +29,16 @@ export class ResizeEntityModeController extends AbstractTransformEntityModeContr
 
         const selectionRect = this.originalSelectionRect;
         const point = app.pointerPosition.get();
+        const marginX = Math.min(MARGIN, selectionRect.width / 4);
+        const marginY = Math.min(MARGIN, selectionRect.height / 4);
 
-        if (point.x < selectionRect.left + MARGIN) {
-            if (point.y < selectionRect.top + MARGIN) {
+        if (point.x < selectionRect.left + marginX) {
+            if (point.y < selectionRect.top + marginY) {
                 this.startPoint = selectionRect.topLeft;
                 this.resizeOrigin = selectionRect.bottomRight;
                 this.resizeInXAxis = true;
                 this.resizeInYAxis = true;
-            } else if (point.y > selectionRect.bottom - MARGIN) {
+            } else if (point.y > selectionRect.bottom - marginY) {
                 this.startPoint = selectionRect.bottomLeft;
                 this.resizeOrigin = selectionRect.topRight;
                 this.resizeInXAxis = true;
@@ -50,13 +49,13 @@ export class ResizeEntityModeController extends AbstractTransformEntityModeContr
                 this.resizeInXAxis = true;
                 this.resizeInYAxis = false;
             }
-        } else if (point.x > selectionRect.right - MARGIN) {
-            if (point.y < selectionRect.top + MARGIN) {
+        } else if (point.x > selectionRect.right - marginX) {
+            if (point.y < selectionRect.top + marginY) {
                 this.startPoint = selectionRect.topRight;
                 this.resizeOrigin = selectionRect.bottomLeft;
                 this.resizeInXAxis = true;
                 this.resizeInYAxis = true;
-            } else if (point.y > selectionRect.bottom - MARGIN) {
+            } else if (point.y > selectionRect.bottom - marginY) {
                 this.startPoint = selectionRect.bottomRight;
                 this.resizeOrigin = selectionRect.topLeft;
                 this.resizeInXAxis = true;

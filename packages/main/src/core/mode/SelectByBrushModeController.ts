@@ -20,6 +20,14 @@ export class SelectByBrushModeController extends ModeController {
         super();
     }
 
+    onRegistered(app: App) {
+        app.keyboard.addBinding({
+            key: "Escape",
+            mode: [SelectByBrushModeController.type],
+            action: () => this.abort(),
+        });
+    }
+
     onBeforeEnterMode(app: App, ev: ModeChangeEvent): void {
         this.startPoint = app.pointerPosition.get();
         this.brushRect.set(Rect.fromPoints(this.startPoint, this.startPoint));
@@ -47,5 +55,10 @@ export class SelectByBrushModeController extends ModeController {
 
     onBeforeExitMode(app: App, ev: ModeChangeEvent) {
         this.brushRect.set(null);
+    }
+
+    abort() {
+        this.app.canvas.setSelectedEntityIds(this.originalSelectedEntityIds);
+        this.app.setMode(SelectEntityModeController.type);
     }
 }

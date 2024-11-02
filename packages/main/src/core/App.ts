@@ -365,6 +365,7 @@ export class App {
         // drag operation with other buttons
         if (ev.button !== MouseEventButton.MAIN) return;
 
+        this.updatePointerPosition(ev);
         this.gesture.handlePointerDown(ev);
 
         this.getModeController().onPointerDown(this, {
@@ -382,7 +383,7 @@ export class App {
         });
     }
 
-    handleContextMenu(ev: MouseEvent) {
+    handleContextMenu(ev: NativeMouseEvent) {
         ev.preventDefault();
 
         if (this.gesture.inPointerEventSession()) return;
@@ -408,13 +409,8 @@ export class App {
      */
     handlePointerMove(ev: NativePointerEvent) {
         if (this.contextMenu.state.get().visible) return;
-        this.pointerPosition.set(
-            this.viewport
-                .get()
-                .fromCanvasCoordinateTransform.apply(
-                    new Point(ev.clientX, ev.clientY),
-                ),
-        );
+
+        this.updatePointerPosition(ev);
         this.gesture.handlePointerMove(ev);
     }
 
@@ -422,11 +418,13 @@ export class App {
      * Handle native `pointerup` events
      * @internal
      */
-    handlePointerUp(ev: PointerEvent) {
+    handlePointerUp(ev: NativePointerEvent) {
         if (this.contextMenu.state.get().visible) return;
         if (this.requiredPointerUpCountBeforeDoubleClick > 0) {
             this.requiredPointerUpCountBeforeDoubleClick -= 1;
         }
+
+        this.updatePointerPosition(ev);
         this.gesture.handlePointerUp(ev);
     }
 
@@ -434,7 +432,7 @@ export class App {
      * Handle native `doubleclick` events
      * @internal
      */
-    handleDoubleClick(ev: MouseEvent) {
+    handleDoubleClick(ev: NativeMouseEvent) {
         if (this.contextMenu.state.get().visible) return;
         if (this.requiredPointerUpCountBeforeDoubleClick > 0) return;
 
@@ -473,7 +471,7 @@ export class App {
      * Handle native `keydown` events
      * @internal
      */
-    handleKeyDown(ev: KeyboardEvent) {
+    handleKeyDown(ev: NativeKeyboardEvent) {
         if (this.contextMenu.state.get().visible) return;
 
         this.keyboard.handleKeyDown(ev);
@@ -486,6 +484,16 @@ export class App {
         this.entityHandle
             .getHandle(entity)
             .onViewResize(entity, this, width, height);
+    }
+
+    private updatePointerPosition(ev: NativeMouseEvent) {
+        this.pointerPosition.set(
+            this.viewport
+                .get()
+                .fromCanvasCoordinateTransform.apply(
+                    new Point(ev.clientX, ev.clientY),
+                ),
+        );
     }
 
     /**
@@ -512,13 +520,25 @@ export class App {
     }
 }
 
-export interface NativePointerEvent {
-    button: number;
-    preventDefault: () => void;
+export interface NativePointerEvent extends NativeMouseEvent {
     pointerId: number;
+}
+
+export interface NativeMouseEvent {
+    preventDefault: () => void;
+    button: number;
     clientX: number;
     clientY: number;
     shiftKey: boolean;
     metaKey: boolean;
     ctrlKey: boolean;
+}
+
+export interface NativeKeyboardEvent {
+    key: string;
+    altKey: boolean;
+    shiftKey: boolean;
+    metaKey: boolean;
+    ctrlKey: boolean;
+    preventDefault(): void;
 }

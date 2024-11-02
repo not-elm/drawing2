@@ -199,7 +199,6 @@ export class SelectEntityModeController extends ModeController {
         if (!ev.shiftKey) app.canvas.unselectAll();
 
         app.setMode(SelectByBrushModeController.type);
-        // setupBrushSelectPointerEventHandlers(app, ev, this.brushRect);
     }
 
     onPointerMove(app: App, ev: CanvasPointerEvent) {

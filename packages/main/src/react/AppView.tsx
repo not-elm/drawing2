@@ -91,16 +91,16 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                             <ToolBar.Button
                                 mode={SelectEntityModeController.type}
                             >
-                                Select
+                                選択
                             </ToolBar.Button>
                             <ToolBar.Button mode={NewShapeModeController.type}>
-                                Rect
+                                図形
                             </ToolBar.Button>
                             <ToolBar.Button mode={NewPathModeController.type}>
-                                Line
+                                パス
                             </ToolBar.Button>
                             <ToolBar.Button mode={NewTextModeController.type}>
-                                Text
+                                テキスト
                             </ToolBar.Button>
                         </ToolBar>
                     </div>

@@ -38,6 +38,14 @@ export class MoveNodeModeController extends ModeController {
         super();
     }
 
+    onRegistered(app: App) {
+        app.keyboard.addBinding({
+            key: "Escape",
+            mode: [MoveNodeModeController.type],
+            action: () => this.abort(),
+        });
+    }
+
     onBeforeEnterMode(app: App, ev: ModeChangeEvent): void {
         const originalEntity = app.canvas.selectedEntities.get()[0];
         assert(

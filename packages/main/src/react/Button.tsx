@@ -15,6 +15,7 @@ export const Button = styled.button({
     borderRadius: 8,
     cursor: "pointer",
     pointerEvents: "all",
+    whiteSpace: "nowrap",
 
     "&:hover": {
         backgroundColor: "var(--color-ui-background-hover)",

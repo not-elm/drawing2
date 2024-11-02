@@ -67,7 +67,7 @@ export class GestureRecognizer {
         }
     }
 
-    handlePointerUp(nativeEv: PointerEvent) {
+    handlePointerUp(nativeEv: NativePointerEvent) {
         const session = this.sessions.get(nativeEv.pointerId);
         if (session === undefined) return;
 
