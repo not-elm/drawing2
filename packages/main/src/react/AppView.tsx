@@ -75,35 +75,29 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                     }}
                 >
                     <Canvas />
-                    <div
+
+                    <ToolBar
                         css={{
                             position: "absolute",
-                            width: "100%",
-                            bottom: 12,
-                            left: 12,
-                            right: 12,
-                            display: "flex",
-                            flexDirection: "row",
-                            justifyContent: "center",
+                            top: 0,
+                            left: 0,
+                            bottom: 0,
                         }}
                     >
-                        <ToolBar>
-                            <ToolBar.Button
-                                mode={SelectEntityModeController.type}
-                            >
-                                選択
-                            </ToolBar.Button>
-                            <ToolBar.Button mode={NewShapeModeController.type}>
-                                図形
-                            </ToolBar.Button>
-                            <ToolBar.Button mode={NewPathModeController.type}>
-                                パス
-                            </ToolBar.Button>
-                            <ToolBar.Button mode={NewTextModeController.type}>
-                                テキスト
-                            </ToolBar.Button>
-                        </ToolBar>
-                    </div>
+                        <ToolBar.Button mode={SelectEntityModeController.type}>
+                            選択
+                        </ToolBar.Button>
+                        <ToolBar.Button mode={NewShapeModeController.type}>
+                            図形
+                        </ToolBar.Button>
+                        <ToolBar.Button mode={NewPathModeController.type}>
+                            パス
+                        </ToolBar.Button>
+                        <ToolBar.Button mode={NewTextModeController.type}>
+                            テキスト
+                        </ToolBar.Button>
+                    </ToolBar>
+
                     <div
                         css={{
                             position: "absolute",
