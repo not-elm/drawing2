@@ -37,6 +37,7 @@ export function createDefaultApp(
 
     if (enableSyncWithLocalStorage) {
         syncWithLocalStorage(app);
+        app.history.clear();
     }
 
     return app;

@@ -16,6 +16,7 @@ export function ColorPropertySection() {
     const app = useApp();
     const selectedColorId = useSelectedColorId();
     const handleClick = (colorId: ColorId) => {
+        app.history.addCheckpoint();
         app.updatePropertyForSelectedEntities(PROPERTY_KEY_COLOR_ID, colorId);
         app.setSelectedPropertyValue(PROPERTY_KEY_COLOR_ID, colorId);
     };

@@ -101,7 +101,7 @@ export class NewPathModeController extends ModeController {
     }
 
     onPointerDown(app: App, ev: CanvasPointerEvent): void {
-        app.history.pause();
+        this.app.history.addCheckpoint();
 
         const point = this.applySnapAndConstraint(ev.point, ev);
         const overlappedNode = this.findNodeByPoint(point);
@@ -131,8 +131,6 @@ export class NewPathModeController extends ModeController {
             // Start creating a new path
             this.lastNodeId = null;
         }
-
-        app.history.resume();
     }
 
     onPointerMove(app: App, ev: CanvasPointerMoveEvent) {

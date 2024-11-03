@@ -14,6 +14,7 @@ export function SizingModePropertySection() {
     const selectedValue = useSelectedPropertyValue(PROPERTY_KEY_SIZING_MODE);
 
     const handleClick = (sizingMode: SizingMode) => {
+        app.history.addCheckpoint();
         app.updatePropertyForSelectedEntities(
             PROPERTY_KEY_SIZING_MODE,
             sizingMode,

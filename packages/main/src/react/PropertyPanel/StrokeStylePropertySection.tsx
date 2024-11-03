@@ -15,6 +15,7 @@ export function StrokeStylePropertySection() {
     const selectedValue = useSelectedPropertyValue(PROPERTY_KEY_STROKE_STYLE);
 
     const handleClick = (strokeStyle: StrokeStyle) => {
+        app.history.addCheckpoint();
         app.updatePropertyForSelectedEntities(
             PROPERTY_KEY_STROKE_STYLE,
             strokeStyle,

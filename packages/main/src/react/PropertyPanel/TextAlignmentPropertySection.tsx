@@ -29,6 +29,7 @@ export function TextAlignmentPropertySection() {
         alignmentX: TextAlignment,
         alignmentY: TextAlignment,
     ) => {
+        app.history.addCheckpoint();
         app.updatePropertyForSelectedEntities(
             PROPERTY_KEY_TEXT_ALIGNMENT_X,
             alignmentX,

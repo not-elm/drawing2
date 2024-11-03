@@ -19,7 +19,7 @@ export function setupCornerRadiusHandlePointerEventHandlers(
     entity: PathEntity,
     handle: CornerRoundHandleData,
 ) {
-    app.history.pause();
+    app.history.addCheckpoint();
 
     const dx = handle.handlePosition.x - handle.node.x;
     const dy = handle.handlePosition.y - handle.node.y;
@@ -27,22 +27,16 @@ export function setupCornerRadiusHandlePointerEventHandlers(
     const ix = dx / norm;
     const iy = dy / norm;
 
-    app.gesture
-        .addPointerMoveHandlerForPointer(
-            ev.pointerId,
-            getPointerMoveHandler(
-                entity.id,
-                ix,
-                iy,
-                app.entityHandle.getProperty(
-                    entity,
-                    PROPERTY_KEY_CORNER_RADIUS,
-                    0,
-                ),
-                handle.cornerAngle,
-            ),
-        )
-        .addPointerUpHandlerForPointer(ev.pointerId, getPointerUpHandler());
+    app.gesture.addPointerMoveHandlerForPointer(
+        ev.pointerId,
+        getPointerMoveHandler(
+            entity.id,
+            ix,
+            iy,
+            app.entityHandle.getProperty(entity, PROPERTY_KEY_CORNER_RADIUS, 0),
+            handle.cornerAngle,
+        ),
+    );
 }
 
 function getPointerMoveHandler(
@@ -77,11 +71,5 @@ function getPointerMoveHandler(
                 value,
             );
         });
-    };
-}
-
-function getPointerUpHandler() {
-    return (app: App, ev: CanvasPointerEvent) => {
-        app.history.resume();
     };
 }

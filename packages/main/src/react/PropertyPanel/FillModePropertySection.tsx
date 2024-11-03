@@ -21,6 +21,7 @@ export function FillModePropertySection() {
     const selectedValue = useSelectedPropertyValue(PROPERTY_KEY_FILL_STYLE);
 
     const handleClick = (fillStyle: FillStyle) => {
+        app.history.addCheckpoint();
         app.updatePropertyForSelectedEntities(
             PROPERTY_KEY_FILL_STYLE,
             fillStyle,

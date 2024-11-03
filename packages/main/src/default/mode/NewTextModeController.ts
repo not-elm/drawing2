@@ -32,7 +32,8 @@ export class NewTextModeController extends ModeController {
     }
 
     onPointerDown(app: App, ev: CanvasPointerEvent): void {
-        app.history.pause();
+        app.history.addCheckpoint();
+
         const text = this.insertNewText(app, Rect.fromSize(ev.point, 1, 1));
         app.canvas.unselectAll();
         app.canvas.select(text.id);

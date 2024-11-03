@@ -97,7 +97,10 @@ export class App {
         this.keyboard.addBinding({
             key: "x",
             metaKey: true,
-            action: () => this.cut(),
+            action: () => {
+                this.history.addCheckpoint();
+                this.cut();
+            },
         });
         this.keyboard.addBinding({
             key: "c",
@@ -107,7 +110,10 @@ export class App {
         this.keyboard.addBinding({
             key: "v",
             metaKey: true,
-            action: () => this.paste(),
+            action: () => {
+                this.history.addCheckpoint();
+                this.paste();
+            },
         });
 
         this.keyboard.addBinding({
@@ -125,7 +131,10 @@ export class App {
         this.keyboard.addBinding({
             key: "x",
             ctrlKey: true,
-            action: () => this.cut(),
+            action: () => {
+                this.history.addCheckpoint();
+                this.cut();
+            },
         });
         this.keyboard.addBinding({
             key: "c",
@@ -135,7 +144,10 @@ export class App {
         this.keyboard.addBinding({
             key: "v",
             ctrlKey: true,
-            action: () => this.paste(),
+            action: () => {
+                this.history.addCheckpoint();
+                this.paste();
+            },
         });
 
         this.gesture.addPointerMoveHandler((app, ev) => {
@@ -236,6 +248,7 @@ export class App {
         if (selectedEntityIds.size === 0) {
             return;
         }
+
         this.canvas.edit((builder) => {
             builder.updateProperty([...selectedEntityIds], key, value);
         });

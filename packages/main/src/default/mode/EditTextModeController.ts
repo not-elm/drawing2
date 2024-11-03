@@ -27,7 +27,8 @@ export class EditTextModeController extends ModeController {
         ) {
             ev.abort();
         }
-        app.history.pause();
+
+        app.history.addCheckpoint();
     }
 
     onAfterEnterMode(app: App, ev: ModeChangeEvent) {
@@ -40,7 +41,6 @@ export class EditTextModeController extends ModeController {
         for (const entity of app.canvas.selectedEntities.get()) {
             app.entityHandle.getHandle(entity).onTextEditEnd(entity, app);
         }
-        app.history.resume();
     }
 
     onPointerDown(app: App, ev: CanvasPointerEvent): void {

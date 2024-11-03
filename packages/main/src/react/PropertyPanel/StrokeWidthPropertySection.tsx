@@ -12,6 +12,7 @@ export function StrokeWidthPropertySection() {
     const selectedValue = useSelectedPropertyValue(PROPERTY_KEY_STROKE_WIDTH);
 
     const handleClick = (strokeWidth: number) => {
+        app.history.addCheckpoint();
         app.updatePropertyForSelectedEntities(
             PROPERTY_KEY_STROKE_WIDTH,
             strokeWidth,

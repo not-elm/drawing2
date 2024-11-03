@@ -94,6 +94,7 @@ export class SelectEntityModeController extends ModeController {
             key: "Backspace",
             mode: [SelectEntityModeController.type],
             action: (app, ev) => {
+                app.history.addCheckpoint();
                 app.deleteSelectedEntities();
             },
         });
@@ -101,6 +102,7 @@ export class SelectEntityModeController extends ModeController {
             key: "Delete",
             mode: [SelectEntityModeController.type],
             action: (app, ev) => {
+                app.history.addCheckpoint();
                 app.deleteSelectedEntities();
             },
         });
@@ -108,24 +110,28 @@ export class SelectEntityModeController extends ModeController {
         app.contextMenu.add({
             title: "最前面へ",
             action: () => {
+                app.history.addCheckpoint();
                 app.bringToFront();
             },
         });
         app.contextMenu.add({
             title: "ひとつ前へ",
             action: () => {
+                app.history.addCheckpoint();
                 app.bringForward();
             },
         });
         app.contextMenu.add({
             title: "ひとつ後ろへ",
             action: () => {
+                app.history.addCheckpoint();
                 app.sendBackward();
             },
         });
         app.contextMenu.add({
             title: "最背面へ",
             action: () => {
+                app.history.addCheckpoint();
                 app.sendToBack();
             },
         });
@@ -275,7 +281,9 @@ export class SelectEntityModeController extends ModeController {
         if (!ev.shiftKey) app.canvas.unselectAll();
         app.canvas.select(entity.id);
 
+        app.history.addCheckpoint();
         app.setMode(MoveEntityModeController.type);
+
         app.gesture.addPointerUpHandlerForPointer(ev.pointerId, (app, ev) => {
             if (ev.isTap) {
                 app.entityHandle
@@ -299,10 +307,12 @@ export class SelectEntityModeController extends ModeController {
             case "BottomLeftHandle":
             case "BottomHandle":
             case "BottomRightHandle": {
+                app.history.addCheckpoint();
                 app.setMode(ResizeEntityModeController.type);
                 break;
             }
             case "CenterHandle": {
+                app.history.addCheckpoint();
                 app.setMode(MoveEntityModeController.type);
                 break;
             }

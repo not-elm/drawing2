@@ -41,13 +41,13 @@ export class NewShapeModeController extends ModeController {
     }
 
     onPointerDown(app: App, ev: CanvasPointerEvent): void {
+        app.history.addCheckpoint();
+
         const p0 = ev.point;
         const p1 = translate(1, 1).apply(ev.point);
 
-        app.history.pause();
         const shape = this.insertNewShape(app, new Rect(p0, p1));
 
-        app.setMode(SelectEntityModeController.type);
         app.canvas.unselectAll();
         app.canvas.select(shape.id);
 
