@@ -274,6 +274,13 @@ describe("SelectEntityModeController", () => {
                         shiftKey: true,
                     }),
                 );
+                app.handlePointerUp(
+                    createNativePointerEvent({
+                        clientX: 5,
+                        clientY: 5,
+                        shiftKey: true,
+                    }),
+                );
 
                 expect(app.canvas.selectedEntityIds.get()).toEqual(
                     new Set([entity.id]),
@@ -290,6 +297,13 @@ describe("SelectEntityModeController", () => {
                 app.canvas.select(entity.id);
 
                 app.handlePointerDown(
+                    createNativePointerEvent({
+                        clientX: 5,
+                        clientY: 5,
+                        shiftKey: false,
+                    }),
+                );
+                app.handlePointerUp(
                     createNativePointerEvent({
                         clientX: 5,
                         clientY: 5,
@@ -332,6 +346,7 @@ describe("SelectEntityModeController", () => {
                 expect(app.canvas.selectedEntityIds.get()).toEqual(
                     new Set([entity1.id, entity2.id]),
                 );
+                expect(app.mode.get()).toEqual(SelectEntityModeController.type);
             });
 
             test("without shiftKey pressed, select only entity under the pointer", () => {
@@ -362,6 +377,7 @@ describe("SelectEntityModeController", () => {
                 expect(app.canvas.selectedEntityIds.get()).toEqual(
                     new Set([entity2.id]),
                 );
+                expect(app.mode.get()).toEqual(SelectEntityModeController.type);
             });
         });
 
@@ -383,10 +399,18 @@ describe("SelectEntityModeController", () => {
                         shiftKey: true,
                     }),
                 );
+                app.handlePointerUp(
+                    createNativePointerEvent({
+                        clientX: 25,
+                        clientY: 25,
+                        shiftKey: true,
+                    }),
+                );
 
                 expect(app.canvas.selectedEntityIds.get()).toEqual(
                     new Set([entity1.id, entity2.id]),
                 );
+                expect(app.mode.get()).toEqual(SelectEntityModeController.type);
             });
 
             test("without shiftKey pressed, selection is not changed", () => {
@@ -406,10 +430,18 @@ describe("SelectEntityModeController", () => {
                         shiftKey: false,
                     }),
                 );
+                app.handlePointerUp(
+                    createNativePointerEvent({
+                        clientX: 25,
+                        clientY: 25,
+                        shiftKey: false,
+                    }),
+                );
 
                 expect(app.canvas.selectedEntityIds.get()).toEqual(
                     new Set([entity2.id]),
                 );
+                expect(app.mode.get()).toEqual(SelectEntityModeController.type);
             });
         });
 
@@ -417,8 +449,8 @@ describe("SelectEntityModeController", () => {
             test("with shiftKey pressed, selection is not changed", () => {
                 const app = createApp();
 
-                const entity1 = createRectPathEntity(Rect.of(0, 0, 20, 5));
-                const entity2 = createRectPathEntity(Rect.of(0, 0, 5, 20));
+                const entity1 = createRectPathEntity(Rect.of(0, 0, 200, 5));
+                const entity2 = createRectPathEntity(Rect.of(0, 0, 5, 200));
                 app.canvas.edit((builder) => {
                     builder.setEntities([entity1, entity2]);
                 });
@@ -426,8 +458,15 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 10,
-                        clientY: 10,
+                        clientX: 100,
+                        clientY: 100,
+                        shiftKey: true,
+                    }),
+                );
+                app.handlePointerUp(
+                    createNativePointerEvent({
+                        clientX: 100,
+                        clientY: 100,
                         shiftKey: true,
                     }),
                 );
@@ -440,8 +479,8 @@ describe("SelectEntityModeController", () => {
             test("without shiftKey pressed, selection is not changed", () => {
                 const app = createApp();
 
-                const entity1 = createRectPathEntity(Rect.of(0, 0, 20, 5));
-                const entity2 = createRectPathEntity(Rect.of(0, 0, 5, 20));
+                const entity1 = createRectPathEntity(Rect.of(0, 0, 200, 5));
+                const entity2 = createRectPathEntity(Rect.of(0, 0, 5, 200));
                 app.canvas.edit((builder) => {
                     builder.setEntities([entity1, entity2]);
                 });
@@ -449,8 +488,15 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 10,
-                        clientY: 10,
+                        clientX: 100,
+                        clientY: 100,
+                        shiftKey: false,
+                    }),
+                );
+                app.handlePointerUp(
+                    createNativePointerEvent({
+                        clientX: 100,
+                        clientY: 100,
                         shiftKey: false,
                     }),
                 );
@@ -478,6 +524,13 @@ describe("SelectEntityModeController", () => {
                         shiftKey: true,
                     }),
                 );
+                app.handlePointerUp(
+                    createNativePointerEvent({
+                        clientX: 100,
+                        clientY: 100,
+                        shiftKey: true,
+                    }),
+                );
 
                 expect(app.canvas.selectedEntityIds.get()).toEqual(
                     new Set([entity1.id]),
@@ -494,6 +547,13 @@ describe("SelectEntityModeController", () => {
                 app.canvas.selectAll();
 
                 app.handlePointerDown(
+                    createNativePointerEvent({
+                        clientX: 100,
+                        clientY: 100,
+                        shiftKey: false,
+                    }),
+                );
+                app.handlePointerUp(
                     createNativePointerEvent({
                         clientX: 100,
                         clientY: 100,

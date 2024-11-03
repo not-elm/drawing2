@@ -47,9 +47,7 @@ export function testHitEntities(
         }
     }
 
-    entities
-        .sort((a, b) => -(a.zIndex - b.zIndex))
-        .sort((a, b) => a.distance - b.distance);
+    entities.sort((a, b) => -(a.zIndex - b.zIndex));
 
     return {
         entities,

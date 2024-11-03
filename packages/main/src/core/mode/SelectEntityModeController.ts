@@ -18,6 +18,8 @@ import { SelectByBrushModeController } from "./SelectByBrushModeController";
 
 export class SelectEntityModeController extends ModeController {
     static readonly type = "select-entity";
+    private selectedEntityIdsOnPointerDown: ReadonlySet<string> =
+        new Set<string>();
 
     constructor(readonly app: App) {
         super();
@@ -135,7 +137,8 @@ export class SelectEntityModeController extends ModeController {
     }
 
     onPointerDown(app: App, ev: CanvasPointerEvent): void {
-        const selectedEntityIds = app.canvas.selectedEntityIds.get();
+        this.selectedEntityIdsOnPointerDown =
+            app.canvas.selectedEntityIds.get();
 
         const handle = this.getHandleType(app, ev.point);
         if (handle !== null) {
@@ -174,23 +177,25 @@ export class SelectEntityModeController extends ModeController {
                 app.entityHandle,
             );
             const result = hitResult.entities.at(0);
-            if (
-                result !== undefined &&
-                !selectedEntityIds.has(result.target.id)
-            ) {
-                if (!ev.shiftKey) {
-                    app.canvas.unselectAll();
+            if (result !== undefined) {
+                if (!selectedEntityIds.has(result.target.id)) {
+                    if (!ev.shiftKey) {
+                        app.canvas.unselectAll();
+                    }
+                    app.canvas.select(result.target.id);
                 }
-                app.canvas.select(result.target.id);
 
                 app.entityHandle
                     .getHandle(result.target)
                     .onTap(result.target, app, {
                         ...ev,
-                        previousSelectedEntities: selectedEntityIds,
+                        previousSelectedEntities:
+                            this.selectedEntityIdsOnPointerDown,
                     });
             }
         }
+
+        this.selectedEntityIdsOnPointerDown = new Set<string>();
     }
 
     onDoubleClick(app: App, ev: CanvasPointerEvent) {
@@ -215,42 +220,6 @@ export class SelectEntityModeController extends ModeController {
         }
 
         super.onContextMenu(app, ev);
-    }
-
-    private onCanvasTap(app: App, ev: CanvasPointerEvent) {
-        const hitEntity = testHitEntities(
-            app.canvas.page.get(),
-            ev.point,
-            app.viewport.get().scale,
-            app.entityHandle,
-        ).entities.at(0);
-
-        if (hitEntity !== undefined) {
-            const previousSelectedEntityIds =
-                app.canvas.selectedEntityIds.get();
-
-            const selectedOnlyThisEntity =
-                previousSelectedEntityIds.size === 1 &&
-                previousSelectedEntityIds.has(hitEntity.target.id);
-
-            if (ev.shiftKey) {
-                app.canvas.unselect(hitEntity.target.id);
-            } else {
-                if (!selectedOnlyThisEntity) {
-                    app.canvas.unselectAll();
-                    app.canvas.select(hitEntity.target.id);
-                }
-            }
-
-            app.entityHandle
-                .getHandle(hitEntity.target)
-                .onTap(hitEntity.target, app, {
-                    ...ev,
-                    previousSelectedEntities: previousSelectedEntityIds,
-                });
-        } else {
-            if (!ev.shiftKey) app.canvas.unselectAll();
-        }
     }
 
     private onEntityPointerDown(
@@ -467,28 +436,4 @@ function testHitWithRange(
     } else {
         return "none";
     }
-}
-
-function isPointInTriangle(
-    point: Point,
-    triangle: [Point, Point, Point],
-): boolean {
-    const [p0, p1, p2] = triangle;
-
-    const p0x = p0.x - point.x;
-    const p0y = p0.y - point.y;
-    const p1x = p1.x - point.x;
-    const p1y = p1.y - point.y;
-    const p2x = p2.x - point.x;
-    const p2y = p2.y - point.y;
-
-    const cross01 = p0x * p1y - p0y * p1x;
-    const cross12 = p1x * p2y - p1y * p2x;
-    const cross20 = p2x * p0y - p2y * p0x;
-
-    if (cross01 * cross12 < 0) return false;
-    if (cross12 * cross20 < 0) return false;
-    if (cross20 * cross01 < 0) return false;
-
-    return true;
 }
