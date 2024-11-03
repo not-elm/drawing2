@@ -97,9 +97,11 @@ export class MoveNodeModeController extends ModeController {
         let point = ev.point;
         let snapAxis: Axis | null = null;
 
-        const snapResult = this.snap(ev.point);
-        point = snapResult.point;
-        snapAxis = snapResult.axis;
+        if (ev.ctrlKey) {
+            const snapResult = this.snap(ev.point);
+            point = snapResult.point;
+            snapAxis = snapResult.axis;
+        }
 
         if (ev.shiftKey) {
             point = this.applyConstraint(point, snapAxis);
