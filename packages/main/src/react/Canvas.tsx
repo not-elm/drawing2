@@ -38,7 +38,7 @@ export function Canvas() {
     }, [app]);
 
     const handleWheel: WheelEventHandler = useCallback(
-        (ev: React.WheelEvent) => {
+        (ev) => {
             if (ev.ctrlKey) {
                 app.handleScale(
                     Math.min(
@@ -77,7 +77,7 @@ export function Canvas() {
             onWheel={handleWheel}
             onPointerDown={(ev) => {
                 ev.stopPropagation();
-                ev.currentTarget.setPointerCapture(ev.pointerId);
+                (ev.target as Element).setPointerCapture(ev.pointerId);
                 app.handlePointerDown(ev.nativeEvent);
             }}
             onContextMenu={(ev) => {

@@ -34,6 +34,15 @@ export function StrokeStylePropertySection() {
             <Button
                 onPointerDown={(ev) => {
                     ev.stopPropagation();
+                    handleClick("none");
+                }}
+                aria-selected={selectedValue === "none"}
+            >
+                <span>none</span>
+            </Button>
+            <Button
+                onPointerDown={(ev) => {
+                    ev.stopPropagation();
                     handleClick("solid");
                 }}
                 aria-selected={selectedValue === "solid"}

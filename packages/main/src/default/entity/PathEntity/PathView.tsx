@@ -23,8 +23,6 @@ import {
     PathEntityHandle,
 } from "./PathEntity";
 
-export const STROKE_WIDTH_BASE = 5;
-
 export const PathView = memo(function PathView({
     entity,
 }: { entity: PathEntity }) {
@@ -71,15 +69,6 @@ const PathViewInner = memo(function PathViewInner({
     left: number;
     arrowHeadNodeIds: string[];
 }) {
-    const strokeWidth2 =
-        ({
-            solid: STROKE_WIDTH_BASE,
-            dashed: STROKE_WIDTH_BASE,
-            dotted: STROKE_WIDTH_BASE * 1.4,
-        }[strokeStyle] *
-            strokeWidth) /
-        2;
-
     const outline = graph.getOutline();
 
     const pathDefinitionForFill = computePathDefinitionForFill(outline.points);
@@ -117,13 +106,14 @@ const PathViewInner = memo(function PathViewInner({
                         stroke: Colors[colorId],
                         strokeLinejoin: "round",
                         strokeLinecap: "round",
-                        strokeWidth: strokeWidth2,
+                        strokeWidth,
                         strokeDasharray: {
+                            none: undefined,
                             solid: undefined,
-                            dashed: [2 * strokeWidth2, strokeWidth2 + 5].join(
+                            dashed: [2 * strokeWidth, strokeWidth + 5].join(
                                 " ",
                             ),
-                            dotted: [0, strokeWidth2 * (0.5 + 1.2 + 0.5)].join(
+                            dotted: [0, strokeWidth * (0.5 + 1.2 + 0.5)].join(
                                 " ",
                             ),
                         }[strokeStyle],

@@ -21,9 +21,12 @@ export const Button = styled.button({
         backgroundColor: "var(--color-ui-background-hover)",
     },
 
-    '&[aria-checked="true"]': {
+    "&[aria-checked='true']": {
         backgroundColor: "var(--color-ui-selected)",
         color: "#fff",
+        "svg *": {
+            stroke: "#fff",
+        },
     },
     "&[aria-selected='true']": {
         background: "#f2f2f2",

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1"
+     viewBox="29.13742938734083 22.881811097651735 320.4414062499857 320.44140624999403">
+    <g>
+        <path d="M 56.2490222246829 50.23652037710309 L 156.35962319257612 309.9772285470077" stroke="black"
+              stroke-width="16px" stroke-linecap="round" stroke-linejoin="round"></path>
+        <path d="M 201.13736919880216 195.24356107286405 L 156.35962319257612 309.9772285470077" stroke="black"
+              stroke-width="16px" stroke-linecap="round" stroke-linejoin="round"></path>
+        <path d="M 201.13736919880216 195.24356107286405 L 316.0566304922402 150.73125738958208" stroke="black"
+              stroke-width="16px" stroke-linecap="round" stroke-linejoin="round"></path>
+        <path d="M 316.0566304922402 150.73125738958208 L 56.2490222246829 50.23652037710309" stroke="black"
+              stroke-width="16px" stroke-linecap="round" stroke-linejoin="round"></path>
+    </g>
+</svg>

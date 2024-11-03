@@ -18,6 +18,10 @@ import { TextAlignmentPropertySection } from "./PropertyPanel/TextAlignmentPrope
 import { StatusBar } from "./StatusBar";
 import { ToolBar } from "./ToolBar";
 import { AppProvider } from "./hooks/useApp";
+import NewPathIcon from "./icons/new-path.svg";
+import NewShapeIcon from "./icons/new-shape.svg";
+import NewTextIcon from "./icons/new-text.svg";
+import SelectEntityIcon from "./icons/select-entity.svg";
 
 export function AppView({ app: controlledApp }: { app?: App }) {
     const appRef = useRef<App>(null as never);
@@ -89,16 +93,16 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                             <ToolBar.Button
                                 mode={SelectEntityModeController.type}
                             >
-                                選択
+                                <SelectEntityIcon />
                             </ToolBar.Button>
                             <ToolBar.Button mode={NewShapeModeController.type}>
-                                図形
+                                <NewShapeIcon />
                             </ToolBar.Button>
                             <ToolBar.Button mode={NewPathModeController.type}>
-                                パス
+                                <NewPathIcon />
                             </ToolBar.Button>
                             <ToolBar.Button mode={NewTextModeController.type}>
-                                テキスト
+                                <NewTextIcon />
                             </ToolBar.Button>
                         </ToolBar>
                     </div>

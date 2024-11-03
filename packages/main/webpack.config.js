@@ -23,6 +23,11 @@ module.exports = {
                 exclude: /node_modules/,
                 use: "babel-loader",
             },
+            {
+                test: /\.svg$/i,
+                issuer: /\.[jt]sx?$/,
+                use: [{ loader: "@svgr/webpack", options: {} }],
+            },
         ],
     },
     experiments: {

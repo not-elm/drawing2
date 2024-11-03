@@ -22,6 +22,14 @@ export abstract class EntityHandle<T extends Entity> {
 
     abstract getView(): ComponentType<{ entity: T }>;
 
+    /**
+     * Returns the SVG element representation of this entity.
+     * This method is used in exporting the entity as SVG.
+     */
+    getSVGElement(entity: T): SVGElement | null {
+        return null;
+    }
+
     isPropertySupported(entity: T, propertyKey: string): boolean {
         return propertyKey in entity;
     }
@@ -106,6 +114,10 @@ export class EntityHandleMap {
 
     getShape(entity: Entity): Shape {
         return this.getHandle(entity).getShape(entity);
+    }
+
+    getSVGElement(entity: Entity): SVGElement | null {
+        return this.getHandle(entity).getSVGElement(entity);
     }
 
     transform<T extends Entity>(entity: T, transform: TransformMatrix): T {

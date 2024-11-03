@@ -1,6 +1,7 @@
 import { App } from "../core/App";
 import { PathEntityHandle } from "./entity/PathEntity/PathEntity";
 import { TextEntityHandle } from "./entity/TextEntity/TextEntity";
+import { setUpExportAsSVG } from "./exportAsSVG";
 import { EditTextModeController } from "./mode/EditTextModeController";
 import { NewPathModeController } from "./mode/NewPathModeController";
 import { NewShapeModeController } from "./mode/NewShapeModeController";
@@ -10,9 +11,11 @@ import { syncWithLocalStorage } from "./syncWithLocalStorage";
 export function createDefaultApp(
     option: {
         enableSyncWithLocalStorage?: boolean;
+        enableExportAsSVG?: boolean;
     } = {},
 ): App {
-    const { enableSyncWithLocalStorage = true } = option;
+    const { enableSyncWithLocalStorage = true, enableExportAsSVG = true } =
+        option;
 
     const app = new App();
 
@@ -38,6 +41,9 @@ export function createDefaultApp(
     if (enableSyncWithLocalStorage) {
         syncWithLocalStorage(app);
         app.history.clear();
+    }
+    if (enableExportAsSVG) {
+        setUpExportAsSVG(app);
     }
 
     return app;

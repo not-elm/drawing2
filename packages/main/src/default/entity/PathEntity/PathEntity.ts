@@ -45,6 +45,59 @@ export class PathEntityHandle extends EntityHandle<PathEntity> {
         return PathEntityHandle.getGraph(entity);
     }
 
+    getSVGElement(entity: PathEntity): SVGElement {
+        const graph = PathEntityHandle.getGraph(entity);
+        const elements: SVGElement[] = [];
+
+        const outline = graph.getOutline();
+        const dCommands: string[] = [];
+        for (const node of outline.points) {
+            if (dCommands.length === 0) {
+                dCommands.push(`M ${node.x} ${node.y}`);
+            } else {
+                dCommands.push(`L ${node.x} ${node.y}`);
+            }
+        }
+        dCommands.push("Z");
+        const path = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "path",
+        );
+        path.setAttribute("d", dCommands.join(" "));
+        path.setAttribute("stroke", "black");
+        path.setAttribute("fill", "white");
+        elements.push(path);
+
+        for (const edge of graph.getEdges()) {
+            const path = document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "path",
+            );
+            path.setAttribute(
+                "d",
+                `M ${edge.p1.x} ${edge.p1.y} L ${edge.p2.x} ${edge.p2.y}`,
+            );
+            path.setAttribute("stroke", "black");
+            path.setAttribute(
+                "stroke-width",
+                `${entity[PROPERTY_KEY_STROKE_WIDTH]}px`,
+            );
+            path.setAttribute("stroke-linecap", "round");
+            path.setAttribute("stroke-linejoin", "round");
+            elements.push(path);
+        }
+
+        const group = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "g",
+        );
+        for (const element of elements) {
+            group.appendChild(element);
+        }
+
+        return group;
+    }
+
     getView(): ComponentType<{ entity: PathEntity }> {
         return PathView;
     }
