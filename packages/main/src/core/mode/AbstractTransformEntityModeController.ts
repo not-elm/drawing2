@@ -76,6 +76,7 @@ export abstract class AbstractTransformEntityModeController extends ModeControll
 
     onPointerUp(app: App, ev: CanvasPointerUpEvent): void {
         app.setMode(SelectEntityModeController.type);
+        app.getModeController().onPointerUp(app, ev);
     }
 
     onBeforeExitMode(app: App): void {

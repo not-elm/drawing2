@@ -12,6 +12,7 @@ import { normalizeAngle } from "../../lib/normalizeAngle";
 import { testHitEntities } from "../../lib/testHitEntities";
 import type { App } from "../App";
 import type { Entity } from "../Entity";
+import type { CanvasPointerUpEvent } from "../GestureRecognizer";
 import { type CanvasPointerEvent, ModeController } from "../ModeController";
 import { type ICell, derived } from "../cell/ICell";
 import { setupCornerRadiusHandlePointerEventHandlers } from "../setupCornerRadiusHandlePointerEventHandlers";
@@ -179,26 +180,20 @@ export class SelectEntityModeController extends ModeController {
     onPointerDown(app: App, ev: CanvasPointerEvent): void {
         const selectedEntityIds = app.canvas.selectedEntityIds.get();
 
-        const hitResult = testHitEntities(
-            app.canvas.page.get(),
-            ev.point,
-            app.viewport.get().scale,
-            app.entityHandle,
-        );
-        const result = hitResult.entities.at(0);
-        if (result !== undefined && !selectedEntityIds.has(result.target.id)) {
-            this.onEntityPointerDown(app, ev, result.target);
-            return;
-        }
-
         const handle = this.getHandleType(app, ev.point);
         if (handle !== null) {
             this.onSelectionPointerDown(app, ev, handle);
             return;
         }
 
-        if (result !== undefined && selectedEntityIds.has(result.target.id)) {
-            this.onEntityPointerDown(app, ev, result.target);
+        const hitEntity = testHitEntities(
+            app.canvas.page.get(),
+            ev.point,
+            app.viewport.get().scale,
+            app.entityHandle,
+        ).entities.at(0)?.target;
+        if (hitEntity !== undefined) {
+            this.onEntityPointerDown(app, ev, hitEntity);
             return;
         }
 
@@ -209,6 +204,36 @@ export class SelectEntityModeController extends ModeController {
 
     onPointerMove(app: App, ev: CanvasPointerEvent) {
         app.cursor.set(this.getCursor(app));
+    }
+
+    onPointerUp(app: App, ev: CanvasPointerUpEvent) {
+        const selectedEntityIds = app.canvas.selectedEntityIds.get();
+
+        if (ev.isTap) {
+            const hitResult = testHitEntities(
+                app.canvas.page.get(),
+                ev.point,
+                app.viewport.get().scale,
+                app.entityHandle,
+            );
+            const result = hitResult.entities.at(0);
+            if (
+                result !== undefined &&
+                !selectedEntityIds.has(result.target.id)
+            ) {
+                if (!ev.shiftKey) {
+                    app.canvas.unselectAll();
+                }
+                app.canvas.select(result.target.id);
+
+                app.entityHandle
+                    .getHandle(result.target)
+                    .onTap(result.target, app, {
+                        ...ev,
+                        previousSelectedEntities: selectedEntityIds,
+                    });
+            }
+        }
     }
 
     onDoubleClick(app: App, ev: CanvasPointerEvent) {
@@ -326,12 +351,6 @@ export class SelectEntityModeController extends ModeController {
                 break;
             }
         }
-
-        app.gesture.addPointerUpHandlerForPointer(ev.pointerId, (app, ev) => {
-            if (ev.isTap) {
-                this.onCanvasTap(app, ev);
-            }
-        });
     }
 
     private getHandleType(

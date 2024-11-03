@@ -65,7 +65,10 @@ describe("SelectEntityModeController", () => {
         });
 
         describe("on non-selected entity in selection rect", () => {
-            test("with shiftKey pressed, add that entity to selection", () => {
+            // Try transformation by dragging first. Select behind
+            // entities in pointerUp event if it's a tap action.
+
+            test("with shiftKey pressed, selection must not be changed", () => {
                 const app = createApp();
 
                 const entity1 = createRectPathEntity(Rect.of(0, 0, 20, 20));
@@ -84,11 +87,11 @@ describe("SelectEntityModeController", () => {
                 );
 
                 expect(app.canvas.selectedEntityIds.get()).toEqual(
-                    new Set([entity1.id, entity2.id]),
+                    new Set([entity1.id]),
                 );
             });
 
-            test("without shiftKey pressed, select only entity under the pointer", () => {
+            test("without shiftKey pressed, selection must not be changed", () => {
                 const app = createApp();
 
                 const entity1 = createRectPathEntity(Rect.of(0, 0, 20, 20));
@@ -107,7 +110,7 @@ describe("SelectEntityModeController", () => {
                 );
 
                 expect(app.canvas.selectedEntityIds.get()).toEqual(
-                    new Set([entity2.id]),
+                    new Set([entity1.id]),
                 );
             });
         });
@@ -318,6 +321,13 @@ describe("SelectEntityModeController", () => {
                         shiftKey: true,
                     }),
                 );
+                app.handlePointerUp(
+                    createNativePointerEvent({
+                        clientX: 10,
+                        clientY: 10,
+                        shiftKey: true,
+                    }),
+                );
 
                 expect(app.canvas.selectedEntityIds.get()).toEqual(
                     new Set([entity1.id, entity2.id]),
@@ -335,6 +345,13 @@ describe("SelectEntityModeController", () => {
                 app.canvas.select(entity1.id);
 
                 app.handlePointerDown(
+                    createNativePointerEvent({
+                        clientX: 10,
+                        clientY: 10,
+                        shiftKey: false,
+                    }),
+                );
+                app.handlePointerUp(
                     createNativePointerEvent({
                         clientX: 10,
                         clientY: 10,
@@ -507,6 +524,26 @@ describe("SelectEntityModeController", () => {
             );
 
             expect(app.mode.get()).toEqual(ResizeEntityModeController.type);
+        });
+
+        test("Resize handle must be prioritized over entities behind", () => {
+            const app = createApp();
+
+            const entity1 = createRectPathEntity(Rect.of(5, 5, 10, 10));
+            const entity2 = createRectPathEntity(Rect.of(0, 0, 10, 10));
+            app.canvas.edit((builder) => {
+                builder.setEntities([entity1, entity2]);
+            });
+            app.canvas.select(entity1.id);
+
+            app.handlePointerDown(
+                createNativePointerEvent({ clientX: 4.5, clientY: 4.5 }),
+            );
+
+            expect(app.mode.get()).toEqual(ResizeEntityModeController.type);
+            expect(app.canvas.selectedEntityIds.get()).toEqual(
+                new Set([entity1.id]),
+            );
         });
 
         test("on center of selection rect, enter move-entity mode", () => {
