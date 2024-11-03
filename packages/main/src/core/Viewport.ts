@@ -23,16 +23,28 @@ export class Viewport {
         centerCanvasX: number,
         centerCanvasY: number,
     ): Viewport {
-        const transform = scale(
-            new Point(centerCanvasX / this.scale, centerCanvasY / this.scale),
-            this.scale / newScale,
-            this.scale / newScale,
+        // C: scale origin in canvas coordinate
+        // c: scale origin in content coordinate
+        // v1, v2: top left position of old and new viewport in content coordinate
+        // s1, s2: old and new scale (size in canvas / size in content)
+
+        // C.x = (c.x - v1.x) * s1 = (c.x - v2.x) * s2
+        // C.x / s1 = c.x - v1.x
+        // C.x / s2 = c.x - v2.x
+        // C.x * (1/s1 - 1/s2) = -v1.x + v2.x
+        // v2.x = v1.x + C.x * (1/s1 - 1/s2)
+        const oldScale = this.scale;
+        const newLeft =
+            this.rect.left + centerCanvasX * (1 / oldScale - 1 / newScale);
+        const newTop =
+            this.rect.top + centerCanvasY * (1 / oldScale - 1 / newScale);
+        const newWidth = (this.rect.width * oldScale) / newScale;
+        const newHeight = (this.rect.height * oldScale) / newScale;
+
+        return new Viewport(
+            Rect.of(newLeft, newTop, newWidth, newHeight),
+            newScale,
         );
-
-        const p0 = transform.apply(this.rect.p0);
-        const p1 = transform.apply(this.rect.p1);
-
-        return new Viewport(new Rect(p0, p1), newScale);
     }
 
     resize(width: number, height: number): Viewport {
