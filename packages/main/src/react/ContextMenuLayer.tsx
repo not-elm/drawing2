@@ -21,7 +21,7 @@ export function ContextMenuLayer() {
     return (
         <div
             css={{
-                display: "absolute",
+                position: "absolute",
                 inset: 0,
                 overflow: "visible",
                 transform: `translate(${x}px, ${y}px)`,

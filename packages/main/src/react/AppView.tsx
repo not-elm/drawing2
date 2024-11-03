@@ -56,10 +56,6 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                     css={{
                         position: "absolute",
                         inset: 0,
-                        display: "flex",
-                        flexDirection: "row",
-                        alignItems: "stretch",
-                        justifyContent: "stretch",
                         overflow: "clip",
                         "--color-ui-foreground": "#404040",
                         "--color-ui-primary": "#3680f4",
@@ -76,6 +72,11 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                         touchAction: "none",
                         pointerEvents: "none",
                         userSelect: "none",
+
+                        display: "flex",
+                        flexDirection: "row",
+                        alignItems: "stretch",
+                        justifyContent: "stretch",
                     }}
                 >
                     <div css={{ flex: "0 0 auto" }}>
@@ -103,8 +104,8 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                     </div>
                     <div css={{ flex: "1 1 0", position: "relative" }}>
                         <Canvas />
+                        <ContextMenuLayer />
                     </div>
-
                     <div
                         css={{
                             position: "absolute",
@@ -130,7 +131,6 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                             <SizingModePropertySection />
                         </PropertyPanel>
                     </div>
-                    <ContextMenuLayer />
                 </div>
             </MathJaxContext>
         </AppProvider>
