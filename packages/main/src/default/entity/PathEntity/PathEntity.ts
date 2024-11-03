@@ -20,12 +20,10 @@ import {
 import { PROPERTY_KEY_STROKE_WIDTH } from "../../property/StrokeWidth";
 
 import type { ComponentType } from "react";
-import { getMaxCornerRadius } from "../../../core/mode/SelectEntityModeController";
 import { SelectPathModeController } from "../../../core/mode/SelectPathModeController";
 import type { Shape } from "../../../core/shape/Shape";
 import { PathView } from "./PathView";
 
-export const PROPERTY_KEY_CORNER_RADIUS = "cornerRadius";
 export const PROPERTY_KEY_ARROW_HEAD_NODE_IDS = "arrowHeadNodeIds";
 
 export interface PathEntity extends Entity {
@@ -37,7 +35,6 @@ export interface PathEntity extends Entity {
     [PROPERTY_KEY_STROKE_STYLE]: StrokeStyle;
     [PROPERTY_KEY_STROKE_WIDTH]: number;
     [PROPERTY_KEY_FILL_STYLE]: FillStyle;
-    [PROPERTY_KEY_CORNER_RADIUS]: number;
     [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]: string[];
 }
 
@@ -102,10 +99,6 @@ export class PathEntityHandle extends EntityHandle<PathEntity> {
         }
 
         return PathEntityHandle.setGraph(entity, graph);
-    }
-
-    onTransformEnd(entity: PathEntity, app: App) {
-        this.constraintCornerRadius(entity, app);
     }
 
     static getNodes(entity: PathEntity): GraphNode[] {
@@ -184,20 +177,6 @@ export class PathEntityHandle extends EntityHandle<PathEntity> {
             })),
             edges: graph.getEdges().map((edge) => [edge.p1.id, edge.p2.id]),
         };
-    }
-
-    private constraintCornerRadius(entity: PathEntity, app: App) {
-        const graph = PathEntityHandle.getGraph(entity);
-        const maxCornerRadius = getMaxCornerRadius(graph.getOutline().points);
-        if (maxCornerRadius < entity[PROPERTY_KEY_CORNER_RADIUS]) {
-            app.canvas.edit((builder) => {
-                builder.updateProperty(
-                    [entity.id],
-                    PROPERTY_KEY_CORNER_RADIUS,
-                    maxCornerRadius,
-                );
-            });
-        }
     }
 }
 

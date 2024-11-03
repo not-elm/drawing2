@@ -1,8 +1,4 @@
 import { memo } from "react";
-import {
-    getCornerRoundHandleData,
-    getMaxCornerRadius,
-} from "../../../core/mode/SelectEntityModeController";
 import type { Graph, GraphNode } from "../../../core/shape/Graph";
 import { useApp } from "../../../react/hooks/useApp";
 import {
@@ -23,7 +19,6 @@ import {
 import { PROPERTY_KEY_STROKE_WIDTH } from "../../property/StrokeWidth";
 import {
     PROPERTY_KEY_ARROW_HEAD_NODE_IDS,
-    PROPERTY_KEY_CORNER_RADIUS,
     type PathEntity,
     PathEntityHandle,
 } from "./PathEntity";
@@ -51,7 +46,6 @@ export const PathView = memo(function PathView({
                 graph={PathEntityHandle.getGraph(entity)}
                 top={rect.top}
                 left={rect.left}
-                cornerRadius={entity[PROPERTY_KEY_CORNER_RADIUS]}
                 arrowHeadNodeIds={entity[PROPERTY_KEY_ARROW_HEAD_NODE_IDS]}
             />
         </div>
@@ -66,7 +60,6 @@ const PathViewInner = memo(function PathViewInner({
     graph,
     top,
     left,
-    cornerRadius,
     arrowHeadNodeIds,
 }: {
     colorId: ColorId;
@@ -76,7 +69,6 @@ const PathViewInner = memo(function PathViewInner({
     graph: Graph;
     top: number;
     left: number;
-    cornerRadius: number;
     arrowHeadNodeIds: string[];
 }) {
     const strokeWidth2 =
@@ -90,10 +82,7 @@ const PathViewInner = memo(function PathViewInner({
 
     const outline = graph.getOutline();
 
-    const pathDefinitionForFill = computePathDefinitionForFill(
-        outline.points,
-        cornerRadius,
-    );
+    const pathDefinitionForFill = computePathDefinitionForFill(outline.points);
     return (
         <>
             <svg
@@ -177,34 +166,15 @@ function constructArrowHeadPath(
     return [`M${q1x} ${q1y}`, `L${x1} ${y1}`, `L${q2x} ${q2y}`].join(" ");
 }
 
-function computePathDefinitionForFill(
-    nodes: GraphNode[],
-    cornerRadius: number,
-): string {
+function computePathDefinitionForFill(nodes: GraphNode[]): string {
     const commands: string[] = [];
-    const maxRadius = getMaxCornerRadius(nodes);
-    const radius = Math.min(cornerRadius, maxRadius);
-    const handles = getCornerRoundHandleData(nodes, radius);
 
-    for (const handle of handles) {
+    for (const node of nodes) {
         if (commands.length === 0) {
-            commands.push(
-                `M${handle.arcStartPosition.x} ${handle.arcStartPosition.y}`,
-            );
+            commands.push(`M${node.x} ${node.y}`);
         } else {
-            commands.push(
-                `L${handle.arcStartPosition.x} ${handle.arcStartPosition.y}`,
-            );
+            commands.push(`L${node.x} ${node.y}`);
         }
-
-        // 0 is clockwise, 1 is counter-clockwise.
-        // Outline is defined in clockwise. Round arc should be also in clockwise.
-        // However, if the angle is larger than PI, it should be in counter-clockwise
-        // because the arc should be at the outside of the outline.
-        const arcDirection = handle.cornerAngle > Math.PI ? 0 : 1;
-        commands.push(
-            `A${radius} ${radius} 0 0 ${arcDirection} ${handle.arcEndPosition.x} ${handle.arcEndPosition.y}`,
-        );
     }
     return `${commands.join(" ")}Z`;
 }

@@ -20,7 +20,6 @@ import { assert } from "../../lib/assert";
 import { randomId } from "../../lib/randomId";
 import {
     PROPERTY_KEY_ARROW_HEAD_NODE_IDS,
-    PROPERTY_KEY_CORNER_RADIUS,
     type PathEntity,
     PathEntityHandle,
 } from "../entity/PathEntity/PathEntity";
@@ -356,7 +355,6 @@ export function createEmptyPathEntity(app: App): PathEntity {
             PROPERTY_KEY_FILL_STYLE,
             "none",
         ),
-        [PROPERTY_KEY_CORNER_RADIUS]: 0,
         [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]: [],
     };
 }

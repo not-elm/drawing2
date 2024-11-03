@@ -5,7 +5,6 @@ import { randomId } from "../../lib/randomId";
 import { createDefaultApp } from "../createDefaultApp";
 import {
     PROPERTY_KEY_ARROW_HEAD_NODE_IDS,
-    PROPERTY_KEY_CORNER_RADIUS,
     type PathEntity,
 } from "../entity/PathEntity/PathEntity";
 import { PROPERTY_KEY_COLOR_ID } from "../property/Colors";
@@ -34,7 +33,6 @@ export function createPathEntity(props: Partial<PathEntity> = {}): PathEntity {
         [PROPERTY_KEY_STROKE_STYLE]: "solid",
         [PROPERTY_KEY_STROKE_WIDTH]: 1,
         [PROPERTY_KEY_FILL_STYLE]: "none",
-        [PROPERTY_KEY_CORNER_RADIUS]: 0,
         [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]: [],
         ...props,
     };

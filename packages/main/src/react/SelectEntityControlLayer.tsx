@@ -12,10 +12,6 @@ export function SelectEntityControlLayer() {
 
 function SelectEntityControlLayerInner() {
     const app = useApp();
-    const modeController = app.getModeControllerByClass(
-        SelectEntityModeController,
-    );
-    const visibleCornerRoundHandles = useCell(modeController.controlLayerData);
     const viewport = useCell(app.viewport);
     const selectionRect = useCell(app.canvas.selectionRect);
 
@@ -70,22 +66,6 @@ function SelectEntityControlLayerInner() {
                     />
                 </>
             )}
-            {visibleCornerRoundHandles.map((handle) => {
-                const position = viewport.transform.apply(
-                    handle.handlePosition,
-                );
-
-                return (
-                    <circle
-                        key={handle.node.id}
-                        cx={position.x}
-                        cy={position.y}
-                        r={5}
-                        fill="#fff"
-                        stroke="var(--color-selection)"
-                    />
-                );
-            })}
         </svg>
     );
 }

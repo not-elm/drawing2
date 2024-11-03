@@ -12,7 +12,6 @@ import { translate } from "../../core/shape/TransformMatrix";
 import { randomId } from "../../lib/randomId";
 import {
     PROPERTY_KEY_ARROW_HEAD_NODE_IDS,
-    PROPERTY_KEY_CORNER_RADIUS,
     type PathEntity,
 } from "../entity/PathEntity/PathEntity";
 import { PROPERTY_KEY_COLOR_ID } from "../property/Colors";
@@ -104,7 +103,6 @@ export class NewShapeModeController extends ModeController {
                 PROPERTY_KEY_FILL_STYLE,
                 "none",
             ),
-            [PROPERTY_KEY_CORNER_RADIUS]: 0,
             [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]: [],
         };
 
