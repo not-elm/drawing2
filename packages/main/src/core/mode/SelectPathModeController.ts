@@ -20,8 +20,8 @@ import { Point } from "../shape/Point";
 import { MoveNodeModeController } from "./MoveNodeModeController";
 import { SelectEntityModeController } from "./SelectEntityModeController";
 
-const NODE_CONTROL_HIT_AREA_RADIUS = 16;
-const EDGE_CONTROL_HIT_AREA_WIDTH = 16;
+const NODE_CONTROL_HIT_AREA_MARGIN = 16;
+const EDGE_CONTROL_HIT_AREA_MARGIN = 16;
 
 export class SelectPathModeController extends ModeController {
     static readonly type = "select-path";
@@ -213,6 +213,11 @@ export class SelectPathModeController extends ModeController {
     }
 
     static getControlByPoint(app: App, point: Point): Control | null {
+        const nodeControlMargin =
+            NODE_CONTROL_HIT_AREA_MARGIN / app.viewport.get().scale;
+        const edgeControlMargin =
+            EDGE_CONTROL_HIT_AREA_MARGIN / app.viewport.get().scale;
+
         const entities = app.canvas.selectedEntities.get();
         if (entities.length !== 1) return null;
 
@@ -223,7 +228,7 @@ export class SelectPathModeController extends ModeController {
 
         for (const node of graph.nodes.values()) {
             const distance = Math.hypot(node.x - point.x, node.y - point.y);
-            if (distance < NODE_CONTROL_HIT_AREA_RADIUS) {
+            if (distance < nodeControlMargin) {
                 return { type: "node", path, node };
             }
         }
@@ -232,13 +237,13 @@ export class SelectPathModeController extends ModeController {
             const { p1, p2 } = edge;
             const center = new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
             const distance = Math.hypot(center.x - point.x, center.y - point.y);
-            if (distance < NODE_CONTROL_HIT_AREA_RADIUS) {
+            if (distance < edgeControlMargin) {
                 return { type: "center-of-edge", path, edge, point: center };
             }
 
             const entry = Line.of(p1.x, p1.y, p2.x, p2.y).getDistance(point);
 
-            if (entry.distance < EDGE_CONTROL_HIT_AREA_WIDTH) {
+            if (entry.distance < edgeControlMargin) {
                 return { type: "edge", path, edge, point: entry.point };
             }
         }
