@@ -15,7 +15,7 @@ describe("SelectByBrushModeController", () => {
         app.setMode(SelectEntityModeController.type);
 
         app.handlePointerDown(
-            createNativePointerEvent({ clientX: 5, clientY: 10 }),
+            createNativePointerEvent({ offsetX: 5, offsetY: 10 }),
         );
         expect(app.mode.get()).toBe(SelectByBrushModeController.type);
     });
@@ -25,10 +25,10 @@ describe("SelectByBrushModeController", () => {
         app.setMode(SelectEntityModeController.type);
 
         app.handlePointerDown(
-            createNativePointerEvent({ clientX: 5, clientY: 10 }),
+            createNativePointerEvent({ offsetX: 5, offsetY: 10 }),
         );
         app.handlePointerMove(
-            createNativePointerEvent({ clientX: 20, clientY: 30 }),
+            createNativePointerEvent({ offsetX: 20, offsetY: 30 }),
         );
 
         const controller = app.getModeControllerByClass(
@@ -42,15 +42,15 @@ describe("SelectByBrushModeController", () => {
         app.setMode(SelectEntityModeController.type);
 
         app.handlePointerDown(
-            createNativePointerEvent({ clientX: 5, clientY: 10 }),
+            createNativePointerEvent({ offsetX: 5, offsetY: 10 }),
         );
         expect(app.mode.get()).toBe(SelectByBrushModeController.type);
 
         app.handlePointerMove(
-            createNativePointerEvent({ clientX: 20, clientY: 30 }),
+            createNativePointerEvent({ offsetX: 20, offsetY: 30 }),
         );
         app.handlePointerUp(
-            createNativePointerEvent({ clientX: 20, clientY: 30 }),
+            createNativePointerEvent({ offsetX: 20, offsetY: 30 }),
         );
         expect(app.mode.get()).toBe(SelectEntityModeController.type);
     });
@@ -66,10 +66,10 @@ describe("SelectByBrushModeController", () => {
         });
 
         app.handlePointerDown(
-            createNativePointerEvent({ clientX: 0, clientY: 0 }),
+            createNativePointerEvent({ offsetX: 0, offsetY: 0 }),
         );
         app.handlePointerMove(
-            createNativePointerEvent({ clientX: 50, clientY: 50 }),
+            createNativePointerEvent({ offsetX: 50, offsetY: 50 }),
         );
         expect(app.canvas.selectedEntityIds.get()).toEqual(
             new Set([entity1.id, entity2.id]),
@@ -87,17 +87,17 @@ describe("SelectByBrushModeController", () => {
         });
 
         app.handlePointerDown(
-            createNativePointerEvent({ clientX: 0, clientY: 0 }),
+            createNativePointerEvent({ offsetX: 0, offsetY: 0 }),
         );
         app.handlePointerMove(
-            createNativePointerEvent({ clientX: 30, clientY: 30 }),
+            createNativePointerEvent({ offsetX: 30, offsetY: 30 }),
         );
         expect(app.canvas.selectedEntityIds.get()).toEqual(
             new Set([entity1.id, entity2.id]),
         );
 
         app.handlePointerMove(
-            createNativePointerEvent({ clientX: 15, clientY: 15 }),
+            createNativePointerEvent({ offsetX: 15, offsetY: 15 }),
         );
         expect(app.canvas.selectedEntityIds.get()).toEqual(
             new Set([entity1.id]),
@@ -117,20 +117,20 @@ describe("SelectByBrushModeController", () => {
 
         app.handlePointerDown(
             createNativePointerEvent({
-                clientX: 0,
-                clientY: 0,
+                offsetX: 0,
+                offsetY: 0,
                 shiftKey: true,
             }),
         );
         app.handlePointerMove(
-            createNativePointerEvent({ clientX: 30, clientY: 30 }),
+            createNativePointerEvent({ offsetX: 30, offsetY: 30 }),
         );
         expect(app.canvas.selectedEntityIds.get()).toEqual(
             new Set([entity1.id, entity2.id]),
         );
 
         app.handlePointerMove(
-            createNativePointerEvent({ clientX: 0, clientY: 0 }),
+            createNativePointerEvent({ offsetX: 0, offsetY: 0 }),
         );
         expect(app.canvas.selectedEntityIds.get()).toEqual(
             new Set([entity1.id]),
@@ -150,13 +150,13 @@ describe("SelectByBrushModeController", () => {
 
         app.handlePointerDown(
             createNativePointerEvent({
-                clientX: 0,
-                clientY: 0,
+                offsetX: 0,
+                offsetY: 0,
                 shiftKey: true,
             }),
         );
         app.handlePointerMove(
-            createNativePointerEvent({ clientX: 30, clientY: 30 }),
+            createNativePointerEvent({ offsetX: 30, offsetY: 30 }),
         );
         expect(app.canvas.selectedEntityIds.get()).toEqual(
             new Set([entity1.id, entity2.id]),

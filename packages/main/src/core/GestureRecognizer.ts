@@ -21,7 +21,7 @@ export class GestureRecognizer {
         const point = this.app.viewport
             .get()
             .fromCanvasCoordinateTransform.apply(
-                new Point(nativeEv.clientX, nativeEv.clientY),
+                new Point(nativeEv.offsetX, nativeEv.offsetY),
             );
 
         this.sessions.set(nativeEv.pointerId, {
@@ -39,7 +39,7 @@ export class GestureRecognizer {
         const point = this.app.viewport
             .get()
             .fromCanvasCoordinateTransform.apply(
-                new Point(nativeEv.clientX, nativeEv.clientY),
+                new Point(nativeEv.offsetX, nativeEv.offsetY),
             );
         const ev: CanvasPointerMoveEvent = {
             point,
@@ -75,7 +75,7 @@ export class GestureRecognizer {
             point: this.app.viewport
                 .get()
                 .fromCanvasCoordinateTransform.apply(
-                    new Point(nativeEv.clientX, nativeEv.clientY),
+                    new Point(nativeEv.offsetX, nativeEv.offsetY),
                 ),
             button:
                 nativeEv.button === MouseEventButton.MAIN ? "main" : "other",

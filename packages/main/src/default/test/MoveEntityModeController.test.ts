@@ -21,7 +21,7 @@ describe("MoveEntityModeController", () => {
         app.canvas.select(entity1.id);
 
         app.handlePointerDown(
-            createNativePointerEvent({ clientX: 15, clientY: 15 }),
+            createNativePointerEvent({ offsetX: 15, offsetY: 15 }),
         );
         expect(app.mode.get()).toBe(MoveEntityModeController.type);
     });
@@ -40,10 +40,10 @@ describe("MoveEntityModeController", () => {
         app.canvas.select(entity2.id);
 
         app.handlePointerDown(
-            createNativePointerEvent({ clientX: 20, clientY: 20 }),
+            createNativePointerEvent({ offsetX: 20, offsetY: 20 }),
         );
         app.handlePointerMove(
-            createNativePointerEvent({ clientX: 30, clientY: 40 }),
+            createNativePointerEvent({ offsetX: 30, offsetY: 40 }),
         );
 
         const updateEntity1 = app.canvas.page.get().entities.get(entity1.id);
@@ -71,7 +71,7 @@ describe("MoveEntityModeController", () => {
         app.canvas.selectAll();
 
         app.handlePointerDown(
-            createNativePointerEvent({ clientX: 15, clientY: 15 }),
+            createNativePointerEvent({ offsetX: 15, offsetY: 15 }),
         );
         expect(app.mode.get()).toEqual(MoveEntityModeController.type);
 
@@ -79,7 +79,7 @@ describe("MoveEntityModeController", () => {
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
         app.handlePointerUp(
-            createNativePointerEvent({ clientX: 15, clientY: 15 }),
+            createNativePointerEvent({ offsetX: 15, offsetY: 15 }),
         );
         expect(app.mode.get()).toEqual(SelectEntityModeController.type);
     });
@@ -96,10 +96,10 @@ describe("MoveEntityModeController", () => {
         app.canvas.selectAll();
 
         app.handlePointerDown(
-            createNativePointerEvent({ clientX: 20, clientY: 20 }),
+            createNativePointerEvent({ offsetX: 20, offsetY: 20 }),
         );
         app.handlePointerMove(
-            createNativePointerEvent({ clientX: 50, clientY: 60 }),
+            createNativePointerEvent({ offsetX: 50, offsetY: 60 }),
         );
         app.handleKeyDown(createNativeKeyboardEvent({ key: "Escape" }));
 
@@ -127,15 +127,15 @@ describe("MoveEntityModeController", () => {
 
         app.handlePointerDown(
             createNativePointerEvent({
-                clientX: rect1.center.x,
-                clientY: rect1.center.y,
+                offsetX: rect1.center.x,
+                offsetY: rect1.center.y,
             }),
         );
         app.handlePointerMove(
             // If snapped, entity will be moved by 90px in y-axis
             createNativePointerEvent({
-                clientX: rect1.center.x,
-                clientY: rect1.center.y + 89.5,
+                offsetX: rect1.center.x,
+                offsetY: rect1.center.y + 89.5,
                 ctrlKey: true,
             }),
         );
@@ -161,12 +161,12 @@ describe("MoveEntityModeController", () => {
         app.canvas.select(entity1.id);
 
         app.handlePointerDown(
-            createNativePointerEvent({ clientX: 15, clientY: 15 }),
+            createNativePointerEvent({ offsetX: 15, offsetY: 15 }),
         );
         app.handlePointerMove(
             createNativePointerEvent({
-                clientX: 15 + 40,
-                clientY: 15 + 60,
+                offsetX: 15 + 40,
+                offsetY: 15 + 60,
                 shiftKey: true,
             }),
         );
@@ -192,15 +192,15 @@ describe("MoveEntityModeController", () => {
         app.canvas.select(entity1.id);
 
         app.handlePointerDown(
-            createNativePointerEvent({ clientX: 15, clientY: 15 }),
+            createNativePointerEvent({ offsetX: 15, offsetY: 15 }),
         );
         app.handlePointerMove(
             // Snap can be activated in both x and y direction,
             // but x-axis will be ignored since constraint is active and
             // entity is moved more widely in y-axis
             createNativePointerEvent({
-                clientX: 15 + 9,
-                clientY: 15 + 19,
+                offsetX: 15 + 9,
+                offsetY: 15 + 19,
                 shiftKey: true,
                 ctrlKey: true,
             }),

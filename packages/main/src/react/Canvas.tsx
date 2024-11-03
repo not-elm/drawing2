@@ -38,15 +38,15 @@ export function Canvas() {
     }, [app]);
 
     const handleWheel: WheelEventHandler = useCallback(
-        (ev) => {
+        (ev: React.WheelEvent) => {
             if (ev.ctrlKey) {
                 app.handleScale(
                     Math.min(
                         Math.max(0.1, viewport.scale - ev.deltaY * 0.0005),
                         4,
                     ),
-                    ev.clientX,
-                    ev.clientY,
+                    ev.nativeEvent.offsetX,
+                    ev.nativeEvent.offsetY,
                 );
             } else {
                 app.handleScroll(ev.deltaX, ev.deltaY);
@@ -63,8 +63,9 @@ export function Canvas() {
         <div
             ref={resizeObserverRef}
             css={{
-                position: "fixed",
-                inset: 0,
+                position: "relative",
+                width: "100%",
+                height: "100%",
                 overflow: "clip",
                 pointerEvents: "all",
                 background: "#f9fafc",
@@ -76,6 +77,7 @@ export function Canvas() {
             onWheel={handleWheel}
             onPointerDown={(ev) => {
                 ev.stopPropagation();
+                ev.currentTarget.setPointerCapture(ev.pointerId);
                 app.handlePointerDown(ev.nativeEvent);
             }}
             onContextMenu={(ev) => {

@@ -30,8 +30,8 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 5,
-                        clientY: 5,
+                        offsetX: 5,
+                        offsetY: 5,
                         shiftKey: true,
                     }),
                 );
@@ -52,8 +52,8 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 5,
-                        clientY: 5,
+                        offsetX: 5,
+                        offsetY: 5,
                         shiftKey: false,
                     }),
                 );
@@ -80,8 +80,8 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 10,
-                        clientY: 10,
+                        offsetX: 10,
+                        offsetY: 10,
                         shiftKey: true,
                     }),
                 );
@@ -103,8 +103,8 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 10,
-                        clientY: 10,
+                        offsetX: 10,
+                        offsetY: 10,
                         shiftKey: false,
                     }),
                 );
@@ -128,8 +128,8 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 25,
-                        clientY: 25,
+                        offsetX: 25,
+                        offsetY: 25,
                         shiftKey: true,
                     }),
                 );
@@ -151,8 +151,8 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 25,
-                        clientY: 25,
+                        offsetX: 25,
+                        offsetY: 25,
                         shiftKey: false,
                     }),
                 );
@@ -176,8 +176,8 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 10,
-                        clientY: 10,
+                        offsetX: 10,
+                        offsetY: 10,
                         shiftKey: true,
                     }),
                 );
@@ -199,8 +199,8 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 10,
-                        clientY: 10,
+                        offsetX: 10,
+                        offsetY: 10,
                         shiftKey: false,
                     }),
                 );
@@ -223,8 +223,8 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 100,
-                        clientY: 100,
+                        offsetX: 100,
+                        offsetY: 100,
                         shiftKey: true,
                     }),
                 );
@@ -245,8 +245,8 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 100,
-                        clientY: 100,
+                        offsetX: 100,
+                        offsetY: 100,
                         shiftKey: false,
                     }),
                 );
@@ -269,15 +269,15 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 5,
-                        clientY: 5,
+                        offsetX: 5,
+                        offsetY: 5,
                         shiftKey: true,
                     }),
                 );
                 app.handlePointerUp(
                     createNativePointerEvent({
-                        clientX: 5,
-                        clientY: 5,
+                        offsetX: 5,
+                        offsetY: 5,
                         shiftKey: true,
                     }),
                 );
@@ -298,15 +298,15 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 5,
-                        clientY: 5,
+                        offsetX: 5,
+                        offsetY: 5,
                         shiftKey: false,
                     }),
                 );
                 app.handlePointerUp(
                     createNativePointerEvent({
-                        clientX: 5,
-                        clientY: 5,
+                        offsetX: 5,
+                        offsetY: 5,
                         shiftKey: false,
                     }),
                 );
@@ -330,15 +330,15 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 10,
-                        clientY: 10,
+                        offsetX: 10,
+                        offsetY: 10,
                         shiftKey: true,
                     }),
                 );
                 app.handlePointerUp(
                     createNativePointerEvent({
-                        clientX: 10,
-                        clientY: 10,
+                        offsetX: 10,
+                        offsetY: 10,
                         shiftKey: true,
                     }),
                 );
@@ -361,15 +361,15 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 10,
-                        clientY: 10,
+                        offsetX: 10,
+                        offsetY: 10,
                         shiftKey: false,
                     }),
                 );
                 app.handlePointerUp(
                     createNativePointerEvent({
-                        clientX: 10,
-                        clientY: 10,
+                        offsetX: 10,
+                        offsetY: 10,
                         shiftKey: false,
                     }),
                 );
@@ -394,15 +394,15 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 25,
-                        clientY: 25,
+                        offsetX: 25,
+                        offsetY: 25,
                         shiftKey: true,
                     }),
                 );
                 app.handlePointerUp(
                     createNativePointerEvent({
-                        clientX: 25,
-                        clientY: 25,
+                        offsetX: 25,
+                        offsetY: 25,
                         shiftKey: true,
                     }),
                 );
@@ -425,15 +425,15 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 25,
-                        clientY: 25,
+                        offsetX: 25,
+                        offsetY: 25,
                         shiftKey: false,
                     }),
                 );
                 app.handlePointerUp(
                     createNativePointerEvent({
-                        clientX: 25,
-                        clientY: 25,
+                        offsetX: 25,
+                        offsetY: 25,
                         shiftKey: false,
                     }),
                 );
@@ -458,15 +458,15 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 100,
-                        clientY: 100,
+                        offsetX: 100,
+                        offsetY: 100,
                         shiftKey: true,
                     }),
                 );
                 app.handlePointerUp(
                     createNativePointerEvent({
-                        clientX: 100,
-                        clientY: 100,
+                        offsetX: 100,
+                        offsetY: 100,
                         shiftKey: true,
                     }),
                 );
@@ -488,15 +488,15 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 100,
-                        clientY: 100,
+                        offsetX: 100,
+                        offsetY: 100,
                         shiftKey: false,
                     }),
                 );
                 app.handlePointerUp(
                     createNativePointerEvent({
-                        clientX: 100,
-                        clientY: 100,
+                        offsetX: 100,
+                        offsetY: 100,
                         shiftKey: false,
                     }),
                 );
@@ -519,15 +519,15 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 100,
-                        clientY: 100,
+                        offsetX: 100,
+                        offsetY: 100,
                         shiftKey: true,
                     }),
                 );
                 app.handlePointerUp(
                     createNativePointerEvent({
-                        clientX: 100,
-                        clientY: 100,
+                        offsetX: 100,
+                        offsetY: 100,
                         shiftKey: true,
                     }),
                 );
@@ -548,15 +548,15 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerDown(
                     createNativePointerEvent({
-                        clientX: 100,
-                        clientY: 100,
+                        offsetX: 100,
+                        offsetY: 100,
                         shiftKey: false,
                     }),
                 );
                 app.handlePointerUp(
                     createNativePointerEvent({
-                        clientX: 100,
-                        clientY: 100,
+                        offsetX: 100,
+                        offsetY: 100,
                         shiftKey: false,
                     }),
                 );
@@ -578,8 +578,8 @@ describe("SelectEntityModeController", () => {
 
             app.handlePointerDown(
                 createNativePointerEvent({
-                    clientX: 10,
-                    clientY: 10,
+                    offsetX: 10,
+                    offsetY: 10,
                 }),
             );
 
@@ -597,7 +597,7 @@ describe("SelectEntityModeController", () => {
             app.canvas.select(entity1.id);
 
             app.handlePointerDown(
-                createNativePointerEvent({ clientX: 4.5, clientY: 4.5 }),
+                createNativePointerEvent({ offsetX: 4.5, offsetY: 4.5 }),
             );
 
             expect(app.mode.get()).toEqual(ResizeEntityModeController.type);
@@ -617,8 +617,8 @@ describe("SelectEntityModeController", () => {
 
             app.handlePointerDown(
                 createNativePointerEvent({
-                    clientX: 5,
-                    clientY: 5,
+                    offsetX: 5,
+                    offsetY: 5,
                 }),
             );
 
@@ -637,8 +637,8 @@ describe("SelectEntityModeController", () => {
 
             app.handlePointerDown(
                 createNativePointerEvent({
-                    clientX: 25,
-                    clientY: 25,
+                    offsetX: 25,
+                    offsetY: 25,
                 }),
             );
 
@@ -656,8 +656,8 @@ describe("SelectEntityModeController", () => {
 
             app.handlePointerDown(
                 createNativePointerEvent({
-                    clientX: 25,
-                    clientY: 25,
+                    offsetX: 25,
+                    offsetY: 25,
                 }),
             );
 
@@ -689,8 +689,8 @@ describe("SelectEntityModeController", () => {
 
                 app.handlePointerMove(
                     createNativePointerEvent({
-                        clientX: pointerX,
-                        clientY: pointerY,
+                        offsetX: pointerX,
+                        offsetY: pointerY,
                     }),
                 );
 
@@ -702,7 +702,7 @@ describe("SelectEntityModeController", () => {
     test("on doubleClick, create new TextEntity and enter edit-text mode", () => {
         const app = createApp();
         app.handleDoubleClick(
-            createNativePointerEvent({ clientX: 10, clientY: 20 }),
+            createNativePointerEvent({ offsetX: 10, offsetY: 20 }),
         );
 
         const entities = Array.from(app.canvas.page.get().entities.values());
@@ -730,7 +730,7 @@ describe("SelectEntityModeController", () => {
         });
 
         app.handleContextMenu(
-            createNativePointerEvent({ clientX: 5, clientY: 5 }),
+            createNativePointerEvent({ offsetX: 5, offsetY: 5 }),
         );
 
         expect(app.canvas.selectedEntityIds.get()).toEqual(

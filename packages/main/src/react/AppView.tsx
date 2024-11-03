@@ -56,6 +56,10 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                     css={{
                         position: "absolute",
                         inset: 0,
+                        display: "flex",
+                        flexDirection: "row",
+                        alignItems: "stretch",
+                        justifyContent: "stretch",
                         overflow: "clip",
                         "--color-ui-foreground": "#404040",
                         "--color-ui-primary": "#3680f4",
@@ -74,29 +78,32 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                         userSelect: "none",
                     }}
                 >
-                    <Canvas />
-
-                    <ToolBar
-                        css={{
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            bottom: 0,
-                        }}
-                    >
-                        <ToolBar.Button mode={SelectEntityModeController.type}>
-                            選択
-                        </ToolBar.Button>
-                        <ToolBar.Button mode={NewShapeModeController.type}>
-                            図形
-                        </ToolBar.Button>
-                        <ToolBar.Button mode={NewPathModeController.type}>
-                            パス
-                        </ToolBar.Button>
-                        <ToolBar.Button mode={NewTextModeController.type}>
-                            テキスト
-                        </ToolBar.Button>
-                    </ToolBar>
+                    <div css={{ flex: "0 0 auto" }}>
+                        <ToolBar
+                            css={{
+                                position: "relative",
+                                height: "100%",
+                            }}
+                        >
+                            <ToolBar.Button
+                                mode={SelectEntityModeController.type}
+                            >
+                                選択
+                            </ToolBar.Button>
+                            <ToolBar.Button mode={NewShapeModeController.type}>
+                                図形
+                            </ToolBar.Button>
+                            <ToolBar.Button mode={NewPathModeController.type}>
+                                パス
+                            </ToolBar.Button>
+                            <ToolBar.Button mode={NewTextModeController.type}>
+                                テキスト
+                            </ToolBar.Button>
+                        </ToolBar>
+                    </div>
+                    <div css={{ flex: "1 1 0", position: "relative" }}>
+                        <Canvas />
+                    </div>
 
                     <div
                         css={{

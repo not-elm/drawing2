@@ -386,7 +386,7 @@ export class App {
             point: this.viewport
                 .get()
                 .fromCanvasCoordinateTransform.apply(
-                    new Point(ev.clientX, ev.clientY),
+                    new Point(ev.offsetX, ev.offsetY),
                 ),
             shiftKey: ev.shiftKey,
             metaKey: ev.metaKey,
@@ -406,7 +406,7 @@ export class App {
             point: this.viewport
                 .get()
                 .fromCanvasCoordinateTransform.apply(
-                    new Point(ev.clientX, ev.clientY),
+                    new Point(ev.offsetX, ev.offsetY),
                 ),
             shiftKey: ev.shiftKey,
             metaKey: ev.metaKey,
@@ -454,7 +454,7 @@ export class App {
             point: this.viewport
                 .get()
                 .fromCanvasCoordinateTransform.apply(
-                    new Point(ev.clientX, ev.clientY),
+                    new Point(ev.offsetX, ev.offsetY),
                 ),
             shiftKey: ev.shiftKey,
             metaKey: ev.metaKey,
@@ -503,7 +503,7 @@ export class App {
             this.viewport
                 .get()
                 .fromCanvasCoordinateTransform.apply(
-                    new Point(ev.clientX, ev.clientY),
+                    new Point(ev.offsetX, ev.offsetY),
                 ),
         );
     }
@@ -539,8 +539,8 @@ export interface NativePointerEvent extends NativeMouseEvent {
 export interface NativeMouseEvent {
     preventDefault: () => void;
     button: number;
-    clientX: number;
-    clientY: number;
+    offsetX: number;
+    offsetY: number;
     shiftKey: boolean;
     metaKey: boolean;
     ctrlKey: boolean;
