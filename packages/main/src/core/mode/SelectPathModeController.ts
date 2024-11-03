@@ -100,12 +100,14 @@ export class SelectPathModeController extends ModeController {
         if (control.type === "node") {
             this.selectedEdgeIds.set(new Set());
             this.selectedNodeIds.set(new Set([control.node.id]));
+            app.history.addCheckpoint();
             app.setMode(MoveNodeModeController.type);
         }
 
         if (control.type === "edge") {
             this.selectedEdgeIds.set(new Set([control.edge.id]));
             this.selectedNodeIds.set(new Set());
+            app.history.addCheckpoint();
             app.setMode(MoveNodeModeController.type);
         }
 
@@ -119,6 +121,7 @@ export class SelectPathModeController extends ModeController {
 
             const newPath = PathEntityHandle.setGraph(control.path, graph);
 
+            app.history.addCheckpoint();
             app.canvas.edit((builder) => builder.setEntities([newPath]));
 
             this.selectedEdgeIds.set(new Set());
