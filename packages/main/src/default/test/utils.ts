@@ -1,4 +1,5 @@
 import type { NativeKeyboardEvent, NativePointerEvent } from "../../core/App";
+import { Color } from "../../core/Color";
 import { Point } from "../../core/shape/Point";
 import type { Rect } from "../../core/shape/Shape";
 import { noop } from "../../lib/noop";
@@ -7,9 +8,12 @@ import { createDefaultApp } from "../createDefaultApp";
 import {
     PROPERTY_KEY_ARROW_HEAD_NODE_IDS,
     type PathEntity,
+    PathEntityHandle,
 } from "../entity/PathEntity/PathEntity";
-import { PROPERTY_KEY_COLOR_ID } from "../property/Colors";
-import { PROPERTY_KEY_FILL_STYLE } from "../property/FillStyle";
+import {
+    PROPERTY_KEY_FILL_COLOR,
+    PROPERTY_KEY_STROKE_COLOR,
+} from "../property/Colors";
 import { PROPERTY_KEY_STROKE_STYLE } from "../property/StrokeStyle";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../property/StrokeWidth";
 
@@ -28,12 +32,13 @@ export function createPathEntity(props: Partial<PathEntity> = {}): PathEntity {
     return {
         id: randomId(),
         type: "path",
+        schemaVersion: PathEntityHandle.SCHEMA_VERSION,
         nodes: [node1, node2],
         edges: [[node1.id, node2.id]],
-        [PROPERTY_KEY_COLOR_ID]: 0,
+        [PROPERTY_KEY_STROKE_COLOR]: Color.Black,
         [PROPERTY_KEY_STROKE_STYLE]: "solid",
         [PROPERTY_KEY_STROKE_WIDTH]: 1,
-        [PROPERTY_KEY_FILL_STYLE]: "none",
+        [PROPERTY_KEY_FILL_COLOR]: Color.Transparent,
         [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]: [],
         ...props,
     };

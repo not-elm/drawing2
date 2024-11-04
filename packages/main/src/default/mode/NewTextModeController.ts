@@ -1,4 +1,5 @@
 import type { App } from "../../core/App";
+import { Color } from "../../core/Color";
 import {
     type CanvasPointerEvent,
     ModeController,
@@ -6,8 +7,11 @@ import {
 import { SelectEntityModeController } from "../../core/mode/SelectEntityModeController";
 import { Rect } from "../../core/shape/Shape";
 import { randomId } from "../../lib/randomId";
-import type { TextEntity } from "../entity/TextEntity/TextEntity";
-import { PROPERTY_KEY_COLOR_ID } from "../property/Colors";
+import {
+    type TextEntity,
+    TextEntityHandle,
+} from "../entity/TextEntity/TextEntity";
+import { PROPERTY_KEY_TEXT_COLOR } from "../property/Colors";
 import { PROPERTY_KEY_TEXT_ALIGNMENT_X } from "../property/TextAlignment";
 import { EditTextModeController } from "./EditTextModeController";
 
@@ -47,6 +51,7 @@ export class NewTextModeController extends ModeController {
         const text: TextEntity = {
             type: "text",
             id: randomId(),
+            schemaVersion: TextEntityHandle.SCHEMA_VERSION,
             x: rect.left,
             y: rect.top,
             width: rect.width,
@@ -56,9 +61,9 @@ export class NewTextModeController extends ModeController {
                 PROPERTY_KEY_TEXT_ALIGNMENT_X,
                 "start",
             ),
-            [PROPERTY_KEY_COLOR_ID]: app.getSelectedPropertyValue(
-                PROPERTY_KEY_COLOR_ID,
-                0,
+            [PROPERTY_KEY_TEXT_COLOR]: app.getSelectedPropertyValue(
+                PROPERTY_KEY_TEXT_COLOR,
+                Color.Black,
             ),
             sizingMode: "content",
         };

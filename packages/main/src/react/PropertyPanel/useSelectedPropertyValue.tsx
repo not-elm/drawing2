@@ -1,5 +1,4 @@
 import { SelectEntityModeController } from "../../core/mode/SelectEntityModeController";
-import type { ColorId } from "../../default/property/Colors";
 import { isNotNullish } from "../../lib/isNullish";
 import { useApp } from "../hooks/useApp";
 import { useCell } from "../hooks/useCell";
@@ -23,7 +22,7 @@ export function useSelectedPropertyValue<T = unknown>(
                 ),
             )
             .filter(isNotNullish),
-    ) as Set<ColorId>;
+    );
 
     if (values.size === 0) {
         return selectedProperties.getOrDefault(propertyKey, null);

@@ -1,4 +1,5 @@
 import type { App } from "../../core/App";
+import { Color } from "../../core/Color";
 import type { Entity } from "../../core/Entity";
 import type { CanvasPointerMoveEvent } from "../../core/GestureRecognizer";
 import { LinkToEdge, LinkToRect } from "../../core/Link";
@@ -23,8 +24,10 @@ import {
     type PathEntity,
     PathEntityHandle,
 } from "../entity/PathEntity/PathEntity";
-import { PROPERTY_KEY_COLOR_ID } from "../property/Colors";
-import { PROPERTY_KEY_FILL_STYLE } from "../property/FillStyle";
+import {
+    PROPERTY_KEY_FILL_COLOR,
+    PROPERTY_KEY_STROKE_COLOR,
+} from "../property/Colors";
 import { PROPERTY_KEY_STROKE_STYLE } from "../property/StrokeStyle";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../property/StrokeWidth";
 
@@ -339,9 +342,14 @@ export function createEmptyPathEntity(app: App): PathEntity {
         type: "path",
         nodes: [],
         edges: [],
-        [PROPERTY_KEY_COLOR_ID]: app.getSelectedPropertyValue(
-            PROPERTY_KEY_COLOR_ID,
-            0,
+        schemaVersion: PathEntityHandle.SCHEMA_VERSION,
+        [PROPERTY_KEY_STROKE_COLOR]: app.getSelectedPropertyValue(
+            PROPERTY_KEY_STROKE_COLOR,
+            Color.Black,
+        ),
+        [PROPERTY_KEY_FILL_COLOR]: app.getSelectedPropertyValue(
+            PROPERTY_KEY_FILL_COLOR,
+            Color.Transparent,
         ),
         [PROPERTY_KEY_STROKE_STYLE]: app.getSelectedPropertyValue(
             PROPERTY_KEY_STROKE_STYLE,
@@ -350,10 +358,6 @@ export function createEmptyPathEntity(app: App): PathEntity {
         [PROPERTY_KEY_STROKE_WIDTH]: app.getSelectedPropertyValue(
             PROPERTY_KEY_STROKE_WIDTH,
             2,
-        ),
-        [PROPERTY_KEY_FILL_STYLE]: app.getSelectedPropertyValue(
-            PROPERTY_KEY_FILL_STYLE,
-            "none",
         ),
         [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]: [],
     };

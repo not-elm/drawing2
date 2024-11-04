@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Card } from "../Card";
 
 export function PropertyPanel({
     children,
@@ -7,8 +6,20 @@ export function PropertyPanel({
     children?: ReactNode;
 }) {
     return (
-        <Card
+        <div
             css={{
+                position: "relative",
+                width: "240px",
+                height: "100%",
+                padding: "4px 4px",
+
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "stretch",
+
+                background: "#fff",
+                borderLeft: "1px solid #c0c0c0",
+
                 pointerEvents: "all",
                 "> * + *": {
                     borderTop: "1px solid #f0f0f0",
@@ -19,6 +30,6 @@ export function PropertyPanel({
             onPointerDown={(ev) => ev.stopPropagation()}
         >
             {children}
-        </Card>
+        </div>
     );
 }

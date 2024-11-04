@@ -1,12 +1,13 @@
 import type { CSSObject } from "@emotion/styled";
 import { MathJax } from "better-react-mathjax";
 import { type ReactNode, memo } from "react";
+import { Color } from "../../../core/Color";
 import { assert } from "../../../lib/assert";
 import { useApp } from "../../../react/hooks/useApp";
 import { useCell } from "../../../react/hooks/useCell";
 import { useResizeObserver } from "../../../react/hooks/useResizeObserver";
 import { EditTextModeController } from "../../mode/EditTextModeController";
-import { Colors, PROPERTY_KEY_COLOR_ID } from "../../property/Colors";
+import { PROPERTY_KEY_TEXT_COLOR } from "../../property/Colors";
 import { PROPERTY_KEY_SIZING_MODE } from "../../property/SizingMode";
 import {
     PROPERTY_KEY_TEXT_ALIGNMENT_X,
@@ -39,7 +40,7 @@ export const TextView = memo(function ShapeView({
                 shapeId={entity.id}
                 width={entity.width}
                 sizingMode={entity[PROPERTY_KEY_SIZING_MODE]}
-                color={Colors[entity[PROPERTY_KEY_COLOR_ID]]}
+                color={entity[PROPERTY_KEY_TEXT_COLOR]}
                 textAlignment={textAlignment}
                 content={entity[PROPERTY_KEY_CONTENT]}
             />
@@ -60,7 +61,7 @@ const TextViewInner = memo(function ShapeViewInner({
     width: number;
     sizingMode: "content" | "fixed";
     textAlignment: TextAlignment;
-    color: string;
+    color: Color;
     editing: boolean;
     content: string;
 }) {
@@ -80,7 +81,7 @@ const TextViewInner = memo(function ShapeViewInner({
         <div
             ref={containerRef}
             css={{
-                color,
+                color: Color.stringify(color),
                 position: "absolute",
                 fontSize: 24,
                 pointerEvents: "all",

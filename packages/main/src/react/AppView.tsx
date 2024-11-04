@@ -9,7 +9,6 @@ import { NewTextModeController } from "../default/mode/NewTextModeController";
 import { Canvas } from "./Canvas";
 import { ContextMenuLayer } from "./ContextMenuLayer";
 import { ColorPropertySection } from "./PropertyPanel/ColorPropertySection";
-import { FillModePropertySection } from "./PropertyPanel/FillModePropertySection";
 import { PropertyPanel } from "./PropertyPanel/PropertyPanel";
 import { SizingModePropertySection } from "./PropertyPanel/SizingModePropertySection";
 import { StrokeStylePropertySection } from "./PropertyPanel/StrokeStylePropertySection";
@@ -110,26 +109,10 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                         <Canvas />
                         <ContextMenuLayer />
                     </div>
-                    <div
-                        css={{
-                            position: "absolute",
-                            top: 0,
-                            right: 0,
-                            bottom: 0,
-                            padding: 12,
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "flex-start",
-                            overflow: "auto",
-                            "&::-webkit-scrollbar": {
-                                display: "none",
-                            },
-                        }}
-                    >
+                    <div css={{ flex: "0 0 auto" }}>
                         <PropertyPanel>
                             <ColorPropertySection />
                             <TextAlignmentPropertySection />
-                            <FillModePropertySection />
                             <StrokeStylePropertySection />
                             <StrokeWidthPropertySection />
                             <SizingModePropertySection />

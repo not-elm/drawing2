@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import type { App } from "../../../core/App";
+import { Color } from "../../../core/Color";
 import {
     type Entity,
     EntityHandle,
@@ -8,7 +9,7 @@ import {
 } from "../../../core/Entity";
 import { Rect } from "../../../core/shape/Shape";
 import { EditTextModeController } from "../../mode/EditTextModeController";
-import { type ColorId, PROPERTY_KEY_COLOR_ID } from "../../property/Colors";
+import { PROPERTY_KEY_TEXT_COLOR } from "../../property/Colors";
 import {
     PROPERTY_KEY_SIZING_MODE,
     type SizingMode,
@@ -30,11 +31,12 @@ export interface TextEntity extends Entity {
     height: number;
     [PROPERTY_KEY_SIZING_MODE]: SizingMode;
     [PROPERTY_KEY_TEXT_ALIGNMENT_X]: TextAlignment;
-    [PROPERTY_KEY_COLOR_ID]: ColorId;
+    [PROPERTY_KEY_TEXT_COLOR]: Color;
     [PROPERTY_KEY_CONTENT]: string;
 }
 
 export class TextEntityHandle extends EntityHandle<TextEntity> {
+    static readonly SCHEMA_VERSION = 2;
     public readonly type = "text";
 
     getShape(entity: TextEntity): Rect {
@@ -43,6 +45,26 @@ export class TextEntityHandle extends EntityHandle<TextEntity> {
 
     getView(): ComponentType<{ entity: TextEntity }> {
         return TextView;
+    }
+
+    upgradeSchemaVersion(entity: TextEntity): TextEntity {
+        switch (entity.schemaVersion) {
+            case undefined: {
+                // Add schemaVersion
+                return { ...entity, schemaVersion: 1 };
+            }
+            case 1: {
+                // replace colorId with strokeColor and fillColor
+                return {
+                    ...entity,
+                    [PROPERTY_KEY_TEXT_COLOR]:
+                        entity[PROPERTY_KEY_TEXT_COLOR] ?? Color.Black,
+                    schemaVersion: TextEntityHandle.SCHEMA_VERSION,
+                };
+            }
+        }
+
+        return entity;
     }
 
     onTransform(entity: TextEntity, ev: TransformEvent): TextEntity {

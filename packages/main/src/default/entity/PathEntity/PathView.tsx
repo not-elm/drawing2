@@ -1,17 +1,11 @@
 import { memo } from "react";
+import { Color } from "../../../core/Color";
 import type { Graph, GraphNode } from "../../../core/shape/Graph";
 import { useApp } from "../../../react/hooks/useApp";
 import {
-    type ColorId,
-    ColorPaletteBackground,
-    ColorPaletteBackgroundMonoColor,
-    Colors,
-    PROPERTY_KEY_COLOR_ID,
+    PROPERTY_KEY_FILL_COLOR,
+    PROPERTY_KEY_STROKE_COLOR,
 } from "../../property/Colors";
-import {
-    type FillStyle,
-    PROPERTY_KEY_FILL_STYLE,
-} from "../../property/FillStyle";
 import {
     PROPERTY_KEY_STROKE_STYLE,
     type StrokeStyle,
@@ -37,10 +31,10 @@ export const PathView = memo(function PathView({
             css={{ position: "absolute" }}
         >
             <PathViewInner
-                colorId={entity[PROPERTY_KEY_COLOR_ID]}
+                strokeColor={entity[PROPERTY_KEY_STROKE_COLOR]}
                 strokeStyle={entity[PROPERTY_KEY_STROKE_STYLE]}
                 strokeWidth={entity[PROPERTY_KEY_STROKE_WIDTH]}
-                fillStyle={entity[PROPERTY_KEY_FILL_STYLE]}
+                fillColor={entity[PROPERTY_KEY_FILL_COLOR] ?? Color.Transparent}
                 graph={PathEntityHandle.getGraph(entity)}
                 top={rect.top}
                 left={rect.left}
@@ -51,19 +45,19 @@ export const PathView = memo(function PathView({
 });
 
 const PathViewInner = memo(function PathViewInner({
-    colorId,
+    strokeColor,
     strokeStyle,
     strokeWidth,
-    fillStyle,
+    fillColor,
     graph,
     top,
     left,
     arrowHeadNodeIds,
 }: {
-    colorId: ColorId;
+    strokeColor: Color;
     strokeStyle: StrokeStyle;
     strokeWidth: number;
-    fillStyle: FillStyle;
+    fillColor: Color;
     graph: Graph;
     top: number;
     left: number;
@@ -88,13 +82,7 @@ const PathViewInner = memo(function PathViewInner({
                     <path
                         d={pathDefinitionForFill}
                         css={{
-                            ...{
-                                none: { fill: "none" },
-                                mono: { fill: ColorPaletteBackgroundMonoColor },
-                                color: {
-                                    fill: ColorPaletteBackground[colorId],
-                                },
-                            }[fillStyle],
+                            fill: Color.stringify(fillColor),
                             stroke: "none",
                         }}
                     />
@@ -103,7 +91,7 @@ const PathViewInner = memo(function PathViewInner({
                     d={computePathDefinitionForEdges(graph, arrowHeadNodeIds)}
                     css={{
                         fill: "none",
-                        stroke: Colors[colorId],
+                        stroke: Color.stringify(strokeColor),
                         strokeLinejoin: "round",
                         strokeLinecap: "round",
                         strokeWidth,

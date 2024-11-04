@@ -1,33 +1,20 @@
+import { Color } from "../../core/Color";
+
 export const Colors = [
-    "#000000",
-    "#9fa8b2",
-    "#e085f4",
-    "#ae3ec9",
-    "#4465e9",
-    "#4ba1f1",
-    "#f1ac4b",
-    "#e16919",
-    "#099268",
-    "#4cb05e",
-    "#f87777",
-    "#e03131",
+    Color.rgb(0, 0, 0),
+    Color.rgb(159, 168, 178),
+    Color.rgb(224, 133, 244),
+    Color.rgb(174, 62, 201),
+    Color.rgb(68, 101, 233),
+    Color.rgb(75, 161, 241),
+    Color.rgb(241, 172, 75),
+    Color.rgb(225, 105, 25),
+    Color.rgb(9, 146, 104),
+    Color.rgb(76, 176, 94),
+    Color.rgb(248, 119, 119),
+    Color.rgb(224, 49, 49),
 ];
-export const ColorPaletteBackground = [
-    "#e8e8e8",
-    "#eceef0",
-    "#f5eafa",
-    "#ecdcf2",
-    "#dce1f8",
-    "#ddedfa",
-    "#f9f0e6",
-    "#f8e2d4",
-    "#d3e9e3",
-    "#dbf0e0",
-    "#f4dadb",
-    "#f4dadb",
-];
-export const ColorPaletteBackgroundMonoColor = "#ffffff";
 
-export type ColorId = number;
-
-export const PROPERTY_KEY_COLOR_ID = "colorId" as const;
+export const PROPERTY_KEY_TEXT_COLOR = "textColor" as const;
+export const PROPERTY_KEY_STROKE_COLOR = "strokeColor" as const;
+export const PROPERTY_KEY_FILL_COLOR = "fillColor" as const;

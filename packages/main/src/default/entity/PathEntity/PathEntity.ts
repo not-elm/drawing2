@@ -8,11 +8,10 @@ import {
 import { Graph, type GraphEdge, GraphNode } from "../../../core/shape/Graph";
 import { Point } from "../../../core/shape/Point";
 import { assert } from "../../../lib/assert";
-import { type ColorId, PROPERTY_KEY_COLOR_ID } from "../../property/Colors";
 import {
-    type FillStyle,
-    PROPERTY_KEY_FILL_STYLE,
-} from "../../property/FillStyle";
+    PROPERTY_KEY_FILL_COLOR,
+    PROPERTY_KEY_STROKE_COLOR,
+} from "../../property/Colors";
 import {
     PROPERTY_KEY_STROKE_STYLE,
     type StrokeStyle,
@@ -20,6 +19,7 @@ import {
 import { PROPERTY_KEY_STROKE_WIDTH } from "../../property/StrokeWidth";
 
 import type { ComponentType } from "react";
+import { Color } from "../../../core/Color";
 import { SelectPathModeController } from "../../../core/mode/SelectPathModeController";
 import type { Shape } from "../../../core/shape/Shape";
 import { PathView } from "./PathView";
@@ -31,14 +31,15 @@ export interface PathEntity extends Entity {
     readonly id: string;
     nodes: { id: string; x: number; y: number }[];
     edges: [string, string][];
-    [PROPERTY_KEY_COLOR_ID]: ColorId;
+    [PROPERTY_KEY_STROKE_COLOR]: Color;
     [PROPERTY_KEY_STROKE_STYLE]: StrokeStyle;
     [PROPERTY_KEY_STROKE_WIDTH]: number;
-    [PROPERTY_KEY_FILL_STYLE]: FillStyle;
+    [PROPERTY_KEY_FILL_COLOR]: Color;
     [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]: string[];
 }
 
 export class PathEntityHandle extends EntityHandle<PathEntity> {
+    static readonly SCHEMA_VERSION = 2;
     public readonly type = "path";
 
     getShape(entity: PathEntity): Shape {
@@ -100,6 +101,28 @@ export class PathEntityHandle extends EntityHandle<PathEntity> {
 
     getView(): ComponentType<{ entity: PathEntity }> {
         return PathView;
+    }
+
+    upgradeSchemaVersion(entity: PathEntity): PathEntity {
+        switch (entity.schemaVersion) {
+            case undefined: {
+                // Add schemaVersion
+                return { ...entity, schemaVersion: 1 };
+            }
+            case 1: {
+                // replace colorId with strokeColor and fillColor
+                return {
+                    ...entity,
+                    [PROPERTY_KEY_STROKE_COLOR]:
+                        entity[PROPERTY_KEY_STROKE_COLOR] ?? Color.Black,
+                    [PROPERTY_KEY_FILL_COLOR]:
+                        entity[PROPERTY_KEY_FILL_COLOR] ?? Color.Transparent,
+                    schemaVersion: PathEntityHandle.SCHEMA_VERSION,
+                };
+            }
+        }
+
+        return entity;
     }
 
     onTap(entity: PathEntity, app: App, ev: TapEntityEvent) {

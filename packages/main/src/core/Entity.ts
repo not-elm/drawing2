@@ -10,6 +10,7 @@ import type { TransformMatrix } from "./shape/TransformMatrix";
 export interface Entity extends JSONObject {
     readonly type: string;
     readonly id: string;
+    readonly schemaVersion: number;
 }
 
 export abstract class EntityHandle<T extends Entity> {
@@ -62,6 +63,10 @@ export abstract class EntityHandle<T extends Entity> {
             rect.bottomRight,
             rect.center,
         ];
+    }
+
+    upgradeSchemaVersion(entity: T): T {
+        return entity;
     }
 
     /**

@@ -1,4 +1,5 @@
 import type { App } from "../../core/App";
+import { Color } from "../../core/Color";
 import type { Entity } from "../../core/Entity";
 import {
     type CanvasPointerEvent,
@@ -13,9 +14,12 @@ import { randomId } from "../../lib/randomId";
 import {
     PROPERTY_KEY_ARROW_HEAD_NODE_IDS,
     type PathEntity,
+    PathEntityHandle,
 } from "../entity/PathEntity/PathEntity";
-import { PROPERTY_KEY_COLOR_ID } from "../property/Colors";
-import { PROPERTY_KEY_FILL_STYLE } from "../property/FillStyle";
+import {
+    PROPERTY_KEY_FILL_COLOR,
+    PROPERTY_KEY_STROKE_COLOR,
+} from "../property/Colors";
 import { PROPERTY_KEY_STROKE_STYLE } from "../property/StrokeStyle";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../property/StrokeWidth";
 
@@ -67,6 +71,7 @@ export class NewShapeModeController extends ModeController {
         const shape: PathEntity = {
             id: randomId(),
             type: "path",
+            schemaVersion: PathEntityHandle.SCHEMA_VERSION,
             nodes: [
                 { id: topLeftNode.id, x: topLeftNode.x, y: topLeftNode.y },
                 { id: topRightNode.id, x: topRightNode.x, y: topRightNode.y },
@@ -87,9 +92,13 @@ export class NewShapeModeController extends ModeController {
                 [bottomRightNode.id, bottomLeftNode.id],
                 [bottomLeftNode.id, topLeftNode.id],
             ],
-            [PROPERTY_KEY_COLOR_ID]: app.getSelectedPropertyValue(
-                PROPERTY_KEY_COLOR_ID,
-                0,
+            [PROPERTY_KEY_STROKE_COLOR]: app.getSelectedPropertyValue(
+                PROPERTY_KEY_STROKE_COLOR,
+                Color.Black,
+            ),
+            [PROPERTY_KEY_FILL_COLOR]: app.getSelectedPropertyValue(
+                PROPERTY_KEY_FILL_COLOR,
+                Color.Transparent,
             ),
             [PROPERTY_KEY_STROKE_STYLE]: app.getSelectedPropertyValue(
                 PROPERTY_KEY_STROKE_STYLE,
@@ -98,10 +107,6 @@ export class NewShapeModeController extends ModeController {
             [PROPERTY_KEY_STROKE_WIDTH]: app.getSelectedPropertyValue(
                 PROPERTY_KEY_STROKE_WIDTH,
                 2,
-            ),
-            [PROPERTY_KEY_FILL_STYLE]: app.getSelectedPropertyValue(
-                PROPERTY_KEY_FILL_STYLE,
-                "none",
             ),
             [PROPERTY_KEY_ARROW_HEAD_NODE_IDS]: [],
         };
