@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { ResizeEntityModeController } from "../../core/mode/ResizeEntityModeController";
 import { SelectEntityModeController } from "../../core/mode/SelectEntityModeController";
+import { Point } from "../../core/shape/Point";
 import { Rect } from "../../core/shape/Shape";
 import {
     createApp,
@@ -21,7 +22,9 @@ describe("ResizeEntityModeController", () => {
         app.canvas.select(entity1.id);
 
         app.handlePointerDown(
-            createNativePointerEvent({ offsetX: 10, offsetY: 10 }),
+            createNativePointerEvent({
+                canvasPoint: new Point(10, 10),
+            }),
         );
         expect(app.mode.get()).toBe(ResizeEntityModeController.type);
     });
@@ -38,10 +41,14 @@ describe("ResizeEntityModeController", () => {
         app.canvas.selectAll();
 
         app.handlePointerDown(
-            createNativePointerEvent({ offsetX: 10, offsetY: 10 }),
+            createNativePointerEvent({
+                canvasPoint: new Point(10, 10),
+            }),
         );
         app.handlePointerMove(
-            createNativePointerEvent({ offsetX: -10, offsetY: -10 }),
+            createNativePointerEvent({
+                canvasPoint: new Point(-10, -10),
+            }),
         );
 
         const updateEntity1 = app.canvas.page.get().entities.get(entity1.id);
@@ -68,7 +75,7 @@ describe("ResizeEntityModeController", () => {
         app.canvas.selectAll();
 
         app.handlePointerDown(
-            createNativePointerEvent({ offsetX: 10, offsetY: 10 }),
+            createNativePointerEvent({ canvasPoint: new Point(10, 10) }),
         );
         expect(app.mode.get()).toEqual(ResizeEntityModeController.type);
 
@@ -76,7 +83,7 @@ describe("ResizeEntityModeController", () => {
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
         app.handlePointerUp(
-            createNativePointerEvent({ offsetX: 10, offsetY: 10 }),
+            createNativePointerEvent({ canvasPoint: new Point(10, 10) }),
         );
         expect(app.mode.get()).toEqual(SelectEntityModeController.type);
     });
@@ -93,10 +100,10 @@ describe("ResizeEntityModeController", () => {
         app.canvas.selectAll();
 
         app.handlePointerDown(
-            createNativePointerEvent({ offsetX: 10, offsetY: 10 }),
+            createNativePointerEvent({ canvasPoint: new Point(10, 10) }),
         );
         app.handlePointerMove(
-            createNativePointerEvent({ offsetX: -10, offsetY: -10 }),
+            createNativePointerEvent({ canvasPoint: new Point(-10, -10) }),
         );
         app.handleKeyDown(createNativeKeyboardEvent({ key: "Escape" }));
 
@@ -122,14 +129,12 @@ describe("ResizeEntityModeController", () => {
 
         app.handlePointerDown(
             createNativePointerEvent({
-                offsetX: 20,
-                offsetY: 20,
+                canvasPoint: new Point(20, 20),
             }),
         );
         app.handlePointerMove(
             createNativePointerEvent({
-                offsetX: 20,
-                offsetY: 20 + 79.5,
+                canvasPoint: new Point(20, 20 + 79.5),
                 ctrlKey: true,
             }),
         );
@@ -155,12 +160,11 @@ describe("ResizeEntityModeController", () => {
         app.canvas.select(entity1.id);
 
         app.handlePointerDown(
-            createNativePointerEvent({ offsetX: 10, offsetY: 10 }),
+            createNativePointerEvent({ canvasPoint: new Point(10, 10) }),
         );
         app.handlePointerMove(
             createNativePointerEvent({
-                offsetX: 15 + 100,
-                offsetY: 15 + 100,
+                canvasPoint: new Point(15 + 100, 15 + 100),
                 shiftKey: true,
             }),
         );
@@ -186,12 +190,11 @@ describe("ResizeEntityModeController", () => {
         app.canvas.select(entity1.id);
 
         app.handlePointerDown(
-            createNativePointerEvent({ offsetX: 20, offsetY: 20 }),
+            createNativePointerEvent({ canvasPoint: new Point(20, 20) }),
         );
         app.handlePointerMove(
             createNativePointerEvent({
-                offsetX: 20 + 9,
-                offsetY: 20 + 18,
+                canvasPoint: new Point(20 + 9, 20 + 18),
                 shiftKey: true,
                 ctrlKey: true,
             }),

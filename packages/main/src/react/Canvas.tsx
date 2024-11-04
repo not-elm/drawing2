@@ -1,4 +1,6 @@
-import { type WheelEventHandler, useCallback, useEffect } from "react";
+import { type WheelEventHandler, useCallback, useEffect, useRef } from "react";
+import type { NativeMouseEvent, NativePointerEvent } from "../core/App";
+import { Point } from "../core/shape/Point";
 import { LinkGuideLayer } from "./LinkGuideLayer";
 import { NewPathControlLayer } from "./NewPathControlLayer";
 import { SelectByBrushControlLayer } from "./SelectByBrushControlLayer";
@@ -20,12 +22,12 @@ export function Canvas() {
     useEffect(() => {
         function handlePointerMove(ev: PointerEvent) {
             ev.stopPropagation();
-            app.handlePointerMove(ev);
+            app.handlePointerMove(toNativePointerEvent(ev, canvasRef.current));
         }
 
         function handlePointerUp(ev: PointerEvent) {
             ev.stopPropagation();
-            app.handlePointerUp(ev);
+            app.handlePointerUp(toNativePointerEvent(ev, canvasRef.current));
         }
 
         window.addEventListener("pointermove", handlePointerMove);
@@ -55,13 +57,17 @@ export function Canvas() {
         [app, viewport.scale],
     );
 
+    const canvasRef = useRef<HTMLDivElement | null>(null);
     const resizeObserverRef = useResizeObserver((entry) => {
         app.resizeViewport(entry.contentRect.width, entry.contentRect.height);
     });
 
     return (
         <div
-            ref={resizeObserverRef}
+            ref={(e) => {
+                resizeObserverRef(e);
+                canvasRef.current = e;
+            }}
             css={{
                 position: "relative",
                 width: "100%",
@@ -77,16 +83,22 @@ export function Canvas() {
             onWheel={handleWheel}
             onPointerDown={(ev) => {
                 ev.stopPropagation();
-                (ev.target as Element).setPointerCapture(ev.pointerId);
-                app.handlePointerDown(ev.nativeEvent);
+                ev.currentTarget.setPointerCapture(ev.pointerId);
+                app.handlePointerDown(
+                    toNativePointerEvent(ev.nativeEvent, canvasRef.current),
+                );
             }}
             onContextMenu={(ev) => {
                 ev.stopPropagation();
-                app.handleContextMenu(ev.nativeEvent);
+                app.handleContextMenu(
+                    toNativeMouseEvent(ev.nativeEvent, canvasRef.current),
+                );
             }}
             onDoubleClick={(ev) => {
                 ev.stopPropagation();
-                app.handleDoubleClick(ev.nativeEvent);
+                app.handleDoubleClick(
+                    toNativeMouseEvent(ev.nativeEvent, canvasRef.current),
+                );
             }}
         >
             <div
@@ -115,4 +127,36 @@ export function Canvas() {
             <SnapGuideLayer />
         </div>
     );
+}
+
+/**
+ * Convert DOM MouseEvent to NativeMouseEvent including coordinate conversion
+ */
+function toNativeMouseEvent(
+    ev: MouseEvent,
+    canvasDOM: HTMLElement | null,
+): NativeMouseEvent {
+    const canvasRect = canvasDOM?.getBoundingClientRect();
+
+    return {
+        preventDefault: () => ev.preventDefault(),
+        button: ev.button,
+        canvasPoint: new Point(
+            ev.clientX - (canvasRect?.left ?? 0),
+            ev.clientY - (canvasRect?.top ?? 0),
+        ),
+        shiftKey: ev.shiftKey,
+        metaKey: ev.metaKey,
+        ctrlKey: ev.ctrlKey,
+    };
+}
+
+function toNativePointerEvent(
+    ev: PointerEvent,
+    canvasDOM: HTMLElement | null,
+): NativePointerEvent {
+    return {
+        ...toNativeMouseEvent(ev, canvasDOM),
+        pointerId: ev.pointerId,
+    };
 }

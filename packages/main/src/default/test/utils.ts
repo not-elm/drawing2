@@ -1,4 +1,5 @@
 import type { NativeKeyboardEvent, NativePointerEvent } from "../../core/App";
+import { Point } from "../../core/shape/Point";
 import type { Rect } from "../../core/shape/Shape";
 import { noop } from "../../lib/noop";
 import { randomId } from "../../lib/randomId";
@@ -65,8 +66,7 @@ export function createNativePointerEvent(
     return {
         pointerId: 0,
         button: 0,
-        offsetX: 0,
-        offsetY: 0,
+        canvasPoint: new Point(0, 0),
         shiftKey: false,
         ctrlKey: false,
         metaKey: false,

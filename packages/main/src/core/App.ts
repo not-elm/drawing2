@@ -385,9 +385,7 @@ export class App {
             button: ev.button === MouseEventButton.MAIN ? "main" : "other",
             point: this.viewport
                 .get()
-                .fromCanvasCoordinateTransform.apply(
-                    new Point(ev.offsetX, ev.offsetY),
-                ),
+                .fromCanvasCoordinateTransform.apply(ev.canvasPoint),
             shiftKey: ev.shiftKey,
             metaKey: ev.metaKey,
             ctrlKey: ev.ctrlKey,
@@ -405,9 +403,7 @@ export class App {
             button: "other",
             point: this.viewport
                 .get()
-                .fromCanvasCoordinateTransform.apply(
-                    new Point(ev.offsetX, ev.offsetY),
-                ),
+                .fromCanvasCoordinateTransform.apply(ev.canvasPoint),
             shiftKey: ev.shiftKey,
             metaKey: ev.metaKey,
             ctrlKey: ev.ctrlKey,
@@ -453,9 +449,7 @@ export class App {
             button: "main",
             point: this.viewport
                 .get()
-                .fromCanvasCoordinateTransform.apply(
-                    new Point(ev.offsetX, ev.offsetY),
-                ),
+                .fromCanvasCoordinateTransform.apply(ev.canvasPoint),
             shiftKey: ev.shiftKey,
             metaKey: ev.metaKey,
             ctrlKey: ev.ctrlKey,
@@ -502,9 +496,7 @@ export class App {
         this.pointerPosition.set(
             this.viewport
                 .get()
-                .fromCanvasCoordinateTransform.apply(
-                    new Point(ev.offsetX, ev.offsetY),
-                ),
+                .fromCanvasCoordinateTransform.apply(ev.canvasPoint),
         );
     }
 
@@ -539,8 +531,7 @@ export interface NativePointerEvent extends NativeMouseEvent {
 export interface NativeMouseEvent {
     preventDefault: () => void;
     button: number;
-    offsetX: number;
-    offsetY: number;
+    canvasPoint: Point;
     shiftKey: boolean;
     metaKey: boolean;
     ctrlKey: boolean;

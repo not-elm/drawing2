@@ -1,7 +1,7 @@
 import { assert } from "../lib/assert";
 import type { App, NativePointerEvent } from "./App";
 import type { CanvasPointerEvent } from "./ModeController";
-import { Point } from "./shape/Point";
+import type { Point } from "./shape/Point";
 
 const THRESHOLD_CLICK_DURATION_IN_MILLI = 200;
 
@@ -20,9 +20,7 @@ export class GestureRecognizer {
     handlePointerDown(nativeEv: NativePointerEvent) {
         const point = this.app.viewport
             .get()
-            .fromCanvasCoordinateTransform.apply(
-                new Point(nativeEv.offsetX, nativeEv.offsetY),
-            );
+            .fromCanvasCoordinateTransform.apply(nativeEv.canvasPoint);
 
         this.sessions.set(nativeEv.pointerId, {
             pointerId: nativeEv.pointerId,
@@ -38,9 +36,7 @@ export class GestureRecognizer {
         const session = this.sessions.get(nativeEv.pointerId);
         const point = this.app.viewport
             .get()
-            .fromCanvasCoordinateTransform.apply(
-                new Point(nativeEv.offsetX, nativeEv.offsetY),
-            );
+            .fromCanvasCoordinateTransform.apply(nativeEv.canvasPoint);
         const ev: CanvasPointerMoveEvent = {
             point,
             button:
@@ -74,9 +70,7 @@ export class GestureRecognizer {
         const ev: CanvasPointerUpEvent = {
             point: this.app.viewport
                 .get()
-                .fromCanvasCoordinateTransform.apply(
-                    new Point(nativeEv.offsetX, nativeEv.offsetY),
-                ),
+                .fromCanvasCoordinateTransform.apply(nativeEv.canvasPoint),
             button:
                 nativeEv.button === MouseEventButton.MAIN ? "main" : "other",
             pointerId: nativeEv.pointerId,

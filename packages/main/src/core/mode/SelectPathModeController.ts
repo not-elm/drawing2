@@ -15,7 +15,6 @@ import {
 } from "../ModeController";
 import { cell } from "../cell/ICell";
 import { type GraphEdge, GraphNode } from "../shape/Graph";
-import { Line } from "../shape/Line";
 import { Point } from "../shape/Point";
 import { MoveNodeModeController } from "./MoveNodeModeController";
 import { SelectEntityModeController } from "./SelectEntityModeController";
@@ -241,7 +240,7 @@ export class SelectPathModeController extends ModeController {
                 return { type: "center-of-edge", path, edge, point: center };
             }
 
-            const entry = Line.of(p1.x, p1.y, p2.x, p2.y).getDistance(point);
+            const entry = edge.getDistance(point);
 
             if (entry.distance < edgeControlMargin) {
                 return { type: "edge", path, edge, point: entry.point };
