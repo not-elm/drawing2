@@ -9,11 +9,10 @@ import { NewTextModeController } from "../default/mode/NewTextModeController";
 import { Canvas } from "./Canvas";
 import { ContextMenuLayer } from "./ContextMenuLayer";
 import { PortalContextProvider, PortalMountPoint } from "./Portal";
-import { ColorPropertySection } from "./PropertyPanel/ColorPropertySection";
+import { FillPropertySection } from "./PropertyPanel/FillPropertySection";
 import { PropertyPanel } from "./PropertyPanel/PropertyPanel";
 import { SizingModePropertySection } from "./PropertyPanel/SizingModePropertySection";
-import { StrokeStylePropertySection } from "./PropertyPanel/StrokeStylePropertySection";
-import { StrokeWidthPropertySection } from "./PropertyPanel/StrokeWidthPropertySection";
+import { StrokePropertySection } from "./PropertyPanel/StrokePropertySection";
 import { TextAlignmentPropertySection } from "./PropertyPanel/TextAlignmentPropertySection";
 import { StatusBar } from "./StatusBar";
 import { ToolBar } from "./ToolBar";
@@ -67,6 +66,7 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                             "--color-ui-primary-hover": "#b0c5fb",
                             "--color-ui-background": "#fff",
                             "--color-ui-background-hover": "#f0f0f0",
+                            "--color-ui-background-selected": "#f1f6fd",
                             "--color-ui-selected": "var(--color-ui-primary)",
                             "--color-selection": "var(--color-ui-primary)",
                             "--color-selection-hover":
@@ -119,10 +119,9 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                         </div>
                         <div css={{ flex: "0 0 auto" }}>
                             <PropertyPanel>
-                                <ColorPropertySection />
+                                <StrokePropertySection />
+                                <FillPropertySection />
                                 <TextAlignmentPropertySection />
-                                <StrokeStylePropertySection />
-                                <StrokeWidthPropertySection />
                                 <SizingModePropertySection />
                             </PropertyPanel>
                         </div>

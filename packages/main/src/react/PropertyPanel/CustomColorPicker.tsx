@@ -262,8 +262,8 @@ export function ColorPreview({
         <div
             css={{
                 position: "relative",
-                height: "24px",
-                width: "24px",
+                height: "16px",
+                width: "16px",
                 overflow: "clip",
                 border: "1px solid #eee",
             }}

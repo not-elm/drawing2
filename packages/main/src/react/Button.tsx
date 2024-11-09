@@ -1,6 +1,8 @@
 import styled from "@emotion/styled";
+import { InputBase } from "./Input";
 
 export const Button = styled.button({
+    ...InputBase,
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
@@ -10,9 +12,6 @@ export const Button = styled.button({
     position: "relative",
     minWidth: "32px",
     minHeight: "32px",
-    border: "none",
-    backgroundColor: "var(--color-ui-background)",
-    borderRadius: 8,
     cursor: "pointer",
     pointerEvents: "all",
     whiteSpace: "nowrap",

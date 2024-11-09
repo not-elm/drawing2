@@ -7,6 +7,7 @@ const Card = styled.div({
     background: "#fff",
     boxShadow: "0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23)",
     borderRadius: 8,
+    overflow: "clip",
 });
 
 const CardSection = styled.div({
