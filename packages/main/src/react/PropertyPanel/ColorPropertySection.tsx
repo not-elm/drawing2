@@ -1,78 +1,85 @@
 import { Color } from "../../core/Color";
 import {
-    Colors,
+    PROPERTY_KEY_FILL_COLOR,
     PROPERTY_KEY_STROKE_COLOR,
 } from "../../default/property/Colors";
-import { Button } from "../Button";
 import { Card } from "../Card";
 import { useApp } from "../hooks/useApp";
+import { ColorPickerButton } from "./ColorPickerButton";
 import { useSelectedPropertyValue } from "./useSelectedPropertyValue";
-
-export function useSelectedColor() {
-    return useSelectedPropertyValue<Color>(PROPERTY_KEY_STROKE_COLOR);
-}
 
 export function ColorPropertySection() {
     const app = useApp();
-    const selectedColor = useSelectedColor();
-    const handleClick = (color: Color) => {
-        app.history.addCheckpoint();
-        app.updatePropertyForSelectedEntities(PROPERTY_KEY_STROKE_COLOR, color);
-        app.setSelectedPropertyValue(PROPERTY_KEY_STROKE_COLOR, color);
-    };
+    const selectedStrokeColor =
+        useSelectedPropertyValue<Color>(PROPERTY_KEY_STROKE_COLOR) ??
+        Color.Black;
+    const selectedFillColor =
+        useSelectedPropertyValue<Color>(PROPERTY_KEY_FILL_COLOR) ??
+        Color.Transparent;
 
     return (
         <Card.Section
             css={{
-                display: "grid",
-                gap: 4,
-                width: "min-content",
-                alignSelf: "center",
-                gridTemplateColumns: "repeat(4, 1fr)",
-                gridTemplateRows: "repeat(3, 1fr)",
-            }}
-        >
-            {Colors.map((color) => (
-                <ColorButton
-                    key={Color.stringify(color)}
-                    selected={
-                        selectedColor !== null &&
-                        Color.stringify(selectedColor) ===
-                            Color.stringify(color)
-                    }
-                    onClick={handleClick}
-                    color={color}
-                />
-            ))}
-        </Card.Section>
-    );
-}
+                padding: "8px 16px",
+                display: "flex",
+                flexDirection: "row",
+                gap: 8,
 
-function ColorButton({
-    selected,
-    onClick,
-    color,
-}: {
-    selected: boolean;
-    onClick: (color: Color) => void;
-    color: Color;
-}) {
-    return (
-        <Button
-            onPointerDown={(ev) => {
-                ev.stopPropagation();
-                onClick(color);
-            }}
-            aria-selected={selected}
-            css={{
-                "&::after": {
-                    content: '""',
-                    position: "absolute",
-                    inset: "8px",
-                    borderRadius: "50%",
-                    background: Color.stringify(color),
+                label: {
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-start",
+                    justifyContent: "flex-start",
+                    gap: 4,
+
+                    span: {
+                        color: "#888",
+                        fontSize: "0.875em",
+                    },
                 },
             }}
-        />
+        >
+            <label>
+                <span>線</span>
+                <ColorPickerButton
+                    value={selectedStrokeColor}
+                    onClose={() => {
+                        app.addColorHistory(selectedStrokeColor);
+                    }}
+                    onChange={(value) => {
+                        app.history.addCheckpoint();
+                        app.updatePropertyForSelectedEntities(
+                            PROPERTY_KEY_STROKE_COLOR,
+                            value,
+                        );
+                        app.setSelectedPropertyValue(
+                            PROPERTY_KEY_STROKE_COLOR,
+                            value,
+                        );
+                    }}
+                />
+            </label>
+            <label>
+                <span>塗り</span>
+                <ColorPickerButton
+                    value={selectedFillColor}
+                    onClose={() => {
+                        app.addColorHistory(selectedFillColor);
+                    }}
+                    onChange={(value) => {
+                        app.history.addCheckpoint();
+                        app.updatePropertyForSelectedEntities(
+                            PROPERTY_KEY_FILL_COLOR,
+                            value,
+                        );
+                        app.setSelectedPropertyValue(
+                            PROPERTY_KEY_FILL_COLOR,
+                            value,
+                        );
+                        app.addColorHistory(value);
+                    }}
+                />
+            </label>
+        </Card.Section>
     );
 }

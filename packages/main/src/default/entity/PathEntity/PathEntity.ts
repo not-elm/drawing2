@@ -99,6 +99,13 @@ export class PathEntityHandle extends EntityHandle<PathEntity> {
         return group;
     }
 
+    getColors(entity: PathEntity): Color[] {
+        return [
+            entity[PROPERTY_KEY_STROKE_COLOR],
+            entity[PROPERTY_KEY_FILL_COLOR],
+        ];
+    }
+
     getView(): ComponentType<{ entity: PathEntity }> {
         return PathView;
     }

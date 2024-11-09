@@ -5,10 +5,8 @@ const Card = styled.div({
     flexDirection: "column",
     alignItems: "stretch",
     background: "#fff",
-    border: "1px solid #c0c0c0",
-    boxShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
-    padding: "4px 4px",
-    borderRadius: "12px",
+    boxShadow: "0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23)",
+    borderRadius: 8,
 });
 
 const CardSection = styled.div({

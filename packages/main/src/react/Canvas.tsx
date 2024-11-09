@@ -18,6 +18,7 @@ export function Canvas() {
     const page = useCell(app.canvas.page);
     const viewport = useCell(app.viewport);
     const cursor = useCell(app.cursor);
+    const colorHistory = useCell(app.cursor);
 
     useEffect(() => {
         function handlePointerMove(ev: PointerEvent) {

@@ -1,4 +1,5 @@
 import type { App } from "../core/App";
+import { Color } from "../core/Color";
 import type { EntityHandleMap } from "../core/Entity";
 import { Page, type SerializedPage } from "../core/Page";
 import { PageBuilder } from "../core/PageBuilder";
@@ -29,6 +30,8 @@ export function syncWithLocalStorage(app: App) {
     if (page !== null) {
         app.canvas.setPage(page);
         app.canvas.unselectAll();
+
+        restoreColorHistory(app, page);
     }
 }
 
@@ -78,6 +81,38 @@ function upgradeSchemaVersion(
     }
 
     return builder.build();
+}
+
+function restoreColorHistory(app: App, page: Page) {
+    const colorMap = new Map<
+        string,
+        {
+            color: Color;
+            count: number;
+        }
+    >();
+
+    for (const entity of page.entities.values()) {
+        for (const color of app.entityHandle
+            .getHandle(entity)
+            .getColors(entity)) {
+            const key = Color.stringify(color);
+            const entry = colorMap.get(key);
+            if (entry === undefined) {
+                colorMap.set(key, { color, count: 1 });
+            } else {
+                entry.count++;
+            }
+        }
+    }
+
+    const colors = Array.from(colorMap.values())
+        .sort((a, b) => a.count - b.count)
+        .map((entry) => entry.color);
+
+    for (const color of colors) {
+        app.addColorHistory(color);
+    }
 }
 
 const LOCAL_STORAGE_KEY = "LocalCanvasStateStore.state.page";

@@ -47,6 +47,10 @@ export class TextEntityHandle extends EntityHandle<TextEntity> {
         return TextView;
     }
 
+    getColors(entity: TextEntity): Color[] {
+        return [entity[PROPERTY_KEY_TEXT_COLOR]];
+    }
+
     upgradeSchemaVersion(entity: TextEntity): TextEntity {
         switch (entity.schemaVersion) {
             case undefined: {

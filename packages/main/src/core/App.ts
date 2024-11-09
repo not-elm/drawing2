@@ -4,6 +4,7 @@ import type { JSONValue } from "../lib/JSONObject";
 import { assert } from "../lib/assert";
 import { CanvasStateStore } from "./CanvasStateStore";
 import { ClipboardService } from "./ClipboardService";
+import { Color } from "./Color";
 import { ContextMenuService } from "./ContextMenuService";
 import { type Entity, type EntityHandle, EntityHandleMap } from "./Entity";
 import { GestureRecognizer, MouseEventButton } from "./GestureRecognizer";
@@ -36,6 +37,27 @@ class SelectedProperties {
     }
 }
 
+export class ColorHistory {
+    static readonly MAX_HISTORY_SIZE = 10;
+    colors: Color[] = [];
+
+    constructor(colors: Color[]) {
+        this.colors = colors;
+    }
+
+    add(color: Color) {
+        if (this.colors.some((other) => Color.equals(other, color))) {
+            return this;
+        }
+
+        const newColors = [color, ...this.colors].slice(
+            0,
+            ColorHistory.MAX_HISTORY_SIZE,
+        );
+        return new ColorHistory(newColors);
+    }
+}
+
 export class App {
     readonly entityHandle = new EntityHandleMap();
 
@@ -46,6 +68,7 @@ export class App {
     readonly selectedProperties = cell(new SelectedProperties({}));
     readonly snapGuideMap = cell(new SnapGuideMap());
     readonly modeControllers = cell(new Map<string, ModeController>());
+    readonly colorHistory = cell(new ColorHistory([]));
 
     readonly clipboard = new ClipboardService(this.entityHandle);
     readonly canvas = new CanvasStateStore(this);
@@ -270,6 +293,10 @@ export class App {
 
     deleteSnapGuide(key: string) {
         this.snapGuideMap.set(this.snapGuideMap.get().deleteSnapGuide(key));
+    }
+
+    addColorHistory(color: Color) {
+        this.colorHistory.set(this.colorHistory.get().add(color));
     }
 
     // Ordering

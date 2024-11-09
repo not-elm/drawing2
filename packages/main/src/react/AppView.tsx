@@ -8,6 +8,7 @@ import { NewShapeModeController } from "../default/mode/NewShapeModeController";
 import { NewTextModeController } from "../default/mode/NewTextModeController";
 import { Canvas } from "./Canvas";
 import { ContextMenuLayer } from "./ContextMenuLayer";
+import { PortalContextProvider, PortalMountPoint } from "./Portal";
 import { ColorPropertySection } from "./PropertyPanel/ColorPropertySection";
 import { PropertyPanel } from "./PropertyPanel/PropertyPanel";
 import { SizingModePropertySection } from "./PropertyPanel/SizingModePropertySection";
@@ -42,84 +43,93 @@ export function AppView({ app: controlledApp }: { app?: App }) {
 
     return (
         <AppProvider app={app}>
-            <StatusBar />
-            <MathJaxContext
-                version={2}
-                config={{
-                    // https://docs.mathjax.org/en/stable/start.html#configuring-your-copy-of-mathjax
-                    tex2jax: {
-                        inlineMath: [
-                            ["$", "$"],
-                            ["\\(", "\\)"],
-                        ],
-                    },
-                }}
-            >
-                <div
-                    css={{
-                        position: "absolute",
-                        inset: 0,
-                        overflow: "clip",
-                        "--color-ui-foreground": "#404040",
-                        "--color-ui-primary": "#3680f4",
-                        "--color-ui-primary-hover": "#b0c5fb",
-                        "--color-ui-background": "#fff",
-                        "--color-ui-background-hover": "#f0f0f0",
-                        "--color-ui-selected": "var(--color-ui-primary)",
-                        "--color-selection": "var(--color-ui-primary)",
-                        "--color-selection-hover":
-                            "var(--color-ui-primary-hover)",
-
-                        // Disable mobile browser's default touch gestures (pan, zoom)
-                        // to prevent conflicts with our event handling such as "pointermove".
-                        touchAction: "none",
-                        pointerEvents: "none",
-                        userSelect: "none",
-
-                        display: "flex",
-                        flexDirection: "row",
-                        alignItems: "stretch",
-                        justifyContent: "stretch",
+            <PortalContextProvider>
+                <StatusBar />
+                <MathJaxContext
+                    version={2}
+                    config={{
+                        // https://docs.mathjax.org/en/stable/start.html#configuring-your-copy-of-mathjax
+                        tex2jax: {
+                            inlineMath: [
+                                ["$", "$"],
+                                ["\\(", "\\)"],
+                            ],
+                        },
                     }}
                 >
-                    <div css={{ flex: "0 0 auto" }}>
-                        <ToolBar
-                            css={{
-                                position: "relative",
-                                height: "100%",
-                            }}
-                        >
-                            <ToolBar.Button
-                                mode={SelectEntityModeController.type}
+                    <div
+                        css={{
+                            position: "absolute",
+                            inset: 0,
+                            overflow: "clip",
+                            "--color-ui-foreground": "#404040",
+                            "--color-ui-primary": "#3680f4",
+                            "--color-ui-primary-hover": "#b0c5fb",
+                            "--color-ui-background": "#fff",
+                            "--color-ui-background-hover": "#f0f0f0",
+                            "--color-ui-selected": "var(--color-ui-primary)",
+                            "--color-selection": "var(--color-ui-primary)",
+                            "--color-selection-hover":
+                                "var(--color-ui-primary-hover)",
+
+                            // Disable mobile browser's default touch gestures (pan, zoom)
+                            // to prevent conflicts with our event handling such as "pointermove".
+                            touchAction: "none",
+                            pointerEvents: "none",
+                            userSelect: "none",
+
+                            display: "flex",
+                            flexDirection: "row",
+                            alignItems: "stretch",
+                            justifyContent: "stretch",
+                        }}
+                    >
+                        <div css={{ flex: "0 0 auto" }}>
+                            <ToolBar
+                                css={{
+                                    position: "relative",
+                                    height: "100%",
+                                }}
                             >
-                                <SelectEntityIcon />
-                            </ToolBar.Button>
-                            <ToolBar.Button mode={NewShapeModeController.type}>
-                                <NewShapeIcon />
-                            </ToolBar.Button>
-                            <ToolBar.Button mode={NewPathModeController.type}>
-                                <NewPathIcon />
-                            </ToolBar.Button>
-                            <ToolBar.Button mode={NewTextModeController.type}>
-                                <NewTextIcon />
-                            </ToolBar.Button>
-                        </ToolBar>
+                                <ToolBar.Button
+                                    mode={SelectEntityModeController.type}
+                                >
+                                    <SelectEntityIcon />
+                                </ToolBar.Button>
+                                <ToolBar.Button
+                                    mode={NewShapeModeController.type}
+                                >
+                                    <NewShapeIcon />
+                                </ToolBar.Button>
+                                <ToolBar.Button
+                                    mode={NewPathModeController.type}
+                                >
+                                    <NewPathIcon />
+                                </ToolBar.Button>
+                                <ToolBar.Button
+                                    mode={NewTextModeController.type}
+                                >
+                                    <NewTextIcon />
+                                </ToolBar.Button>
+                            </ToolBar>
+                        </div>
+                        <div css={{ flex: "1 1 0", position: "relative" }}>
+                            <Canvas />
+                            <ContextMenuLayer />
+                        </div>
+                        <div css={{ flex: "0 0 auto" }}>
+                            <PropertyPanel>
+                                <ColorPropertySection />
+                                <TextAlignmentPropertySection />
+                                <StrokeStylePropertySection />
+                                <StrokeWidthPropertySection />
+                                <SizingModePropertySection />
+                            </PropertyPanel>
+                        </div>
+                        <PortalMountPoint />
                     </div>
-                    <div css={{ flex: "1 1 0", position: "relative" }}>
-                        <Canvas />
-                        <ContextMenuLayer />
-                    </div>
-                    <div css={{ flex: "0 0 auto" }}>
-                        <PropertyPanel>
-                            <ColorPropertySection />
-                            <TextAlignmentPropertySection />
-                            <StrokeStylePropertySection />
-                            <StrokeWidthPropertySection />
-                            <SizingModePropertySection />
-                        </PropertyPanel>
-                    </div>
-                </div>
-            </MathJaxContext>
+                </MathJaxContext>
+            </PortalContextProvider>
         </AppProvider>
     );
 }

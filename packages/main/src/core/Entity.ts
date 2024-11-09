@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 import type { JSONObject, JSONValue } from "../lib/JSONObject";
 import { assert } from "../lib/assert";
 import type { App } from "./App";
+import type { Color } from "./Color";
 import type { CanvasPointerEvent } from "./ModeController";
 import type { Point } from "./shape/Point";
 import type { Shape } from "./shape/Shape";
@@ -67,6 +68,14 @@ export abstract class EntityHandle<T extends Entity> {
 
     upgradeSchemaVersion(entity: T): T {
         return entity;
+    }
+
+    /**
+     * Returns colors that are used in this entity. This method is used to restore color history from saved entities.
+     * @param entity
+     */
+    getColors(entity: T): Color[] {
+        return [];
     }
 
     /**
