@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { SelectPathModeController } from "../core/mode/SelectPathModeController";
+import { Variables } from "./Variables";
 import { useApp } from "./hooks/useApp";
 import { useCell } from "./hooks/useCell";
 
@@ -53,15 +54,15 @@ export function SelectPathControlLayerInner() {
                         y2={p2.y}
                         css={{
                             strokeWidth: 1,
-                            stroke: "var(--color-selection)",
+                            stroke: Variables.color.control.border,
 
                             ...(highlighted && {
                                 strokeWidth: 1,
-                                stroke: "var(--color-selection-hover)",
+                                stroke: Variables.color.control.borderHover,
                             }),
                             ...(selected && {
                                 strokeWidth: 3,
-                                stroke: "var(--color-selection)",
+                                stroke: Variables.color.control.borderSelected,
                             }),
                         }}
                     />,
@@ -76,8 +77,8 @@ export function SelectPathControlLayerInner() {
                             r={5}
                             css={{
                                 strokeWidth: 1,
-                                stroke: "var(--color-selection-hover)",
-                                fill: "#fff",
+                                stroke: Variables.color.control.borderHover,
+                                fill: Variables.color.control.background,
                             }}
                         />,
                     );
@@ -98,18 +99,18 @@ export function SelectPathControlLayerInner() {
                         r={5}
                         css={{
                             strokeWidth: 1,
-                            stroke: "var(--color-selection)",
-                            fill: "#fff",
+                            stroke: Variables.color.control.border,
+                            fill: Variables.color.control.background,
 
                             ...(highlighted && {
                                 strokeWidth: 1,
-                                stroke: "var(--color-selection-hover)",
-                                fill: "#fff",
+                                stroke: Variables.color.control.borderHover,
+                                fill: Variables.color.control.background,
                             }),
                             ...(selected && {
                                 strokeWidth: 2,
-                                fill: "var(--color-selection)",
-                                stroke: "#fff",
+                                fill: Variables.color.control.border,
+                                stroke: Variables.color.control.background,
                             }),
                         }}
                     />

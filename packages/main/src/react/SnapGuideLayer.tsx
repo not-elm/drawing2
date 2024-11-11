@@ -1,3 +1,4 @@
+import { Variables } from "./Variables";
 import { useApp } from "./hooks/useApp";
 import { useCell } from "./hooks/useCell";
 
@@ -26,7 +27,7 @@ export function SnapGuideLayer() {
                             d={`M${x - 2} ${y - 2}L${x + 2} ${y + 2}M${x + 2} ${
                                 y - 2
                             }L${x - 2} ${y + 2}`}
-                            stroke="#f00"
+                            stroke={Variables.color.layoutGuide.border}
                             strokeWidth={1}
                         />
                     );
@@ -43,7 +44,7 @@ export function SnapGuideLayer() {
                             x2={line.x2 - viewport.rect.left}
                             y2={line.y2 - viewport.rect.top}
                             css={{
-                                stroke: "#f00",
+                                stroke: Variables.color.layoutGuide.border,
                                 strokeWidth: 1,
                             }}
                         />

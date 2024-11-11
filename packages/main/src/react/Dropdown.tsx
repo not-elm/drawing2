@@ -140,6 +140,7 @@ export function DropdownBody(props: { children?: ReactNode }) {
     if (!isOpen) return null;
 
     const MARGIN = 24;
+    const SPACE_FROM_TRIGGER = 8;
 
     const translateX =
         triggerLeft < MARGIN
@@ -149,9 +150,9 @@ export function DropdownBody(props: { children?: ReactNode }) {
               : triggerLeft;
 
     const translateY =
-        triggerBottom + bodyHeight > windowHeight - MARGIN
+        triggerBottom + SPACE_FROM_TRIGGER + bodyHeight > windowHeight - MARGIN
             ? Math.max(MARGIN, windowHeight - MARGIN - bodyHeight)
-            : triggerBottom;
+            : triggerBottom + SPACE_FROM_TRIGGER;
 
     return (
         <Portal>

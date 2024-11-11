@@ -1,12 +1,15 @@
 import styled from "@emotion/styled";
+import { Variables } from "./Variables";
 
 const Card = styled.div({
     display: "flex",
     flexDirection: "column",
     alignItems: "stretch",
-    background: "#fff",
-    boxShadow: "0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23)",
-    borderRadius: 8,
+    background: Variables.color.background,
+    boxShadow: Variables.shadow.sm,
+    border: "1px solid",
+    borderColor: Variables.color.borderWeak,
+    borderRadius: Variables.size.borderRadius.md,
     overflow: "clip",
 });
 

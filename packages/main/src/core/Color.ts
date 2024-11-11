@@ -60,6 +60,17 @@ export namespace Color {
         return { hue, saturation, brightness };
     }
 
+    export function toHex(color: Color): string {
+        const { r, g, b } = color;
+        return `#${Math.floor(r).toString(16).padStart(2, "0")}${Math.floor(g)
+            .toString(16)
+            .padStart(2, "0")}${Math.floor(b)
+            .toString(16)
+            .padStart(2, "0")}${Math.round(color.a * 255)
+            .toString(16)
+            .padStart(2, "0")}`;
+    }
+
     export function equals(c1: Color, c2: Color): boolean {
         return c1.r === c2.r && c1.g === c2.g && c1.b === c2.b && c1.a === c2.a;
     }

@@ -6,6 +6,7 @@ import {
     isPathEntity,
 } from "../default/entity/PathEntity/PathEntity";
 import { assert } from "../lib/assert";
+import { Variables } from "./Variables";
 import { useApp } from "./hooks/useApp";
 import { useCell } from "./hooks/useCell";
 
@@ -73,7 +74,7 @@ export function LinkToEdgeGuide({ link }: { link: LinkToEdge }) {
         >
             <line
                 css={{
-                    stroke: "var(--color-selection)",
+                    stroke: Variables.color.control.border,
                     strokeWidth: 2,
                     strokeDasharray: "2 2",
                 }}
@@ -84,9 +85,9 @@ export function LinkToEdgeGuide({ link }: { link: LinkToEdge }) {
             />
             <circle
                 css={{
-                    stroke: "var(--color-selection)",
+                    stroke: Variables.color.control.border,
                     strokeWidth: 2,
-                    fill: "#fff",
+                    fill: Variables.color.control.background,
                 }}
                 cx={(linkPointX - left) * viewport.scale}
                 cy={(linkPointY - top) * viewport.scale}

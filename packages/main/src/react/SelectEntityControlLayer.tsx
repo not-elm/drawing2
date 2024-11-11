@@ -1,4 +1,5 @@
 import { SelectEntityModeController } from "../core/mode/SelectEntityModeController";
+import { Variables } from "./Variables";
 import { useApp } from "./hooks/useApp";
 import { useCell } from "./hooks/useCell";
 
@@ -37,32 +38,32 @@ function SelectEntityControlLayerInner() {
                         y={transformedSelectionRect.top - 4}
                         width={8}
                         height={8}
-                        fill="#fff"
-                        stroke="var(--color-selection)"
+                        fill={Variables.color.control.background}
+                        stroke={Variables.color.control.border}
                     />
                     <rect
                         x={transformedSelectionRect.right - 4}
                         y={transformedSelectionRect.top - 4}
                         width={8}
                         height={8}
-                        fill="#fff"
-                        stroke="var(--color-selection)"
+                        fill={Variables.color.control.background}
+                        stroke={Variables.color.control.border}
                     />
                     <rect
                         x={transformedSelectionRect.right - 4}
                         y={transformedSelectionRect.bottom - 4}
                         width={8}
                         height={8}
-                        fill="#fff"
-                        stroke="var(--color-selection)"
+                        fill={Variables.color.control.background}
+                        stroke={Variables.color.control.border}
                     />
                     <rect
                         x={transformedSelectionRect.left - 4}
                         y={transformedSelectionRect.bottom - 4}
                         width={8}
                         height={8}
-                        fill="#fff"
-                        stroke="var(--color-selection)"
+                        fill={Variables.color.control.background}
+                        stroke={Variables.color.control.border}
                     />
                 </>
             )}

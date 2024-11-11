@@ -1,5 +1,6 @@
 import styled from "@emotion/styled";
 import { InputBase } from "./Input";
+import { Variables } from "./Variables";
 
 export const Button = styled.button({
     ...InputBase,
@@ -8,26 +9,20 @@ export const Button = styled.button({
     alignItems: "center",
     justifyContent: "center",
     boxSizing: "border-box",
-    padding: "8px",
+    paddingLeft: Variables.size.spacing.sm,
+    paddingRight: Variables.size.spacing.sm,
     position: "relative",
-    minWidth: "32px",
-    minHeight: "32px",
+    minWidth: Variables.size.minimumTargetSize,
+    minHeight: Variables.size.minimumTargetSize,
     cursor: "pointer",
     pointerEvents: "all",
     whiteSpace: "nowrap",
 
     "&:hover": {
-        backgroundColor: "var(--color-ui-background-hover)",
+        backgroundColor: Variables.color.backgroundHover,
     },
 
-    "&[aria-checked='true']": {
-        backgroundColor: "var(--color-ui-selected)",
-        color: "#fff",
-        "svg *": {
-            stroke: "#fff",
-        },
-    },
     "&[aria-selected='true']": {
-        background: "#f2f2f2",
+        backgroundColor: Variables.color.backgroundSelected,
     },
 });

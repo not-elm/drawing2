@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Variables } from "./Variables";
 
 export function FormField({
     label,
@@ -18,8 +19,8 @@ export function FormField({
         >
             <span
                 css={{
-                    color: "#888",
-                    fontSize: "0.75em",
+                    color: Variables.color.foregroundWeak,
+                    fontSize: Variables.size.font.sm,
                     lineHeight: 1,
                 }}
             >

@@ -1,5 +1,7 @@
 import { type ReactNode, createContext, useContext } from "react";
 import { Card } from "./Card";
+import { Menu } from "./Menu";
+import { Variables } from "./Variables";
 
 const context = createContext<{
     value: string | null;
@@ -42,16 +44,12 @@ function SelectItemList({
     children?: ReactNode;
 }) {
     return (
-        <Card>
-            <ul
-                css={{
-                    listStyle: "none",
-                    padding: 0,
-                    margin: 0,
-                }}
-            >
-                {children}
-            </ul>
+        <Card
+            css={{
+                display: "inline-block",
+            }}
+        >
+            <Menu>{children}</Menu>
         </Card>
     );
 }
@@ -66,57 +64,27 @@ function SelectItem({
     const { value: selectedValue, select } = useContext(context);
 
     return (
-        <li
-            css={{
-                minHeight: "32px",
-                minWidth: "80px",
-                display: "flex",
-                alignItems: "stretch",
-                justifyContent: "stretch",
+        <Menu.Item
+            buttonProps={{
+                role: "option",
+                "aria-selected": value === selectedValue,
+            }}
+            onClick={() => {
+                select(value);
             }}
         >
-            <button
-                role="option"
-                type="button"
+            <span
+                className="material-symbols-outlined"
                 css={{
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "center",
-                    flex: "1 1 0",
-                    gap: 4,
-                    padding: "4px 8px",
-                    margin: 0,
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-
-                    "&:hover": {
-                        background: "var(--color-ui-background-hover)",
-                    },
-
-                    "&[aria-selected=true]": {
-                        background: "var(--color-ui-background-selected)",
-                    },
-                }}
-                aria-selected={value === selectedValue}
-                onClick={() => {
-                    select(value);
+                    color: Variables.color.foregroundSelected,
+                    visibility: value === selectedValue ? "visible" : "hidden",
+                    marginInlineEnd: Variables.size.spacing.md,
                 }}
             >
-                <span
-                    className="material-symbols-outlined"
-                    css={{
-                        fontSize: "20px",
-                        color: "var(--color-ui-primary)",
-                        visibility:
-                            value === selectedValue ? "visible" : "hidden",
-                    }}
-                >
-                    check
-                </span>
-                {children}
-            </button>
-        </li>
+                check
+            </span>
+            {children}
+        </Menu.Item>
     );
 }
 

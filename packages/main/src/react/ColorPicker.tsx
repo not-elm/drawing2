@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { Color } from "../../core/Color";
-import { Button } from "../Button";
-import { Card } from "../Card";
-import { useApp } from "../hooks/useApp";
-import { useCell } from "../hooks/useCell";
+import { Color } from "../core/Color";
+import { Button } from "./Button";
+import { Card } from "./Card";
+import { Variables } from "./Variables";
+import { useApp } from "./hooks/useApp";
+import { useCell } from "./hooks/useCell";
 
-export function CustomColorPicker({
+export function ColorPicker({
     value,
     onChange,
 }: {
@@ -24,7 +25,8 @@ export function CustomColorPicker({
         <Card css={{ paddingTop: 16 }}>
             <div
                 css={{
-                    borderTop: "1px solid #eee",
+                    borderTop: "1px solid",
+                    borderTopColor: Variables.color.border,
                 }}
             >
                 <SaturationBrightnessPicker
@@ -38,8 +40,10 @@ export function CustomColorPicker({
             </div>
             <div
                 css={{
-                    borderTop: "1px solid #ccc",
-                    padding: "8px 16px",
+                    borderTop: "1px solid",
+                    borderTopColor: Variables.color.border,
+                    paddingBlock: Variables.size.spacing.sm,
+                    paddingInline: Variables.size.spacing.md,
                     display: "flex",
                     flexDirection: "row",
                     alignItems: "center",
@@ -72,8 +76,9 @@ export function CustomColorPicker({
             </div>
             <div
                 css={{
-                    borderTop: "1px solid #eee",
-                    padding: "8px 8px",
+                    borderTop: "1px solid",
+                    borderTopColor: Variables.color.border,
+                    padding: Variables.size.spacing.sm,
                     display: "grid",
                     gridTemplateColumns: "repeat(6, 48px)",
                     gap: 0,
@@ -126,13 +131,11 @@ function SaturationBrightnessPicker({
     });
 
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
+    const shaderRef = useRef<((hue: number) => void) | null>(null);
 
-    const roundedHue = Math.floor(hue * 1024) / 1024;
     useEffect(() => {
-        const canvas = canvasRef.current;
-        if (canvas === null) return;
-        renderSBGradation(canvas, roundedHue);
-    }, [roundedHue]);
+        shaderRef.current?.(hue);
+    }, [hue]);
 
     return (
         <div
@@ -140,7 +143,7 @@ function SaturationBrightnessPicker({
                 position: "relative",
                 overflow: "clip",
                 width: "100%",
-                height: "160px",
+                height: "240px",
             }}
         >
             <canvas
@@ -152,6 +155,14 @@ function SaturationBrightnessPicker({
                 }}
                 ref={(e) => {
                     canvasRef.current = e;
+                    shaderRef.current = null;
+                    if (e === null) return;
+
+                    const gl = e.getContext("webgl");
+                    if (gl === null) return;
+
+                    shaderRef.current =
+                        createSaturationBrightnessGradationShader(gl);
                 }}
                 onPointerDown={(ev) => {
                     ev.preventDefault();
@@ -169,8 +180,8 @@ function SaturationBrightnessPicker({
                     transform: "translate(-50%, -50%)",
                     width: "8px",
                     height: "8px",
-                    border: "1px solid #c0c0c0",
-                    outline: "1px solid #666",
+                    border: "3px solid #fff",
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.3)",
                     borderRadius: "50%",
                 }}
             />
@@ -216,7 +227,7 @@ function CanvasRangeInput({
                 position: "relative",
                 height: "16px",
                 width: "100%",
-                padding: "4px 0",
+                paddingBlock: Variables.size.spacing.xs,
             }}
             onPointerDown={(ev) => {
                 ev.preventDefault();
@@ -244,8 +255,9 @@ function CanvasRangeInput({
                     width: "4px",
                     height: "24px",
                     background: "#fff",
-                    border: "1px solid #c0c0c0",
-                    borderRadius: "4px",
+                    border: "1px solid",
+                    borderColor: Variables.color.border,
+                    borderRadius: Variables.size.borderRadius.md,
                     transform: "translate(-50%)",
                 }}
             />
@@ -262,10 +274,11 @@ export function ColorPreview({
         <div
             css={{
                 position: "relative",
-                height: "16px",
-                width: "16px",
+                height: "12px",
+                width: "12px",
                 overflow: "clip",
-                border: "1px solid #eee",
+                borderColor: Variables.color.border,
+                borderRadius: "50%",
             }}
         >
             <canvas
@@ -297,23 +310,108 @@ export function ColorPreview({
     );
 }
 
-function renderSBGradation(canvas: HTMLCanvasElement, hue: number) {
-    const ctx = canvas.getContext("2d");
-    if (ctx === null) return;
-
-    const width = canvas.width;
-    const height = canvas.height;
-
-    for (let x = 0; x < width; x++) {
-        for (let y = 0; y < height; y++) {
-            const s = x / width;
-            const b = 1 - y / height;
-            const color = Color.hsb(hue, s, b);
-
-            ctx.fillStyle = `rgb(${color.r},${color.g},${color.b})`;
-            ctx.fillRect(x, y, 1, 1);
-        }
+function createSaturationBrightnessGradationShader(gl: WebGLRenderingContext) {
+    const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+    if (vertexShader === null) return null;
+    gl.shaderSource(
+        vertexShader,
+        `
+    attribute vec2 position;
+    void main() {
+        gl_Position = vec4(position, 0.0, 1.0);
     }
+`,
+    );
+    gl.compileShader(vertexShader);
+
+    const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+    if (fragmentShader === null) return null;
+    gl.shaderSource(
+        fragmentShader,
+        `
+    precision mediump float;
+    uniform float hue;
+    uniform vec2 resolution;
+
+    //  https://www.shadertoy.com/view/MsS3Wc
+    vec3 hsb2rgb(in vec3 c){
+        vec3 rgb = clamp(abs(mod(c.x * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0);
+        rgb = rgb * rgb * (3.0 - 2.0 * rgb);
+        return c.z * mix(vec3(1.0), rgb, c.y);
+    }
+    
+    void main() {
+        vec2 uv = gl_FragCoord.xy / resolution.xy;
+        vec3 hsb = vec3(hue, uv.x, uv.y);
+        
+        gl_FragColor = vec4(hsb2rgb(hsb), 1.0);
+    }
+`,
+    );
+    gl.compileShader(fragmentShader);
+
+    const shaderProgram = gl.createProgram();
+    if (shaderProgram === null) return null;
+    gl.attachShader(shaderProgram, vertexShader);
+    gl.attachShader(shaderProgram, fragmentShader);
+    gl.linkProgram(shaderProgram);
+
+    const positionAttributeLocation = gl.getAttribLocation(
+        shaderProgram,
+        "position",
+    );
+    const hueUniformLocation = gl.getUniformLocation(shaderProgram, "hue");
+    const resolutionUniformLocation = gl.getUniformLocation(
+        shaderProgram,
+        "resolution",
+    );
+
+    return (hue: number) => {
+        const positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array([
+                -1.0,
+                -1.0, // 左下
+                1.0,
+                -1.0, // 右下
+                -1.0,
+                1.0, // 左上
+                -1.0,
+                1.0, // 左上
+                1.0,
+                -1.0, // 右下
+                1.0,
+                1.0, // 右上
+            ]),
+            gl.STATIC_DRAW,
+        );
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.useProgram(shaderProgram);
+
+        gl.uniform2f(
+            resolutionUniformLocation,
+            gl.canvas.width,
+            gl.canvas.height,
+        );
+        gl.uniform1f(hueUniformLocation, hue);
+
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.enableVertexAttribArray(positionAttributeLocation);
+        gl.vertexAttribPointer(
+            positionAttributeLocation,
+            2,
+            gl.FLOAT,
+            false,
+            0,
+            0,
+        );
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+    };
 }
 
 function renderHueGradation(canvas: HTMLCanvasElement) {

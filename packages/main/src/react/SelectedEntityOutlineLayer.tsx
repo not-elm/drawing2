@@ -5,6 +5,7 @@ import { Graph } from "../core/shape/Graph";
 import { Line } from "../core/shape/Line";
 import { Rect, type Shape } from "../core/shape/Shape";
 import type { TransformMatrix } from "../core/shape/TransformMatrix";
+import { Variables } from "./Variables";
 import { useApp } from "./hooks/useApp";
 import { useCell } from "./hooks/useCell";
 
@@ -40,7 +41,7 @@ export function SelectedEntityOutlineLayer() {
                 <path
                     key={entity.id}
                     css={{
-                        stroke: "var(--color-selection)",
+                        stroke: Variables.color.outline,
                         fill: "none",
                     }}
                     d={convertShapeToPathDefinition(

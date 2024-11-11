@@ -6,13 +6,13 @@ import {
     type StrokeStyle,
 } from "../../default/property/StrokeStyle";
 import { PROPERTY_KEY_STROKE_WIDTH } from "../../default/property/StrokeWidth";
-import { Card } from "../Card";
+import { ColorPickerButton } from "../ColorPickerButton";
 import { DropdownSelect } from "../DropdownSelect";
-import { FormField } from "../FormField"; // 色
+import { FormField } from "../FormField";
 import { PixelValueInput } from "../PixelValueInput";
 import { Select } from "../Select";
 import { useApp } from "../hooks/useApp";
-import { ColorPickerButton } from "./ColorPickerButton";
+import { PropertyPane } from "./PropertyPane";
 import { useSelectedPropertyValue } from "./useSelectedPropertyValue";
 
 export function StrokePropertySection() {
@@ -27,23 +27,8 @@ export function StrokePropertySection() {
         useSelectedPropertyValue<number>(PROPERTY_KEY_STROKE_WIDTH) ?? 1;
 
     return (
-        <Card.Section
-            css={{
-                padding: "8px 16px",
-                display: "flex",
-                flexDirection: "column",
-                gap: 8,
-            }}
-        >
-            <h4
-                css={{
-                    margin: 0,
-                    color: "#888",
-                    fontWeight: "normal",
-                }}
-            >
-                Stroke
-            </h4>
+        <PropertyPane.Section>
+            <PropertyPane.Header>Stroke</PropertyPane.Header>
             <div
                 css={{
                     display: "flex",
@@ -132,7 +117,7 @@ export function StrokePropertySection() {
                     </DropdownSelect>
                 </FormField>
             </div>
-        </Card.Section>
+        </PropertyPane.Section>
     );
 }
 

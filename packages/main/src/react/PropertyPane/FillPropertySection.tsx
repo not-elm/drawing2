@@ -1,9 +1,9 @@
 import { Color } from "../../core/Color";
 import { PROPERTY_KEY_FILL_COLOR } from "../../default/property/Colors";
-import { Card } from "../Card";
-import { FormField } from "../FormField"; // 色
+import { ColorPickerButton } from "../ColorPickerButton";
+import { FormField } from "../FormField";
 import { useApp } from "../hooks/useApp";
-import { ColorPickerButton } from "./ColorPickerButton";
+import { PropertyPane } from "./PropertyPane";
 import { useSelectedPropertyValue } from "./useSelectedPropertyValue";
 
 export function FillPropertySection() {
@@ -12,23 +12,8 @@ export function FillPropertySection() {
         useSelectedPropertyValue<Color>(PROPERTY_KEY_FILL_COLOR) ?? Color.Black;
 
     return (
-        <Card.Section
-            css={{
-                padding: "8px 16px",
-                display: "flex",
-                flexDirection: "column",
-                gap: 8,
-            }}
-        >
-            <h4
-                css={{
-                    margin: 0,
-                    color: "#888",
-                    fontWeight: "normal",
-                }}
-            >
-                Fill
-            </h4>
+        <PropertyPane.Section>
+            <PropertyPane.Header>Fill</PropertyPane.Header>
             <div
                 css={{
                     display: "flex",
@@ -57,6 +42,6 @@ export function FillPropertySection() {
                     />
                 </FormField>
             </div>
-        </Card.Section>
+        </PropertyPane.Section>
     );
 }

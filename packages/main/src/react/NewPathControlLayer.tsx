@@ -1,4 +1,5 @@
 import { NewPathModeController } from "../default/mode/NewPathModeController";
+import { Variables } from "./Variables";
 import { useApp } from "./hooks/useApp";
 import { useCell } from "./hooks/useCell";
 
@@ -36,14 +37,8 @@ export function NewPathControlLayer() {
                         r={5}
                         css={{
                             strokeWidth: 1,
-                            stroke: "var(--color-selection)",
-                            fill: "#fff",
-
-                            // ...(highlighted && {
-                            //     strokeWidth: 1,
-                            //     stroke: "var(--color-selection-hover)",
-                            //     fill: "#fff",
-                            // }),
+                            stroke: Variables.color.control.border,
+                            fill: Variables.color.control.background,
                         }}
                     />
                 );
@@ -56,7 +51,7 @@ export function NewPathControlLayer() {
                     y2={viewport.transform.apply(pointerPosition).y}
                     css={{
                         strokeWidth: 1,
-                        stroke: "var(--color-selection)",
+                        stroke: Variables.color.primary,
                     }}
                 />
             )}

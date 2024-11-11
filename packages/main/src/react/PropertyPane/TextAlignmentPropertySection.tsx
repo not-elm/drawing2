@@ -1,12 +1,12 @@
+import { NewTextModeController } from "../../default/mode/NewTextModeController";
 import {
     PROPERTY_KEY_TEXT_ALIGNMENT_X,
     PROPERTY_KEY_TEXT_ALIGNMENT_Y,
     type TextAlignment,
 } from "../../default/property/TextAlignment";
-import { Card } from "../Card";
+import { Variables } from "../Variables";
 import { useApp } from "../hooks/useApp";
-
-import { NewTextModeController } from "../../default/mode/NewTextModeController";
+import { PropertyPane } from "./PropertyPane";
 import { useSelectedPropertyValue } from "./useSelectedPropertyValue";
 import { useVisibleFlag } from "./useVisibleFlag";
 
@@ -52,15 +52,17 @@ export function TextAlignmentPropertySection() {
     if (!visible) return null;
 
     return (
-        <Card.Section css={{ flexDirection: "row" }}>
+        <PropertyPane.Section>
+            <PropertyPane.Header>Text</PropertyPane.Header>
             <div
                 css={{
                     position: "relative",
-                    border: "1px solid #d0d0d0",
-                    borderRadius: "6px",
+                    border: "1px solid",
+                    borderColor: Variables.color.border,
+                    borderRadius: Variables.size.borderRadius.md,
                     width: "96px",
                     height: "96px",
-                    margin: "32px 0",
+                    marginBlock: 32,
                 }}
             >
                 {ALIGNMENT_OPTION_Y.map((alignY) =>
@@ -77,7 +79,7 @@ export function TextAlignmentPropertySection() {
                     )),
                 )}
             </div>
-        </Card.Section>
+        </PropertyPane.Section>
     );
 }
 
@@ -128,7 +130,7 @@ function TextAlignButton({
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "var(--color-ui-selected)",
+                color: Variables.color.primary,
 
                 "&::after": {
                     position: "absolute",
@@ -153,16 +155,7 @@ function TextAlignButton({
                 },
             }}
         >
-            {selected && (
-                <span
-                    className="material-symbols-outlined"
-                    css={{
-                        fontSize: 30,
-                    }}
-                >
-                    abc
-                </span>
-            )}
+            {selected && <span className="material-symbols-outlined">abc</span>}
         </button>
     );
 }

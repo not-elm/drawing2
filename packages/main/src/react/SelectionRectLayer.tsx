@@ -2,6 +2,7 @@ import { MoveEntityModeController } from "../core/mode/MoveEntityModeController"
 import { ResizeEntityModeController } from "../core/mode/ResizeEntityModeController";
 import { SelectByBrushModeController } from "../core/mode/SelectByBrushModeController";
 import { SelectEntityModeController } from "../core/mode/SelectEntityModeController";
+import { Variables } from "./Variables";
 import { useApp } from "./hooks/useApp";
 import { useCell } from "./hooks/useCell";
 
@@ -40,7 +41,7 @@ export function SelectionRectLayer() {
             {transformedSelectionRect !== null && (
                 <rect
                     css={{
-                        stroke: "var(--color-selection)",
+                        stroke: Variables.color.control.border,
                         fill: "none",
                     }}
                     x={transformedSelectionRect.left}

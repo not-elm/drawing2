@@ -9,13 +9,14 @@ import { NewTextModeController } from "../default/mode/NewTextModeController";
 import { Canvas } from "./Canvas";
 import { ContextMenuLayer } from "./ContextMenuLayer";
 import { PortalContextProvider, PortalMountPoint } from "./Portal";
-import { FillPropertySection } from "./PropertyPanel/FillPropertySection";
-import { PropertyPanel } from "./PropertyPanel/PropertyPanel";
-import { SizingModePropertySection } from "./PropertyPanel/SizingModePropertySection";
-import { StrokePropertySection } from "./PropertyPanel/StrokePropertySection";
-import { TextAlignmentPropertySection } from "./PropertyPanel/TextAlignmentPropertySection";
-import { StatusBar } from "./StatusBar";
+import { DebugSection } from "./PropertyPane/DebugSection";
+import { FillPropertySection } from "./PropertyPane/FillPropertySection";
+import { PropertyPane } from "./PropertyPane/PropertyPane";
+import { SizingModePropertySection } from "./PropertyPane/SizingModePropertySection";
+import { StrokePropertySection } from "./PropertyPane/StrokePropertySection";
+import { TextAlignmentPropertySection } from "./PropertyPane/TextAlignmentPropertySection";
 import { ToolBar } from "./ToolBar";
+import { Variables } from "./Variables";
 import { AppProvider } from "./hooks/useApp";
 import NewPathIcon from "./icons/new-path.svg";
 import NewShapeIcon from "./icons/new-shape.svg";
@@ -43,7 +44,6 @@ export function AppView({ app: controlledApp }: { app?: App }) {
     return (
         <AppProvider app={app}>
             <PortalContextProvider>
-                <StatusBar />
                 <MathJaxContext
                     version={2}
                     config={{
@@ -61,16 +61,7 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                             position: "absolute",
                             inset: 0,
                             overflow: "clip",
-                            "--color-ui-foreground": "#404040",
-                            "--color-ui-primary": "#3680f4",
-                            "--color-ui-primary-hover": "#b0c5fb",
-                            "--color-ui-background": "#fff",
-                            "--color-ui-background-hover": "#f0f0f0",
-                            "--color-ui-background-selected": "#f1f6fd",
-                            "--color-ui-selected": "var(--color-ui-primary)",
-                            "--color-selection": "var(--color-ui-primary)",
-                            "--color-selection-hover":
-                                "var(--color-ui-primary-hover)",
+                            fontSize: Variables.size.font.md,
 
                             // Disable mobile browser's default touch gestures (pan, zoom)
                             // to prevent conflicts with our event handling such as "pointermove".
@@ -118,12 +109,13 @@ export function AppView({ app: controlledApp }: { app?: App }) {
                             <ContextMenuLayer />
                         </div>
                         <div css={{ flex: "0 0 auto" }}>
-                            <PropertyPanel>
+                            <PropertyPane>
                                 <StrokePropertySection />
                                 <FillPropertySection />
                                 <TextAlignmentPropertySection />
                                 <SizingModePropertySection />
-                            </PropertyPanel>
+                                <DebugSection />
+                            </PropertyPane>
                         </div>
                         <PortalMountPoint />
                     </div>

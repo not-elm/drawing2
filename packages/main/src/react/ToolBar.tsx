@@ -1,6 +1,7 @@
 import styled from "@emotion/styled";
 import type { LiHTMLAttributes, ReactNode } from "react";
 import { Button } from "./Button";
+import { Variables } from "./Variables";
 import { useApp } from "./hooks/useApp";
 import { useCell } from "./hooks/useCell";
 
@@ -9,10 +10,12 @@ const ToolBar = styled.ul({
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "flex-start",
-    background: "#fff",
-    borderRight: "1px solid #c0c0c0",
+    background: Variables.color.toolBar.background,
+    borderRight: "1px solid",
+    borderColor: Variables.color.toolBar.border,
     boxShadow: "0 1px 4px rgba(0, 0, 0, 0.2)",
-    padding: "4px 8px",
+    paddingBlock: Variables.size.spacing.sm,
+    paddingInline: Variables.size.spacing.sm,
     margin: 0,
     listStyle: "none",
     flex: "0 0 auto",
@@ -36,8 +39,9 @@ function ToolBarButton({
     return (
         <ToolBarItem>
             <Button
+                role="option"
                 css={{ width: 48, height: 48 }}
-                aria-checked={currentMode === mode}
+                aria-selected={currentMode === mode}
                 onPointerDown={() => app.setMode(mode)}
             >
                 {children}

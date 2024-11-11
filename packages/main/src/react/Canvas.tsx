@@ -9,6 +9,7 @@ import { SelectPathControlLayer } from "./SelectPathControlLayer";
 import { SelectedEntityOutlineLayer } from "./SelectedEntityOutlineLayer";
 import { SelectionRectLayer } from "./SelectionRectLayer";
 import { SnapGuideLayer } from "./SnapGuideLayer";
+import { Variables } from "./Variables";
 import { useApp } from "./hooks/useApp";
 import { useCell } from "./hooks/useCell";
 import { useResizeObserver } from "./hooks/useResizeObserver";
@@ -75,7 +76,7 @@ export function Canvas() {
                 height: "100%",
                 overflow: "clip",
                 pointerEvents: "all",
-                background: "#f9fafc",
+                background: Variables.color.canvas.background,
                 cursor,
                 ">*": {
                     pointerEvents: "none",
